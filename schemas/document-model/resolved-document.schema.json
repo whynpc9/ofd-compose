@@ -1,0 +1,362 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ofd-compose.local/schemas/document-model/resolved-document.schema.json",
+  "title": "OFD Compose ResolvedDocument v0",
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "format",
+    "modelVersion",
+    "templateSchemaVersion",
+    "expressionLanguageVersion",
+    "bindingPolicyVersion",
+    "documentId",
+    "revisionId",
+    "settings",
+    "styles",
+    "body"
+  ],
+  "properties": {
+    "format": {
+      "const": "ofd-compose/resolved-document@0",
+      "type": "string"
+    },
+    "modelVersion": {
+      "const": "0",
+      "type": "string"
+    },
+    "templateSchemaVersion": {
+      "const": "ofd-compose/document-model@0",
+      "type": "string"
+    },
+    "expressionLanguageVersion": {
+      "const": "expr-1",
+      "type": "string"
+    },
+    "bindingPolicyVersion": {
+      "description": "绑定策略版本：strict-1（新模板）或 legacy-compat-1（迁移模板，节点级兼容政策）。",
+      "anyOf": [
+        {
+          "const": "strict-1",
+          "type": "string"
+        },
+        {
+          "const": "legacy-compat-1",
+          "type": "string"
+        }
+      ]
+    },
+    "documentId": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "revisionId": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "settings": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "locale",
+        "timeZone",
+        "bindingPolicyVersion"
+      ],
+      "properties": {
+        "locale": {
+          "minLength": 2,
+          "description": "BCP 47 locale 标签（如 zh-CN）。v0 仅记录；数字/日期格式化为固定不变文化。",
+          "type": "string"
+        },
+        "timeZone": {
+          "minLength": 1,
+          "description": "IANA 时区（如 Asia/Shanghai、UTC）。带偏移的日期时间值按此时区取字段。",
+          "type": "string"
+        },
+        "bindingPolicyVersion": {
+          "description": "绑定策略版本：strict-1（新模板）或 legacy-compat-1（迁移模板，节点级兼容政策）。",
+          "anyOf": [
+            {
+              "const": "strict-1",
+              "type": "string"
+            },
+            {
+              "const": "legacy-compat-1",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "styles": {
+      "type": "object",
+      "patternProperties": {
+        "^(.*)$": {
+          "additionalProperties": false,
+          "type": "object",
+          "properties": {
+            "fontFamily": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "fontSize": {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            "bold": {
+              "type": "boolean"
+            },
+            "italic": {
+              "type": "boolean"
+            },
+            "underline": {
+              "type": "boolean"
+            },
+            "strikethrough": {
+              "type": "boolean"
+            },
+            "color": {
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "type": "string"
+            },
+            "highlight": {
+              "pattern": "^#[0-9A-Fa-f]{6}$",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "body": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "kind",
+          "nodeId",
+          "fragments"
+        ],
+        "properties": {
+          "kind": {
+            "const": "paragraph",
+            "type": "string"
+          },
+          "nodeId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "styleId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "fragments": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "text",
+                    "origin"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "text",
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string"
+                    },
+                    "styleId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "origin": {
+                      "anyOf": [
+                        {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "kind",
+                            "nodeId"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "const": "static",
+                              "type": "string"
+                            },
+                            "nodeId": {
+                              "minLength": 1,
+                              "type": "string"
+                            }
+                          }
+                        },
+                        {
+                          "additionalProperties": false,
+                          "type": "object",
+                          "required": [
+                            "kind",
+                            "nodeId",
+                            "bindingId",
+                            "expression",
+                            "valueState"
+                          ],
+                          "properties": {
+                            "kind": {
+                              "const": "dynamic-text",
+                              "type": "string"
+                            },
+                            "nodeId": {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "bindingId": {
+                              "minLength": 1,
+                              "type": "string"
+                            },
+                            "expression": {
+                              "type": "string"
+                            },
+                            "dataPath": {
+                              "type": "string"
+                            },
+                            "valueState": {
+                              "anyOf": [
+                                {
+                                  "const": "value",
+                                  "type": "string"
+                                },
+                                {
+                                  "const": "null",
+                                  "type": "string"
+                                },
+                                {
+                                  "const": "missing",
+                                  "type": "string"
+                                }
+                              ]
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "kind",
+                    "nodeId",
+                    "controlId",
+                    "controlType"
+                  ],
+                  "properties": {
+                    "kind": {
+                      "const": "input-control",
+                      "type": "string"
+                    },
+                    "nodeId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "controlId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "controlType": {
+                      "anyOf": [
+                        {
+                          "const": "text",
+                          "type": "string"
+                        },
+                        {
+                          "const": "number",
+                          "type": "string"
+                        },
+                        {
+                          "const": "select",
+                          "type": "string"
+                        },
+                        {
+                          "const": "date",
+                          "type": "string"
+                        },
+                        {
+                          "const": "radio",
+                          "type": "string"
+                        },
+                        {
+                          "const": "checkbox",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "placeholder": {
+                      "type": "string"
+                    },
+                    "defaultValue": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "boolean"
+                        }
+                      ]
+                    },
+                    "required": {
+                      "type": "boolean"
+                    },
+                    "options": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "styleId": {
+                      "minLength": 1,
+                      "type": "string"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "source"
+      ],
+      "properties": {
+        "source": {
+          "anyOf": [
+            {
+              "const": "native",
+              "type": "string"
+            },
+            {
+              "const": "legacy-docx-import",
+              "type": "string"
+            }
+          ]
+        },
+        "templateId": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "legacyCommit": {
+          "pattern": "^[0-9a-f]{40}$",
+          "type": "string"
+        }
+      }
+    }
+  }
+}

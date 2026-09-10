@@ -9,7 +9,13 @@ const execFileAsync = promisify(execFile);
 const repoRoot = path.resolve(import.meta.dirname, "../../..");
 const biomeBin = path.join(repoRoot, "node_modules", ".bin", "biome");
 
-const corePackages = ["binding-core", "layout-core", "typography-core"] as const;
+const corePackages = [
+  "binding-core",
+  "document-model",
+  "layout-core",
+  "template-compiler",
+  "typography-core",
+] as const;
 
 const intlViolation = `export function formatAmount(value: number): string {
   return Intl.NumberFormat("zh-CN").format(value);

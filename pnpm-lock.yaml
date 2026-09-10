@@ -36,22 +36,63 @@ importers:
         specifier: 5.0.0
         version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
 
-  packages/binding-core: {}
-
-  packages/layout-core: {}
-
-  packages/typography-core: {}
-
-  tests/gates:
+  packages/binding-core:
+    dependencies:
+      '@ofd-compose/document-model':
+        specifier: workspace:*
+        version: link:../document-model
+      '@ofd-compose/template-compiler':
+        specifier: workspace:*
+        version: link:../template-compiler
+      '@sinclair/typebox':
+        specifier: 0.34.52
+        version: 0.34.52
+      decimal.js:
+        specifier: 10.6.0
+        version: 10.6.0
+      temporal-polyfill:
+        specifier: 1.0.4
+        version: 1.0.4
     devDependencies:
-      '@types/node':
-        specifier: 24.13.3
-        version: 24.13.3
       vitest:
         specifier: 5.0.0
         version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
 
-  tests/golden-corpus:
+  packages/document-model:
+    dependencies:
+      '@sinclair/typebox':
+        specifier: 0.34.52
+        version: 0.34.52
+    devDependencies:
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
+
+  packages/layout-core: {}
+
+  packages/template-compiler:
+    dependencies:
+      '@ofd-compose/document-model':
+        specifier: workspace:*
+        version: link:../document-model
+      '@sinclair/typebox':
+        specifier: 0.34.52
+        version: 0.34.52
+    devDependencies:
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
+
+  packages/typography-core: {}
+
+  tests/gates:
+    dependencies:
+      '@ofd-compose/binding-core':
+        specifier: workspace:*
+        version: link:../../packages/binding-core
+      '@ofd-compose/document-model':
+        specifier: workspace:*
+        version: link:../../packages/document-model
     devDependencies:
       '@types/node':
         specifier: 24.13.3
@@ -59,6 +100,34 @@ importers:
       ajv:
         specifier: 8.17.1
         version: 8.17.1
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
+
+  tests/golden-corpus:
+    dependencies:
+      '@ofd-compose/binding-core':
+        specifier: workspace:*
+        version: link:../../packages/binding-core
+      '@ofd-compose/document-model':
+        specifier: workspace:*
+        version: link:../../packages/document-model
+      '@ofd-compose/template-compiler':
+        specifier: workspace:*
+        version: link:../../packages/template-compiler
+    devDependencies:
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      ajv:
+        specifier: 8.17.1
+        version: 8.17.1
+      vite:
+        specifier: 8.2.2
+        version: 8.2.2(@types/node@24.13.3)
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
 
   tests/smoke:
     dependencies:
@@ -255,6 +324,9 @@ packages:
 
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
+
+  '@sinclair/typebox@0.34.52':
+    resolution: {integrity: sha512-XiMQh7qqVlxZzcVD+kkGMNGMzcTrDMLWI7S4x7z1MkCkbDPrekpZXEUK0eZqZFMuHQg2a2DZOcDIh9o5v3Gonw==}
 
   '@turbo/darwin-64@2.10.12':
     resolution: {integrity: sha512-9nKgKoF6ZOUsM+or0OtNf+TTJSfGvDNP7ZFv/ZGWVwOSCkumyctQiTeHwB4UNljHTnC41AqylgbunLDHoccNrA==}
@@ -486,6 +558,9 @@ packages:
 
   convert-source-map@2.0.0:
     resolution: {integrity: sha512-Kvp459HrV2FEJ1CAsi1Ku+MY3kasH19TFykTz2xWmMeq6bk2NU3XXvfJ+Q61m0xktWwt+1HSYf3JZsTms3aRJg==}
+
+  decimal.js@10.6.0:
+    resolution: {integrity: sha512-YpgQiITW3JXGntzdUmyUR1V812Hn8T1YVXhCu+wO3OpS4eU9l4YdD3qjyiKdV6mvV29zapkMeD390UVEf2lkUg==}
 
   defu@6.1.7:
     resolution: {integrity: sha512-7z22QmUWiQ/2d0KkdYmANbRUVABpZ9SNYyH5vx6PZ+nE5bcC0l7uFvEfHlyld/HcGBFTL536ClDt3DEcSlEJAQ==}
@@ -725,6 +800,15 @@ packages:
 
   std-env@4.2.0:
     resolution: {integrity: sha512-oCUKSupKTHX53EyjDtuZQ64pjLJ6yYCtpmEw0goYxtjG9KpbRe8KAsl2tBUGU9DyMcJ0RwJ8GqJAFzMXcXW1Rw==}
+
+  temporal-polyfill@1.0.4:
+    resolution: {integrity: sha512-MLEU0qOD2uXlz24oINNtdLZQl8RgmMxSnRtKEGZGGetTJjlRwQJjk+VsJ4EREaUoiaTb8NJOcUiKtoAiWn9EBg==}
+
+  temporal-spec@1.0.1:
+    resolution: {integrity: sha512-wxVoanmDeavXie1vu2JaQ3WIc3JZnWAOYFBsJyATaVsXsycKYUflGsyBmrRSnoCpZJpwPyr38VpgSUlQ8CbFxg==}
+
+  temporal-utils@1.0.2:
+    resolution: {integrity: sha512-1B8Dl4KzrOvsNUlpoWGno2VLQlxroLjDgc5NBjVC9ax9ymdo+ezfyvhyjEMx+IVfhINr6CIG2gcnlP95iRrybQ==}
 
   tinybench@6.1.4:
     resolution: {integrity: sha512-9APumHG7r4yOk4X4WlkmE71aZcv1gvin1czO3OQ1U9iJcFA5Ja/ygyb0vPOVHTthFozUYs8CLoLUlM8grb2lTQ==}
@@ -1020,6 +1104,8 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
+  '@sinclair/typebox@0.34.52': {}
+
   '@turbo/darwin-64@2.10.12':
     optional: true
 
@@ -1202,6 +1288,8 @@ snapshots:
 
   convert-source-map@2.0.0: {}
 
+  decimal.js@10.6.0: {}
+
   defu@6.1.7: {}
 
   detect-libc@2.1.2: {}
@@ -1376,6 +1464,15 @@ snapshots:
   stackback@0.0.2: {}
 
   std-env@4.2.0: {}
+
+  temporal-polyfill@1.0.4:
+    dependencies:
+      temporal-spec: 1.0.1
+      temporal-utils: 1.0.2
+
+  temporal-spec@1.0.1: {}
+
+  temporal-utils@1.0.2: {}
 
   tinybench@6.1.4: {}
 

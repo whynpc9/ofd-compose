@@ -19,7 +19,7 @@
     "legacyPixelDpi": 96
   },
   "result": {
-    "status": "not-executable",
-    "note": "issue 02：格式冻结，执行随后续排版票接入"
+    "status": "pass",
+    "note": "issue 04：叙述类用例在 ResolvedDocument 级通过（Node 与浏览器双模式，tests/golden-corpus/tests/narrative-corpus.dual.test.ts）"
   }
 }

@@ -1,6 +1,6 @@
 # tests/golden-corpus — Golden Corpus
 
-评审人可见的固定结构语料库（issue 02）。**用例暂不可执行；格式已冻结**，后续票以这些用例为验收输入。
+评审人可见的固定结构语料库（issue 02）。**格式已冻结**，后续票以这些用例为验收输入；从 issue 04 起，叙述类用例已可执行（见「叙述类用例的执行」），其余用例 `result.status` 仍为 `not-executable`。
 
 ## 分层
 
@@ -41,6 +41,15 @@
 ## 校验
 
 `pnpm --filter @ofd-compose/golden-corpus test`：枚举全部用例，校验 manifest schema、语义 schema、`dataDigest` 与 data.json 字节一致、引用文件存在；并对 15 个测试方法与示例 01–12 的覆盖性做强断言。
+
+## 叙述类用例的执行（issue 04）
+
+`tests/narrative-corpus.dual.test.ts` 把 **叙述类** 用例（`template.txt` 只含静态文本与行内 `{expr}`，不含控制块 `{#` `{/` `{?`、图片/条码 `{%`、表格或 `<run>` 标注）经 `src/narrative-template.ts` 转成原生 TemplateSource（`timeZone: UTC`，策略取 manifest `nativeProfile.bindingPolicyVersion`），再经 `compile()` → `bind()` 得到 ResolvedDocument，并断言段落最终文本等于 `expected/semantics.json` 的 `paragraphs`、无 error/warning 级诊断。
+
+- 用例清单在测试中固定（当前：01、06、07、08 四个测试方法用例）；集合变化必须显式更新，避免用例被静默跳过。
+- 同一文件在 Node（`pnpm test`）与浏览器（`pnpm test:browser`，Playwright chromium）两种模式运行；语料经 `import.meta.glob` 读取，不依赖 `node:fs`。
+- 通过的用例 manifest `result.status` 记为 `pass`（测试同时断言其余用例仍为 `not-executable`）。
+- `src/narrative-template.ts` 是测试支持代码，不是受限导入器（issue 30）。
 
 ## 扫描产物：template.generated.docx 与 scan-reports/
 

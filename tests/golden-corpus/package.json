@@ -4,11 +4,19 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
     "typecheck": "tsc --noEmit",
     "scan": "dotnet run --project ../../dotnet/tools/OFDCompose.CorpusDocxGenerator -- . && dotnet run --project ../../dotnet/tools/OFDCompose.DocxScanner -- corpus ."
   },
+  "dependencies": {
+    "@ofd-compose/binding-core": "workspace:*",
+    "@ofd-compose/document-model": "workspace:*",
+    "@ofd-compose/template-compiler": "workspace:*"
+  },
   "devDependencies": {
     "@types/node": "24.13.3",
-    "ajv": "8.17.1"
+    "ajv": "8.17.1",
+    "vite": "8.2.2",
+    "vitest": "5.0.0"
   }
 }
