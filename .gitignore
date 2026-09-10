@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build / cache
+dist/
+build/
+out/
+.turbo/
+*.tsbuildinfo
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+project.lock.json
+artifacts/
+
+# Test / coverage
+coverage/
+*.lcov
+TestResults/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.pem
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Local tooling
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.local/
