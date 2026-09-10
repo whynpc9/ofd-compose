@@ -25,4 +25,4 @@
 - xUnit：v3 包 4.0.0 + .NET 10 MTP runner（`global.json` 的 `test.runner`），`dotnet test` 通过。
 - **许可白名单的落地解释（需评审确认）**：严格按字面执行时 vitest 树中的 ISC（picocolors/flatted/siginfo）与 tsdown 树中的 MPL-2.0（lightningcss）必然失败。落地为：生产依赖零例外严格白名单；开发工具链允许 `tools/license-check/dev-exceptions.json` 中逐包具名例外（当前 4 条，均不进入发布产物）。
 - **偏离 ADR-0001 的点（需评审）**：ADR 指定 NuGet 侧用 `dotnet-project-licenses`；实测 2.7.1 稳定版与 3.0.0-alpha.9 均无法在 net10.0 + CPM + slnx 下枚举项目，NuGet 侧改由 `check-licenses.mjs` 直接解析 `project.assets.json` + nuspec 元数据，语义等价。详见 `tools/license-check/README.md`。
-- `Date.toLocale*` 禁令（ADR-0001 §B）未纳入：Biome 2.5 无成员级禁用规则（`noRestrictedGlobals` 只管全局名），后续用 GritQL 插件或自写规则补齐。
+- `Date.toLocale*` 禁令（ADR-0001 §B）：Biome 2.5 无成员级内置规则，以 GritQL 插件 `tools/biome-plugins/no-date-tolocale.grit` 实现（按路径限定三个 Core 包；`tests/gates/` 有正/负向门禁测试）。【2026-09-10 code-review 后补齐】

@@ -26,6 +26,16 @@ const cleanSource = `export function add(left: number, right: number): number {
 }
 `;
 
+const toLocaleViolation = `export function formatDay(value: Date): string {
+  return value.toLocaleDateString("zh-CN");
+}
+`;
+
+const toLocaleSafe = `export function formatDay(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+`;
+
 async function createLintFixture(
   files: Readonly<Record<string, string>>,
 ): Promise<{ dir: string; cleanup: () => Promise<void> }> {
@@ -36,6 +46,14 @@ async function createLintFixture(
   >;
   delete config.$schema;
   delete config.vcs;
+  // GritQL plugin paths resolve relative to the config file: copy them into the fixture.
+  const plugins = (config.plugins ?? []) as (string | { path: string })[];
+  for (const plugin of plugins) {
+    const relativePath = typeof plugin === "string" ? plugin : plugin.path;
+    const target = path.join(dir, relativePath);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, await readFile(path.join(repoRoot, relativePath), "utf8"));
+  }
   await writeFile(path.join(dir, "biome.json"), `${JSON.stringify(config, null, 2)}\n`);
   for (const [relativePath, content] of Object.entries(files)) {
     const target = path.join(dir, relativePath);
@@ -109,6 +127,25 @@ it("does not flag the same code outside core packages", async () => {
   try {
     const result = await runBiome(dir);
     expect(result.code).toBe(0);
+  } finally {
+    await cleanup();
+  }
+});
+
+it("flags Date/Number toLocale* formatting in core packages (ADR-0001)", async () => {
+  const { dir, cleanup } = await createLintFixture({
+    "packages/binding-core/src/format-date.ts": toLocaleViolation,
+    "packages/layout-core/src/format-date.ts": toLocaleSafe,
+    "tests/smoke/src/format-date.helper.ts": toLocaleViolation,
+  });
+  try {
+    const result = await runBiome(dir);
+    expect(result.code).not.toBe(0);
+    expect(result.output).toContain("packages/binding-core/src/format-date.ts");
+    expect(result.output).toContain("toLocale");
+    // 同名调用在非 Core 路径不触发；Core 包内的非 locale 方法不触发。
+    expect(result.output).not.toContain("tests/smoke/src/format-date.helper.ts");
+    expect(result.output).not.toContain("packages/layout-core/src/format-date.ts");
   } finally {
     await cleanup();
   }

@@ -1,0 +1,14 @@
+// 禁止 Core 包使用 locale 相关的隐式格式化（Date/Number 的 toLocale*）。
+// 排版与格式化必须显式锁定 locale/时区/舍入（ADR-0001 原则 5）。
+`$fn($args)` where {
+  $fn <: or {
+    `$_.toLocaleString`,
+    `$_.toLocaleDateString`,
+    `$_.toLocaleTimeString`
+  },
+  register_diagnostic(
+    span = $fn,
+    message = "Core packages must not use locale-dependent formatting (Date/Number toLocale*). Determinism, ADR-0001.",
+    severity = "error"
+  )
+}

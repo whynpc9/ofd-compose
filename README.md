@@ -39,7 +39,7 @@ pnpm build           # tsdown 构建
 pnpm test            # Vitest node 模式
 pnpm test:browser    # Vitest browser 模式（Playwright provider, chromium）
 pnpm test:dotnet     # dotnet test（xUnit v3）
-pnpm check:licenses  # 许可白名单（pnpm 侧；.NET 侧见 tools/license-check/README.md）
+pnpm check:licenses  # 许可白名单（pnpm 与 NuGet 两侧，见 tools/license-check/README.md）
 ```
 
 ## 工程门禁

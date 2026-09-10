@@ -7,7 +7,14 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": ["**", "!.scratch", "!**/dist", "!**/coverage", "!**/packages.lock.json"]
+    "includes": [
+      "**",
+      "!.scratch",
+      "!**/dist",
+      "!**/coverage",
+      "!**/packages.lock.json",
+      "!**/*.grit"
+    ]
   },
   "formatter": {
     "enabled": true,
@@ -78,6 +85,16 @@
           }
         }
       }
+    }
+  ],
+  "plugins": [
+    {
+      "path": "./tools/biome-plugins/no-date-tolocale.grit",
+      "includes": [
+        "**/packages/binding-core/**",
+        "**/packages/layout-core/**",
+        "**/packages/typography-core/**"
+      ]
     }
   ]
 }
