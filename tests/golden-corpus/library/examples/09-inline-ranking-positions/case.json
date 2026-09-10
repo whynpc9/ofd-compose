@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-example-09-inline-ranking",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "09-inline-ranking-positions"
+  },
+  "templateId": "ndocxtemplater-example-09-inline-ranking-positions",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:55ac761945f9b9c338ff261632e0e889b46ff8f8f3fc7c188b9fae35c1be34ba",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

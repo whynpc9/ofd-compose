@@ -1,0 +1,97 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.docx",
+    "sha256": "98ccc9dffc3de579f6b31e9d09bc8deca790f38a86272810c03e2c8763782f4f"
+  },
+  "summary": {
+    "tagCount": 3,
+    "inlineExpressions": 3,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["patient.age", "patient.name", "report.id"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "patient.age", "count": 1 },
+      { "expression": "patient.name", "count": 1 },
+      { "expression": "report.id", "count": 1 }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{patient.name}",
+      "expression": "patient.name",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "patient.name", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{patient.age}",
+      "expression": "patient.age",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "patient.age", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 2,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{report.id}",
+      "expression": "report.id",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "report.id", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

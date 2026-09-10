@@ -1,0 +1,4 @@
+{
+  "paragraphs": ["Header", "Footer"],
+  "conditionalBlocks": [{ "expression": "flags.showVip", "visible": false }]
+}

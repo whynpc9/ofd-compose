@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-09-inline-image-data-uri",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_RendersInlineImageTag_FromDataUri"
+  },
+  "templateId": "ndocxtemplater-test-09-inline-image",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:c5233bd4782cea8b70c55fa73d4922d5940aee9366a09d26eea4bb295b8f69be",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

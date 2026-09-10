@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-example-02-condition",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "02-condition"
+  },
+  "templateId": "ndocxtemplater-example-02-condition",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:0d769f0694a084e8b45c54a64573d2383650641215d1da3f6d9ca5ee5a42ce6d",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

@@ -1,0 +1,4 @@
+{
+  "paragraphs": ["Patient: Bob", "VIP customer", "End."],
+  "conditionalBlocks": [{ "expression": "patient.isVip", "visible": true }]
+}

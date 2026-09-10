@@ -1,0 +1,26 @@
+{
+  "caseId": "lib-example-12-barcodes",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "12-barcodes"
+  },
+  "templateId": "ndocxtemplater-example-12-barcodes",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:991047589476f9ae35beb1b78b8145b4ff0dd970ae791703aa7b4517744e9f2c",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": ["pixel-assertion-rebuilt"],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  },
+  "notes": ["本版补建：旧断言仅为「位图含深色像素」，本版改为解码值断言（assertion: decode-value）"]
+}

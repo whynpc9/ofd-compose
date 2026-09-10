@@ -1,0 +1,98 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.docx",
+    "sha256": "3960c52f40f5fe043707a01334c304f06ff670c0f6472298cde89e58267adf58"
+  },
+  "summary": {
+    "tagCount": 3,
+    "inlineExpressions": 1,
+    "loops": 0,
+    "conditionals": 1,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["patient.isVip", "patient.name"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "patient.isVip", "count": 2 },
+      { "expression": "patient.name", "count": 1 }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{patient.name}",
+      "expression": "patient.name",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "patient.name", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{?patient.isVip}",
+      "expression": "patient.isVip",
+      "kind": "if-start",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "patient.isVip", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 3,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{/?patient.isVip}",
+      "expression": "patient.isVip",
+      "kind": "if-end",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "patient.isVip", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [
+    { "kind": "if", "expression": "patient.isVip", "paired": true, "depth": 0, "scope": "body" }
+  ],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

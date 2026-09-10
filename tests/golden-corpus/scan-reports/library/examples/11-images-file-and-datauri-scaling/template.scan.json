@@ -1,0 +1,137 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.docx",
+    "sha256": "27900bdb1125c7959e11103a65f3ecaeca6d2830a617d8ca2523737a878d7d7c"
+  },
+  "summary": {
+    "tagCount": 3,
+    "inlineExpressions": 0,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 3,
+    "barcodes": 0,
+    "dataPaths": ["fitInBox", "fromDataUri", "fromPath"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "fitInBox", "count": 1 },
+      { "expression": "fromDataUri", "count": 1 },
+      { "expression": "fromPath", "count": 1 }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%%fromPath}",
+      "expression": "fromPath",
+      "kind": "image",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "fromPath", "operations": [] },
+      "image": { "centered": true, "valueExpression": "fromPath" },
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "needs-review"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 3,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%%fromDataUri}",
+      "expression": "fromDataUri",
+      "kind": "image",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "fromDataUri", "operations": [] },
+      "image": { "centered": true, "valueExpression": "fromDataUri" },
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 5,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%%fitInBox}",
+      "expression": "fitInBox",
+      "kind": "image",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "fitInBox", "operations": [] },
+      "image": { "centered": true, "valueExpression": "fitInBox" },
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "needs-review"
+    }
+  ],
+  "resourceReferences": [
+    {
+      "expression": "fromPath",
+      "kind": "image",
+      "centered": true,
+      "value": {
+        "state": "resolved",
+        "valueKind": "object",
+        "sourceKey": "src",
+        "sizeKeys": ["maxWidth", "preserveAspectRatio"],
+        "sourceForm": "relative-path",
+        "itemCount": null
+      }
+    },
+    {
+      "expression": "fromDataUri",
+      "kind": "image",
+      "centered": true,
+      "value": {
+        "state": "resolved",
+        "valueKind": "object",
+        "sourceKey": "src",
+        "sizeKeys": ["scale", "preserveAspectRatio"],
+        "sourceForm": "data-uri:image/png",
+        "itemCount": null
+      }
+    },
+    {
+      "expression": "fitInBox",
+      "kind": "image",
+      "centered": true,
+      "value": {
+        "state": "resolved",
+        "valueKind": "object",
+        "sourceKey": "src",
+        "sizeKeys": ["width", "height", "preserveAspectRatio"],
+        "sourceForm": "relative-path",
+        "itemCount": null
+      }
+    }
+  ],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": ["file-path-image-source"],
+  "risk": "medium",
+  "migrationStatus": "needs-review"
+}

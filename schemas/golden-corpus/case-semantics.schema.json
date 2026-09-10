@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ofd-compose.local/schemas/golden-corpus/case-semantics.schema.json",
+  "title": "Golden Corpus Case Expected Semantics",
+  "description": "用例预期语义结构文件：最终文本、表格行组、条件显隐、媒体、条码。不以 Word 分页或像素为预期。",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "paragraphs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "正文段落最终文本（按顺序）。图片/条码独占段落不含文字，不在此列。"
+    },
+    "tables": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["rows"],
+        "properties": {
+          "rows": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": { "type": "string" },
+              "minItems": 1
+            },
+            "minItems": 1,
+            "description": "行组内容与顺序；每行为单元格最终文本数组。"
+          }
+        }
+      }
+    },
+    "conditionalBlocks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["expression", "visible"],
+        "properties": {
+          "expression": { "type": "string", "minLength": 1 },
+          "visible": { "type": "boolean" }
+        }
+      },
+      "description": "条件块在给定数据下的显隐。"
+    },
+    "media": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "order", "widthPx", "heightPx", "alignment", "source"],
+        "properties": {
+          "kind": { "type": "string", "const": "image" },
+          "order": { "type": "integer", "minimum": 1 },
+          "widthPx": { "type": "integer", "minimum": 1 },
+          "heightPx": { "type": "integer", "minimum": 1 },
+          "alignment": { "type": "string", "enum": ["inline", "centered"] },
+          "source": { "type": "string", "enum": ["data-uri", "base64", "file-path"] },
+          "byteIdenticalReembed": {
+            "type": "boolean",
+            "description": "旧引擎原样回嵌输入字节（real PNG 用例）。"
+          },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      },
+      "description": "图片尺寸（legacy px @96dpi）与出现顺序。"
+    },
+    "barcodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "order",
+          "symbology",
+          "value",
+          "widthPx",
+          "heightPx",
+          "alignment",
+          "assertion"
+        ],
+        "properties": {
+          "order": { "type": "integer", "minimum": 1 },
+          "symbology": {
+            "type": "string",
+            "enum": ["code128", "code39", "code93", "codabar", "ean13", "ean8", "upca", "itf"]
+          },
+          "value": { "type": "string", "minLength": 1 },
+          "encodedValue": {
+            "type": "string",
+            "minLength": 1,
+            "description": "规范化后的实际编码值（如 UPC-A→EAN13 前置 0）。"
+          },
+          "normalizationPolicy": {
+            "type": "string",
+            "enum": ["upca-to-ean13", "itf-pad-left-zero"]
+          },
+          "widthPx": { "type": "integer", "minimum": 1 },
+          "heightPx": { "type": "integer", "minimum": 1 },
+          "marginPx": { "type": "integer", "minimum": 0 },
+          "alignment": { "type": "string", "enum": ["inline", "centered"] },
+          "assertion": {
+            "type": "string",
+            "const": "decode-value",
+            "description": "本版补建：以解码值断言取代旧「含深色像素」断言。"
+          },
+          "note": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "anyOf": [
+    { "required": ["paragraphs"] },
+    { "required": ["tables"] },
+    { "required": ["conditionalBlocks"] },
+    { "required": ["media"] },
+    { "required": ["barcodes"] }
+  ]
+}

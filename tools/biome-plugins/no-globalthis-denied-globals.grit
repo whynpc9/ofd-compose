@@ -1,0 +1,42 @@
+// 禁止 Core 包通过 globalThis 限定访问被禁全局：noRestrictedGlobals 只看裸标识符，
+// `globalThis.Intl` / `globalThis.document` 这类成员访问会绕过该规则。
+// 清单与 biome.json overrides 中 noRestrictedGlobals 的 deniedGlobals 保持一致。
+`globalThis.$global` where {
+  $global <: or {
+    `Intl`,
+    `window`,
+    `document`,
+    `navigator`,
+    `location`,
+    `history`,
+    `screen`,
+    `localStorage`,
+    `sessionStorage`,
+    `indexedDB`,
+    `customElements`,
+    `getComputedStyle`,
+    `requestAnimationFrame`,
+    `cancelAnimationFrame`,
+    `HTMLElement`,
+    `HTMLCanvasElement`,
+    `HTMLImageElement`,
+    `Element`,
+    `Node`,
+    `NodeList`,
+    `DocumentFragment`,
+    `DOMParser`,
+    `XMLSerializer`,
+    `MutationObserver`,
+    `ResizeObserver`,
+    `IntersectionObserver`,
+    `Image`,
+    `ImageData`,
+    `OffscreenCanvas`,
+    `CanvasRenderingContext2D`
+  },
+  register_diagnostic(
+    span = $global,
+    message = "Core packages must not access denied globals through globalThis (same prohibition as the bare identifier, ADR-0001).",
+    severity = "error"
+  )
+}

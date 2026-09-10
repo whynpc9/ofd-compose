@@ -1,0 +1,6 @@
+File path image
+{%fileImage}
+Data URI image
+{%dataUriImage}
+Fit box image
+{%fitBoxImage}

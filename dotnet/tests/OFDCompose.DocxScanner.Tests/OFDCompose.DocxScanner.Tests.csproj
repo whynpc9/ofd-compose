@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" />
+    <PackageReference Include="xunit.v3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\tools\OFDCompose.DocxScanner\OFDCompose.DocxScanner.csproj" />
+    <ProjectReference Include="..\..\tools\OFDCompose.CorpusDocxGenerator\OFDCompose.CorpusDocxGenerator.csproj" />
+  </ItemGroup>
+
+</Project>

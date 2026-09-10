@@ -1,0 +1,14 @@
+{
+  "invoice": {
+    "lines": [
+      {
+        "name": "Apple",
+        "qty": 2
+      },
+      {
+        "name": "Banana",
+        "qty": 3
+      }
+    ]
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
+  "root": true,
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!.scratch",
+      "!**/dist",
+      "!**/coverage",
+      "!**/packages.lock.json",
+      "!**/*.grit"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineWidth": 100
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "preset": "recommended"
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "semicolons": "always",
+      "trailingCommas": "all"
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "packages/binding-core/**",
+        "packages/layout-core/**",
+        "packages/typography-core/**"
+      ],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedGlobals": {
+              "level": "error",
+              "options": {
+                "deniedGlobals": {
+                  "Intl": "Core packages must not depend on runtime ICU/Intl (determinism, ADR-0001). Use the platform's own formatting/shaping code.",
+                  "window": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "document": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "navigator": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "location": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "history": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "screen": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "localStorage": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "sessionStorage": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "indexedDB": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "customElements": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "getComputedStyle": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "requestAnimationFrame": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "cancelAnimationFrame": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "HTMLElement": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "HTMLCanvasElement": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "HTMLImageElement": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "Element": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "Node": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "NodeList": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "DocumentFragment": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "DOMParser": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "XMLSerializer": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "MutationObserver": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "ResizeObserver": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "IntersectionObserver": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "Image": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "ImageData": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "OffscreenCanvas": "Core packages must be runtime-neutral: no DOM globals (ADR-0001).",
+                  "CanvasRenderingContext2D": "Core packages must be runtime-neutral: no DOM globals (ADR-0001)."
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "plugins": [
+    {
+      "path": "./tools/biome-plugins/no-date-tolocale.grit",
+      "includes": [
+        "**/packages/binding-core/**",
+        "**/packages/layout-core/**",
+        "**/packages/typography-core/**"
+      ]
+    },
+    {
+      "path": "./tools/biome-plugins/no-globalthis-denied-globals.grit",
+      "includes": [
+        "**/packages/binding-core/**",
+        "**/packages/layout-core/**",
+        "**/packages/typography-core/**"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,191 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "9a12239fb12f085e69f4164e6d68be3729d89b4d8644b176a53ce25bc7a7c6b5"
+  },
+  "summary": {
+    "tagCount": 6,
+    "inlineExpressions": 4,
+    "loops": 1,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["amount", "id", "orders", "reportDate"],
+    "functions": ["count", "format", "sort", "take"],
+    "formatPatterns": [
+      { "kind": "date", "pattern": "yyyy-MM-dd", "alias": null },
+      { "kind": "number", "pattern": "0.00", "alias": null }
+    ],
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "amount|format:number:0.00", "count": 1 },
+      { "expression": "id", "count": 1 },
+      { "expression": "orders|count", "count": 1 },
+      { "expression": "orders|sort:amount:desc|take:2", "count": 2 },
+      { "expression": "reportDate|format:date:yyyy-MM-dd", "count": 1 }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{orders|count}",
+      "expression": "orders|count",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "orders", "operations": [{ "name": "count", "args": [] }] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{reportDate|format:date:yyyy-MM-dd}",
+      "expression": "reportDate|format:date:yyyy-MM-dd",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": {
+        "path": "reportDate",
+        "operations": [{ "name": "format", "args": ["date", "yyyy-MM-dd"] }]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 2,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{#orders|sort:amount:desc|take:2}",
+      "expression": "orders|sort:amount:desc|take:2",
+      "kind": "loop-start",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": {
+        "path": "orders",
+        "operations": [
+          { "name": "sort", "args": ["amount", "desc"] },
+          { "name": "take", "args": ["2"] }
+        ]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 3,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{id}",
+      "expression": "id",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "id", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 3,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{amount|format:number:0.00}",
+      "expression": "amount|format:number:0.00",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": {
+        "path": "amount",
+        "operations": [{ "name": "format", "args": ["number", "0.00"] }]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 4,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{/orders|sort:amount:desc|take:2}",
+      "expression": "orders|sort:amount:desc|take:2",
+      "kind": "loop-end",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": {
+        "path": "orders",
+        "operations": [
+          { "name": "sort", "args": ["amount", "desc"] },
+          { "name": "take", "args": ["2"] }
+        ]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [
+    {
+      "kind": "loop",
+      "expression": "orders|sort:amount:desc|take:2",
+      "paired": true,
+      "depth": 0,
+      "scope": "body"
+    }
+  ],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

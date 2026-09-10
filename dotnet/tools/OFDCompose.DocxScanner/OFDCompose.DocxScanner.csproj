@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>OFDCompose.DocxScanner</RootNamespace>
+    <AssemblyName>OFDCompose.DocxScanner</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DocumentFormat.OpenXml" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="OFDCompose.DocxScanner.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,85 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "c48657c5b49b3985dfb74e86a473212937ff19b9ea833c492ae18570bfb9042a"
+  },
+  "summary": {
+    "tagCount": 2,
+    "inlineExpressions": 0,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 2,
+    "dataPaths": ["barcodes.itf", "barcodes.upca"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": ["itf", "upca"],
+    "occurrences": [
+      { "expression": "barcode:barcodes.itf;type=itf;width=300;height=90", "count": 1 },
+      { "expression": "barcode:barcodes.upca;type=upca;width=300;height=90", "count": 1 }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%barcode:barcodes.upca;type=upca;width=300;height=90}",
+      "expression": "barcode:barcodes.upca;type=upca;width=300;height=90",
+      "kind": "barcode",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "barcodes.upca", "operations": [] },
+      "image": null,
+      "barcode": {
+        "valueExpression": "barcodes.upca",
+        "symbology": "upca",
+        "parameters": { "width": 300, "height": 90, "margin": 2, "pure": true },
+        "centered": false
+      },
+      "runSpans": null,
+      "migrationStatus": "needs-review"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%barcode:barcodes.itf;type=itf;width=300;height=90}",
+      "expression": "barcode:barcodes.itf;type=itf;width=300;height=90",
+      "kind": "barcode",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "barcodes.itf", "operations": [] },
+      "image": null,
+      "barcode": {
+        "valueExpression": "barcodes.itf",
+        "symbology": "itf",
+        "parameters": { "width": 300, "height": 90, "margin": 2, "pure": true },
+        "centered": false
+      },
+      "runSpans": null,
+      "migrationStatus": "needs-review"
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": ["itf-pad-left-zero", "upca-to-ean13"],
+  "risk": "medium",
+  "migrationStatus": "needs-review"
+}

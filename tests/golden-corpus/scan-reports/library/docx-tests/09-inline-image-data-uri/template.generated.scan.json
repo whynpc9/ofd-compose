@@ -1,0 +1,65 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "4a46471ed437cc062b10f30d00ddf43fc9e1717777b090dac88428e93b88f7b5"
+  },
+  "summary": {
+    "tagCount": 1,
+    "inlineExpressions": 0,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 1,
+    "barcodes": 0,
+    "dataPaths": ["logo"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": [],
+    "occurrences": [{ "expression": "logo", "count": 1 }]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%logo}",
+      "expression": "logo",
+      "kind": "image",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "logo", "operations": [] },
+      "image": { "centered": false, "valueExpression": "logo" },
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    }
+  ],
+  "resourceReferences": [
+    {
+      "expression": "logo",
+      "kind": "image",
+      "centered": false,
+      "value": {
+        "state": "resolved",
+        "valueKind": "object",
+        "sourceKey": "src",
+        "sizeKeys": ["width", "height"],
+        "sourceForm": "data-uri:image/png",
+        "itemCount": null
+      }
+    }
+  ],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

@@ -1,0 +1,29 @@
+{
+  "$comment": "Dev-only toolchain packages whose licenses are outside the shipping whitelist (allowed-licenses.txt) but acceptable for non-distributed build/test tooling. Each entry needs reviewer sign-off in PR. These packages never enter shipped artifacts (packages/dist, containers, NuGet packages).",
+  "exceptions": [
+    {
+      "name": "picocolors",
+      "license": "ISC",
+      "scope": "dev-only",
+      "reason": "Vitest 终端着色依赖；仅测试期使用。ISC 与 MIT/BSD 等价的宽松许可。"
+    },
+    {
+      "name": "flatted",
+      "license": "ISC",
+      "scope": "dev-only",
+      "reason": "Vitest 快照序列化依赖；仅测试期使用。ISC 与 MIT/BSD 等价的宽松许可。"
+    },
+    {
+      "name": "siginfo",
+      "license": "ISC",
+      "scope": "dev-only",
+      "reason": "Vitest/Tinybench 依赖；仅测试期使用。ISC 与 MIT/BSD 等价的宽松许可。"
+    },
+    {
+      "name": "lightningcss",
+      "license": "MPL-2.0",
+      "scope": "dev-only",
+      "reason": "tsdown/rolldown 的 CSS 压缩器（含各平台可选二进制）；仅构建期调用，本仓库产物不含 CSS。MPL-2.0 为文件级弱 copyleft，不修改其源码。"
+    }
+  ]
+}

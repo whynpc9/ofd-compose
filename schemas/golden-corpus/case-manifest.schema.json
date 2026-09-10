@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ofd-compose.local/schemas/golden-corpus/case-manifest.schema.json",
+  "title": "Golden Corpus Case Manifest",
+  "description": "golden corpus 用例 manifest（issue 02）。格式冻结；后续票以此为准入输入。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "caseId",
+    "tier",
+    "legacyCommit",
+    "source",
+    "templateId",
+    "dataDigest",
+    "expectedSemantic",
+    "allowedDifferences",
+    "nativeProfile",
+    "result"
+  ],
+  "properties": {
+    "caseId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "全 corpus 唯一的用例标识（kebab-case）。"
+    },
+    "tier": {
+      "type": "string",
+      "enum": ["library", "business"],
+      "description": "library=库级基线（NDocxTemplater 测试/示例转录）；business=业务基线（宿主脱敏提供）。"
+    },
+    "legacyCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$",
+      "description": "旧引擎固定提交（完整 SHA-1）。库级基线固定为 9c02f26d0f81b554019441e348f981b67e11a4e7。"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "name"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["docx-test", "example"],
+          "description": "docx-test=DocxTemplateEngineTests 的 [Fact]；example=examples/ 目录。"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "测试方法名（如 Render_...）或示例编号目录名（如 04-table-loop）。"
+        }
+      }
+    },
+    "templateId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "模板稳定标识。库级基线为 ndocxtemplater-<来源>-<slug>。"
+    },
+    "templateAsset": {
+      "type": "string",
+      "minLength": 1,
+      "description": "用例目录内旧模板 DOCX 的相对路径（示例用例有，测试方法用例无）。"
+    },
+    "templateDescription": {
+      "type": "string",
+      "minLength": 1,
+      "description": "用例目录内模板结构文本文件的相对路径（段落/表格/标签逐行列出）。"
+    },
+    "dataDigest": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "description": "用例 data.json 字节的 SHA-256。"
+    },
+    "expectedSemantic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["file", "format"],
+      "properties": {
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "预期语义结构文件的相对路径（文本/结构表达，不含 Word 分页或像素断言）。"
+        },
+        "format": {
+          "type": "string",
+          "const": "ofd-compose/case-semantics@1"
+        }
+      }
+    },
+    "allowedDifferences": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "允许差异词汇表，见 tests/golden-corpus/README.md。"
+    },
+    "nativeProfile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bindingPolicyVersion"],
+      "properties": {
+        "bindingPolicyVersion": {
+          "type": "string",
+          "enum": ["strict-1", "legacy-compat-1"]
+        },
+        "legacyPixelDpi": {
+          "type": "integer",
+          "const": 96,
+          "description": "旧模板图片尺寸兼容配置（spec §7）。"
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["not-executable", "pass", "fail", "not-verified"],
+          "description": "issue 02 阶段的用例一律 not-executable（格式已冻结、暂不可执行）。"
+        },
+        "note": { "type": "string", "minLength": 1 }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "description": "转录备注，如「本版补建：…」。"
+    }
+  }
+}

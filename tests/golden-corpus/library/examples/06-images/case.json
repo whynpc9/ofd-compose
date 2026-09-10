@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-example-06-images",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "06-images"
+  },
+  "templateId": "ndocxtemplater-example-06-images",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:2cb0655e721c44a9c5099f27c3efce03775aeb94e97c4b20e4174c916a2a81ca",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

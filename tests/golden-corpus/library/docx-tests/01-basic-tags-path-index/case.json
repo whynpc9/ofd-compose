@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-01-basic-tags-path-index",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_ReplacesBasicTags_WithJsonPathAndIndex"
+  },
+  "templateId": "ndocxtemplater-test-01-basic-tags",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:ed8d93090376c26d65698944394ffe89b03d64983d5e84d61a13dc5141913d28",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.docx",
+    "sha256": "3963b923f036d0599e18d4e1bb35d77ec1e63c41c1cc665019563e71dc4c9173"
+  },
+  "summary": {
+    "tagCount": 4,
+    "inlineExpressions": 2,
+    "loops": 1,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["createdAt", "name", "rows"],
+    "functions": ["format"],
+    "formatPatterns": [{ "kind": "date", "pattern": "yyyy-MM-dd", "alias": null }],
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "createdAt|format:date:yyyy-MM-dd", "count": 1 },
+      { "expression": "name", "count": 1 },
+      { "expression": "rows", "count": 2 }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "table-row",
+        "paragraphIndex": null,
+        "tableIndex": 0,
+        "rowIndex": 1,
+        "cellIndex": null
+      },
+      "rawText": "{#rows}",
+      "expression": "rows",
+      "kind": "loop-start",
+      "blockLevel": true,
+      "rowLevel": true,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "rows", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "table-cell",
+        "paragraphIndex": 0,
+        "tableIndex": 0,
+        "rowIndex": 2,
+        "cellIndex": 0
+      },
+      "rawText": "{name}",
+      "expression": "name",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "name", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "table-cell",
+        "paragraphIndex": 0,
+        "tableIndex": 0,
+        "rowIndex": 2,
+        "cellIndex": 1
+      },
+      "rawText": "{createdAt|format:date:yyyy-MM-dd}",
+      "expression": "createdAt|format:date:yyyy-MM-dd",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": true,
+      "runCount": 3,
+      "pipeline": {
+        "path": "createdAt",
+        "operations": [{ "name": "format", "args": ["date", "yyyy-MM-dd"] }]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": [
+        { "start": 0, "length": 14, "runIndex": 0, "runPropertiesXml": null },
+        { "start": 14, "length": 17, "runIndex": 1, "runPropertiesXml": null },
+        { "start": 31, "length": 3, "runIndex": 2, "runPropertiesXml": null }
+      ],
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "table-row",
+        "paragraphIndex": null,
+        "tableIndex": 0,
+        "rowIndex": 3,
+        "cellIndex": null
+      },
+      "rawText": "{/rows}",
+      "expression": "rows",
+      "kind": "loop-end",
+      "blockLevel": true,
+      "rowLevel": true,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "rows", "operations": [] },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [
+    { "kind": "loop", "expression": "rows", "paired": true, "depth": 0, "scope": "table-row" }
+  ],
+  "diagnostics": [
+    {
+      "code": "SPLIT_RUN_TAG",
+      "severity": "info",
+      "message": "Tag '{createdAt|format:date:yyyy-MM-dd}' is split across 3 runs; import must map style ranges instead of legacy first-run flattening.",
+      "location": {
+        "scope": "table-cell",
+        "paragraphIndex": 0,
+        "tableIndex": 0,
+        "rowIndex": 2,
+        "cellIndex": 1
+      }
+    }
+  ],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

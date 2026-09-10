@@ -1,0 +1,91 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "4293d8b3e2f930ba568898ba4d203c7bc1c94b3876bfe7b628d820e992dc16d8"
+  },
+  "summary": {
+    "tagCount": 2,
+    "inlineExpressions": 0,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 2,
+    "dataPaths": ["barcodes.code128", "barcodes.ean13"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": ["code128", "ean13"],
+    "occurrences": [
+      {
+        "expression": "barcode:barcodes.code128;type=code128;width=360;height=96;margin=1",
+        "count": 1
+      },
+      {
+        "expression": "barcode:barcodes.ean13;type=ean13;width=280;height=100;margin=2",
+        "count": 1
+      }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%barcode:barcodes.code128;type=code128;width=360;height=96;margin=1}",
+      "expression": "barcode:barcodes.code128;type=code128;width=360;height=96;margin=1",
+      "kind": "barcode",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "barcodes.code128", "operations": [] },
+      "image": null,
+      "barcode": {
+        "valueExpression": "barcodes.code128",
+        "symbology": "code128",
+        "parameters": { "width": 360, "height": 96, "margin": 1, "pure": true },
+        "centered": false
+      },
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 3,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%%barcode:barcodes.ean13;type=ean13;width=280;height=100;margin=2}",
+      "expression": "barcode:barcodes.ean13;type=ean13;width=280;height=100;margin=2",
+      "kind": "barcode",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "barcodes.ean13", "operations": [] },
+      "image": null,
+      "barcode": {
+        "valueExpression": "barcodes.ean13",
+        "symbology": "ean13",
+        "parameters": { "width": 280, "height": 100, "margin": 2, "pure": true },
+        "centered": true
+      },
+      "runSpans": null,
+      "migrationStatus": "auto"
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

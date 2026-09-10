@@ -1,0 +1,2 @@
+{%barcode:barcodes.upca;type=upca;width=300;height=90}
+{%barcode:barcodes.itf;type=itf;width=300;height=90}

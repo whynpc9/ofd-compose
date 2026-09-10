@@ -1,0 +1,65 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "b85acb36b449bbec5dc7963f38d81fa549d9bac0d037d59e82fe366713cc0157"
+  },
+  "summary": {
+    "tagCount": 1,
+    "inlineExpressions": 0,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 1,
+    "barcodes": 0,
+    "dataPaths": ["cover"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": [],
+    "occurrences": [{ "expression": "cover", "count": 1 }]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%%cover}",
+      "expression": "cover",
+      "kind": "image",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "cover", "operations": [] },
+      "image": { "centered": true, "valueExpression": "cover" },
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    }
+  ],
+  "resourceReferences": [
+    {
+      "expression": "cover",
+      "kind": "image",
+      "centered": true,
+      "value": {
+        "state": "resolved",
+        "valueKind": "object",
+        "sourceKey": "src",
+        "sizeKeys": ["width", "height"],
+        "sourceForm": "data-uri:image/png",
+        "itemCount": null
+      }
+    }
+  ],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

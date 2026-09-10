@@ -1,0 +1,13 @@
+{
+  "paragraphs": ["Invoice: INV-2026-001"],
+  "tables": [
+    {
+      "rows": [
+        ["Item", "Qty", "Unit Price"],
+        ["Apple", "2", "3.50"],
+        ["Banana", "3", "2.20"],
+        ["Orange", "5", "1.80"]
+      ]
+    }
+  ]
+}

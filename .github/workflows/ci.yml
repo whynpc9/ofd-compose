@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Verify lockfiles are committed
+        run: |
+          test -f pnpm-lock.yaml
+          test -n "$(find dotnet -name packages.lock.json -print -quit)"
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm lint
+
+      - run: pnpm typecheck
+
+      - run: pnpm build
+
+      - name: TS tests (node mode)
+        run: pnpm test
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: TS tests (browser mode)
+        run: pnpm test:browser
+
+      - name: .NET restore (locked)
+        run: dotnet restore dotnet/OFDCompose.slnx --locked-mode
+
+      - name: .NET tests
+        run: dotnet test dotnet/OFDCompose.slnx --no-restore
+
+      - name: Golden corpus scan reports are reproducible
+        # git status (not git diff): a new template whose .scan.json was never
+        # committed must also fail this gate — git diff ignores untracked files.
+        run: |
+          pnpm --filter @ofd-compose/golden-corpus run scan
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Scan reports are not reproducible or not committed:"
+            git status --porcelain
+            exit 1
+          fi
+
+      - name: License whitelist (pnpm + NuGet)
+        run: pnpm check:licenses

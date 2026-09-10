@@ -1,0 +1,7 @@
+{
+  "tables": [
+    {
+      "rows": [["Item", "Qty"], ["Apple", "2"], ["Banana", "3"]]
+    }
+  ]
+}

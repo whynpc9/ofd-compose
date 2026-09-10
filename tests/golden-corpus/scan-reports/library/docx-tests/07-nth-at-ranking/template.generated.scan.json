@@ -1,0 +1,125 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "b78805cbcea540e9e967cfb384f2f6708ee62f41efdee3935a4bc9910d7dceb1"
+  },
+  "summary": {
+    "tagCount": 3,
+    "inlineExpressions": 3,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["institutions"],
+    "functions": ["at", "format", "get", "nth", "sort", "take"],
+    "formatPatterns": [{ "kind": "number", "pattern": "#,##0", "alias": null }],
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "institutions|sort:revenue:desc|take:10|at:-1|get:name", "count": 1 },
+      { "expression": "institutions|sort:revenue:desc|take:10|nth:3|get:name", "count": 1 },
+      {
+        "expression": "institutions|sort:revenue:desc|take:10|nth:3|get:revenue|format:number:#,##0",
+        "count": 1
+      }
+    ]
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{institutions|sort:revenue:desc|take:10|nth:3|get:name}",
+      "expression": "institutions|sort:revenue:desc|take:10|nth:3|get:name",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": {
+        "path": "institutions",
+        "operations": [
+          { "name": "sort", "args": ["revenue", "desc"] },
+          { "name": "take", "args": ["10"] },
+          { "name": "nth", "args": ["3"] },
+          { "name": "get", "args": ["name"] }
+        ]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{institutions|sort:revenue:desc|take:10|nth:3|get:revenue|format:number:#,##0}",
+      "expression": "institutions|sort:revenue:desc|take:10|nth:3|get:revenue|format:number:#,##0",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": {
+        "path": "institutions",
+        "operations": [
+          { "name": "sort", "args": ["revenue", "desc"] },
+          { "name": "take", "args": ["10"] },
+          { "name": "nth", "args": ["3"] },
+          { "name": "get", "args": ["revenue"] },
+          { "name": "format", "args": ["number", "#,##0"] }
+        ]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "auto"
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{institutions|sort:revenue:desc|take:10|at:-1|get:name}",
+      "expression": "institutions|sort:revenue:desc|take:10|at:-1|get:name",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": {
+        "path": "institutions",
+        "operations": [
+          { "name": "sort", "args": ["revenue", "desc"] },
+          { "name": "take", "args": ["10"] },
+          { "name": "at", "args": ["-1"] },
+          { "name": "get", "args": ["name"] }
+        ]
+      },
+      "image": null,
+      "barcode": null,
+      "runSpans": null,
+      "migrationStatus": "needs-review"
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": ["at-negative-index"],
+  "risk": "medium",
+  "migrationStatus": "needs-review"
+}

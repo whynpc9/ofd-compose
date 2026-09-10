@@ -1,0 +1,26 @@
+{
+  "caseId": "lib-test-15-table-split-runs-date-format",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_FormatsDateExpressionInTable_WhenTagIsSplitAcrossRuns"
+  },
+  "templateId": "ndocxtemplater-test-15-split-runs",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:193a91747d219f278dd044514b852c0a9b07b7f97d9675352bcc289a3fe3ce0b",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": ["split-run-flattening"],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  },
+  "notes": ["旧引擎把跨 run 标签的替换结果写入首个 run 并清空其余 run；新平台不保留该行为"]
+}

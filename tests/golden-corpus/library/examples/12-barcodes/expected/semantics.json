@@ -1,0 +1,27 @@
+{
+  "paragraphs": ["Code128 条形码（由模板参数指定类型和尺寸）", "EAN13 条形码（居中）"],
+  "barcodes": [
+    {
+      "order": 1,
+      "symbology": "code128",
+      "value": "A20260303001",
+      "widthPx": 360,
+      "heightPx": 96,
+      "marginPx": 1,
+      "alignment": "inline",
+      "assertion": "decode-value",
+      "note": "本版补建：旧断言仅为「位图含深色像素」"
+    },
+    {
+      "order": 2,
+      "symbology": "ean13",
+      "value": "6901234567892",
+      "widthPx": 280,
+      "heightPx": 100,
+      "marginPx": 2,
+      "alignment": "centered",
+      "assertion": "decode-value",
+      "note": "本版补建：旧断言仅为「位图含深色像素」"
+    }
+  ]
+}

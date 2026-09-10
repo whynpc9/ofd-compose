@@ -1,0 +1,26 @@
+{
+  "caseId": "lib-test-12-real-png-scaling",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_RendersRealPngFromFilePathAndDataUri_WithAspectRatioScaling"
+  },
+  "templateId": "ndocxtemplater-test-12-real-png",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:ca823f16029bee7a5a090295ff6a48ba943a0e80334b407410c14288a04cb492",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": ["cwd-relative-path"],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  },
+  "notes": ["旧测试以进程内绝对路径引用图片；corpus 内改为用例目录相对路径 assets/real-chart.png"]
+}

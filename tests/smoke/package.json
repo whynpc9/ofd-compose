@@ -1,0 +1,18 @@
+{
+  "name": "@ofd-compose/smoke-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run --config vitest.node.config.ts",
+    "test:browser": "vitest run --config vitest.browser.config.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@ofd-compose/binding-core": "workspace:*",
+    "@ofd-compose/layout-core": "workspace:*",
+    "@ofd-compose/typography-core": "workspace:*"
+  },
+  "devDependencies": {
+    "vitest": "5.0.0"
+  }
+}
