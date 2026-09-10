@@ -1,5 +1,6 @@
 export { type BindingPolicyVersion, bindingPolicyVersions } from "@ofd-compose/document-model";
 export { type BindingPolicy, type BindResult, bind } from "./bind.js";
+export { type DateTimeParts, parseIsoDateTime, toDateTimeParts } from "./date.js";
 export {
   type EvaluationContext,
   type EvaluationResult,
@@ -7,7 +8,7 @@ export {
   type Scope,
   type ValueState,
 } from "./evaluate.js";
-export { formatDateTime, formatDecimal, toDateTimeParts } from "./format.js";
+export { formatDateTime, formatDecimal } from "./format.js";
 export * from "./resolved-document.js";
 export { evaluateTruthiness, isTruthyLegacy, isTruthyStrict } from "./truthiness.js";
 export {

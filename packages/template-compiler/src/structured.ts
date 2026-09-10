@@ -4,24 +4,12 @@ import {
   expressionLanguageVersion,
   type Normalization,
   type OperationNode,
-  type PathSegment,
   toLegacyExpression,
 } from "./ast.js";
-import { ExpressionCompileError } from "./errors.js";
+import { withStepContext } from "./errors.js";
 import { buildFormatSpec } from "./format-spec.js";
 import type { CompiledExpression } from "./legacy-parser.js";
-import { PathSyntaxError, parsePathRef, parsePathSegments } from "./path.js";
-
-function segmentsOf(path: string, what: string): PathSegment[] {
-  try {
-    return parsePathSegments(path.trim());
-  } catch (error) {
-    if (error instanceof PathSyntaxError) {
-      throw new ExpressionCompileError("EXPRESSION_UNSUPPORTED", `${what}: ${error.message}`);
-    }
-    throw error;
-  }
-}
+import { segmentsOf, sourceOf } from "./path.js";
 
 function compileStep(
   step: StructuredStep,
@@ -65,33 +53,15 @@ function compileStep(
 
 /** 结构化配置（可视化面板）→ 与旧文本语法相同的版本化 AST；同时生成规范化旧文本以保持三方映射。 */
 export function compileStructuredExpression(expression: StructuredExpression): CompiledExpression {
-  let source: ExpressionAst["source"];
-  try {
-    source = parsePathRef(expression.source);
-  } catch (error) {
-    if (error instanceof PathSyntaxError) {
-      throw new ExpressionCompileError("EXPRESSION_UNSUPPORTED", error.message, {
-        path: expression.source,
-      });
-    }
-    throw error;
-  }
+  const source = sourceOf(expression.source);
 
   const normalizations: Normalization[] = [];
   const steps = expression.steps.map((step, index) => {
     const astPath = `steps[${index}]` as const;
-    try {
-      return compileStep(step, (from, to) => normalizations.push({ astPath, from, to }));
-    } catch (error) {
-      if (error instanceof ExpressionCompileError) {
-        throw new ExpressionCompileError(error.code, error.message, {
-          ...error.details,
-          step,
-          astPath,
-        });
-      }
-      throw error;
-    }
+    return withStepContext(
+      () => compileStep(step, (from, to) => normalizations.push({ astPath, from, to })),
+      { step, astPath },
+    );
   });
 
   const ast: ExpressionAst = { version: expressionLanguageVersion, source, steps };

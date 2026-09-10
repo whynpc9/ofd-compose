@@ -1,6 +1,7 @@
 import {
   BindingPolicyVersionSchema,
   documentModelSchemaVersion,
+  InputControlSchema,
   modelVersion,
   ProvenanceSchema,
   TemplateSettingsSchema,
@@ -47,27 +48,8 @@ export const ResolvedTextFragmentSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const ResolvedInputControlSchema = Type.Object(
-  {
-    kind: Type.Literal("input-control"),
-    nodeId: identifier,
-    controlId: identifier,
-    controlType: Type.Union([
-      Type.Literal("text"),
-      Type.Literal("number"),
-      Type.Literal("select"),
-      Type.Literal("date"),
-      Type.Literal("radio"),
-      Type.Literal("checkbox"),
-    ]),
-    placeholder: Type.Optional(Type.String()),
-    defaultValue: Type.Optional(Type.Union([Type.String(), Type.Boolean()])),
-    required: Type.Optional(Type.Boolean()),
-    options: Type.Optional(Type.Array(Type.String())),
-    styleId: Type.Optional(identifier),
-  },
-  { additionalProperties: false },
-);
+/** 输入控件不参与绑定，原样进入 ResolvedDocument（与模板侧同一 schema）。 */
+export const ResolvedInputControlSchema = InputControlSchema;
 
 export const ResolvedFragmentSchema = Type.Union([
   ResolvedTextFragmentSchema,

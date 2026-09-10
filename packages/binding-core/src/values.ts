@@ -1,4 +1,5 @@
 import Decimal from "decimal.js";
+import { compareDateTimes, parseIsoDateTime } from "./date.js";
 
 export type JsonObject = { readonly [key: string]: JsonValue };
 export type JsonValue = null | boolean | number | string | readonly JsonValue[] | JsonObject;
@@ -33,27 +34,6 @@ export function toDecimal(value: Value): Decimal | undefined {
   return undefined;
 }
 
-export interface DateTimeParts {
-  readonly year: number;
-  readonly month: number;
-  readonly day: number;
-  readonly hour: number;
-  readonly minute: number;
-  readonly second: number;
-  /** 输入是否带 Z / 偏移（决定是否按模板时区换算）。 */
-  readonly zoned: boolean;
-}
-
-const isoDateTimePattern =
-  /^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.\d{1,9})?)?)?(Z|[+-]\d{2}:?\d{2})?$/i;
-
-/** 只识别 ISO 8601 日期/日期时间文本；其余形态不视为日期（旧引擎的宽松 DateTime.TryParse 不沿用）。 */
-export function matchIsoDateTime(value: Value): RegExpExecArray | undefined {
-  if (typeof value !== "string") return undefined;
-  const match = isoDateTimePattern.exec(value.trim());
-  return match ?? undefined;
-}
-
 /** 旧引擎 ToText 的确定性版本：null/Missing → 空串；数字不用指数记法；对象/数组 → 紧凑 JSON。 */
 export function toText(value: Value, booleanStyle: "lower" | "pascal"): string {
   if (isMissing(value) || value === null) return "";
@@ -82,13 +62,9 @@ export function compareValues(left: Value, right: Value): number {
   const rightDecimal = toDecimal(right);
   if (leftDecimal && rightDecimal) return leftDecimal.comparedTo(rightDecimal);
 
-  const leftDate = matchIsoDateTime(left);
-  const rightDate = matchIsoDateTime(right);
-  if (leftDate && rightDate) {
-    const a = (left as string).trim();
-    const b = (right as string).trim();
-    return a < b ? -1 : a > b ? 1 : 0;
-  }
+  const leftDate = parseIsoDateTime(left);
+  const rightDate = parseIsoDateTime(right);
+  if (leftDate && rightDate) return compareDateTimes(leftDate, rightDate);
 
   const a = toText(left, "pascal").toUpperCase();
   const b = toText(right, "pascal").toUpperCase();

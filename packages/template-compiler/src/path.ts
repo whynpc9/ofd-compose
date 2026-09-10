@@ -1,4 +1,5 @@
 import type { PathRef, PathSegment } from "./ast.js";
+import { ExpressionCompileError } from "./errors.js";
 
 export class PathSyntaxError extends Error {
   constructor(
@@ -91,4 +92,28 @@ export function parsePathRef(text: string): PathRef {
     throw new PathSyntaxError(text, `empty data path '${path}'`);
   }
   return { scope: "implicit", segments };
+}
+
+/** 解析操作参数中的路径（sort/maxby/minby 键、get 路径）；语法错误统一落为 EXPRESSION_UNSUPPORTED。 */
+export function segmentsOf(path: string, what: string): PathSegment[] {
+  try {
+    return parsePathSegments(path.trim());
+  } catch (error) {
+    if (error instanceof PathSyntaxError) {
+      throw new ExpressionCompileError("EXPRESSION_UNSUPPORTED", `${what}: ${error.message}`);
+    }
+    throw error;
+  }
+}
+
+/** 解析表达式源路径（`$`, `.`, `a.b[0]`）；语法错误统一落为 EXPRESSION_UNSUPPORTED。 */
+export function sourceOf(path: string): PathRef {
+  try {
+    return parsePathRef(path);
+  } catch (error) {
+    if (error instanceof PathSyntaxError) {
+      throw new ExpressionCompileError("EXPRESSION_UNSUPPORTED", error.message, { path });
+    }
+    throw error;
+  }
 }

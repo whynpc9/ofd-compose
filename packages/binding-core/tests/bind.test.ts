@@ -433,6 +433,39 @@ describe("date formatting (ISO input, template-locked time zone)", () => {
       ["next tuesday"],
     );
   });
+
+  it("ISO-shaped but invalid values never throw out of bind(): they fall back to text", () => {
+    for (const d of [
+      "2024-13-45",
+      "2024-01-01Z",
+      "2024-02-30T25:61:00Z",
+      "2024-01-01T10:00:00+99:00",
+    ]) {
+      const r = render(["{d|format:date:yyyy-MM-dd}"], { d }, "strict-1");
+      expect(r.texts, d).toEqual([d]);
+      expect(r.diagnostics, d).toEqual([]);
+    }
+  });
+
+  it("sorting ISO dates compares instants, not text: +08:00 10:00 is earlier than 09:00Z", () => {
+    const data = {
+      events: [
+        { id: "z", at: "2026-01-01T09:00:00Z" },
+        { id: "cn", at: "2026-01-01T10:00:00+08:00" },
+        { id: "plain", at: "2026-01-01T01:30:00" },
+      ],
+    };
+    expect(
+      render(
+        [
+          "{events|sort:at:asc|get:[0].id}-{events|sort:at:asc|get:[1].id}-{events|sort:at:asc|get:[2].id}",
+        ],
+        data,
+        "strict-1",
+      ).texts,
+    ).toEqual(["plain-cn-z"]);
+    expect(render(["{events|maxby:at|get:id}"], data, "strict-1").texts).toEqual(["z"]);
+  });
 });
 
 describe("list operations used by narrative sentences", () => {

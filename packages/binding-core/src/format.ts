@@ -1,7 +1,6 @@
 import type { DatePattern, NumberPattern } from "@ofd-compose/template-compiler";
 import Decimal from "decimal.js";
-import { Temporal } from "temporal-polyfill";
-import { type DateTimeParts, matchIsoDateTime, type Value } from "./values.js";
+import type { DateTimeParts } from "./date.js";
 
 /**
  * .NET 自定义数值格式子集的自实现（ADR-0001：不用 Intl.NumberFormat；金额走 decimal.js）。
@@ -40,40 +39,6 @@ export function formatDecimal(value: Decimal, pattern: NumberPattern): string {
   const body = `${pattern.prefix}${digits}${pattern.suffix}`;
   const isZero = rounded.isZero();
   return negative && !isZero ? `-${body}` : body;
-}
-
-/**
- * 解析 ISO 8601 文本为字段。带 Z/偏移的值换算到模板锁定时区（temporal-polyfill）；
- * 不带偏移的值按字面字段使用（与旧引擎 DateTimeKind.Unspecified 行为一致）。
- */
-export function toDateTimeParts(value: Value, timeZone: string): DateTimeParts | undefined {
-  const match = matchIsoDateTime(value);
-  if (!match) return undefined;
-  const text = (value as string).trim();
-  const offset = match[7];
-  if (offset !== undefined) {
-    const instant = Temporal.Instant.from(text);
-    const zoned = instant.toZonedDateTimeISO(timeZone);
-    return {
-      year: zoned.year,
-      month: zoned.month,
-      day: zoned.day,
-      hour: zoned.hour,
-      minute: zoned.minute,
-      second: zoned.second,
-      zoned: true,
-    };
-  }
-  const plain = Temporal.PlainDateTime.from(text);
-  return {
-    year: plain.year,
-    month: plain.month,
-    day: plain.day,
-    hour: plain.hour,
-    minute: plain.minute,
-    second: plain.second,
-    zoned: false,
-  };
 }
 
 const pad = (n: number, width: number): string => String(n).padStart(width, "0");

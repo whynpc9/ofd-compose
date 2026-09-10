@@ -29,15 +29,21 @@ export interface BindResult {
   readonly diagnostics: readonly Diagnostic[];
 }
 
+/** 一次 bind() 调用内所有片段共享的状态。 */
+interface BindContext {
+  readonly compiled: CompiledTemplate;
+  readonly policy: BindingPolicyVersion;
+  readonly data: JsonValue;
+  readonly patternCache: EvaluationContext["patternCache"];
+  readonly diagnostics: Diagnostic[];
+}
+
 function resolveInline(
   inline: InlineNode,
   paragraph: Paragraph,
-  compiled: CompiledTemplate,
-  policy: BindingPolicyVersion,
-  data: JsonValue,
-  patternCache: EvaluationContext["patternCache"],
-  diagnostics: Diagnostic[],
+  ctx: BindContext,
 ): ResolvedFragment {
+  const { compiled, diagnostics } = ctx;
   switch (inline.kind) {
     case "text":
       return {
@@ -46,10 +52,8 @@ function resolveInline(
         ...(inline.styleId === undefined ? {} : { styleId: inline.styleId }),
         origin: { kind: "static", nodeId: inline.nodeId },
       };
-    case "input-control": {
-      const { kind, ...rest } = inline;
-      return { kind, ...rest };
-    }
+    case "input-control":
+      return inline; // 输入控件不参与绑定，原样进入产物。
     case "dynamic-text": {
       const binding: CompiledBinding | undefined = compiled.bindings[inline.bindingId];
       if (binding === undefined) {
@@ -75,12 +79,12 @@ function resolveInline(
         };
       }
       const result = evaluateExpression(binding.ast, {
-        policy,
+        policy: ctx.policy,
         timeZone: compiled.settings.timeZone,
-        scope: { current: data, root: data },
+        scope: { current: ctx.data, root: ctx.data },
         nodeId: inline.nodeId,
         bindingId: inline.bindingId,
-        patternCache,
+        patternCache: ctx.patternCache,
       });
       diagnostics.push(...result.diagnostics);
       const styleId =
@@ -114,16 +118,19 @@ export function bind(
 ): BindResult {
   const bindingPolicyVersion =
     policy.bindingPolicyVersion ?? compiled.settings.bindingPolicyVersion;
-  const diagnostics: Diagnostic[] = [];
-  const patternCache: EvaluationContext["patternCache"] = new Map();
+  const ctx: BindContext = {
+    compiled,
+    policy: bindingPolicyVersion,
+    data,
+    patternCache: new Map(),
+    diagnostics: [],
+  };
 
   const body: ResolvedParagraph[] = compiled.body.map((block) => ({
     kind: "paragraph",
     nodeId: block.nodeId,
     ...(block.styleId === undefined ? {} : { styleId: block.styleId }),
-    fragments: block.inlines.map((inline) =>
-      resolveInline(inline, block, compiled, bindingPolicyVersion, data, patternCache, diagnostics),
-    ),
+    fragments: block.inlines.map((inline) => resolveInline(inline, block, ctx)),
   }));
 
   const document: ResolvedDocument = {
@@ -140,5 +147,5 @@ export function bind(
     ...(compiled.provenance === undefined ? {} : { provenance: compiled.provenance }),
   };
 
-  return { ok: !hasErrors(diagnostics), document, diagnostics };
+  return { ok: !hasErrors(ctx.diagnostics), document, diagnostics: ctx.diagnostics };
 }

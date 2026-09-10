@@ -12,7 +12,8 @@ import {
   pathRefToText,
   pathSegmentsToText,
 } from "@ofd-compose/template-compiler";
-import { formatDateTime, formatDecimal, toDateTimeParts } from "./format.js";
+import { toDateTimeParts } from "./date.js";
+import { formatDateTime, formatDecimal } from "./format.js";
 import { evaluateTruthiness } from "./truthiness.js";
 import {
   compareValues,
@@ -62,6 +63,11 @@ interface State {
   indices: number[] | undefined;
   /** 首次变为 Missing 时的路径。 */
   missingAt: string | undefined;
+}
+
+/** 数组值的初始下标表（0..n-1）；非数组没有可追踪的元素。 */
+function identityIndices(value: Value): number[] | undefined {
+  return isJsonArray(value) ? value.map((_, i) => i) : undefined;
 }
 
 class Evaluator {
@@ -132,7 +138,7 @@ class Evaluator {
     ): State => ({
       value,
       dataPath,
-      indices: isJsonArray(value) ? value.map((_, i) => i) : undefined,
+      indices: identityIndices(value),
       missingAt,
     });
 
@@ -206,7 +212,7 @@ class Evaluator {
     return {
       value,
       dataPath: `${state.dataPath ?? ""}[${original}]`,
-      indices: isJsonArray(value) ? value.map((_, i) => i) : undefined,
+      indices: identityIndices(value),
       missingAt: undefined,
     };
   }
@@ -281,7 +287,7 @@ class Evaluator {
         return {
           value: r.value,
           dataPath: r.dataPath,
-          indices: isJsonArray(r.value) ? r.value.map((_, i) => i) : undefined,
+          indices: identityIndices(r.value),
           missingAt: r.missingAt,
         };
       }

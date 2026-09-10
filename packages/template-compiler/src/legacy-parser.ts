@@ -4,12 +4,11 @@ import {
   expressionLanguageVersion,
   type Normalization,
   type OperationNode,
-  type PathSegment,
   type SourceSpan,
 } from "./ast.js";
-import { ExpressionCompileError } from "./errors.js";
+import { ExpressionCompileError, withStepContext } from "./errors.js";
 import { buildFormatSpec } from "./format-spec.js";
-import { PathSyntaxError, parsePathRef, parsePathSegments } from "./path.js";
+import { segmentsOf, sourceOf } from "./path.js";
 
 export interface CompiledExpression {
   readonly ast: ExpressionAst;
@@ -53,17 +52,6 @@ function parseInteger(text: string, what: string): number {
     );
   }
   return Number.parseInt(trimmed, 10);
-}
-
-function segmentsOf(path: string, what: string): PathSegment[] {
-  try {
-    return parsePathSegments(path.trim());
-  } catch (error) {
-    if (error instanceof PathSyntaxError) {
-      throw new ExpressionCompileError("EXPRESSION_UNSUPPORTED", `${what}: ${error.message}`);
-    }
-    throw error;
-  }
 }
 
 function requireArity(parts: readonly string[], op: string, max: number): void {
@@ -216,35 +204,16 @@ export function compileLegacyExpression(text: string): CompiledExpression {
   const spans: SourceSpan[] = [];
   const normalizations: Normalization[] = [];
 
-  let source: ExpressionAst["source"];
-  try {
-    source = parsePathRef(head.text);
-  } catch (error) {
-    if (error instanceof PathSyntaxError) {
-      throw new ExpressionCompileError("EXPRESSION_UNSUPPORTED", error.message, {
-        path: head.text,
-      });
-    }
-    throw error;
-  }
+  const source = sourceOf(head.text);
   spans.push({ astPath: "source", start: head.start, end: head.end });
 
   const steps: OperationNode[] = rest.map((raw, index) => {
     const astPath = `steps[${index}]` as const;
     spans.push({ astPath, start: raw.start, end: raw.end });
-    try {
-      return parseOperation(raw.text, (from, to) => normalizations.push({ astPath, from, to }));
-    } catch (error) {
-      if (error instanceof ExpressionCompileError) {
-        throw new ExpressionCompileError(error.code, error.message, {
-          ...error.details,
-          step: raw.text,
-          astPath,
-          span: { start: raw.start, end: raw.end },
-        });
-      }
-      throw error;
-    }
+    return withStepContext(
+      () => parseOperation(raw.text, (from, to) => normalizations.push({ astPath, from, to })),
+      { step: raw.text, astPath, span: { start: raw.start, end: raw.end } },
+    );
   });
 
   return {

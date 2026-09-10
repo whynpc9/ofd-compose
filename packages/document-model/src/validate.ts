@@ -26,11 +26,9 @@ function modelInvalid(message: string, extra: Partial<Diagnostic> = {}): Diagnos
   return { code: "MODEL_INVALID", severity: "error", phase: "model", message, ...extra };
 }
 
-function* walkInlines(template: TemplateSource): Generator<[InlineNode, string]> {
+function* walkInlines(template: TemplateSource): Generator<InlineNode> {
   for (const block of template.body) {
-    for (const inline of block.inlines) {
-      yield [inline, block.nodeId];
-    }
+    yield* block.inlines;
   }
 }
 
@@ -80,7 +78,7 @@ export function validateTemplateSource(
     seenNode(block.nodeId);
     checkStyle(block.styleId, block.nodeId);
   }
-  for (const [inline] of walkInlines(template)) {
+  for (const inline of walkInlines(template)) {
     seenNode(inline.nodeId);
     checkStyle(inline.styleId, inline.nodeId);
     if (inline.kind === "dynamic-text") {
