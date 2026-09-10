@@ -11,10 +11,15 @@ export class PathSyntaxError extends Error {
 }
 
 /**
- * 属性名：不含空白、算术/比较/逻辑运算符、括号与引号（spec §5 明确不支持算术与脚本）。
- * 允许 `-`、`_`、数字与任意非 ASCII 字符（如中文键名）。
+ * 属性名沿用旧引擎 PathResolver 的宽松规则（除 `.`/`[` 外任意字符，含内部空格与中文键名），
+ * 只拒绝明显的运算/脚本形态（spec §5 明确不支持算术、比较与脚本）：
+ * 括号、引号，以及与空白相邻的运算符（`a + b`、`a >b`、`x && y`）。
  */
-const propertyNamePattern = /^[^\s+*/%<>=!&|?~^(){}'"`;,]+$/u;
+const scriptLikePattern = /[(){}'"`]|\s[+\-*/%<>=!&|^~]|[+\-*/%<>=!&|^~]\s/u;
+
+function isPlainPropertyName(name: string): boolean {
+  return !scriptLikePattern.test(name);
+}
 
 /**
  * 解析相对路径段：`a.b[0].c`。与旧引擎 PathResolver.ParsePath 一致：
@@ -51,10 +56,10 @@ export function parsePathSegments(path: string): PathSegment[] {
     }
     const name = path.slice(start, index).trim();
     if (name.length > 0) {
-      if (!propertyNamePattern.test(name)) {
+      if (!isPlainPropertyName(name)) {
         throw new PathSyntaxError(
           path,
-          `property name '${name}' in path '${path}' is not a plain identifier (arithmetic, comparison and whitespace are not part of the expression language)`,
+          `property name '${name}' in path '${path}' looks like an arithmetic/comparison/script expression, which is not part of the expression language`,
         );
       }
       segments.push({ kind: "property", name });

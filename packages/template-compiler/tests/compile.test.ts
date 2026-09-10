@@ -123,6 +123,19 @@ describe("legacy pipeline syntax and structured config compile to the same AST",
       { op: "get", path: [] },
     ]);
   });
+
+  it("property names follow the legacy loose rule: inner spaces, symbols and CJK are plain names", () => {
+    for (const name of ["first name", "机构名称", "a&b", "x%", "y?", "first-name", "a>b"]) {
+      expect(compileExpression({ kind: "legacy", text: name }).ast.source.segments, name).toEqual([
+        { kind: "property", name },
+      ]);
+    }
+    for (const text of ["a + b", "a >b", "x && y", "f(x)", "'quoted'", "a - b"]) {
+      expect(() => compileExpression({ kind: "legacy", text }), text).toThrowError(
+        /EXPRESSION_UNSUPPORTED|arithmetic\/comparison\/script/,
+      );
+    }
+  });
 });
 
 describe("source map: template position ↔ legacy expression ↔ AST node", () => {

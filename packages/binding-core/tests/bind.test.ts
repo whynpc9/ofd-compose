@@ -502,6 +502,41 @@ describe("list operations used by narrative sentences", () => {
     expect(r.texts).toEqual(["5 2 1 0"]);
     expect(r.diagnostics.filter((d) => d.code === "LEGACY_SEMANTIC_CHANGE")).toHaveLength(3);
   });
+
+  it("strict count requires an array: non-arrays yield EXPRESSION_UNSUPPORTED and empty text; null counts 0", () => {
+    const r = render(
+      ["{s|count}|{o|count}|{z|count}|{list|count}"],
+      {
+        s: "héllo",
+        o: { a: 1 },
+        z: null,
+        list: [1, 2],
+      },
+      "strict-1",
+    );
+    expect(r.texts).toEqual(["||0|2"]);
+    expect(r.diagnostics.map((d) => [d.code, d.severity, d.dataPath, d.details?.rule])).toEqual([
+      ["EXPRESSION_UNSUPPORTED", "error", "s", "count-non-array"],
+      ["EXPRESSION_UNSUPPORTED", "error", "o", "count-non-array"],
+    ]);
+  });
+
+  it("legacy-compat feeds Missing into if/count as null (legacy) and flags missing-as-null", () => {
+    const r = render(["[{flag|if:是:否}] [{items|count}] [{name}]"], {});
+    expect(r.texts).toEqual(["[否] [0] []"]);
+    expect(r.diagnostics.map((d) => [d.code, d.severity, d.dataPath, d.details?.rule])).toEqual([
+      ["LEGACY_SEMANTIC_CHANGE", "info", "flag", "missing-as-null"],
+      ["LEGACY_SEMANTIC_CHANGE", "info", "items", "missing-as-null"],
+      ["BINDING_MISSING", "warning", "name", undefined],
+    ]);
+    // strict-1 keeps Missing distinct: no false branch, BINDING_MISSING errors instead.
+    const strict = render(["[{flag|if:是:否}] [{items|count}]"], {}, "strict-1");
+    expect(strict.texts).toEqual(["[] []"]);
+    expect(strict.diagnostics.map((d) => [d.code, d.severity])).toEqual([
+      ["BINDING_MISSING", "error"],
+      ["BINDING_MISSING", "error"],
+    ]);
+  });
 });
 
 describe("diagnostics carry the required fields for the three named codes", () => {

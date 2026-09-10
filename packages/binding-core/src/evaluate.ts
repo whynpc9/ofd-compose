@@ -212,7 +212,19 @@ class Evaluator {
   }
 
   private apply(state: State, step: OperationNode): State {
-    if (isMissing(state.value)) return state; // Missing 一路传播；诊断只报首个缺失路径。
+    if (isMissing(state.value)) {
+      // 旧引擎不区分 Missing 与 null：`if` 视缺失为假、`count` 视缺失为 0。
+      // legacy-compat-1 复刻该行为并标记语义变化；strict-1 让 Missing 一路传播（诊断只报首个缺失路径）。
+      if (this.ctx.policy === "legacy-compat-1" && (step.op === "if" || step.op === "count")) {
+        this.legacyChange(
+          "missing-as-null",
+          `'${step.op}' consumed a missing value as null (legacy); strict-1 reports BINDING_MISSING instead`,
+          state.missingAt ?? state.dataPath,
+        );
+        return this.apply({ ...state, value: null, missingAt: undefined }, step);
+      }
+      return state;
+    }
     const value = state.value;
 
     switch (step.op) {
@@ -277,19 +289,27 @@ class Evaluator {
         let count: number;
         if (value === null) count = 0;
         else if (isJsonArray(value)) count = value.length;
-        else {
+        else if (this.ctx.policy === "strict-1") {
+          // strict-1：count 要求数组（spec §6 把对象属性数/字符串长度/标量为 1 列为兼容语义）。
+          this.diag({
+            code: "EXPRESSION_UNSUPPORTED",
+            severity: "error",
+            message: `count requires an array under strict-1 (got ${isJsonObject(value) ? "object" : typeof value})`,
+            ...(state.dataPath === undefined ? {} : { dataPath: state.dataPath }),
+            details: { op: "count", rule: "count-non-array" },
+          });
+          return { value: "", dataPath: state.dataPath, indices: undefined, missingAt: undefined };
+        } else {
           count = isJsonObject(value)
             ? Object.keys(value).length
             : typeof value === "string"
               ? value.length
               : 1;
-          if (this.ctx.policy === "legacy-compat-1") {
-            this.legacyChange(
-              "count-non-array",
-              `count applied to a non-array value (${typeof value}); legacy counts object keys / string length / scalar as 1`,
-              state.dataPath,
-            );
-          }
+          this.legacyChange(
+            "count-non-array",
+            `count applied to a non-array value (${typeof value}); legacy counts object keys / string length / scalar as 1`,
+            state.dataPath,
+          );
         }
         return { value: count, dataPath: state.dataPath, indices: undefined, missingAt: undefined };
       }
