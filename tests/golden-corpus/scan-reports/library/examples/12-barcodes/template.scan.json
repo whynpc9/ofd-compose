@@ -15,7 +15,17 @@
     "dataPaths": ["barcodes.code128", "barcodes.ean13"],
     "functions": [],
     "formatPatterns": [],
-    "symbologies": ["code128", "ean13"]
+    "symbologies": ["code128", "ean13"],
+    "occurrences": [
+      {
+        "expression": "barcode:barcodes.code128;type=code128;width=360;height=96;margin=1",
+        "count": 1
+      },
+      {
+        "expression": "barcode:barcodes.ean13;type=ean13;width=280;height=100;margin=2",
+        "count": 1
+      }
+    ]
   },
   "tags": [
     {

@@ -56,6 +56,30 @@ public class BasicScanTests
     }
 
     [Fact]
+    public void Summary_counts_occurrences_per_distinct_expression()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("A {patient.name}"));
+            body.Append(DocxFixture.Para("B {patient.name}"));
+            body.Append(DocxFixture.Para("C {patient.name}"));
+            body.Append(DocxFixture.Para("once {report.items[0].code}"));
+            body.Append(DocxFixture.Para("{#orders|sort:amount:desc}"));
+            body.Append(DocxFixture.Para("{/orders|sort:amount:desc}"));
+        });
+
+        var report = DocxScan.ScanFile(path);
+
+        Assert.Equal(
+            [
+                new OccurrenceCount("orders|sort:amount:desc", 2),
+                new OccurrenceCount("patient.name", 3),
+                new OccurrenceCount("report.items[0].code", 1),
+            ],
+            report.Summary.Occurrences);
+    }
+
+    [Fact]
     public void Report_serializes_deterministically_and_round_trips()
     {
         var path = DocxFixture.CreateDocx(body =>

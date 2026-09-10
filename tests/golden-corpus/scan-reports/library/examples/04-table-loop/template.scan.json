@@ -15,7 +15,14 @@
     "dataPaths": ["invoice.lines", "invoice.no", "name", "price", "qty"],
     "functions": ["format"],
     "formatPatterns": [{ "kind": "number", "pattern": "0.00", "alias": null }],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "invoice.lines", "count": 2 },
+      { "expression": "invoice.no", "count": 1 },
+      { "expression": "name", "count": 1 },
+      { "expression": "price|format:number:0.00", "count": 1 },
+      { "expression": "qty", "count": 1 }
+    ]
   },
   "tags": [
     {

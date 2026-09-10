@@ -15,7 +15,12 @@
     "dataPaths": ["patient.name", "report.items[0].code", "report.items[1].value"],
     "functions": [],
     "formatPatterns": [],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "patient.name", "count": 1 },
+      { "expression": "report.items[0].code", "count": 1 },
+      { "expression": "report.items[1].value", "count": 1 }
+    ]
   },
   "tags": [
     {

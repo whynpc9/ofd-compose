@@ -19,7 +19,23 @@
       { "kind": "date", "pattern": "yyyy年M月", "alias": null },
       { "kind": "number", "pattern": "#,##0", "alias": null }
     ],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "financeMonthly|maxby:revenue|get:month|format:date:M月", "count": 1 },
+      { "expression": "financeMonthly|maxby:revenue|get:revenue|format:number:#,##0", "count": 1 },
+      {
+        "expression": "financeMonthly|sort:month:asc|first|get:month|format:date:yyyy年M月",
+        "count": 1
+      },
+      {
+        "expression": "financeMonthly|sort:month:asc|last|get:month|format:date:yyyy年M月",
+        "count": 1
+      },
+      { "expression": "institutions|maxby:revenue|get:name", "count": 1 },
+      { "expression": "institutions|maxby:revenue|get:revenue|format:number:#,##0", "count": 1 },
+      { "expression": "institutions|minby:revenue|get:name", "count": 1 },
+      { "expression": "institutions|minby:revenue|get:revenue|format:number:#,##0", "count": 1 }
+    ]
   },
   "tags": [
     {

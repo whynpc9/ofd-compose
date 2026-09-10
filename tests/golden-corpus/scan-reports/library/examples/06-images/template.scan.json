@@ -15,7 +15,12 @@
     "dataPaths": ["gallery", "logo", "photo"],
     "functions": [],
     "formatPatterns": [],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "gallery", "count": 2 },
+      { "expression": "logo", "count": 1 },
+      { "expression": "photo", "count": 1 }
+    ]
   },
   "tags": [
     {

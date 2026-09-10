@@ -67,8 +67,6 @@ internal enum ControlKind
 
 internal sealed class PairingScope
 {
-    public required string Id { get; init; }
-
     /// <summary>Report-facing scope name: body | table-row | table-cell.</summary>
     public required string Display { get; init; }
 
@@ -143,8 +141,8 @@ internal sealed class ScanEngine
         var body = document.MainDocumentPart?.Document?.Body
             ?? throw new InvalidOperationException("The DOCX template does not contain a valid document body.");
 
-        var bodyScope = NewScope("body", "body");
-        WalkCompositeChildren(body, bodyScope, "body", null);
+        var bodyScope = NewScope("body");
+        WalkCompositeChildren(body, bodyScope, null);
 
         var headersFooters = ScanHeadersFooters(document.MainDocumentPart!);
 
@@ -163,7 +161,11 @@ internal sealed class ScanEngine
             [.. _formatPatterns.Distinct().OrderBy(static p => p.Kind, StringComparer.Ordinal)
                 .ThenBy(static p => p.Pattern, StringComparer.Ordinal)
                 .ThenBy(static p => p.Alias, StringComparer.Ordinal)],
-            [.. _symbologies]);
+            [.. _symbologies],
+            [.. _tags
+                .GroupBy(static tag => tag.Expression, StringComparer.Ordinal)
+                .Select(static group => new OccurrenceCount(group.Key, group.Count()))
+                .OrderBy(static entry => entry.Expression, StringComparer.Ordinal)]);
 
         var hasError = _diagnostics.Any(static d => d.Severity == "error");
         var hasWarning = _diagnostics.Any(static d => d.Severity == "warning");
@@ -185,9 +187,9 @@ internal sealed class ScanEngine
             migrationStatus);
     }
 
-    private PairingScope NewScope(string id, string display)
+    private PairingScope NewScope(string display)
     {
-        var scope = new PairingScope { Id = id, Display = display };
+        var scope = new PairingScope { Display = display };
         _scopes.Add(scope);
         return scope;
     }
@@ -195,12 +197,10 @@ internal sealed class ScanEngine
     private void WalkCompositeChildren(
         OpenXmlCompositeElement container,
         PairingScope paragraphScope,
-        string scopePrefix,
         TagLocation? baseLocation)
     {
         var paragraphIndex = 0;
         var tableIndex = 0;
-        var childIndex = 0;
         foreach (var child in container.ChildElements)
         {
             if (child is Paragraph paragraph)
@@ -213,27 +213,24 @@ internal sealed class ScanEngine
             }
             else if (child is Table table)
             {
-                var tablePrefix = $"{scopePrefix}/table[{tableIndex}]";
                 var tableLocation = baseLocation == null
                     ? new TagLocation("table-row", null, tableIndex, null, null)
                     : baseLocation with { Scope = "table-row" };
-                ProcessTable(table, tablePrefix, tableLocation);
+                ProcessTable(table, tableLocation);
                 tableIndex++;
             }
             else if (child is OpenXmlCompositeElement composite)
             {
                 // Legacy recurses into every composite (e.g. SdtBlock); keep inventory honest.
-                var nestedScope = NewScope($"{scopePrefix}/child[{childIndex}]", paragraphScope.Display);
-                WalkCompositeChildren(composite, nestedScope, $"{scopePrefix}/child[{childIndex}]", baseLocation);
+                var nestedScope = NewScope(paragraphScope.Display);
+                WalkCompositeChildren(composite, nestedScope, baseLocation);
             }
-
-            childIndex++;
         }
     }
 
-    private void ProcessTable(Table table, string tablePrefix, TagLocation tableLocation)
+    private void ProcessTable(Table table, TagLocation tableLocation)
     {
-        var rowScope = NewScope($"{tablePrefix}.rows", "table-row");
+        var rowScope = NewScope("table-row");
         var rowIndex = 0;
         foreach (var row in table.Elements<TableRow>())
         {
@@ -262,15 +259,14 @@ internal sealed class ScanEngine
             var cellIndex = 0;
             foreach (var cell in row.Elements<TableCell>())
             {
-                var cellPrefix = $"{tablePrefix}.row[{rowIndex}].cell[{cellIndex}]";
-                var cellScope = NewScope(cellPrefix, "table-cell");
+                var cellScope = NewScope("table-cell");
                 var cellLocation = new TagLocation(
                     "table-cell",
                     null,
                     tableLocation.TableIndex,
                     rowIndex,
                     cellIndex);
-                WalkCellChildren(cell, cellScope, cellPrefix, cellLocation);
+                WalkCellChildren(cell, cellScope, cellLocation);
                 cellIndex++;
             }
 
@@ -281,12 +277,9 @@ internal sealed class ScanEngine
     private void WalkCellChildren(
         OpenXmlCompositeElement cell,
         PairingScope cellScope,
-        string scopePrefix,
         TagLocation cellLocation)
     {
         var paragraphIndex = 0;
-        var nestedTableIndex = 0;
-        var childIndex = 0;
         foreach (var child in cell.ChildElements)
         {
             if (child is Paragraph paragraph)
@@ -296,19 +289,13 @@ internal sealed class ScanEngine
             }
             else if (child is Table nestedTable)
             {
-                ProcessTable(
-                    nestedTable,
-                    $"{scopePrefix}/table[{nestedTableIndex}]",
-                    cellLocation with { Scope = "table-row", ParagraphIndex = null });
-                nestedTableIndex++;
+                ProcessTable(nestedTable, cellLocation with { Scope = "table-row", ParagraphIndex = null });
             }
             else if (child is OpenXmlCompositeElement composite)
             {
-                var nestedScope = NewScope($"{scopePrefix}/child[{childIndex}]", cellScope.Display);
-                WalkCellChildren(composite, nestedScope, $"{scopePrefix}/child[{childIndex}]", cellLocation);
+                var nestedScope = NewScope(cellScope.Display);
+                WalkCellChildren(composite, nestedScope, cellLocation);
             }
-
-            childIndex++;
         }
     }
 
@@ -366,6 +353,27 @@ internal sealed class ScanEngine
         }
 
         return null;
+    }
+
+    private static string ControlKindName(ControlKind kind)
+    {
+        return kind switch
+        {
+            ControlKind.LoopStart => "loop-start",
+            ControlKind.LoopEnd => "loop-end",
+            ControlKind.IfStart => "if-start",
+            ControlKind.IfEnd => "if-end",
+            _ => "inline-expression",
+        };
+    }
+
+    private void AddInlineControlTokenDiagnostic(string rawText, TagLocation location)
+    {
+        AddDiagnostic(
+            "INLINE_CONTROL_TOKEN",
+            "info",
+            $"Control token '{rawText}' is not the element's sole content; legacy erases it inline.",
+            location);
     }
 
     private void ProcessTextElement(
@@ -535,14 +543,7 @@ internal sealed class ScanEngine
         }
         else if ((controlKind = ClassifyControlPrefix(token, out var controlExpression)) != null && controlExpression.Length > 0)
         {
-            kind = controlKind switch
-            {
-                ControlKind.LoopStart => "loop-start",
-                ControlKind.LoopEnd => "loop-end",
-                ControlKind.IfStart => "if-start",
-                ControlKind.IfEnd => "if-end",
-                _ => "inline-expression",
-            };
+            kind = ControlKindName(controlKind.Value);
             expression = controlExpression;
             pipeline = RegisterPipeline(expression, location);
 
@@ -562,30 +563,15 @@ internal sealed class ScanEngine
             }
             else
             {
-                AddDiagnostic(
-                    "INLINE_CONTROL_TOKEN",
-                    "info",
-                    $"Control token '{rawText}' is not the element's sole content; legacy erases it inline.",
-                    location);
+                AddInlineControlTokenDiagnostic(rawText, location);
             }
         }
         else if (controlKind != null)
         {
             // Empty expression after a control prefix: not a marker; legacy erases the token inline.
-            kind = controlKind switch
-            {
-                ControlKind.LoopStart => "loop-start",
-                ControlKind.LoopEnd => "loop-end",
-                ControlKind.IfStart => "if-start",
-                ControlKind.IfEnd => "if-end",
-                _ => "inline-expression",
-            };
+            kind = ControlKindName(controlKind.Value);
             expression = controlExpression;
-            AddDiagnostic(
-                "INLINE_CONTROL_TOKEN",
-                "info",
-                $"Control token '{rawText}' is not the element's sole content; legacy erases it inline.",
-                location);
+            AddInlineControlTokenDiagnostic(rawText, location);
         }
         else
         {

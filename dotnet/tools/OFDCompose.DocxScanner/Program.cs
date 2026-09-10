@@ -41,7 +41,7 @@ public static class Program
                 _ => Usage(),
             };
         }
-        catch (Exception exception) when (exception is IOException or InvalidOperationException or DirectoryNotFoundException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is IOException or InvalidOperationException or UnauthorizedAccessException)
         {
             Console.Error.WriteLine($"error: {exception.Message}");
             return 1;

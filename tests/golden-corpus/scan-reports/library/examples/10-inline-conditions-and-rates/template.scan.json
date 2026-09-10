@@ -25,7 +25,15 @@
       { "kind": "percent", "pattern": "0.00", "alias": null },
       { "kind": "permille", "pattern": "0.00", "alias": null }
     ],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "flags.includeRates|if:包含比率指标:不包含比率指标", "count": 1 },
+      { "expression": "institutions|count", "count": 1 },
+      { "expression": "metrics.badDebtRate|format:number:0.00‰", "count": 1 },
+      { "expression": "metrics.badDebtRate|format:permille:0.00", "count": 1 },
+      { "expression": "metrics.growthRate|format:number:0.00%", "count": 1 },
+      { "expression": "metrics.growthRate|format:percent:0.00", "count": 1 }
+    ]
   },
   "tags": [
     {

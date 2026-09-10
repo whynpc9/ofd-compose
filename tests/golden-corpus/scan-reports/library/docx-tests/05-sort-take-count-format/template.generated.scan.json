@@ -18,7 +18,14 @@
       { "kind": "date", "pattern": "yyyy-MM-dd", "alias": null },
       { "kind": "number", "pattern": "0.00", "alias": null }
     ],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "amount|format:number:0.00", "count": 1 },
+      { "expression": "id", "count": 1 },
+      { "expression": "orders|count", "count": 1 },
+      { "expression": "orders|sort:amount:desc|take:2", "count": 2 },
+      { "expression": "reportDate|format:date:yyyy-MM-dd", "count": 1 }
+    ]
   },
   "tags": [
     {

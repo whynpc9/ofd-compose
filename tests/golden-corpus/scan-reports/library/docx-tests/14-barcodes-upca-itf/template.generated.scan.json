@@ -15,7 +15,11 @@
     "dataPaths": ["barcodes.itf", "barcodes.upca"],
     "functions": [],
     "formatPatterns": [],
-    "symbologies": ["itf", "upca"]
+    "symbologies": ["itf", "upca"],
+    "occurrences": [
+      { "expression": "barcode:barcodes.itf;type=itf;width=300;height=90", "count": 1 },
+      { "expression": "barcode:barcodes.upca;type=upca;width=300;height=90", "count": 1 }
+    ]
   },
   "tags": [
     {

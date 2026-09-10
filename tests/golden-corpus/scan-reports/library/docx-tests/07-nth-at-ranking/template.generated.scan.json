@@ -15,7 +15,15 @@
     "dataPaths": ["institutions"],
     "functions": ["at", "format", "get", "nth", "sort", "take"],
     "formatPatterns": [{ "kind": "number", "pattern": "#,##0", "alias": null }],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "institutions|sort:revenue:desc|take:10|at:-1|get:name", "count": 1 },
+      { "expression": "institutions|sort:revenue:desc|take:10|nth:3|get:name", "count": 1 },
+      {
+        "expression": "institutions|sort:revenue:desc|take:10|nth:3|get:revenue|format:number:#,##0",
+        "count": 1
+      }
+    ]
   },
   "tags": [
     {

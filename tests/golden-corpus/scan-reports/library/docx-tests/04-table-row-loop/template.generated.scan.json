@@ -15,7 +15,12 @@
     "dataPaths": ["invoice.lines", "name", "qty"],
     "functions": [],
     "formatPatterns": [],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "invoice.lines", "count": 2 },
+      { "expression": "name", "count": 1 },
+      { "expression": "qty", "count": 1 }
+    ]
   },
   "tags": [
     {

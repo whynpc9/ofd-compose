@@ -15,7 +15,12 @@
     "dataPaths": ["createdAt", "name", "rows"],
     "functions": ["format"],
     "formatPatterns": [{ "kind": "date", "pattern": "yyyy-MM-dd", "alias": null }],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "createdAt|format:date:yyyy-MM-dd", "count": 1 },
+      { "expression": "name", "count": 1 },
+      { "expression": "rows", "count": 2 }
+    ]
   },
   "tags": [
     {

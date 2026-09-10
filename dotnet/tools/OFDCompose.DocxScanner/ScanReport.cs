@@ -8,6 +8,8 @@ public sealed record ScannedFile(string Name, string Sha256);
 
 public sealed record FormatPattern(string Kind, string? Pattern, string? Alias);
 
+public sealed record OccurrenceCount(string Expression, int Count);
+
 public sealed record ScanSummary(
     int TagCount,
     int InlineExpressions,
@@ -18,7 +20,8 @@ public sealed record ScanSummary(
     IReadOnlyList<string> DataPaths,
     IReadOnlyList<string> Functions,
     IReadOnlyList<FormatPattern> FormatPatterns,
-    IReadOnlyList<string> Symbologies);
+    IReadOnlyList<string> Symbologies,
+    IReadOnlyList<OccurrenceCount> Occurrences);
 
 public sealed record TagLocation(
     string Scope,

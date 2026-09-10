@@ -15,7 +15,11 @@
     "dataPaths": ["patient.isVip", "patient.name"],
     "functions": [],
     "formatPatterns": [],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "patient.isVip", "count": 2 },
+      { "expression": "patient.name", "count": 1 }
+    ]
   },
   "tags": [
     {

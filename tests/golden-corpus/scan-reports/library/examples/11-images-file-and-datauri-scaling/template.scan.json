@@ -15,7 +15,12 @@
     "dataPaths": ["fitInBox", "fromDataUri", "fromPath"],
     "functions": [],
     "formatPatterns": [],
-    "symbologies": []
+    "symbologies": [],
+    "occurrences": [
+      { "expression": "fitInBox", "count": 1 },
+      { "expression": "fromDataUri", "count": 1 },
+      { "expression": "fromPath", "count": 1 }
+    ]
   },
   "tags": [
     {
