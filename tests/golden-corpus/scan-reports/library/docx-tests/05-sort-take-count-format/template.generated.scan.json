@@ -46,7 +46,8 @@
       "pipeline": { "path": "orders", "operations": [{ "name": "count", "args": [] }] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -69,7 +70,8 @@
       },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -95,7 +97,8 @@
       },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -115,7 +118,8 @@
       "pipeline": { "path": "id", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -138,7 +142,8 @@
       },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -164,7 +169,8 @@
       },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     }
   ],
   "resourceReferences": [],

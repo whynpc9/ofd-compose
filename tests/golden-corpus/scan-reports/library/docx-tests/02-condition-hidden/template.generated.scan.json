@@ -37,7 +37,8 @@
       "pipeline": { "path": "flags.showVip", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -57,7 +58,8 @@
       "pipeline": { "path": "flags.showVip", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     }
   ],
   "resourceReferences": [],

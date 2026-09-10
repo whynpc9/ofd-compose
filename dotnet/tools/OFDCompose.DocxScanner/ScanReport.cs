@@ -63,7 +63,8 @@ public sealed record TagRecord(
     PipelineModel? Pipeline,
     ImageInfo? Image,
     BarcodeInfo? Barcode,
-    IReadOnlyList<RunStyleSpan>? RunSpans);
+    IReadOnlyList<RunStyleSpan>? RunSpans,
+    string MigrationStatus);
 
 public sealed record ResourceValue(
     string State,

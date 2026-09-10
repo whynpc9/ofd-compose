@@ -37,7 +37,8 @@
       "pipeline": { "path": "cover", "operations": [] },
       "image": { "centered": true, "valueExpression": "cover" },
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     }
   ],
   "resourceReferences": [

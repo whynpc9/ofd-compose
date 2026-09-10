@@ -63,4 +63,12 @@ describe("SPDX expression evaluation", () => {
     expect(isAllowed("", allowed)).toBe(false);
     expect(isAllowed("MIT AND (Apache-2.0 OR)", allowed)).toBe(false);
   });
+
+  it("canonicalizes only whitelisted BSD variants", async () => {
+    const allowed = await loadAllowed();
+    expect(isAllowed("BSD-2-Clause", allowed)).toBe(true);
+    expect(isAllowed("0BSD", allowed)).toBe(true);
+    // Valid SPDX but not whitelisted: must not collapse into the allowed "bsd" bucket.
+    expect(isAllowed("BSD-4-Clause", allowed)).toBe(false);
+  });
 });

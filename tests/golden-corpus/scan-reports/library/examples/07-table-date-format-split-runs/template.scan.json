@@ -41,7 +41,8 @@
       "pipeline": { "path": "rows", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -61,7 +62,8 @@
       "pipeline": { "path": "name", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -88,7 +90,8 @@
         { "start": 0, "length": 14, "runIndex": 0, "runPropertiesXml": null },
         { "start": 14, "length": 17, "runIndex": 1, "runPropertiesXml": null },
         { "start": 31, "length": 3, "runIndex": 2, "runPropertiesXml": null }
-      ]
+      ],
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -108,7 +111,8 @@
       "pipeline": { "path": "rows", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     }
   ],
   "resourceReferences": [],

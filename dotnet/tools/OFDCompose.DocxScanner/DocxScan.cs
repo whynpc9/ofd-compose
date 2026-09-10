@@ -177,6 +177,9 @@ internal sealed class MarkerInstance
 
     public int Depth { get; set; }
 
+    /// <summary>Index of the tag record this marker was emitted from (-1 when not applicable).</summary>
+    public int TagIndex { get; init; } = -1;
+
     public static bool IsStartOfSameType(ControlKind startKind, ControlKind candidateKind)
     {
         return (startKind == ControlKind.LoopStart && candidateKind == ControlKind.LoopStart)
@@ -200,9 +203,11 @@ internal sealed class ScanEngine
     private readonly JsonNode? _data;
 
     private readonly List<TagRecord> _tags = [];
+    private readonly List<string> _tagStatuses = [];
+    private int _currentTagIndex = -1;
     private readonly List<PairingScope> _scopes = [];
     private readonly List<ScanDiagnostic> _diagnostics = [];
-    private readonly List<(string Expression, bool Centered, TagLocation Location)> _imageReferences = [];
+    private readonly List<(string Expression, bool Centered, TagLocation Location, ResourceValue Value)> _imageReferences = [];
     private readonly SortedSet<string> _dataPaths = new(StringComparer.Ordinal);
     private readonly SortedSet<string> _functions = new(StringComparer.Ordinal);
     private readonly SortedSet<string> _symbologies = new(StringComparer.Ordinal);
@@ -250,14 +255,21 @@ internal sealed class ScanEngine
         var hasError = _diagnostics.Any(static d => d.Severity == "error");
         var hasWarning = _diagnostics.Any(static d => d.Severity == "warning");
         var risk = hasError ? "high" : hasWarning || _semanticChanges.Count > 0 ? "medium" : "low";
-        var migrationStatus = hasError || hasWarning || _semanticChanges.Count > 0 ? "needs-review" : "auto";
+        // A template containing a capability-gap tag cannot migrate automatically at all;
+        // everything else with an error/warning diagnostic or semantic change needs review.
+        var migrationStatus = _tagStatuses.Contains("unsupported")
+            ? "unsupported"
+            : hasError || hasWarning || _semanticChanges.Count > 0 ? "needs-review" : "auto";
+        var tags = _tags
+            .Select((tag, index) => tag with { MigrationStatus = _tagStatuses[index] })
+            .ToList();
 
         return new ScanReport(
             DocxScan.ReportFormat,
             new ScannerInfo(DocxScan.ScannerName, DocxScan.ScannerVersion),
             new ScannedFile(_fileName, _sha256),
             summary,
-            [.. _tags],
+            tags,
             resourceReferences,
             controlBlocks,
             [.. _diagnostics],
@@ -587,6 +599,8 @@ internal sealed class ScanEngine
         var blockLevel = false;
         var rowLevel = false;
         ControlKind? controlKind = null;
+        _tagStatuses.Add("auto");
+        _currentTagIndex = _tagStatuses.Count - 1;
 
         if (token.StartsWith('%') && token.Length > 1)
         {
@@ -616,11 +630,11 @@ internal sealed class ScanEngine
 
                 if (parsed.Symbology == "upca")
                 {
-                    _semanticChanges.Add("upca-to-ean13");
+                    AddSemanticChange("upca-to-ean13");
                 }
                 else if (parsed.Symbology == "itf")
                 {
-                    _semanticChanges.Add("itf-pad-left-zero");
+                    AddSemanticChange("itf-pad-left-zero");
                 }
 
                 pipeline = RegisterPipeline(parsed.ValueExpression, location);
@@ -650,7 +664,9 @@ internal sealed class ScanEngine
 
                 if (kind == "image")
                 {
-                    _imageReferences.Add((expression, image!.Centered, location));
+                    // Resolve the sidecar value here (not post-hoc) so a file-path
+                    // source semantic change is attributed to this tag.
+                    _imageReferences.Add((expression, image!.Centered, location, ResolveValue(expression)));
                 }
             }
         }
@@ -672,6 +688,7 @@ internal sealed class ScanEngine
                         RawText = rawText,
                         Location = location,
                         Scope = scope,
+                        TagIndex = _currentTagIndex,
                     });
             }
             else
@@ -715,7 +732,9 @@ internal sealed class ScanEngine
                 pipeline,
                 image,
                 barcode,
-                runSpans));
+                runSpans,
+                "auto"));
+        _currentTagIndex = -1;
     }
 
     private PipelineModel? RegisterPipeline(string expression, TagLocation location)
@@ -729,7 +748,7 @@ internal sealed class ScanEngine
         _dataPaths.Add(pipeline.Path);
         if (ExpressionGrammar.PathContainsNegativeIndex(pipeline.Path))
         {
-            _semanticChanges.Add("path-negative-index");
+            AddSemanticChange("path-negative-index");
         }
 
         foreach (var operation in pipeline.Operations)
@@ -747,13 +766,22 @@ internal sealed class ScanEngine
 
             if (ExpressionGrammar.TryParseNegativeAtArgument(operation, out _))
             {
-                _semanticChanges.Add("at-negative-index");
+                AddSemanticChange("at-negative-index");
             }
 
             if (operation.Name == "format")
             {
                 RegisterFormatPattern(operation, location);
             }
+        }
+
+        // Inline conditional `{path|if:t:f}`: same legacy-truthiness classification as
+        // block conditionals, but only when `if` reads the path value directly.
+        if (pipeline.Operations.Count > 0
+            && pipeline.Operations[0].Name == "if"
+            && ExpressionGrammar.IsPlainPath(pipeline.Path))
+        {
+            ClassifyTruthiness(pipeline.Path, location, $"Inline if '{expression}'");
         }
 
         return pipeline;
@@ -793,7 +821,7 @@ internal sealed class ScanEngine
         var alias = canonical != rawKind ? rawKind : null;
         if (alias != null)
         {
-            _semanticChanges.Add("format-alias");
+            AddSemanticChange("format-alias");
         }
 
         _formatPatterns.Add(new FormatPattern(canonical, pattern, alias));
@@ -848,7 +876,8 @@ internal sealed class ScanEngine
                         "UNPAIRED_BLOCK_START",
                         "error",
                         $"No closing tag found for '{start.RawText}' in scope '{start.Scope.Display}'.",
-                        start.Location);
+                        start.Location,
+                        start.TagIndex);
                     continue;
                 }
 
@@ -861,7 +890,8 @@ internal sealed class ScanEngine
                         "MISMATCHED_BLOCK_END",
                         "error",
                         $"Closing tag '{matched.RawText}' does not match opening tag '{start.RawText}'.",
-                        matched.Location);
+                        matched.Location,
+                        matched.TagIndex);
                 }
             }
 
@@ -883,7 +913,8 @@ internal sealed class ScanEngine
                     "CROSS_CONTAINER_PAIRING",
                     "error",
                     $"End marker '{end.RawText}' in scope '{end.Scope.Display}' matches opening tag in scope '{crossStart.Scope.Display}'; legacy pairs only within one container.",
-                    end.Location);
+                    end.Location,
+                    end.TagIndex);
             }
             else
             {
@@ -891,18 +922,30 @@ internal sealed class ScanEngine
                     "ORPHANED_BLOCK_END",
                     "warning",
                     $"End marker '{end.RawText}' has no opening tag in scope '{end.Scope.Display}'; legacy silently drops it.",
-                    end.Location);
-                _semanticChanges.Add("orphaned-block-end");
+                    end.Location,
+                    end.TagIndex);
+                AddSemanticChange("orphaned-block-end", end.TagIndex);
             }
         }
 
         // Spec: a truthy non-array value under a loop marker executes the block exactly
         // once under legacy truthiness and must be flagged LEGACY_SEMANTIC_CHANGE.
+        // Likewise, conditionals whose value relies on legacy truthiness
+        // ("false"/"0" strings are truthy under legacy) must be flagged.
         foreach (var marker in _scopes.SelectMany(static scope => scope.Markers))
         {
-            if (marker.Kind == ControlKind.LoopStart && marker.Paired)
+            if (!marker.Paired)
+            {
+                continue;
+            }
+
+            if (marker.Kind == ControlKind.LoopStart)
             {
                 ClassifyLoopValue(marker);
+            }
+            else if (marker.Kind == ControlKind.IfStart)
+            {
+                ClassifyTruthiness(marker.Expression, marker.Location, $"Conditional '{marker.RawText}'", marker.TagIndex);
             }
         }
 
@@ -952,7 +995,8 @@ internal sealed class ScanEngine
                             "INTERLEAVED_BLOCKS",
                             "error",
                             $"Cross-type blocks '{a.RawText}' and '{b.RawText}' interleave without nesting; legacy misparses this structure.",
-                            b.Location);
+                            b.Location,
+                            b.TagIndex);
                     }
                 }
             }
@@ -984,9 +1028,9 @@ internal sealed class ScanEngine
     private List<ResourceReference> ResolveResourceReferences()
     {
         var references = new List<ResourceReference>();
-        foreach (var (expression, centered, _) in _imageReferences)
+        foreach (var (expression, centered, _, value) in _imageReferences)
         {
-            references.Add(new ResourceReference(expression, "image", centered, ResolveValue(expression)));
+            references.Add(new ResourceReference(expression, "image", centered, value));
         }
 
         return references;
@@ -1015,12 +1059,57 @@ internal sealed class ScanEngine
             return;
         }
 
-        _semanticChanges.Add("non-array-loop");
+        AddSemanticChange("non-array-loop", marker.TagIndex);
         AddDiagnostic(
             "NON_ARRAY_LOOP",
             "warning",
             $"Loop '{marker.RawText}' iterates a truthy non-array value; legacy renders the block exactly once instead of requiring an array.",
-            marker.Location);
+            marker.Location,
+            marker.TagIndex);
+    }
+
+    /// <summary>
+    /// Sidecar lookup (not evaluation) for a conditional value: flags values whose
+    /// legacy truthiness diverges from a declared strict policy — the strings
+    /// "false"/"0" are truthy under legacy (non-blank). The migration spec requires
+    /// every node relying on legacy truthiness to be flagged LEGACY_SEMANTIC_CHANGE.
+    /// </summary>
+    private void ClassifyTruthiness(string expression, TagLocation location, string description, int? tagIndex = null)
+    {
+        if (_data == null || !ExpressionGrammar.IsPlainPath(expression))
+        {
+            return;
+        }
+
+        if (!ExpressionGrammar.TryLookupPath(_data, expression, out var node) || node is null)
+        {
+            return;
+        }
+
+        if (!IsLegacyTruthinessDivergent(node))
+        {
+            return;
+        }
+
+        AddSemanticChange("legacy-truthiness", tagIndex);
+        AddDiagnostic(
+            "LEGACY_TRUTHINESS",
+            "warning",
+            $"{description} relies on legacy truthiness: the strings \"false\"/\"0\" are truthy under legacy (non-blank) but falsy under a strict declared policy.",
+            location,
+            tagIndex);
+    }
+
+    /// <summary>Divergent legacy truthiness: the non-blank strings "false"/"0" are truthy under legacy.</summary>
+    internal static bool IsLegacyTruthinessDivergent(JsonNode node)
+    {
+        if (node is not JsonValue value || value.GetValueKind() != JsonValueKind.String)
+        {
+            return false;
+        }
+
+        var text = value.GetValue<string>().Trim();
+        return text == "0" || string.Equals(text, "false", StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>Legacy truthiness: blank/0/false/empty array/empty object are falsy; "false" and "0" are truthy.</summary>
@@ -1128,7 +1217,7 @@ internal sealed class ScanEngine
         var sourceForm = sourceText == null ? null : ClassifySourceForm(sourceText);
         if (sourceForm is "absolute-path" or "relative-path")
         {
-            _semanticChanges.Add("file-path-image-source");
+            AddSemanticChange("file-path-image-source");
         }
 
         return new ResourceValue("resolved", "object", sourceKey, sizeKeys, sourceForm, null);
@@ -1139,7 +1228,7 @@ internal sealed class ScanEngine
         var sourceForm = ClassifySourceForm(value);
         if (sourceForm is "absolute-path" or "relative-path")
         {
-            _semanticChanges.Add("file-path-image-source");
+            AddSemanticChange("file-path-image-source");
         }
 
         return new ResourceValue("resolved", "string", null, null, sourceForm, null);
@@ -1251,8 +1340,49 @@ internal sealed class ScanEngine
         return new HeadersFooters(parts);
     }
 
-    private void AddDiagnostic(string code, string severity, string message, TagLocation? location)
+    /// <summary>
+    /// Adds a diagnostic and, when attributable to a tag, upgrades that tag's
+    /// per-node migration status: error/warning → needs-review, capability gaps
+    /// (unknown operator/format kind) → unsupported. Info diagnostics never change status.
+    /// </summary>
+    private void AddDiagnostic(string code, string severity, string message, TagLocation? location, int? tagIndex = null)
     {
         _diagnostics.Add(new ScanDiagnostic(code, severity, message, location));
+        var status = code is "UNKNOWN_OPERATOR" or "UNSUPPORTED_FORMAT_KIND"
+            ? "unsupported"
+            : severity is "error" or "warning"
+                ? "needs-review"
+                : null;
+        if (status != null)
+        {
+            FlagTag(tagIndex ?? _currentTagIndex, status);
+        }
+    }
+
+    /// <summary>Records a legacy semantic change and marks the owning tag needs-review.</summary>
+    private void AddSemanticChange(string change, int? tagIndex = null)
+    {
+        _semanticChanges.Add(change);
+        FlagTag(tagIndex ?? _currentTagIndex, "needs-review");
+    }
+
+    /// <summary>Per-node status precedence: unsupported &gt; needs-review &gt; auto (upgrade-only).</summary>
+    private void FlagTag(int tagIndex, string status)
+    {
+        if (tagIndex < 0 || tagIndex >= _tagStatuses.Count)
+        {
+            return;
+        }
+
+        var rank = (string value) => value switch
+        {
+            "needs-review" => 1,
+            "unsupported" => 2,
+            _ => 0,
+        };
+        if (rank(status) > rank(_tagStatuses[tagIndex]))
+        {
+            _tagStatuses[tagIndex] = status;
+        }
     }
 }

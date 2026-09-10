@@ -52,7 +52,8 @@
       },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -81,7 +82,8 @@
       },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -109,7 +111,8 @@
       },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "needs-review"
     }
   ],
   "resourceReferences": [],

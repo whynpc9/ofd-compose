@@ -41,7 +41,8 @@
       "pipeline": { "path": "patient.name", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -61,7 +62,8 @@
       "pipeline": { "path": "report.items[0].code", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -81,7 +83,8 @@
       "pipeline": { "path": "report.items[1].value", "operations": [] },
       "image": null,
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     }
   ],
   "resourceReferences": [],

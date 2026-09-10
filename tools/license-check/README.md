@@ -9,7 +9,7 @@ pnpm check:licenses
 - `allowed-licenses.json`：白名单（SPDX 许可 ID 数组）。当前集合：MIT / Apache-2.0 / BSD（含 0BSD 与各 Clause 变体）/ OFL / Unlicense。修改此文件等同于修改供应链政策，需在 PR 中显式评审。
 - `dev-exceptions.json`：仅限开发工具链的逐包例外（不进入任何发布产物）。**生产依赖不允许例外。**
 - `check-licenses.mjs` 三层检查：
-  1. pnpm 生产依赖（`pnpm licenses list --prod`）：严格白名单，无例外；
+  1. pnpm 生产依赖（`pnpm licenses list --prod`，含 optionalDependencies —— 可选依赖同样可能进入产物）：严格白名单，无例外；
   2. pnpm 开发依赖（`--dev`）：白名单 + `dev-exceptions.json` 具名例外；例外失效会告警；
   3. NuGet 依赖：读取 `dotnet/**/obj/project.assets.json` + 本地 nuspec 元数据（需先 `dotnet restore`），严格白名单；仅声明 license 文件而无表达式的包需人工核查。
 

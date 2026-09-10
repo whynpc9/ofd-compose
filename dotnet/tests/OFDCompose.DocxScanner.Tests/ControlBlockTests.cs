@@ -148,6 +148,10 @@ public class ControlBlockTests
         Assert.Contains("non-array-loop", report.LegacySemanticChanges);
         Assert.Equal("medium", report.Risk);
         Assert.Equal("needs-review", report.MigrationStatus);
+        // Per-tag attribution: the loop start carries the status, sibling tags stay auto.
+        Assert.Equal("needs-review", report.Tags[0].MigrationStatus);
+        Assert.Equal("auto", report.Tags[1].MigrationStatus);
+        Assert.Equal("auto", report.Tags[2].MigrationStatus);
     }
 
     [Fact]
@@ -200,6 +204,58 @@ public class ControlBlockTests
         var report = DocxScan.ScanFile(path);
 
         Assert.DoesNotContain(report.Diagnostics, d => d.Code == "NON_ARRAY_LOOP");
+        Assert.Equal("auto", report.MigrationStatus);
+    }
+
+    [Fact]
+    public void Conditional_on_legacy_truthy_string_false_is_flagged()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("{?flag}"));
+            body.Append(DocxFixture.Para("shown"));
+            body.Append(DocxFixture.Para("{/?flag}"));
+        });
+        // Legacy: any non-blank string is truthy, so "false" renders the block.
+        var dataPath = DocxFixture.CreateDataJson("{\"flag\":\"false\"}");
+
+        var report = DocxScan.ScanFile(path, dataPath);
+
+        Assert.Contains(report.Diagnostics, d => d.Code == "LEGACY_TRUTHINESS" && d.Severity == "warning");
+        Assert.Contains("legacy-truthiness", report.LegacySemanticChanges);
+        Assert.Equal("needs-review", report.MigrationStatus);
+        Assert.Equal("needs-review", report.Tags.Single(t => t.Kind == "if-start").MigrationStatus);
+    }
+
+    [Fact]
+    public void Inline_if_on_legacy_truthy_string_zero_is_flagged()
+    {
+        var path = DocxFixture.CreateDocx(body => body.Append(DocxFixture.Para("{flag|if:yes:no}")));
+        var dataPath = DocxFixture.CreateDataJson("{\"flag\":\"0\"}");
+
+        var report = DocxScan.ScanFile(path, dataPath);
+
+        Assert.Contains(report.Diagnostics, d => d.Code == "LEGACY_TRUTHINESS");
+        Assert.Contains("legacy-truthiness", report.LegacySemanticChanges);
+        Assert.Equal("needs-review", report.Tags.Single().MigrationStatus);
+    }
+
+    [Fact]
+    public void Boolean_and_absent_conditionals_are_not_flagged()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("{?flag}"));
+            body.Append(DocxFixture.Para("{/?flag}"));
+            body.Append(DocxFixture.Para("{?other}"));
+            body.Append(DocxFixture.Para("{/?other}"));
+        });
+        var dataPath = DocxFixture.CreateDataJson("{\"flag\":false}");
+
+        var report = DocxScan.ScanFile(path, dataPath);
+
+        Assert.DoesNotContain(report.Diagnostics, d => d.Code == "LEGACY_TRUTHINESS");
+        Assert.DoesNotContain("legacy-truthiness", report.LegacySemanticChanges);
         Assert.Equal("auto", report.MigrationStatus);
     }
 

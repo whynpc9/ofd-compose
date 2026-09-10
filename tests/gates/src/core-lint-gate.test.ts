@@ -150,3 +150,35 @@ it("flags Date/Number toLocale* formatting in core packages (ADR-0001)", async (
     await cleanup();
   }
 });
+
+it("flags qualified globalThis access to denied globals in core packages", async () => {
+  const qualifiedIntl = `export function formatAmount(value: number): string {
+  return globalThis.Intl.NumberFormat("zh-CN").format(value);
+}
+`;
+  const qualifiedDom = `export function measure(): number {
+  return globalThis.document.createElement("canvas").width;
+}
+`;
+  const allowedGlobalThis = `export function now(): number {
+  return globalThis.performance?.now() ?? 0;
+}
+`;
+  const { dir, cleanup } = await createLintFixture({
+    "packages/binding-core/src/format.ts": qualifiedIntl,
+    "packages/layout-core/src/measure.ts": qualifiedDom,
+    "packages/typography-core/src/time.ts": allowedGlobalThis,
+    "tests/smoke/src/format.helper.ts": qualifiedIntl,
+  });
+  try {
+    const result = await runBiome(dir);
+    expect(result.code).not.toBe(0);
+    expect(result.output).toContain("packages/binding-core/src/format.ts");
+    expect(result.output).toContain("packages/layout-core/src/measure.ts");
+    // 未禁止的 globalThis 成员（performance）与非 Core 路径不触发。
+    expect(result.output).not.toContain("packages/typography-core/src/time.ts");
+    expect(result.output).not.toContain("tests/smoke/src/format.helper.ts");
+  } finally {
+    await cleanup();
+  }
+});

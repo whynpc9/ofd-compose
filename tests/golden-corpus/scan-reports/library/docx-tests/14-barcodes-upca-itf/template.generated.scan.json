@@ -45,7 +45,8 @@
         "parameters": { "width": 300, "height": 90, "margin": 2, "pure": true },
         "centered": false
       },
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "needs-review"
     },
     {
       "location": {
@@ -70,7 +71,8 @@
         "parameters": { "width": 300, "height": 90, "margin": 2, "pure": true },
         "centered": false
       },
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "needs-review"
     }
   ],
   "resourceReferences": [],

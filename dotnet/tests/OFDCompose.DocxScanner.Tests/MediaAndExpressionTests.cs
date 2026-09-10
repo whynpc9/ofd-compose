@@ -106,6 +106,24 @@ public class MediaAndExpressionTests
         Assert.Contains("at-negative-index", report.LegacySemanticChanges);
         Assert.Contains("path-negative-index", report.LegacySemanticChanges);
         Assert.Equal("needs-review", report.MigrationStatus);
+        // Per-tag classification: both expression tags are flagged, template-level rolls up.
+        Assert.All(report.Tags, tag => Assert.Equal("needs-review", tag.MigrationStatus));
+    }
+
+    [Fact]
+    public void Per_tag_status_isolates_flagged_tags_from_clean_ones()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("clean {name}"));
+            body.Append(DocxFixture.Para("flagged {items[-1]}"));
+        });
+
+        var report = DocxScan.ScanFile(path);
+
+        Assert.Equal("auto", report.Tags[0].MigrationStatus);
+        Assert.Equal("needs-review", report.Tags[1].MigrationStatus);
+        Assert.Equal("needs-review", report.MigrationStatus);
     }
 
     [Fact]
@@ -128,16 +146,21 @@ public class MediaAndExpressionTests
     }
 
     [Fact]
-    public void Unknown_operator_is_a_warning()
+    public void Unknown_operator_is_unsupported_at_tag_and_template_level()
     {
         var path = DocxFixture.CreateDocx(body =>
-            body.Append(DocxFixture.Para("{orders|bogus:1}")));
+        {
+            body.Append(DocxFixture.Para("{orders|bogus:1}"));
+            body.Append(DocxFixture.Para("plain {name}"));
+        });
 
         var report = DocxScan.ScanFile(path);
 
         Assert.Contains(report.Diagnostics, d => d.Code == "UNKNOWN_OPERATOR" && d.Severity == "warning");
         Assert.Contains("bogus", report.Summary.Functions);
-        Assert.Equal("needs-review", report.MigrationStatus);
+        Assert.Equal("unsupported", report.Tags[0].MigrationStatus);
+        Assert.Equal("auto", report.Tags[1].MigrationStatus);
+        Assert.Equal("unsupported", report.MigrationStatus);
     }
 
     [Fact]

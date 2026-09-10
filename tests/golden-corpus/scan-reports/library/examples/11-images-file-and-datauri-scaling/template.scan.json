@@ -41,7 +41,8 @@
       "pipeline": { "path": "fromPath", "operations": [] },
       "image": { "centered": true, "valueExpression": "fromPath" },
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "needs-review"
     },
     {
       "location": {
@@ -61,7 +62,8 @@
       "pipeline": { "path": "fromDataUri", "operations": [] },
       "image": { "centered": true, "valueExpression": "fromDataUri" },
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     },
     {
       "location": {
@@ -81,7 +83,8 @@
       "pipeline": { "path": "fitInBox", "operations": [] },
       "image": { "centered": true, "valueExpression": "fitInBox" },
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "needs-review"
     }
   ],
   "resourceReferences": [

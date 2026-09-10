@@ -37,7 +37,8 @@
       "pipeline": { "path": "logo", "operations": [] },
       "image": { "centered": false, "valueExpression": "logo" },
       "barcode": null,
-      "runSpans": null
+      "runSpans": null,
+      "migrationStatus": "auto"
     }
   ],
   "resourceReferences": [

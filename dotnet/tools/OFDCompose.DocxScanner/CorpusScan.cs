@@ -37,7 +37,6 @@ public static class CorpusScan
         {
             var relativeCaseDir = Path.GetRelativePath(root, caseDir).Replace(Path.DirectorySeparatorChar, '/');
             var dataPath = Path.Combine(caseDir, "data.json");
-            var data = File.Exists(dataPath) ? JsonNode.Parse(File.ReadAllText(dataPath)) : null;
 
             var manifestPath = Path.Combine(caseDir, "case.json");
             if (File.Exists(manifestPath))
@@ -57,7 +56,9 @@ public static class CorpusScan
                     continue;
                 }
 
-                var report = DocxScan.Scan(templateName, File.ReadAllBytes(templatePath), data);
+                // ScanFile (not File.ReadAllBytes + Scan) so archive limits are
+                // enforced before the file is read into memory.
+                var report = DocxScan.ScanFile(templatePath, File.Exists(dataPath) ? dataPath : null);
                 var baseName = Path.GetFileNameWithoutExtension(templateName);
                 var reportRelative = $"{relativeCaseDir}/{baseName}.scan.json";
                 DeterministicJson.WriteFile(

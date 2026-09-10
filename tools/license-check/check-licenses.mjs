@@ -21,13 +21,16 @@ const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolDir, "../..");
 
 export function normalize(license) {
-  return license
+  const lowered = license
     .trim()
     .toLowerCase()
-    .replace(/-only$|-or-later$/g, "")
-    .replace(/^bsd-\d-clause$/, "bsd")
-    .replace(/^0bsd$/, "bsd");
+    .replace(/-only$|-or-later$/g, "");
+  // Canonicalize only the exact BSD variants present in allowed-licenses.json;
+  // anything else (e.g. BSD-4-Clause) must not collapse into the whitelisted "bsd".
+  return BSD_CANONICAL.has(lowered) ? "bsd" : lowered;
 }
+
+const BSD_CANONICAL = new Set(["bsd-1-clause", "bsd-2-clause", "bsd-3-clause", "0bsd"]);
 
 async function loadAllowed() {
   const raw = JSON.parse(await readFile(path.join(toolDir, "allowed-licenses.json"), "utf8"));
@@ -128,7 +131,9 @@ async function listPnpmPackages(pnpmArgs) {
 async function checkPnpm(allowed, exceptions) {
   let failed = false;
 
-  const prod = await listPnpmPackages(["--prod", "--no-optional"]);
+  // --prod includes optionalDependencies (they can ship in artifacts); unlike the
+  // dev pass there is no --no-optional here, so optional deps face the strict whitelist.
+  const prod = await listPnpmPackages(["--prod"]);
   const prodViolations = prod.filter((pkg) => !isAllowed(pkg.license, allowed));
   if (prodViolations.length > 0) {
     failed = true;

@@ -95,6 +95,14 @@
         "**/packages/layout-core/**",
         "**/packages/typography-core/**"
       ]
+    },
+    {
+      "path": "./tools/biome-plugins/no-globalthis-denied-globals.grit",
+      "includes": [
+        "**/packages/binding-core/**",
+        "**/packages/layout-core/**",
+        "**/packages/typography-core/**"
+      ]
     }
   ]
 }
