@@ -1,0 +1,102 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "b7fb56a3c7f8e262fecad194206725dd796e54ad9f5f5ff42a60c9639aea69e4"
+  },
+  "summary": {
+    "tagCount": 3,
+    "inlineExpressions": 0,
+    "loops": 1,
+    "conditionals": 0,
+    "images": 1,
+    "barcodes": 0,
+    "dataPaths": ["gallery", "photo"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": []
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{#gallery}",
+      "expression": "gallery",
+      "kind": "loop-start",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "gallery", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{%%photo}",
+      "expression": "photo",
+      "kind": "image",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "photo", "operations": [] },
+      "image": { "centered": true, "valueExpression": "photo" },
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 2,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{/gallery}",
+      "expression": "gallery",
+      "kind": "loop-end",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "gallery", "operations": [] },
+      "image": null,
+      "barcode": null
+    }
+  ],
+  "resourceReferences": [
+    {
+      "expression": "photo",
+      "kind": "image",
+      "centered": true,
+      "value": {
+        "state": "missing",
+        "valueKind": "missing",
+        "sourceKey": null,
+        "sizeKeys": null,
+        "sourceForm": null,
+        "itemCount": null
+      }
+    }
+  ],
+  "controlBlocks": [
+    { "kind": "loop", "expression": "gallery", "paired": true, "depth": 0, "scope": "body" }
+  ],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

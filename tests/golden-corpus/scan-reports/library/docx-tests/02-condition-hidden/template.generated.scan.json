@@ -1,0 +1,69 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "cb30cf57648d4c2ae0f8acd7734e4d9c30d3a0034dc7e1105474a485c9213594"
+  },
+  "summary": {
+    "tagCount": 2,
+    "inlineExpressions": 0,
+    "loops": 0,
+    "conditionals": 1,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["flags.showVip"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": []
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{?flags.showVip}",
+      "expression": "flags.showVip",
+      "kind": "if-start",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "flags.showVip", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 3,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{/?flags.showVip}",
+      "expression": "flags.showVip",
+      "kind": "if-end",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "flags.showVip", "operations": [] },
+      "image": null,
+      "barcode": null
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [
+    { "kind": "if", "expression": "flags.showVip", "paired": true, "depth": 0, "scope": "body" }
+  ],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

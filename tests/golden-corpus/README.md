@@ -41,3 +41,14 @@
 ## 校验
 
 `pnpm --filter @ofd-compose/golden-corpus test`：枚举全部用例，校验 manifest schema、语义 schema、`dataDigest` 与 data.json 字节一致、引用文件存在；并对 15 个测试方法与示例 01–12 的覆盖性做强断言。
+
+## 扫描产物：template.generated.docx 与 scan-reports/
+
+旧 DOCX 扫描器（`dotnet/tools/OFDCompose.DocxScanner`，issue 03）的产物，**已入库**：
+
+- `library/docx-tests/<case>/template.generated.docx`：由 `OFDCompose.CorpusDocxGenerator` 按 `template.txt` 约定生成（确定性字节，供扫描与后续受限导入器使用；**不进入任何 manifest**）。
+- `scan-reports/library/<tier>/<case>/*.scan.json`：每个模板一份扫描报告（`ofd-compose/scan-report@1`）。
+- `scan-reports/migration-report.json`：聚合迁移报告骨架（`ofd-compose/migration-report@0`）。
+
+重新生成：`pnpm --filter @ofd-compose/golden-corpus run scan`（等价于依次运行 generator 与 scanner corpus 模式）。CI 会在生成后执行 `git diff --exit-code` 证明逐字节可复现；若本地模板或扫描器逻辑变更，需重新运行并提交产物。
+

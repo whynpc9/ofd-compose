@@ -50,5 +50,10 @@ jobs:
       - name: .NET tests
         run: dotnet test dotnet/OFDCompose.slnx --no-restore
 
+      - name: Golden corpus scan reports are reproducible
+        run: |
+          pnpm --filter @ofd-compose/golden-corpus run scan
+          git diff --exit-code
+
       - name: License whitelist (pnpm + NuGet)
         run: pnpm check:licenses

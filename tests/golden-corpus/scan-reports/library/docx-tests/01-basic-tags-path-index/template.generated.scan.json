@@ -1,0 +1,86 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "ec52d7148de39135741169b6e4bbde79b30c3298297490366d721acd0ce0787d"
+  },
+  "summary": {
+    "tagCount": 3,
+    "inlineExpressions": 3,
+    "loops": 0,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["patient.name", "report.items[0].code", "report.items[1].value"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": []
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 0,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{patient.name}",
+      "expression": "patient.name",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "patient.name", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{report.items[0].code}",
+      "expression": "report.items[0].code",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "report.items[0].code", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 2,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{report.items[1].value}",
+      "expression": "report.items[1].value",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "report.items[1].value", "operations": [] },
+      "image": null,
+      "barcode": null
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

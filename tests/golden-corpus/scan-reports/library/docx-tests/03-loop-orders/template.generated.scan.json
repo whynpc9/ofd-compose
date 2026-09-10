@@ -1,0 +1,107 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "eb259a2e7c9e0b98b3e967758d9932e6d7a5d2b7ebc1c8be09a165a381c3cea5"
+  },
+  "summary": {
+    "tagCount": 4,
+    "inlineExpressions": 2,
+    "loops": 1,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["amount", "id", "orders"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": []
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 1,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{#orders}",
+      "expression": "orders",
+      "kind": "loop-start",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "orders", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 2,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{id}",
+      "expression": "id",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "id", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 2,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{amount}",
+      "expression": "amount",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "amount", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "body",
+        "paragraphIndex": 3,
+        "tableIndex": null,
+        "rowIndex": null,
+        "cellIndex": null
+      },
+      "rawText": "{/orders}",
+      "expression": "orders",
+      "kind": "loop-end",
+      "blockLevel": true,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "orders", "operations": [] },
+      "image": null,
+      "barcode": null
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [
+    { "kind": "loop", "expression": "orders", "paired": true, "depth": 0, "scope": "body" }
+  ],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

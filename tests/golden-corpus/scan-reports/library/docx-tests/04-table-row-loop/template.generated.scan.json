@@ -1,0 +1,113 @@
+{
+  "format": "ofd-compose/scan-report@1",
+  "scanner": { "name": "OFDCompose.DocxScanner", "version": "0.1.0" },
+  "file": {
+    "name": "template.generated.docx",
+    "sha256": "f54a661af608f8805a676f088dec92fd1bda18dae4d5ff39347cfef909e3a1af"
+  },
+  "summary": {
+    "tagCount": 4,
+    "inlineExpressions": 2,
+    "loops": 1,
+    "conditionals": 0,
+    "images": 0,
+    "barcodes": 0,
+    "dataPaths": ["invoice.lines", "name", "qty"],
+    "functions": [],
+    "formatPatterns": [],
+    "symbologies": []
+  },
+  "tags": [
+    {
+      "location": {
+        "scope": "table-row",
+        "paragraphIndex": null,
+        "tableIndex": 0,
+        "rowIndex": 1,
+        "cellIndex": null
+      },
+      "rawText": "{#invoice.lines}",
+      "expression": "invoice.lines",
+      "kind": "loop-start",
+      "blockLevel": true,
+      "rowLevel": true,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "invoice.lines", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "table-cell",
+        "paragraphIndex": 0,
+        "tableIndex": 0,
+        "rowIndex": 2,
+        "cellIndex": 0
+      },
+      "rawText": "{name}",
+      "expression": "name",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "name", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "table-cell",
+        "paragraphIndex": 0,
+        "tableIndex": 0,
+        "rowIndex": 2,
+        "cellIndex": 1
+      },
+      "rawText": "{qty}",
+      "expression": "qty",
+      "kind": "inline-expression",
+      "blockLevel": false,
+      "rowLevel": false,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "qty", "operations": [] },
+      "image": null,
+      "barcode": null
+    },
+    {
+      "location": {
+        "scope": "table-row",
+        "paragraphIndex": null,
+        "tableIndex": 0,
+        "rowIndex": 3,
+        "cellIndex": null
+      },
+      "rawText": "{/invoice.lines}",
+      "expression": "invoice.lines",
+      "kind": "loop-end",
+      "blockLevel": true,
+      "rowLevel": true,
+      "splitAcrossRuns": false,
+      "runCount": 1,
+      "pipeline": { "path": "invoice.lines", "operations": [] },
+      "image": null,
+      "barcode": null
+    }
+  ],
+  "resourceReferences": [],
+  "controlBlocks": [
+    {
+      "kind": "loop",
+      "expression": "invoice.lines",
+      "paired": true,
+      "depth": 0,
+      "scope": "table-row"
+    }
+  ],
+  "diagnostics": [],
+  "headersFooters": { "parts": [] },
+  "legacySemanticChanges": [],
+  "risk": "low",
+  "migrationStatus": "auto"
+}

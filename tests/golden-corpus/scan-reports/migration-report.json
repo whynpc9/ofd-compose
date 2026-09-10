@@ -1,0 +1,240 @@
+{
+  "format": "ofd-compose/migration-report@0",
+  "note": "MigrationReport 骨架：逐节点政策随受限导入器（后续票）落地",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "templates": [
+    {
+      "file": "library/docx-tests/01-basic-tags-path-index/template.generated.docx",
+      "report": "library/docx-tests/01-basic-tags-path-index/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 3,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/02-condition-hidden/template.generated.docx",
+      "report": "library/docx-tests/02-condition-hidden/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 2,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/02-condition-shown/template.generated.docx",
+      "report": "library/docx-tests/02-condition-shown/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 2,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/03-loop-orders/template.generated.docx",
+      "report": "library/docx-tests/03-loop-orders/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 4,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/04-table-row-loop/template.generated.docx",
+      "report": "library/docx-tests/04-table-row-loop/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 4,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/05-sort-take-count-format/template.generated.docx",
+      "report": "library/docx-tests/05-sort-take-count-format/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 6,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/06-narrative-aggregates/template.generated.docx",
+      "report": "library/docx-tests/06-narrative-aggregates/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 8,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/07-nth-at-ranking/template.generated.docx",
+      "report": "library/docx-tests/07-nth-at-ranking/template.generated.scan.json",
+      "migrationStatus": "needs-review",
+      "risk": "medium",
+      "tagCount": 3,
+      "legacySemanticChanges": ["at-negative-index"]
+    },
+    {
+      "file": "library/docx-tests/08-inline-if-percent-permille/template.generated.docx",
+      "report": "library/docx-tests/08-inline-if-percent-permille/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 6,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/09-inline-image-data-uri/template.generated.docx",
+      "report": "library/docx-tests/09-inline-image-data-uri/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 1,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/10-block-image-centered/template.generated.docx",
+      "report": "library/docx-tests/10-block-image-centered/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 1,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/11-images-in-loop/template.generated.docx",
+      "report": "library/docx-tests/11-images-in-loop/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 3,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/12-real-png-scaling/template.generated.docx",
+      "report": "library/docx-tests/12-real-png-scaling/template.generated.scan.json",
+      "migrationStatus": "needs-review",
+      "risk": "medium",
+      "tagCount": 3,
+      "legacySemanticChanges": ["file-path-image-source"]
+    },
+    {
+      "file": "library/docx-tests/13-barcodes-code128-ean13/template.generated.docx",
+      "report": "library/docx-tests/13-barcodes-code128-ean13/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 2,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/docx-tests/14-barcodes-upca-itf/template.generated.docx",
+      "report": "library/docx-tests/14-barcodes-upca-itf/template.generated.scan.json",
+      "migrationStatus": "needs-review",
+      "risk": "medium",
+      "tagCount": 2,
+      "legacySemanticChanges": ["itf-pad-left-zero", "upca-to-ean13"]
+    },
+    {
+      "file": "library/docx-tests/15-table-split-runs-date-format/template.generated.docx",
+      "report": "library/docx-tests/15-table-split-runs-date-format/template.generated.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 4,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/01-basic-tags/template.docx",
+      "report": "library/examples/01-basic-tags/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 3,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/02-condition/template.docx",
+      "report": "library/examples/02-condition/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 3,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/03-loop/template.docx",
+      "report": "library/examples/03-loop/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 4,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/04-table-loop/template.docx",
+      "report": "library/examples/04-table-loop/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 6,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/05-extensions/template.docx",
+      "report": "library/examples/05-extensions/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 6,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/06-images/template.docx",
+      "report": "library/examples/06-images/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 4,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/07-table-date-format-split-runs/template.docx",
+      "report": "library/examples/07-table-date-format-split-runs/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 4,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/08-inline-friendly-expressions/template.docx",
+      "report": "library/examples/08-inline-friendly-expressions/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 8,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/09-inline-ranking-positions/template.docx",
+      "report": "library/examples/09-inline-ranking-positions/template.scan.json",
+      "migrationStatus": "needs-review",
+      "risk": "medium",
+      "tagCount": 3,
+      "legacySemanticChanges": ["at-negative-index"]
+    },
+    {
+      "file": "library/examples/10-inline-conditions-and-rates/template.docx",
+      "report": "library/examples/10-inline-conditions-and-rates/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 6,
+      "legacySemanticChanges": []
+    },
+    {
+      "file": "library/examples/11-images-file-and-datauri-scaling/template.docx",
+      "report": "library/examples/11-images-file-and-datauri-scaling/template.scan.json",
+      "migrationStatus": "needs-review",
+      "risk": "medium",
+      "tagCount": 3,
+      "legacySemanticChanges": ["file-path-image-source"]
+    },
+    {
+      "file": "library/examples/12-barcodes/template.docx",
+      "report": "library/examples/12-barcodes/template.scan.json",
+      "migrationStatus": "auto",
+      "risk": "low",
+      "tagCount": 2,
+      "legacySemanticChanges": []
+    }
+  ],
+  "totals": {
+    "templates": 28,
+    "auto": 23,
+    "needsReview": 5,
+    "unsupported": 0,
+    "tags": 106,
+    "diagnostics": 2,
+    "legacySemanticChanges": 6
+  }
+}

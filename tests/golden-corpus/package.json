@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "scan": "dotnet run --project ../../dotnet/tools/OFDCompose.CorpusDocxGenerator -- . && dotnet run --project ../../dotnet/tools/OFDCompose.DocxScanner -- corpus ."
   },
   "devDependencies": {
     "@types/node": "24.13.3",
