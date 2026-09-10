@@ -49,3 +49,10 @@ pnpm-debug.log*
 !.vscode/extensions.json
 !.vscode/settings.json
 .local/
+
+# Vendored reference snapshots (not committed)
+.scratch/*/reference/
+
+# Playwright
+.playwright/
+

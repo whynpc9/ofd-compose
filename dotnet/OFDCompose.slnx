@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OFDCompose.Api/OFDCompose.Api.csproj" />
+    <Project Path="src/OFDCompose.ClientSdk/OFDCompose.ClientSdk.csproj" />
+    <Project Path="src/OFDCompose.Containers/OFDCompose.Containers.csproj" />
+    <Project Path="src/OFDCompose.OfdIrWriter/OFDCompose.OfdIrWriter.csproj" />
+    <Project Path="src/OFDCompose.PdfIrWriter/OFDCompose.PdfIrWriter.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OFDCompose.SmokeTests/OFDCompose.SmokeTests.csproj" />
+  </Folder>
+</Solution>
