@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-02-condition-shown",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_EvaluatesConditionalBlocks"
+  },
+  "templateId": "ndocxtemplater-test-02-condition",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:df029c7544176f022cbb962568dc497e58b41bb85b937f4ee5efd10d3a992bf7",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

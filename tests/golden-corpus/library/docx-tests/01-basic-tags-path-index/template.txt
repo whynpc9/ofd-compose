@@ -1,0 +1,3 @@
+Patient: {patient.name}
+First code: {report.items[0].code}
+Last value: {report.items[1].value}

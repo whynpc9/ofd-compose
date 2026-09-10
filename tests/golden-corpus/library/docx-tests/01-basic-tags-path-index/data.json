@@ -1,0 +1,17 @@
+{
+  "patient": {
+    "name": "Alice"
+  },
+  "report": {
+    "items": [
+      {
+        "code": "A1",
+        "value": 10
+      },
+      {
+        "code": "B2",
+        "value": 25
+      }
+    ]
+  }
+}

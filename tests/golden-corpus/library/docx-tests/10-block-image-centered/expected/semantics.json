@@ -1,0 +1,12 @@
+{
+  "media": [
+    {
+      "kind": "image",
+      "order": 1,
+      "widthPx": 24,
+      "heightPx": 24,
+      "alignment": "centered",
+      "source": "data-uri"
+    }
+  ]
+}

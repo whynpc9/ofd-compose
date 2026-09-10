@@ -1,0 +1,28 @@
+{
+  "caseId": "lib-example-07-table-date-split-runs",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "07-table-date-format-split-runs"
+  },
+  "templateId": "ndocxtemplater-example-07-table-date-format-split-runs",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:5d825dea32baf49308937a77769d1fe338507a8c2aee55ec3b942cdb0377d105",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": ["split-run-flattening"],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  },
+  "notes": [
+    "标签 {createdAt|format:date:yyyy-MM-dd} 在 template.docx 原件内即被 Word 拆为 3 个 run（{createdAt|for / mat:date:yyyy-MM- / dd}）；旧引擎将替换结果写入首个 run 并清空其余 run，新平台不保留该行为"
+  ]
+}

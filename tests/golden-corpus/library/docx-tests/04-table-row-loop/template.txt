@@ -1,0 +1,6 @@
+@table-begin
+| Item | Qty |
+| {#invoice.lines} |  |
+| {name} | {qty} |
+| {/invoice.lines} |  |
+@table-end

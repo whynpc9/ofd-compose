@@ -1,0 +1,29 @@
+{
+  "paragraphs": ["Inline logo", "Gallery"],
+  "media": [
+    {
+      "kind": "image",
+      "order": 1,
+      "widthPx": 48,
+      "heightPx": 24,
+      "alignment": "inline",
+      "source": "data-uri"
+    },
+    {
+      "kind": "image",
+      "order": 2,
+      "widthPx": 24,
+      "heightPx": 24,
+      "alignment": "centered",
+      "source": "data-uri"
+    },
+    {
+      "kind": "image",
+      "order": 3,
+      "widthPx": 32,
+      "heightPx": 20,
+      "alignment": "centered",
+      "source": "data-uri"
+    }
+  ]
+}

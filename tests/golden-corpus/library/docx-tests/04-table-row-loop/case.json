@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-04-table-row-loop",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_MapsJsonListToTableRows"
+  },
+  "templateId": "ndocxtemplater-test-04-table-loop",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:ac40161d76b033b99bf4637590f60fa83d5804e0461977fb84ee80c9c06e5d22",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

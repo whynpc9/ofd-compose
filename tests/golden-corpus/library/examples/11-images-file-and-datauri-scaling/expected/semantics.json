@@ -1,0 +1,36 @@
+{
+  "paragraphs": [
+    "图片（文件路径 + maxWidth 等比缩放）",
+    "图片（data URI + scale 等比缩放）",
+    "图片（在固定宽高盒子中等比缩放，不拉伸变形）"
+  ],
+  "media": [
+    {
+      "kind": "image",
+      "order": 1,
+      "widthPx": 376,
+      "heightPx": 339,
+      "alignment": "centered",
+      "source": "file-path",
+      "byteIdenticalReembed": true
+    },
+    {
+      "kind": "image",
+      "order": 2,
+      "widthPx": 376,
+      "heightPx": 339,
+      "alignment": "centered",
+      "source": "data-uri",
+      "byteIdenticalReembed": true
+    },
+    {
+      "kind": "image",
+      "order": 3,
+      "widthPx": 288,
+      "heightPx": 260,
+      "alignment": "centered",
+      "source": "file-path",
+      "byteIdenticalReembed": true
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "barcodes": [
+    {
+      "order": 1,
+      "symbology": "upca",
+      "value": "036000291452",
+      "encodedValue": "0036000291452",
+      "normalizationPolicy": "upca-to-ean13",
+      "widthPx": 300,
+      "heightPx": 90,
+      "marginPx": 2,
+      "alignment": "inline",
+      "assertion": "decode-value",
+      "note": "本版补建：旧断言仅为「位图含深色像素」；旧引擎将 UPC-A 规范化为 EAN13（前置 0）"
+    },
+    {
+      "order": 2,
+      "symbology": "itf",
+      "value": "12345670",
+      "widthPx": 300,
+      "heightPx": 90,
+      "marginPx": 2,
+      "alignment": "inline",
+      "assertion": "decode-value",
+      "note": "本版补建：旧断言仅为「位图含深色像素」；itf 奇数位时左补 0（此值为 8 位，无需补）"
+    }
+  ]
+}

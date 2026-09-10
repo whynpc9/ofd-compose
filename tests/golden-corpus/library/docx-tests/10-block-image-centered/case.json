@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-10-block-image-centered",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_RendersBlockImageTag_Centered"
+  },
+  "templateId": "ndocxtemplater-test-10-block-image",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:d60cd89eb9cf0fda023c267047a23c721fa408ef38a2ff9b9f087722ef93474f",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

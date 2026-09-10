@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-example-01-basic-tags",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "01-basic-tags"
+  },
+  "templateId": "ndocxtemplater-example-01-basic-tags",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:bcd8d40eef6bc6fba40b5f86ef958ee9a2bc241705f0fe523e3500ddfd01a66a",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

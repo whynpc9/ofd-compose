@@ -1,0 +1,28 @@
+{
+  "caseId": "lib-example-11-images-scaling",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "11-images-file-and-datauri-scaling"
+  },
+  "templateId": "ndocxtemplater-example-11-images-file-and-datauri-scaling",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:800d3d99280a7c0c521345be0982e044453911b32b312c54565fd3b131d3e058",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": ["cwd-relative-path"],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  },
+  "notes": [
+    "旧示例以进程 CWD 相对路径 chart.png 引用图片；corpus 内改为用例目录相对路径 assets/chart.png"
+  ]
+}

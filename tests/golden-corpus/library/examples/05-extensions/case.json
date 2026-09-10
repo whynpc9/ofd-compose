@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-example-05-extensions",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "05-extensions"
+  },
+  "templateId": "ndocxtemplater-example-05-extensions",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:1a55059241b1e06f117df71da3e734d5eff80281c6f73c9d96729306abf61037",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

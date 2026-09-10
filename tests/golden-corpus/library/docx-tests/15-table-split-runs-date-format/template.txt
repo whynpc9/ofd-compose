@@ -1,0 +1,6 @@
+@table-begin
+| Name | Created |
+| {#rows} |  |
+| {name} | <run>{createdAt|for</run><run>mat:date:yyyy-MM-</run><run>dd}</run> |
+| {/rows} |  |
+@table-end

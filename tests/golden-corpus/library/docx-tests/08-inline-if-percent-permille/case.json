@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-08-inline-if-percent-permille",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_SupportsInlineCountConditionalAndPercentPermilleFormatting"
+  },
+  "templateId": "ndocxtemplater-test-08-inline-if-rates",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:c4c352e3da5f28204d5dd0a53600de865f5eee104734bce833bd61f4bcfe7440",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "paragraphs": ["Report logo"],
+  "media": [
+    {
+      "kind": "image",
+      "order": 1,
+      "widthPx": 32,
+      "heightPx": 16,
+      "alignment": "inline",
+      "source": "data-uri"
+    }
+  ]
+}

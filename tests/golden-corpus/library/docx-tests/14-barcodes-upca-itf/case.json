@@ -1,0 +1,29 @@
+{
+  "caseId": "lib-test-14-barcodes-upca-itf",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_GeneratesUpcAAndItfBarcodes"
+  },
+  "templateId": "ndocxtemplater-test-14-barcodes-upca-itf",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:40a361c266638c80e80ef28345505cd70fd1ad6bf515092d8c1e956110695e47",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": ["pixel-assertion-rebuilt"],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  },
+  "notes": [
+    "本版补建：旧断言仅为「位图含深色像素」，本版改为解码值断言（assertion: decode-value）",
+    "旧引擎将 UPC-A 规范化为 EAN13（前置 0），itf 奇数位时左补 0；标签未指定 margin 时取旧默认值 2"
+  ]
+}

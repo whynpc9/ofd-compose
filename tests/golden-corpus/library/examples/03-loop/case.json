@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-example-03-loop",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "03-loop"
+  },
+  "templateId": "ndocxtemplater-example-03-loop",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:1cdbbc9a4baaa899a8583a91bb376a8ce32db789f662aedb3ad1d6775e90d4b6",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

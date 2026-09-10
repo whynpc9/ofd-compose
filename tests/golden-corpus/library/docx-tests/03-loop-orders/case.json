@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-03-loop-orders",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_EvaluatesLoopBlocks"
+  },
+  "templateId": "ndocxtemplater-test-03-loop",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:f81e266c59c8567654d9b460b11c09713c359e58752ece49bb8767d450b7a62f",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

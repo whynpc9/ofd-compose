@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-06-narrative-aggregates",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_SupportsInlineFriendlyAggregateExpressions_ForNarrativeParagraphs"
+  },
+  "templateId": "ndocxtemplater-test-06-inline-friendly",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:731ec880fa291faeade6503204b9a9c0e3b57c0ebcdfa69464d290dbe54ae314",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

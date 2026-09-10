@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-example-08-inline-friendly",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "example",
+    "name": "08-inline-friendly-expressions"
+  },
+  "templateId": "ndocxtemplater-example-08-inline-friendly-expressions",
+  "templateAsset": "template.docx",
+  "dataDigest": "sha256:d89f7d7386a36a61c80aa9ff0b538b40d1df27a83cfaefee4682eea5e4ff39ab",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

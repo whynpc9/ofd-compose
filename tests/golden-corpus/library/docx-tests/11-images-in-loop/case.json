@@ -1,0 +1,25 @@
+{
+  "caseId": "lib-test-11-images-in-loop",
+  "tier": "library",
+  "legacyCommit": "9c02f26d0f81b554019441e348f981b67e11a4e7",
+  "source": {
+    "kind": "docx-test",
+    "name": "Render_RendersImagesInsideLoopBlocks"
+  },
+  "templateId": "ndocxtemplater-test-11-images-loop",
+  "templateDescription": "template.txt",
+  "dataDigest": "sha256:1be2b0ea0a72600a3b9b855a01edf6281f706f74aa123f6ff72a6bdf0aa335bc",
+  "expectedSemantic": {
+    "file": "expected/semantics.json",
+    "format": "ofd-compose/case-semantics@1"
+  },
+  "allowedDifferences": [],
+  "nativeProfile": {
+    "bindingPolicyVersion": "legacy-compat-1",
+    "legacyPixelDpi": 96
+  },
+  "result": {
+    "status": "not-executable",
+    "note": "issue 02：格式冻结，执行随后续排版票接入"
+  }
+}

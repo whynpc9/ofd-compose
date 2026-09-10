@@ -1,0 +1,20 @@
+{
+  "media": [
+    {
+      "kind": "image",
+      "order": 1,
+      "widthPx": 18,
+      "heightPx": 18,
+      "alignment": "centered",
+      "source": "data-uri"
+    },
+    {
+      "kind": "image",
+      "order": 2,
+      "widthPx": 20,
+      "heightPx": 20,
+      "alignment": "centered",
+      "source": "data-uri"
+    }
+  ]
+}

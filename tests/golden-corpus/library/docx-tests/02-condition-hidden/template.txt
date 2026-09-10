@@ -1,0 +1,5 @@
+Header
+{?flags.showVip}
+VIP Section
+{/?flags.showVip}
+Footer
