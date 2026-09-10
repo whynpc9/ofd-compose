@@ -40,7 +40,8 @@
       "runCount": 1,
       "pipeline": { "path": "fromPath", "operations": [] },
       "image": { "centered": true, "valueExpression": "fromPath" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -59,7 +60,8 @@
       "runCount": 1,
       "pipeline": { "path": "fromDataUri", "operations": [] },
       "image": { "centered": true, "valueExpression": "fromDataUri" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -78,7 +80,8 @@
       "runCount": 1,
       "pipeline": { "path": "fitInBox", "operations": [] },
       "image": { "centered": true, "valueExpression": "fitInBox" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [

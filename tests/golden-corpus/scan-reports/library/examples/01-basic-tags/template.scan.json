@@ -40,7 +40,8 @@
       "runCount": 1,
       "pipeline": { "path": "patient.name", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -59,7 +60,8 @@
       "runCount": 1,
       "pipeline": { "path": "patient.age", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -78,7 +80,8 @@
       "runCount": 1,
       "pipeline": { "path": "report.id", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [],

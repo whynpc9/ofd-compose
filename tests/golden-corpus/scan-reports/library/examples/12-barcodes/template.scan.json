@@ -50,7 +50,8 @@
         "symbology": "code128",
         "parameters": { "width": 360, "height": 96, "margin": 1, "pure": true },
         "centered": false
-      }
+      },
+      "runSpans": null
     },
     {
       "location": {
@@ -74,7 +75,8 @@
         "symbology": "ean13",
         "parameters": { "width": 280, "height": 100, "margin": 2, "pure": true },
         "centered": true
-      }
+      },
+      "runSpans": null
     }
   ],
   "resourceReferences": [],

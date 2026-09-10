@@ -36,7 +36,8 @@
       "runCount": 1,
       "pipeline": { "path": "flags.showVip", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -55,7 +56,8 @@
       "runCount": 1,
       "pipeline": { "path": "flags.showVip", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [],

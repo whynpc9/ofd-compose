@@ -36,7 +36,8 @@
       "runCount": 1,
       "pipeline": { "path": "gallery", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -55,7 +56,8 @@
       "runCount": 1,
       "pipeline": { "path": "photo", "operations": [] },
       "image": { "centered": true, "valueExpression": "photo" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -74,7 +76,8 @@
       "runCount": 1,
       "pipeline": { "path": "gallery", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [

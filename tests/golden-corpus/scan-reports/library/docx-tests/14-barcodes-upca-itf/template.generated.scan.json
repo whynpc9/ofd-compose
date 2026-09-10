@@ -44,7 +44,8 @@
         "symbology": "upca",
         "parameters": { "width": 300, "height": 90, "margin": 2, "pure": true },
         "centered": false
-      }
+      },
+      "runSpans": null
     },
     {
       "location": {
@@ -68,7 +69,8 @@
         "symbology": "itf",
         "parameters": { "width": 300, "height": 90, "margin": 2, "pure": true },
         "centered": false
-      }
+      },
+      "runSpans": null
     }
   ],
   "resourceReferences": [],

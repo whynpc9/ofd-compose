@@ -42,7 +42,8 @@
       "runCount": 1,
       "pipeline": { "path": "invoice.no", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -61,7 +62,8 @@
       "runCount": 1,
       "pipeline": { "path": "invoice.lines", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -80,7 +82,8 @@
       "runCount": 1,
       "pipeline": { "path": "name", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -99,7 +102,8 @@
       "runCount": 1,
       "pipeline": { "path": "qty", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -121,7 +125,8 @@
         "operations": [{ "name": "format", "args": ["number", "0.00"] }]
       },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -140,7 +145,8 @@
       "runCount": 1,
       "pipeline": { "path": "invoice.lines", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [],

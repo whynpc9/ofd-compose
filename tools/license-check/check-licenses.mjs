@@ -6,8 +6,8 @@
 //   pnpm --dev  (toolchain only):     whitelist + named entries in dev-exceptions.json.
 //   NuGet (per project.assets.json + nuspec metadata): strict whitelist.
 //
-// Compound SPDX expressions: "A OR B" passes if any side is allowed,
-// "A AND B" passes only if both sides are allowed.
+// Compound SPDX expressions are parsed with real operator precedence:
+// parentheses group, AND binds tighter than OR; malformed expressions fail closed.
 
 import { execFile } from "node:child_process";
 import { readdir, readFile } from "node:fs/promises";
@@ -20,11 +20,10 @@ const execFileAsync = promisify(execFile);
 const toolDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(toolDir, "../..");
 
-function normalize(license) {
+export function normalize(license) {
   return license
     .trim()
     .toLowerCase()
-    .replace(/[()]/g, "")
     .replace(/-only$|-or-later$/g, "")
     .replace(/^bsd-\d-clause$/, "bsd")
     .replace(/^0bsd$/, "bsd");
@@ -35,14 +34,68 @@ async function loadAllowed() {
   return new Set(raw.map(normalize));
 }
 
-function isAllowed(expression, allowed) {
-  return expression
-    .split(/\s+or\s+/i)
-    .some((orPart) =>
-      orPart
-        .split(/\s+and\s+/i)
-        .every((andPart) => allowed.has(normalize(andPart.replace(/[()]/g, "")))),
-    );
+export function isAllowed(expression, allowed) {
+  const tokens = expression.match(/\(|\)|[^\s()]+/g) ?? [];
+  let pos = 0;
+
+  const isOperator = (token, op) => token?.toLowerCase() === op;
+
+  function parsePrimary() {
+    const token = tokens[pos];
+    if (token === "(") {
+      pos++;
+      const value = parseOr();
+      if (tokens[pos] !== ")") {
+        throw new Error("unbalanced parentheses");
+      }
+      pos++;
+      return value;
+    }
+    if (
+      token === undefined ||
+      token === ")" ||
+      isOperator(token, "and") ||
+      isOperator(token, "or")
+    ) {
+      throw new Error(`unexpected token: ${token ?? "end of expression"}`);
+    }
+    pos++;
+    let license = token;
+    if (isOperator(tokens[pos], "with")) {
+      const exception = tokens[pos + 1];
+      if (exception === undefined || exception === "(" || exception === ")") {
+        throw new Error("WITH requires an exception name");
+      }
+      license = `${license} WITH ${exception}`;
+      pos += 2;
+    }
+    return allowed.has(normalize(license));
+  }
+
+  function parseAnd() {
+    let value = parsePrimary();
+    while (isOperator(tokens[pos], "and")) {
+      pos++;
+      value = parsePrimary() && value;
+    }
+    return value;
+  }
+
+  function parseOr() {
+    let value = parseAnd();
+    while (isOperator(tokens[pos], "or")) {
+      pos++;
+      value = parseAnd() || value;
+    }
+    return value;
+  }
+
+  try {
+    const result = parseOr();
+    return pos === tokens.length && result;
+  } catch {
+    return false;
+  }
 }
 
 function printViolations(title, violations) {
@@ -232,7 +285,10 @@ async function main() {
   );
 }
 
-main().catch((error) => {
-  console.error(`License gate could not run: ${error.message}`);
-  process.exit(2);
-});
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  main().catch((error) => {
+    console.error(`License gate could not run: ${error.message}`);
+    process.exit(2);
+  });
+}

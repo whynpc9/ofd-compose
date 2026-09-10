@@ -21,12 +21,11 @@
 - Node 24 LTS（`.nvmrc` 锁定；用 `nvm use` 或自行安装）
 - pnpm（`corepack enable` 后由 `packageManager` 字段锁定版本）
 - .NET 10 SDK（`global.json` 锁定版本带）
-- 浏览器模式测试需要一次性安装 Playwright 浏览器：`pnpm exec playwright install chromium`
 
-一条命令安装并跑冒烟测试：
+一条命令安装并跑冒烟测试（含一次性 Playwright chromium 安装，浏览器测试的前置条件）：
 
 ```bash
-pnpm install && pnpm smoke
+pnpm install && pnpm exec playwright install chromium && pnpm smoke
 ```
 
 `pnpm smoke` = TS node 模式测试 + TS browser 模式测试 + .NET xUnit v3 测试。

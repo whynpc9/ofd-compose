@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -8,6 +9,24 @@ using DocumentFormat.OpenXml.Wordprocessing;
 
 namespace OFDCompose.DocxScanner;
 
+/// <summary>
+/// Input bounds for DOCX archives (spec: ZIP/XML inputs get size and structure limits
+/// so hostile input cannot exhaust memory or CPU). Enforced before OpenXML parsing:
+/// compressed size, entry count, and both declared and actually inflated entry sizes.
+/// </summary>
+public sealed record DocxArchiveLimits(
+    long MaxCompressedBytes,
+    int MaxEntries,
+    long MaxExpandedBytesPerEntry,
+    long MaxExpandedBytesTotal)
+{
+    public static DocxArchiveLimits Default { get; } = new(
+        MaxCompressedBytes: 256L * 1024 * 1024,
+        MaxEntries: 10_000,
+        MaxExpandedBytesPerEntry: 512L * 1024 * 1024,
+        MaxExpandedBytesTotal: 2L * 1024 * 1024 * 1024);
+}
+
 public static class DocxScan
 {
     public const string ReportFormat = "ofd-compose/scan-report@1";
@@ -16,8 +35,16 @@ public static class DocxScan
     public const string ScannerVersion = "0.1.0";
     public const string HeaderFooterNote = "静态页眉页脚内容：旧引擎不处理页眉页脚（仅范围发现，非旧引擎动态渲染证据）";
 
-    public static ScanReport ScanFile(string docxPath, string? dataJsonPath = null)
+    public static ScanReport ScanFile(string docxPath, string? dataJsonPath = null, DocxArchiveLimits? limits = null)
     {
+        var effectiveLimits = limits ?? DocxArchiveLimits.Default;
+        var fileLength = new FileInfo(docxPath).Length;
+        if (fileLength > effectiveLimits.MaxCompressedBytes)
+        {
+            throw new InvalidDataException(
+                $"DOCX archive exceeds the compressed size limit ({fileLength} > {effectiveLimits.MaxCompressedBytes} bytes).");
+        }
+
         var bytes = File.ReadAllBytes(docxPath);
         JsonNode? data = null;
         if (dataJsonPath != null)
@@ -25,15 +52,68 @@ public static class DocxScan
             data = JsonNode.Parse(File.ReadAllText(dataJsonPath));
         }
 
-        return Scan(Path.GetFileName(docxPath), bytes, data);
+        return Scan(Path.GetFileName(docxPath), bytes, data, effectiveLimits);
     }
 
-    public static ScanReport Scan(string fileName, byte[] docxBytes, JsonNode? data)
+    public static ScanReport Scan(string fileName, byte[] docxBytes, JsonNode? data, DocxArchiveLimits? limits = null)
     {
+        ValidateArchive(docxBytes, limits ?? DocxArchiveLimits.Default);
         var sha256 = Convert.ToHexString(SHA256.HashData(docxBytes)).ToLowerInvariant();
         using var stream = new MemoryStream(docxBytes, writable: false);
         using var document = WordprocessingDocument.Open(stream, isEditable: false);
         return new ScanEngine(fileName, sha256, data).Run(document);
+    }
+
+    private static void ValidateArchive(byte[] bytes, DocxArchiveLimits limits)
+    {
+        if (bytes.LongLength > limits.MaxCompressedBytes)
+        {
+            throw new InvalidDataException(
+                $"DOCX archive exceeds the compressed size limit ({bytes.LongLength} > {limits.MaxCompressedBytes} bytes).");
+        }
+
+        using var stream = new MemoryStream(bytes, writable: false);
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+        if (archive.Entries.Count > limits.MaxEntries)
+        {
+            throw new InvalidDataException(
+                $"DOCX archive exceeds the entry count limit ({archive.Entries.Count} > {limits.MaxEntries}).");
+        }
+
+        // Declared sizes come from the central directory and can lie, so every entry
+        // is additionally inflated under a hard cap to catch understated lengths.
+        var buffer = new byte[81920];
+        long expandedTotal = 0;
+        foreach (var entry in archive.Entries)
+        {
+            if (entry.Length > limits.MaxExpandedBytesPerEntry)
+            {
+                throw new InvalidDataException(
+                    $"DOCX entry '{entry.FullName}' exceeds the expanded size limit ({entry.Length} > {limits.MaxExpandedBytesPerEntry} bytes).");
+            }
+
+            long inflated = 0;
+            using (var entryStream = entry.Open())
+            {
+                int read;
+                while ((read = entryStream.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    inflated += read;
+                    expandedTotal += read;
+                    if (inflated > limits.MaxExpandedBytesPerEntry)
+                    {
+                        throw new InvalidDataException(
+                            $"DOCX entry '{entry.FullName}' inflates beyond the expanded size limit ({limits.MaxExpandedBytesPerEntry} bytes).");
+                    }
+
+                    if (expandedTotal > limits.MaxExpandedBytesTotal)
+                    {
+                        throw new InvalidDataException(
+                            $"DOCX archive inflates beyond the total expanded size limit ({limits.MaxExpandedBytesTotal} bytes).");
+                    }
+                }
+            }
+        }
     }
 
     public static string ToJson(ScanReport report)
@@ -242,7 +322,8 @@ internal sealed class ScanEngine
             {
                 // Row-level control marker: legacy consumes the whole row as one marker;
                 // the constituent cell paragraphs are not scanned separately.
-                var (runCount, split) = RunStats(rowMatch.Value.Match, TextSpans(rowTextNodes));
+                var rowSpans = TextSpans(rowTextNodes);
+                var (runCount, split) = RunStats(rowMatch.Value.Match, rowSpans);
                 EmitTag(
                     rowMatch.Value.Token,
                     rowMatch.Value.Match.Value,
@@ -251,7 +332,8 @@ internal sealed class ScanEngine
                     isRowMarker: true,
                     soleContent: true,
                     runCount,
-                    split);
+                    split,
+                    BuildRunStyleMap(split, rowSpans));
                 rowIndex++;
                 continue;
             }
@@ -408,7 +490,8 @@ internal sealed class ScanEngine
                 isRowMarker: false,
                 soleContent: true,
                 runCount,
-                split);
+                split,
+                BuildRunStyleMap(split, spans));
             return;
         }
 
@@ -423,37 +506,66 @@ internal sealed class ScanEngine
                 isRowMarker: false,
                 soleContent: false,
                 runCount,
-                split);
+                split,
+                BuildRunStyleMap(split, spans));
         }
     }
 
-    private static List<(int Start, int Length)> TextSpans(IReadOnlyList<Text> textNodes)
+    /// <summary>Offset of one w:t node inside the element's combined text, plus its run's raw rPr XML.</summary>
+    private sealed record TextSpan(int Start, int Length, string? RunPropertiesXml);
+
+    private static List<TextSpan> TextSpans(IReadOnlyList<Text> textNodes)
     {
-        var spans = new List<(int, int)>(textNodes.Count);
+        var spans = new List<TextSpan>(textNodes.Count);
         var offset = 0;
         foreach (var node in textNodes)
         {
-            spans.Add((offset, node.Text.Length));
+            var runPropertiesXml = node.Parent is Run run ? run.RunProperties?.OuterXml : null;
+            spans.Add(new TextSpan(offset, node.Text.Length, runPropertiesXml));
             offset += node.Text.Length;
         }
 
         return spans;
     }
 
-    private static (int RunCount, bool Split) RunStats(Match match, IReadOnlyList<(int Start, int Length)> spans)
+    private static (int RunCount, bool Split) RunStats(Match match, IReadOnlyList<TextSpan> spans)
     {
         var matchStart = match.Index;
         var matchEnd = match.Index + match.Length;
         var count = 0;
-        foreach (var (start, length) in spans)
+        foreach (var span in spans)
         {
-            if (start < matchEnd && matchStart < start + length)
+            if (span.Start < matchEnd && matchStart < span.Start + span.Length)
             {
                 count++;
             }
         }
 
         return (Math.Max(count, 1), count > 1);
+    }
+
+    /// <summary>
+    /// Full text-range → style map of the element, recorded only for split tags
+    /// (spec: preserve the mapping so the independent styles around a tag split
+    /// across Word runs survive migration; legacy flattens to the first run).
+    /// </summary>
+    private static IReadOnlyList<RunStyleSpan>? BuildRunStyleMap(bool split, IReadOnlyList<TextSpan> spans)
+    {
+        if (!split)
+        {
+            return null;
+        }
+
+        var map = new List<RunStyleSpan>(spans.Count);
+        for (var index = 0; index < spans.Count; index++)
+        {
+            if (spans[index].Length > 0)
+            {
+                map.Add(new RunStyleSpan(spans[index].Start, spans[index].Length, index, spans[index].RunPropertiesXml));
+            }
+        }
+
+        return map;
     }
 
     private void EmitTag(
@@ -464,7 +576,8 @@ internal sealed class ScanEngine
         bool isRowMarker,
         bool soleContent,
         int runCount,
-        bool splitAcrossRuns)
+        bool splitAcrossRuns,
+        IReadOnlyList<RunStyleSpan>? runSpans)
     {
         string kind;
         string expression;
@@ -601,7 +714,8 @@ internal sealed class ScanEngine
                 runCount,
                 pipeline,
                 image,
-                barcode));
+                barcode,
+                runSpans));
     }
 
     private PipelineModel? RegisterPipeline(string expression, TagLocation location)
@@ -782,6 +896,16 @@ internal sealed class ScanEngine
             }
         }
 
+        // Spec: a truthy non-array value under a loop marker executes the block exactly
+        // once under legacy truthiness and must be flagged LEGACY_SEMANTIC_CHANGE.
+        foreach (var marker in _scopes.SelectMany(static scope => scope.Markers))
+        {
+            if (marker.Kind == ControlKind.LoopStart && marker.Paired)
+            {
+                ClassifyLoopValue(marker);
+            }
+        }
+
         foreach (var scope in _scopes)
         {
             var paired = scope.Markers.Where(static marker => marker.IsStart && marker.Paired).ToList();
@@ -866,6 +990,56 @@ internal sealed class ScanEngine
         }
 
         return references;
+    }
+
+    /// <summary>
+    /// Sidecar lookup (not evaluation) for a paired loop marker: when the loop value
+    /// is a truthy non-array, legacy renders the block exactly once, which the
+    /// migration spec requires to be reported as a LEGACY_SEMANTIC_CHANGE.
+    /// Arrays iterate normally and falsy values render nothing — no divergence.
+    /// </summary>
+    private void ClassifyLoopValue(MarkerInstance marker)
+    {
+        if (_data == null || !ExpressionGrammar.IsPlainPath(marker.Expression))
+        {
+            return;
+        }
+
+        if (!ExpressionGrammar.TryLookupPath(_data, marker.Expression, out var node))
+        {
+            return;
+        }
+
+        if (node is null or JsonArray || !IsLegacyTruthy(node))
+        {
+            return;
+        }
+
+        _semanticChanges.Add("non-array-loop");
+        AddDiagnostic(
+            "NON_ARRAY_LOOP",
+            "warning",
+            $"Loop '{marker.RawText}' iterates a truthy non-array value; legacy renders the block exactly once instead of requiring an array.",
+            marker.Location);
+    }
+
+    /// <summary>Legacy truthiness: blank/0/false/empty array/empty object are falsy; "false" and "0" are truthy.</summary>
+    internal static bool IsLegacyTruthy(JsonNode node)
+    {
+        return node switch
+        {
+            JsonArray array => array.Count > 0,
+            JsonObject obj => obj.Count > 0,
+            JsonValue value => value.GetValueKind() switch
+            {
+                JsonValueKind.False or JsonValueKind.Null => false,
+                JsonValueKind.True => true,
+                JsonValueKind.String => value.GetValue<string>().Trim().Length > 0,
+                JsonValueKind.Number => value.GetValue<double>() != 0,
+                _ => false,
+            },
+            _ => false,
+        };
     }
 
     private ResourceValue ResolveValue(string expression)

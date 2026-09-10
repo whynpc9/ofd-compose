@@ -36,7 +36,8 @@
       "runCount": 1,
       "pipeline": { "path": "logo", "operations": [] },
       "image": { "centered": false, "valueExpression": "logo" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [

@@ -44,6 +44,13 @@ public sealed record BarcodeInfo(
     BarcodeParameters Parameters,
     bool Centered);
 
+/// <summary>
+/// One text range → run style mapping entry. RunIndex is the index of the
+/// contributing w:t node within the element (document order); RunPropertiesXml
+/// is the parent w:r's raw w:rPr XML (null when the run has no properties).
+/// </summary>
+public sealed record RunStyleSpan(int Start, int Length, int RunIndex, string? RunPropertiesXml);
+
 public sealed record TagRecord(
     TagLocation Location,
     string RawText,
@@ -55,7 +62,8 @@ public sealed record TagRecord(
     int RunCount,
     PipelineModel? Pipeline,
     ImageInfo? Image,
-    BarcodeInfo? Barcode);
+    BarcodeInfo? Barcode,
+    IReadOnlyList<RunStyleSpan>? RunSpans);
 
 public sealed record ResourceValue(
     string State,

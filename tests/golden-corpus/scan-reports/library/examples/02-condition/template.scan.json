@@ -39,7 +39,8 @@
       "runCount": 1,
       "pipeline": { "path": "patient.name", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -58,7 +59,8 @@
       "runCount": 1,
       "pipeline": { "path": "patient.isVip", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -77,7 +79,8 @@
       "runCount": 1,
       "pipeline": { "path": "patient.isVip", "operations": [] },
       "image": null,
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [],

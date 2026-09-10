@@ -40,7 +40,8 @@
       "runCount": 1,
       "pipeline": { "path": "fileImage", "operations": [] },
       "image": { "centered": false, "valueExpression": "fileImage" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -59,7 +60,8 @@
       "runCount": 1,
       "pipeline": { "path": "dataUriImage", "operations": [] },
       "image": { "centered": false, "valueExpression": "dataUriImage" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     },
     {
       "location": {
@@ -78,7 +80,8 @@
       "runCount": 1,
       "pipeline": { "path": "fitBoxImage", "operations": [] },
       "image": { "centered": false, "valueExpression": "fitBoxImage" },
-      "barcode": null
+      "barcode": null,
+      "runSpans": null
     }
   ],
   "resourceReferences": [

@@ -131,6 +131,79 @@ public class ControlBlockTests
     }
 
     [Fact]
+    public void Truthy_non_array_loop_value_is_a_legacy_semantic_change()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("{#value}"));
+            body.Append(DocxFixture.Para("{value}"));
+            body.Append(DocxFixture.Para("{/value}"));
+        });
+        var dataPath = DocxFixture.CreateDataJson("{\"value\":1}");
+
+        var report = DocxScan.ScanFile(path, dataPath);
+
+        var diagnostic = Assert.Single(report.Diagnostics, d => d.Code == "NON_ARRAY_LOOP");
+        Assert.Equal("warning", diagnostic.Severity);
+        Assert.Contains("non-array-loop", report.LegacySemanticChanges);
+        Assert.Equal("medium", report.Risk);
+        Assert.Equal("needs-review", report.MigrationStatus);
+    }
+
+    [Fact]
+    public void Legacy_truthy_string_zero_loop_value_is_flagged()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("{#value}"));
+            body.Append(DocxFixture.Para("{/value}"));
+        });
+        // Legacy truthiness: the string "0" is truthy, so legacy renders the block once.
+        var dataPath = DocxFixture.CreateDataJson("{\"value\":\"0\"}");
+
+        var report = DocxScan.ScanFile(path, dataPath);
+
+        Assert.Contains(report.Diagnostics, d => d.Code == "NON_ARRAY_LOOP");
+        Assert.Contains("non-array-loop", report.LegacySemanticChanges);
+    }
+
+    [Fact]
+    public void Array_and_falsy_loop_values_are_not_semantic_changes()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("{#items}"));
+            body.Append(DocxFixture.Para("{/items}"));
+            body.Append(DocxFixture.Para("{#count}"));
+            body.Append(DocxFixture.Para("{/count}"));
+            body.Append(DocxFixture.Para("{#missing}"));
+            body.Append(DocxFixture.Para("{/missing}"));
+        });
+        var dataPath = DocxFixture.CreateDataJson("{\"items\":[1,2],\"count\":0}");
+
+        var report = DocxScan.ScanFile(path, dataPath);
+
+        Assert.DoesNotContain(report.Diagnostics, d => d.Code == "NON_ARRAY_LOOP");
+        Assert.DoesNotContain("non-array-loop", report.LegacySemanticChanges);
+        Assert.Equal("auto", report.MigrationStatus);
+    }
+
+    [Fact]
+    public void Non_array_loop_requires_a_data_sidecar()
+    {
+        var path = DocxFixture.CreateDocx(body =>
+        {
+            body.Append(DocxFixture.Para("{#value}"));
+            body.Append(DocxFixture.Para("{/value}"));
+        });
+
+        var report = DocxScan.ScanFile(path);
+
+        Assert.DoesNotContain(report.Diagnostics, d => d.Code == "NON_ARRAY_LOOP");
+        Assert.Equal("auto", report.MigrationStatus);
+    }
+
+    [Fact]
     public void Properly_nested_loops_pair_with_nesting_info()
     {
         var path = DocxFixture.CreateDocx(body =>

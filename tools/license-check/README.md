@@ -13,4 +13,6 @@ pnpm check:licenses
   2. pnpm 开发依赖（`--dev`）：白名单 + `dev-exceptions.json` 具名例外；例外失效会告警；
   3. NuGet 依赖：读取 `dotnet/**/obj/project.assets.json` + 本地 nuspec 元数据（需先 `dotnet restore`），严格白名单；仅声明 license 文件而无表达式的包需人工核查。
 
+  复合 SPDX 表达式按运算符优先级解析（括号分组、AND 优先于 OR；`X WITH exception` 视为整体），无法解析的表达式一律判为不允许（fail closed）。
+
 > ADR-0001 备注：ADR 提到 NuGet 侧用 `dotnet-project-licenses`；该工具（2.7.1 稳定版与 3.0.0-alpha.9）在本仓库的 net10.0 + CPM + slnx 环境下无法枚举项目（已实测），故 NuGet 侧由本脚本以 `project.assets.json` 实现同等语义。若将来该工具可用，可在 ADR 修订中换回。
