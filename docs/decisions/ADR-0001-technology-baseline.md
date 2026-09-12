@@ -52,7 +52,7 @@
 | 字素/光标移动 | 编辑器层可用 `Intl.Segmenter`；Layout Core 只用 HarfBuzz cluster | — | — | Layout 不依赖 ICU | — |
 | 十进制 | decimal.js | 10.x | MIT | 金额/比率不走浮点 | WP0.1b |
 | 数字格式化 | 自实现：声明的 .NET 格式模式子集（`0.00`、`#,##0`、`%`、`‰` 等） | — | — | 不用 `Intl.NumberFormat`，避免 ICU 版本差异；与旧 InvariantCulture 输出对照 | WP0.1b |
-| 日期时间 | temporal-polyfill（始终用 polyfill，不用运行时 Temporal）；模板必须显式 IANA 时区；格式化自实现 | 0.3.x | MIT | 两端一致行为；tzdata 版本写入 provenance | WP0.1b：不同 Node/浏览器 ICU 的 tz 偏移一致性 |
+| 日期时间 | temporal-polyfill（始终用 polyfill，不用运行时 Temporal）；模板必须显式 IANA 时区；格式化自实现 | 1.0.x（原 0.3.x，见修订 2026-09-10） | MIT | 两端一致行为；tzdata 版本写入 provenance | WP0.1b：不同 Node/浏览器 ICU 的 tz 偏移一致性 |
 | 规范化 JSON 与摘要 | 自实现确定性序列化（键排序、1/1000 mm 整数、固定数字格式）；SHA-256 对字节 | — | — | 摘要在 TS 生成一次；.NET 只对字节做 SHA-256，不做跨语言重规范化 | WP0.5 |
 | 图片尺寸探测 | image-size | 2.x | MIT | 不解码像素；PNG/JPEG/GIF/BMP/TIFF 尺寸 | WP0.5 |
 | 图片格式 profile | 写入器输入只接受 PNG 与 JPEG；GIF/BMP/TIFF 在 Media Core 规范化为 PNG 或返回 `UNSUPPORTED_FEATURE` | — | — | 缩小写入器解码面 | WP0.5 决定规范化用纯 JS 解码器还是 P0 拒绝 |
@@ -123,6 +123,12 @@
 | PDF 写入器 | 自研 `PdfIrWriter` | WP0.7 以同一批 IR 直接生成 PDF，用 PdfPig / pdf.js / qpdf 独立验证 |
 | ofdrw.net 许可 | MIT | 在 ofdrw.net 仓库添加 LICENSE、包元数据；本项目 WP0.2 锁定提交 |
 | Java 组件 | 仅测试容器中的 ofdrw Reader 作为独立验证器 | 生成适配器留待 WP0.10 ADR |
+
+## 修订记录
+
+| 日期 | 修订 | 理由 |
+| --- | --- | --- |
+| 2026-09-10 | `temporal-polyfill` 版本带 0.3.x → 1.0.x（issue 04 落地为 1.0.4，`packages/binding-core`） | 1.0 系列对应 Temporal 提案 Stage 3 稳定 API（`Instant.from` / `PlainDateTime.from` / `toZonedDateTimeISO`），后续升级不再破坏调用面；许可仍为 MIT，传递依赖 `temporal-spec`（Apache-2.0）、`temporal-utils`（MIT）在白名单内。tzdata 版本写入 provenance 的动作不变，仍在 WP0.1b / issue 05 落地。 |
 
 ## 来源（2026-09-10 静态核查）
 

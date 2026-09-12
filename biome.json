@@ -13,6 +13,7 @@
       "!**/dist",
       "!**/coverage",
       "!**/packages.lock.json",
+      "!schemas/document-model/*.schema.json",
       "!**/*.grit"
     ]
   },
@@ -39,7 +40,9 @@
     {
       "includes": [
         "packages/binding-core/**",
+        "packages/document-model/**",
         "packages/layout-core/**",
+        "packages/template-compiler/**",
         "packages/typography-core/**"
       ],
       "linter": {
@@ -92,7 +95,9 @@
       "path": "./tools/biome-plugins/no-date-tolocale.grit",
       "includes": [
         "**/packages/binding-core/**",
+        "**/packages/document-model/**",
         "**/packages/layout-core/**",
+        "**/packages/template-compiler/**",
         "**/packages/typography-core/**"
       ]
     },
@@ -100,7 +105,9 @@
       "path": "./tools/biome-plugins/no-globalthis-denied-globals.grit",
       "includes": [
         "**/packages/binding-core/**",
+        "**/packages/document-model/**",
         "**/packages/layout-core/**",
+        "**/packages/template-compiler/**",
         "**/packages/typography-core/**"
       ]
     }

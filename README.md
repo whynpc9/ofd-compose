@@ -50,5 +50,15 @@ CI（`.github/workflows/ci.yml`，Linux）依次执行：锁文件存在性检�
 
 - Node 版本：`.nvmrc` + 根 `package.json` 的 `engines`；pnpm 版本：`packageManager`。
 - .NET SDK：`global.json`；包版本：`dotnet/Directory.Packages.props`（CPM）；NuGet 锁文件 `packages.lock.json` 入库。
-- `binding-core` / `layout-core` / `typography-core` 禁止引用 DOM 全局对象与 `Intl`（Biome `noRestrictedGlobals`，见 `biome.json` overrides；门禁测试在 `tests/gates/`）。
+- `document-model` / `template-compiler` / `binding-core` / `layout-core` / `typography-core` 禁止引用 DOM 全局对象与 `Intl`（Biome `noRestrictedGlobals`，见 `biome.json` overrides；门禁测试在 `tests/gates/`）。
+- 契约 schema：`schemas/document-model/*.schema.json` 由 TypeBox 定义生成，`tests/gates` 保证入库文件与定义一致（变更后 `pnpm --filter @ofd-compose/gate-tests test -- -u`）。
+
+## 已落地的内核链路（issue 04 起）
+
+`TemplateSource` --`compile()`（`@ofd-compose/template-compiler`）--> `CompiledTemplate` --`bind()`（`@ofd-compose/binding-core`）--> `ResolvedDocument`
+
+- `@ofd-compose/document-model`：Document Model v0（TypeBox）：信封、settings（locale/timeZone/bindingPolicyVersion）、样式表、段落 + 行内序列（静态文本 / DynamicText / InputControl）、扩展命名空间；`validateTemplateSource()`。
+- `@ofd-compose/template-compiler`：旧管道文本与结构化配置 → 同一版本化 AST（`expressionLanguageVersion = expr-1`）；声明的 .NET 数字/日期格式模式子集编译期校验；模板位置 ↔ 旧表达式 ↔ AST 节点的来源映射。
+- `@ofd-compose/binding-core`：strict-1 / legacy-compat-1 两种绑定策略（Missing/Null 分离、作用域、truthiness、`LEGACY_SEMANTIC_CHANGE`）；decimal.js 数字格式化、temporal-polyfill 日期字段；节点级诊断。
+- 验收：`tests/golden-corpus/tests/narrative-corpus.dual.test.ts` 在 Node 与浏览器双模式下把叙述类 corpus 用例绑定到 ResolvedDocument 并与预期文本比较。
 - TS 包 ESM only、strict（`tsconfig.base.json`）；锁文件 `pnpm-lock.yaml` 入库。

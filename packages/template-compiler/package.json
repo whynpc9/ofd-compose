@@ -1,5 +1,5 @@
 {
-  "name": "@ofd-compose/binding-core",
+  "name": "@ofd-compose/template-compiler",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -13,10 +13,7 @@
   },
   "dependencies": {
     "@ofd-compose/document-model": "workspace:*",
-    "@ofd-compose/template-compiler": "workspace:*",
-    "@sinclair/typebox": "0.34.52",
-    "decimal.js": "10.6.0",
-    "temporal-polyfill": "1.0.4"
+    "@sinclair/typebox": "0.34.52"
   },
   "devDependencies": {
     "vitest": "5.0.0"
