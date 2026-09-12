@@ -1,6 +1,6 @@
 # tests/golden-corpus — Golden Corpus
 
-评审人可见的固定结构语料库（issue 02）。**格式已冻结**，后续票以这些用例为验收输入；从 issue 04 起，叙述类用例已可执行（见「叙述类用例的执行」），其余用例 `result.status` 仍为 `not-executable`。
+评审人可见的固定结构语料库（issue 02）。**格式已冻结**，后续票以这些用例为验收输入；从 issue 04/05 起，文本/结构类用例已可执行（见「文本/结构类用例的执行」），其余用例 `result.status` 仍为 `not-executable`。
 
 ## 分层
 
@@ -15,7 +15,7 @@
 <case-dir>/
   case.json              manifest（schema: schemas/golden-corpus/case-manifest.schema.json）
   data.json              输入数据；manifest.dataDigest 记录其字节的 sha256
-  template.txt           模板结构文本（测试方法用例）：逐段落/表格行列出标签原文
+  template.txt           模板结构文本：逐段落/表格行列出标签原文（测试方法用例原生；示例用例由 template.docx 转录）
   template.docx          旧模板原件（示例用例）
   assets/                可选：图片等资产（如 chart.png）
   expected/semantics.json  预期语义（schema: schemas/golden-corpus/case-semantics.schema.json）
@@ -42,14 +42,15 @@
 
 `pnpm --filter @ofd-compose/golden-corpus test`：枚举全部用例，校验 manifest schema、语义 schema、`dataDigest` 与 data.json 字节一致、引用文件存在；并对 15 个测试方法与示例 01–12 的覆盖性做强断言。
 
-## 叙述类用例的执行（issue 04）
+## 文本/结构类用例的执行（issue 04 / 05）
 
-`tests/narrative-corpus.dual.test.ts` 把 **叙述类** 用例（`template.txt` 只含静态文本与行内 `{expr}`，不含控制块 `{#` `{/` `{?`、图片/条码 `{%`、表格或 `<run>` 标注）经 `src/narrative-template.ts` 转成原生 TemplateSource（`timeZone: UTC`，策略取 manifest `nativeProfile.bindingPolicyVersion`），再经 `compile()` → `bind()` 得到 ResolvedDocument，并断言段落最终文本等于 `expected/semantics.json` 的 `paragraphs`、无 error/warning 级诊断。
+`tests/corpus.dual.test.ts` 把 **文本/结构类** 用例（`template.txt` 由静态文本、行内 `{expr}`、控制块 `{#` `{/` `{?`、表格 `@table-begin` / `| a | b |` 及行组标记组成，不含图片/条码 `{%`）经 `src/corpus-template.ts` 转成原生 TemplateSource（`timeZone: UTC`，策略取 manifest `nativeProfile.bindingPolicyVersion`；循环 → RepeatBlock / RepeatRowGroup，序号退化键并显式标注 `orderDependentIdentity`；`{?}` → ConditionalBlock；`<run>` 标注抹平，对应 `allowedDifferences: split-run-flattening`），再经 `compile()` → `bind()` 得到 ResolvedDocument，并把顶层段落文本、表格单元格文本、`structure.conditionals` 的显隐投影成 `case-semantics@1` 的 `paragraphs` / `tables` / `conditionalBlocks` 与 `expected/semantics.json` 逐项比较，同时断言无 error/warning 级诊断。
 
-- 用例清单在测试中固定（当前：01、06、07、08 四个测试方法用例）；集合变化必须显式更新，避免用例被静默跳过。
-- 同一文件在 Node（`pnpm test`）与浏览器（`pnpm test:browser`，Playwright chromium）两种模式运行；语料经 `import.meta.glob` 读取，不依赖 `node:fs`。
+- 用例清单在测试中固定（当前 19 个：测试方法用例 01、02-hidden、02-shown、03、04、05、06、07、08、15，示例用例 01、02、03、04、05、07、08、09、10）；集合变化必须显式更新，避免用例被静默跳过。测试同时断言其余用例全部是媒体用例（`expected/semantics.json` 含 `media` 或 `barcodes`：示例 06、11、12，测试方法 09–14），留待媒体票（issue 11+）。
+- 示例用例的 `template.txt` 由 `template.docx` 正文（`word/document.xml` 的段落 / 表格 / `w:t` 文本）按同一约定转录，manifest 同时保留 `templateAsset`（原件）与 `templateDescription`（转录）。
+- 同一文件在 Node（`pnpm test`）与浏览器（`pnpm test:browser`，Playwright chromium）两种模式运行；语料经 `import.meta.glob` 读取，不依赖 `node:fs`。浏览器模式下 `document.runtime.tzdataVersion` 为 `null`（ICU 版本不可探测），Node 模式取 `process.versions.tz`。
 - 通过的用例 manifest `result.status` 记为 `pass`（测试同时断言其余用例仍为 `not-executable`）。
-- `src/narrative-template.ts` 是测试支持代码，不是受限导入器（issue 30）。
+- `src/corpus-template.ts` 是测试支持代码，不是受限导入器（issue 30）。
 
 ## 扫描产物：template.generated.docx 与 scan-reports/
 

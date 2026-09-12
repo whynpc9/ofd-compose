@@ -1,6 +1,10 @@
 import { Value } from "@sinclair/typebox/value";
 import type { Diagnostic } from "./diagnostics.js";
-import { type InlineNode, type TemplateSource, TemplateSourceSchema } from "./schema.js";
+import { type TemplateSource, TemplateSourceSchema } from "./schema.js";
+import { findStructureDepthOverflow, isStructureBinding, walkTemplateNodes } from "./walk.js";
+
+/** 结构嵌套深度的默认预算（编译器 `CompileLimits.maxStructureDepth` 与之共用）。 */
+export const defaultMaxStructureDepth = 16;
 
 export interface ValidateTemplateSourceOptions {
   /**
@@ -8,6 +12,11 @@ export interface ValidateTemplateSourceOptions {
    * 未知但 `required: false` 的条目原样保留（透传）。
    */
   readonly knownExtensionNamespaces?: readonly string[];
+  /**
+   * 结构嵌套深度预算。深度超过该值的结构容器在 schema 校验之前被有界预检拦截（`RESOURCE_LIMIT`），
+   * 避免未受信任的深层嵌套把递归校验推向栈溢出。默认 `defaultMaxStructureDepth`。
+   */
+  readonly maxStructureDepth?: number;
 }
 
 export type ValidateTemplateSourceResult =
@@ -26,14 +35,8 @@ function modelInvalid(message: string, extra: Partial<Diagnostic> = {}): Diagnos
   return { code: "MODEL_INVALID", severity: "error", phase: "model", message, ...extra };
 }
 
-function* walkInlines(template: TemplateSource): Generator<InlineNode> {
-  for (const block of template.body) {
-    yield* block.inlines;
-  }
-}
-
 /**
- * 校验 TemplateSource：schema、nodeId/bindingId/controlId 唯一性、styleId 引用、扩展命名空间。
+ * 校验 TemplateSource：schema、nodeId/bindingId/controlId 唯一性（含结构节点与表格内部）、styleId 引用、扩展命名空间。
  * 不做任何修复或丢弃；任何 error 级诊断即 `ok: false`。
  */
 export function validateTemplateSource(
@@ -41,6 +44,31 @@ export function validateTemplateSource(
   options: ValidateTemplateSourceOptions = {},
 ): ValidateTemplateSourceResult {
   const diagnostics: Diagnostic[] = [];
+
+  const maxStructureDepth = options.maxStructureDepth ?? defaultMaxStructureDepth;
+  const overflow = findStructureDepthOverflow(
+    typeof input === "object" && input !== null ? (input as { body?: unknown }).body : undefined,
+    maxStructureDepth,
+  );
+  if (overflow !== undefined) {
+    return {
+      ok: false,
+      diagnostics: [
+        {
+          code: "RESOURCE_LIMIT",
+          severity: "error",
+          phase: "model",
+          ...(overflow.nodeId === undefined ? {} : { nodeId: overflow.nodeId }),
+          message: `structure nesting depth ${overflow.structureDepth + 1} exceeds the budget of ${maxStructureDepth}; the template was not validated further`,
+          details: {
+            limit: "maxStructureDepth",
+            actual: overflow.structureDepth + 1,
+            max: maxStructureDepth,
+          },
+        },
+      ],
+    };
+  }
 
   if (!Value.Check(TemplateSourceSchema, input)) {
     for (const error of Value.Errors(TemplateSourceSchema, input)) {
@@ -74,33 +102,28 @@ export function validateTemplateSource(
     }
   };
 
-  for (const block of template.body) {
-    seenNode(block.nodeId);
-    checkStyle(block.styleId, block.nodeId);
-  }
-  for (const inline of walkInlines(template)) {
-    seenNode(inline.nodeId);
-    checkStyle(inline.styleId, inline.nodeId);
-    if (inline.kind === "dynamic-text") {
-      if (bindingIds.has(inline.bindingId)) {
+  const seenBinding = (nodeId: string, bindingId: string): void => {
+    if (bindingIds.has(bindingId)) {
+      diagnostics.push(modelInvalid(`duplicate bindingId '${bindingId}'`, { nodeId, bindingId }));
+    }
+    bindingIds.add(bindingId);
+  };
+
+  for (const { node } of walkTemplateNodes(template.body)) {
+    seenNode(node.nodeId);
+    if ("styleId" in node) checkStyle(node.styleId, node.nodeId);
+    if (node.kind === "dynamic-text" || isStructureBinding(node)) {
+      seenBinding(node.nodeId, node.bindingId);
+    } else if (node.kind === "input-control") {
+      if (controlIds.has(node.controlId)) {
         diagnostics.push(
-          modelInvalid(`duplicate bindingId '${inline.bindingId}'`, {
-            nodeId: inline.nodeId,
-            bindingId: inline.bindingId,
+          modelInvalid(`duplicate controlId '${node.controlId}'`, {
+            nodeId: node.nodeId,
+            details: { controlId: node.controlId },
           }),
         );
       }
-      bindingIds.add(inline.bindingId);
-    } else if (inline.kind === "input-control") {
-      if (controlIds.has(inline.controlId)) {
-        diagnostics.push(
-          modelInvalid(`duplicate controlId '${inline.controlId}'`, {
-            nodeId: inline.nodeId,
-            details: { controlId: inline.controlId },
-          }),
-        );
-      }
-      controlIds.add(inline.controlId);
+      controlIds.add(node.controlId);
     }
   }
 

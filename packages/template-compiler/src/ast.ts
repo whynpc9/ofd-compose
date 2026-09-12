@@ -14,12 +14,20 @@ export type PathSegment =
  * 数据路径引用。
  * - `implicit`：裸路径（`institutions`），作用域由 bindingPolicy 决定（strict：当前项；legacy-compat：当前项→父级→根回溯）；
  * - `current`：`.`；
+ * - `parent`：`^`（父级项）、`^^`（祖父级）…，可接 `.path` / `[n]`（spec §6 显式作用域，strict 下替代隐式回溯）；
  * - `root`：`$` / `$.a.b`。
  */
-export interface PathRef {
-  readonly scope: "implicit" | "current" | "root";
-  readonly segments: readonly PathSegment[];
-}
+export type PathRef =
+  | {
+      readonly scope: "implicit" | "current" | "root";
+      readonly segments: readonly PathSegment[];
+    }
+  | {
+      readonly scope: "parent";
+      /** 向上跳的层数（`^` = 1）。 */
+      readonly hops: number;
+      readonly segments: readonly PathSegment[];
+    };
 
 export type FormatSpec =
   | { readonly kind: "number"; readonly pattern: string }
@@ -97,6 +105,10 @@ export function pathRefToText(path: PathRef): string {
       return body.length === 0 ? "." : `.${body}`;
     case "root":
       return body.length === 0 ? "$" : body.startsWith("[") ? `$${body}` : `$.${body}`;
+    case "parent": {
+      const hops = "^".repeat(path.hops);
+      return body.length === 0 ? hops : body.startsWith("[") ? `${hops}${body}` : `${hops}.${body}`;
+    }
     default:
       return body;
   }

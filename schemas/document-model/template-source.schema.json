@@ -101,511 +101,1793 @@
     "body": {
       "type": "array",
       "items": {
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "kind",
-          "nodeId",
-          "inlines"
-        ],
-        "properties": {
-          "kind": {
-            "const": "paragraph",
-            "type": "string"
-          },
-          "nodeId": {
-            "minLength": 1,
-            "maxLength": 256,
-            "pattern": "^[A-Za-z0-9._:-]+$",
-            "type": "string"
-          },
-          "styleId": {
-            "minLength": 1,
-            "maxLength": 256,
-            "pattern": "^[A-Za-z0-9._:-]+$",
-            "type": "string"
-          },
-          "inlines": {
-            "type": "array",
-            "items": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "type": "object",
-                  "required": [
-                    "kind",
-                    "nodeId",
-                    "text"
-                  ],
-                  "properties": {
-                    "kind": {
-                      "const": "text",
-                      "type": "string"
+        "$id": "BlockNode",
+        "anyOf": [
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "kind",
+              "nodeId",
+              "inlines"
+            ],
+            "properties": {
+              "kind": {
+                "const": "paragraph",
+                "type": "string"
+              },
+              "nodeId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "styleId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "inlines": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "nodeId",
+                        "text"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "text",
+                          "type": "string"
+                        },
+                        "nodeId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "styleId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        }
+                      }
                     },
-                    "nodeId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    },
-                    "text": {
-                      "type": "string"
-                    },
-                    "styleId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": false,
-                  "type": "object",
-                  "required": [
-                    "kind",
-                    "nodeId",
-                    "bindingId",
-                    "expression"
-                  ],
-                  "properties": {
-                    "kind": {
-                      "const": "dynamic-text",
-                      "type": "string"
-                    },
-                    "nodeId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    },
-                    "bindingId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    },
-                    "expression": {
-                      "anyOf": [
-                        {
-                          "additionalProperties": false,
-                          "type": "object",
-                          "required": [
-                            "kind",
-                            "text"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "legacy",
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "nodeId",
+                        "bindingId",
+                        "expression"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "dynamic-text",
+                          "type": "string"
+                        },
+                        "nodeId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "bindingId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "expression": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "text"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "legacy",
+                                  "type": "string"
+                                },
+                                "text": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "source",
+                                "steps"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "structured",
+                                  "type": "string"
+                                },
+                                "source": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "steps": {
+                                  "type": "array",
+                                  "items": {
+                                    "anyOf": [
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "key"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "sort",
+                                            "type": "string"
+                                          },
+                                          "key": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          },
+                                          "direction": {
+                                            "anyOf": [
+                                              {
+                                                "const": "asc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "desc",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "take",
+                                            "type": "string"
+                                          },
+                                          "count": {
+                                            "minimum": 0,
+                                            "type": "integer"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "first",
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "last",
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "rank"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "nth",
+                                            "type": "string"
+                                          },
+                                          "rank": {
+                                            "minimum": 1,
+                                            "type": "integer"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "index"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "at",
+                                            "type": "string"
+                                          },
+                                          "index": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "key"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "maxby",
+                                            "type": "string"
+                                          },
+                                          "key": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "key"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "minby",
+                                            "type": "string"
+                                          },
+                                          "key": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "path"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "anyOf": [
+                                              {
+                                                "const": "get",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "pick",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "path": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "count",
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "whenTrue"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "if",
+                                            "type": "string"
+                                          },
+                                          "whenTrue": {
+                                            "type": "string"
+                                          },
+                                          "whenFalse": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "kind"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "format",
+                                            "type": "string"
+                                          },
+                                          "kind": {
+                                            "anyOf": [
+                                              {
+                                                "const": "number",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "numeric",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "percent",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "percentage",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "permille",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "per-mille",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "per_mille",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "date",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "datetime",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "time",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "pattern": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "styleId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "styleInheritance": {
+                          "anyOf": [
+                            {
+                              "const": "inherit-paragraph",
                               "type": "string"
                             },
-                            "text": {
-                              "minLength": 1,
+                            {
+                              "const": "explicit",
                               "type": "string"
                             }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "nodeId",
+                        "controlId",
+                        "controlType"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "input-control",
+                          "type": "string"
+                        },
+                        "nodeId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "controlId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "controlType": {
+                          "anyOf": [
+                            {
+                              "const": "text",
+                              "type": "string"
+                            },
+                            {
+                              "const": "number",
+                              "type": "string"
+                            },
+                            {
+                              "const": "select",
+                              "type": "string"
+                            },
+                            {
+                              "const": "date",
+                              "type": "string"
+                            },
+                            {
+                              "const": "radio",
+                              "type": "string"
+                            },
+                            {
+                              "const": "checkbox",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "placeholder": {
+                          "type": "string"
+                        },
+                        "defaultValue": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
                           }
                         },
-                        {
-                          "additionalProperties": false,
-                          "type": "object",
-                          "required": [
-                            "kind",
-                            "source",
-                            "steps"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "structured",
-                              "type": "string"
-                            },
-                            "source": {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            "steps": {
-                              "type": "array",
-                              "items": {
-                                "anyOf": [
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "key"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "sort",
-                                        "type": "string"
-                                      },
-                                      "key": {
-                                        "minLength": 1,
-                                        "type": "string"
-                                      },
-                                      "direction": {
-                                        "anyOf": [
-                                          {
-                                            "const": "asc",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "desc",
-                                            "type": "string"
-                                          }
-                                        ]
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "count"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "take",
-                                        "type": "string"
-                                      },
-                                      "count": {
-                                        "minimum": 0,
-                                        "type": "integer"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "first",
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "last",
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "rank"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "nth",
-                                        "type": "string"
-                                      },
-                                      "rank": {
-                                        "minimum": 1,
-                                        "type": "integer"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "index"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "at",
-                                        "type": "string"
-                                      },
-                                      "index": {
-                                        "type": "integer"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "key"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "maxby",
-                                        "type": "string"
-                                      },
-                                      "key": {
-                                        "minLength": 1,
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "key"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "minby",
-                                        "type": "string"
-                                      },
-                                      "key": {
-                                        "minLength": 1,
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "path"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "anyOf": [
-                                          {
-                                            "const": "get",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "pick",
-                                            "type": "string"
-                                          }
-                                        ]
-                                      },
-                                      "path": {
-                                        "minLength": 1,
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "count",
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "whenTrue"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "if",
-                                        "type": "string"
-                                      },
-                                      "whenTrue": {
-                                        "type": "string"
-                                      },
-                                      "whenFalse": {
-                                        "type": "string"
-                                      }
-                                    }
-                                  },
-                                  {
-                                    "additionalProperties": false,
-                                    "type": "object",
-                                    "required": [
-                                      "op",
-                                      "kind"
-                                    ],
-                                    "properties": {
-                                      "op": {
-                                        "const": "format",
-                                        "type": "string"
-                                      },
-                                      "kind": {
-                                        "anyOf": [
-                                          {
-                                            "const": "number",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "numeric",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "percent",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "percentage",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "permille",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "per-mille",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "per_mille",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "date",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "datetime",
-                                            "type": "string"
-                                          },
-                                          {
-                                            "const": "time",
-                                            "type": "string"
-                                          }
-                                        ]
-                                      },
-                                      "pattern": {
-                                        "type": "string"
-                                      }
-                                    }
-                                  }
-                                ]
+                        "styleId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "kind",
+              "nodeId",
+              "rows"
+            ],
+            "properties": {
+              "kind": {
+                "const": "table",
+                "type": "string"
+              },
+              "nodeId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "styleId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "rows": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "nodeId",
+                        "cells"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "table-row",
+                          "type": "string"
+                        },
+                        "nodeId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "cells": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "nodeId",
+                              "blocks"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "table-cell",
+                                "type": "string"
+                              },
+                              "nodeId": {
+                                "minLength": 1,
+                                "maxLength": 256,
+                                "pattern": "^[A-Za-z0-9._:-]+$",
+                                "type": "string"
+                              },
+                              "styleId": {
+                                "minLength": 1,
+                                "maxLength": 256,
+                                "pattern": "^[A-Za-z0-9._:-]+$",
+                                "type": "string"
+                              },
+                              "blocks": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "BlockNode"
+                                }
                               }
                             }
                           }
                         }
-                      ]
-                    },
-                    "styleId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    },
-                    "styleInheritance": {
-                      "anyOf": [
-                        {
-                          "const": "inherit-paragraph",
-                          "type": "string"
-                        },
-                        {
-                          "const": "explicit",
-                          "type": "string"
-                        }
-                      ]
-                    }
-                  }
-                },
-                {
-                  "additionalProperties": false,
-                  "type": "object",
-                  "required": [
-                    "kind",
-                    "nodeId",
-                    "controlId",
-                    "controlType"
-                  ],
-                  "properties": {
-                    "kind": {
-                      "const": "input-control",
-                      "type": "string"
-                    },
-                    "nodeId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    },
-                    "controlId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    },
-                    "controlType": {
-                      "anyOf": [
-                        {
-                          "const": "text",
-                          "type": "string"
-                        },
-                        {
-                          "const": "number",
-                          "type": "string"
-                        },
-                        {
-                          "const": "select",
-                          "type": "string"
-                        },
-                        {
-                          "const": "date",
-                          "type": "string"
-                        },
-                        {
-                          "const": "radio",
-                          "type": "string"
-                        },
-                        {
-                          "const": "checkbox",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "placeholder": {
-                      "type": "string"
-                    },
-                    "defaultValue": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
-                    },
-                    "required": {
-                      "type": "boolean"
-                    },
-                    "options": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
                       }
                     },
-                    "styleId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "nodeId",
+                        "bindingId",
+                        "expression",
+                        "repeatKey",
+                        "rows"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "repeat-row-group",
+                          "type": "string"
+                        },
+                        "nodeId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "bindingId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "expression": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "text"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "legacy",
+                                  "type": "string"
+                                },
+                                "text": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "source",
+                                "steps"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "structured",
+                                  "type": "string"
+                                },
+                                "source": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "steps": {
+                                  "type": "array",
+                                  "items": {
+                                    "anyOf": [
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "key"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "sort",
+                                            "type": "string"
+                                          },
+                                          "key": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          },
+                                          "direction": {
+                                            "anyOf": [
+                                              {
+                                                "const": "asc",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "desc",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "count"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "take",
+                                            "type": "string"
+                                          },
+                                          "count": {
+                                            "minimum": 0,
+                                            "type": "integer"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "first",
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "last",
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "rank"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "nth",
+                                            "type": "string"
+                                          },
+                                          "rank": {
+                                            "minimum": 1,
+                                            "type": "integer"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "index"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "at",
+                                            "type": "string"
+                                          },
+                                          "index": {
+                                            "type": "integer"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "key"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "maxby",
+                                            "type": "string"
+                                          },
+                                          "key": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "key"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "minby",
+                                            "type": "string"
+                                          },
+                                          "key": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "path"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "anyOf": [
+                                              {
+                                                "const": "get",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "pick",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "path": {
+                                            "minLength": 1,
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "count",
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "whenTrue"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "if",
+                                            "type": "string"
+                                          },
+                                          "whenTrue": {
+                                            "type": "string"
+                                          },
+                                          "whenFalse": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      },
+                                      {
+                                        "additionalProperties": false,
+                                        "type": "object",
+                                        "required": [
+                                          "op",
+                                          "kind"
+                                        ],
+                                        "properties": {
+                                          "op": {
+                                            "const": "format",
+                                            "type": "string"
+                                          },
+                                          "kind": {
+                                            "anyOf": [
+                                              {
+                                                "const": "number",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "numeric",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "percent",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "percentage",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "permille",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "per-mille",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "per_mille",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "date",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "datetime",
+                                                "type": "string"
+                                              },
+                                              {
+                                                "const": "time",
+                                                "type": "string"
+                                              }
+                                            ]
+                                          },
+                                          "pattern": {
+                                            "type": "string"
+                                          }
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "repeatKey": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "path"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "path",
+                                  "type": "string"
+                                },
+                                "path": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "orderDependentIdentity"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "ordinal",
+                                  "type": "string"
+                                },
+                                "orderDependentIdentity": {
+                                  "description": "确认：使用序号作退化键时，重排数据会改变实例身份。",
+                                  "const": true,
+                                  "type": "boolean"
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        "rows": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "kind",
+                              "nodeId",
+                              "cells"
+                            ],
+                            "properties": {
+                              "kind": {
+                                "const": "table-row",
+                                "type": "string"
+                              },
+                              "nodeId": {
+                                "minLength": 1,
+                                "maxLength": 256,
+                                "pattern": "^[A-Za-z0-9._:-]+$",
+                                "type": "string"
+                              },
+                              "cells": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "additionalProperties": false,
+                                  "type": "object",
+                                  "required": [
+                                    "kind",
+                                    "nodeId",
+                                    "blocks"
+                                  ],
+                                  "properties": {
+                                    "kind": {
+                                      "const": "table-cell",
+                                      "type": "string"
+                                    },
+                                    "nodeId": {
+                                      "minLength": 1,
+                                      "maxLength": 256,
+                                      "pattern": "^[A-Za-z0-9._:-]+$",
+                                      "type": "string"
+                                    },
+                                    "styleId": {
+                                      "minLength": 1,
+                                      "maxLength": 256,
+                                      "pattern": "^[A-Za-z0-9._:-]+$",
+                                      "type": "string"
+                                    },
+                                    "blocks": {
+                                      "type": "array",
+                                      "items": {
+                                        "$ref": "BlockNode"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "kind",
+              "nodeId",
+              "bindingId",
+              "expression",
+              "children"
+            ],
+            "properties": {
+              "kind": {
+                "const": "conditional-block",
+                "type": "string"
+              },
+              "nodeId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "bindingId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "expression": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "text"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "legacy",
+                        "type": "string"
+                      },
+                      "text": {
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "source",
+                      "steps"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "structured",
+                        "type": "string"
+                      },
+                      "source": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "steps": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "key"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "sort",
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "direction": {
+                                  "anyOf": [
+                                    {
+                                      "const": "asc",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "desc",
+                                      "type": "string"
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "count"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "take",
+                                  "type": "string"
+                                },
+                                "count": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "first",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "last",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "rank"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "nth",
+                                  "type": "string"
+                                },
+                                "rank": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "index"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "at",
+                                  "type": "string"
+                                },
+                                "index": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "key"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "maxby",
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "key"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "minby",
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "path"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "anyOf": [
+                                    {
+                                      "const": "get",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "pick",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "path": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "count",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "whenTrue"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "if",
+                                  "type": "string"
+                                },
+                                "whenTrue": {
+                                  "type": "string"
+                                },
+                                "whenFalse": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "kind"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "format",
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "anyOf": [
+                                    {
+                                      "const": "number",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "percent",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "percentage",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "permille",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "per-mille",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "per_mille",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "date",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "datetime",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "time",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
                     }
                   }
+                ]
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "BlockNode"
                 }
-              ]
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "kind",
+              "nodeId",
+              "bindingId",
+              "expression",
+              "repeatKey",
+              "children"
+            ],
+            "properties": {
+              "kind": {
+                "const": "repeat-block",
+                "type": "string"
+              },
+              "nodeId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "bindingId": {
+                "minLength": 1,
+                "maxLength": 256,
+                "pattern": "^[A-Za-z0-9._:-]+$",
+                "type": "string"
+              },
+              "expression": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "text"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "legacy",
+                        "type": "string"
+                      },
+                      "text": {
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "source",
+                      "steps"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "structured",
+                        "type": "string"
+                      },
+                      "source": {
+                        "minLength": 1,
+                        "type": "string"
+                      },
+                      "steps": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "key"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "sort",
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "direction": {
+                                  "anyOf": [
+                                    {
+                                      "const": "asc",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "desc",
+                                      "type": "string"
+                                    }
+                                  ]
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "count"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "take",
+                                  "type": "string"
+                                },
+                                "count": {
+                                  "minimum": 0,
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "first",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "last",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "rank"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "nth",
+                                  "type": "string"
+                                },
+                                "rank": {
+                                  "minimum": 1,
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "index"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "at",
+                                  "type": "string"
+                                },
+                                "index": {
+                                  "type": "integer"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "key"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "maxby",
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "key"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "minby",
+                                  "type": "string"
+                                },
+                                "key": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "path"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "anyOf": [
+                                    {
+                                      "const": "get",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "pick",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "path": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "count",
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "whenTrue"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "if",
+                                  "type": "string"
+                                },
+                                "whenTrue": {
+                                  "type": "string"
+                                },
+                                "whenFalse": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "op",
+                                "kind"
+                              ],
+                              "properties": {
+                                "op": {
+                                  "const": "format",
+                                  "type": "string"
+                                },
+                                "kind": {
+                                  "anyOf": [
+                                    {
+                                      "const": "number",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "numeric",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "percent",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "percentage",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "permille",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "per-mille",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "per_mille",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "date",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "datetime",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "time",
+                                      "type": "string"
+                                    }
+                                  ]
+                                },
+                                "pattern": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  }
+                ]
+              },
+              "repeatKey": {
+                "anyOf": [
+                  {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "path"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "path",
+                        "type": "string"
+                      },
+                      "path": {
+                        "minLength": 1,
+                        "type": "string"
+                      }
+                    }
+                  },
+                  {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "orderDependentIdentity"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "const": "ordinal",
+                        "type": "string"
+                      },
+                      "orderDependentIdentity": {
+                        "description": "确认：使用序号作退化键时，重排数据会改变实例身份。",
+                        "const": true,
+                        "type": "boolean"
+                      }
+                    }
+                  }
+                ]
+              },
+              "children": {
+                "type": "array",
+                "items": {
+                  "$ref": "BlockNode"
+                }
+              }
             }
           }
-        }
+        ]
       }
     },
     "extensions": {

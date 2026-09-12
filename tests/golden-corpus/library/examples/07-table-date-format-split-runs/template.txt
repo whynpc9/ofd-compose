@@ -1,0 +1,6 @@
+@table-begin
+| Name | Created |
+| {#rows} |  |
+| {name} | {createdAt|format:date:yyyy-MM-dd} |
+| {/rows} |  |
+@table-end

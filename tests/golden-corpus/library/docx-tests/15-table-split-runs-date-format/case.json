@@ -19,8 +19,8 @@
     "legacyPixelDpi": 96
   },
   "result": {
-    "status": "not-executable",
-    "note": "issue 02：格式冻结，执行随后续排版票接入"
+    "status": "pass",
+    "note": "issue 05：结构类用例（条件块/重复块/表格行组）在 ResolvedDocument 级通过（Node 与浏览器双模式，tests/golden-corpus/tests/corpus.dual.test.ts）"
   },
   "notes": ["旧引擎把跨 run 标签的替换结果写入首个 run 并清空其余 run；新平台不保留该行为"]
 }

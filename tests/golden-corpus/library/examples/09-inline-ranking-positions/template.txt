@@ -1,0 +1,2 @@
+前10名机构中，第3名为{institutions|sort:revenue:desc|take:10|nth:3|get:name}，收入为{institutions|sort:revenue:desc|take:10|nth:3|get:revenue|format:number:#,##0}元。
+前10名末位为{institutions|sort:revenue:desc|take:10|at:-1|get:name}（支持负数索引）。

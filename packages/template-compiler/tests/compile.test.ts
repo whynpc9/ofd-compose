@@ -308,3 +308,151 @@ describe("format pattern parsers", () => {
     });
   });
 });
+
+describe("parent scope paths and structure bindings (issue 05)", () => {
+  it("`^`, `^^.a[0]` compile to parent PathRefs and round-trip through the canonical text", () => {
+    expect(compileExpression({ kind: "legacy", text: "^" }).ast.source).toEqual({
+      scope: "parent",
+      hops: 1,
+      segments: [],
+    });
+    const deep = compileExpression({ kind: "legacy", text: "^^.items[0]|get:name" });
+    expect(deep.ast.source).toEqual({
+      scope: "parent",
+      hops: 2,
+      segments: [
+        { kind: "property", name: "items" },
+        { kind: "index", index: 0 },
+      ],
+    });
+    const structured = compileExpression({
+      kind: "structured",
+      source: "^^.items[0]",
+      steps: [{ op: "get", path: "name" }],
+    });
+    expect(structured.ast).toEqual(deep.ast);
+    expect(structured.sourceMap.legacyText).toBe("^^.items[0]|get:name");
+    expect(compileExpression({ kind: "legacy", text: "^[1]" }).sourceMap.legacyText).toBe("^[1]");
+    expect(() => compileExpression({ kind: "legacy", text: "^name" })).toThrow(
+      ExpressionCompileError,
+    );
+  });
+
+  it("compiles ConditionalBlock / RepeatBlock / RepeatRowGroup expressions into role-tagged bindings", () => {
+    const source: TemplateSource = {
+      ...template([]),
+      body: [
+        {
+          kind: "conditional-block",
+          nodeId: "c1",
+          bindingId: "cond",
+          expression: { kind: "legacy", text: "flags.show" },
+          children: [
+            {
+              kind: "repeat-block",
+              nodeId: "r1",
+              bindingId: "rows",
+              expression: { kind: "legacy", text: "items|sort:score:desc|take:3" },
+              repeatKey: { kind: "path", path: "meta.id" },
+              children: [
+                {
+                  kind: "table",
+                  nodeId: "tbl",
+                  rows: [
+                    {
+                      kind: "repeat-row-group",
+                      nodeId: "rg",
+                      bindingId: "cells",
+                      expression: { kind: "structured", source: "values", steps: [] },
+                      repeatKey: { kind: "ordinal", orderDependentIdentity: true },
+                      rows: [
+                        {
+                          kind: "table-row",
+                          nodeId: "row",
+                          cells: [
+                            {
+                              kind: "table-cell",
+                              nodeId: "cell",
+                              blocks: [
+                                {
+                                  kind: "paragraph",
+                                  nodeId: "p",
+                                  inlines: [
+                                    {
+                                      kind: "dynamic-text",
+                                      nodeId: "d",
+                                      bindingId: "v",
+                                      expression: { kind: "legacy", text: "." },
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+    const result = compile(source);
+    expect(result.diagnostics).toEqual([]);
+    if (!result.ok) throw new Error("compile");
+    const { bindings } = result.template;
+    expect(Object.keys(bindings).sort()).toEqual(["cells", "cond", "rows", "v"]);
+    expect(bindings.cond).toMatchObject({ role: "conditional-block", nodeId: "c1" });
+    expect(bindings.rows).toMatchObject({
+      role: "repeat-block",
+      nodeId: "r1",
+      repeatKey: {
+        kind: "path",
+        text: "meta.id",
+        segments: [
+          { kind: "property", name: "meta" },
+          { kind: "property", name: "id" },
+        ],
+      },
+    });
+    expect(bindings.rows?.ast.steps.map((s) => s.op)).toEqual(["sort", "take"]);
+    expect(bindings.cells).toMatchObject({
+      role: "repeat-row-group",
+      repeatKey: { kind: "ordinal" },
+    });
+    expect(bindings.v).toMatchObject({
+      role: "dynamic-text",
+      styleInheritance: "inherit-paragraph",
+    });
+  });
+
+  it("locates expression errors inside structure nodes to the structure node's ids", () => {
+    const source: TemplateSource = {
+      ...template([]),
+      body: [
+        {
+          kind: "repeat-block",
+          nodeId: "r1",
+          bindingId: "rows",
+          expression: { kind: "legacy", text: "items|groupBy:region" },
+          repeatKey: { kind: "ordinal", orderDependentIdentity: true },
+          children: [],
+        },
+      ],
+    };
+    const result = compile(source);
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "EXPRESSION_UNSUPPORTED",
+        phase: "compile",
+        nodeId: "r1",
+        bindingId: "rows",
+        details: expect.objectContaining({ operation: "groupBy" }),
+      }),
+    ]);
+  });
+});

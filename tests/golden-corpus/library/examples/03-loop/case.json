@@ -8,6 +8,7 @@
   },
   "templateId": "ndocxtemplater-example-03-loop",
   "templateAsset": "template.docx",
+  "templateDescription": "template.txt",
   "dataDigest": "sha256:1cdbbc9a4baaa899a8583a91bb376a8ce32db789f662aedb3ad1d6775e90d4b6",
   "expectedSemantic": {
     "file": "expected/semantics.json",
@@ -19,7 +20,7 @@
     "legacyPixelDpi": 96
   },
   "result": {
-    "status": "not-executable",
-    "note": "issue 02：格式冻结，执行随后续排版票接入"
+    "status": "pass",
+    "note": "issue 05：template.txt 由 template.docx 正文转录；文本/结构语义在 ResolvedDocument 级通过（Node 与浏览器双模式，tests/golden-corpus/tests/corpus.dual.test.ts）"
   }
 }
