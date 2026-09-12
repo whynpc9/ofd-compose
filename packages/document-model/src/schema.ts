@@ -1,11 +1,11 @@
-import { type Static, Type } from "@sinclair/typebox";
+import { type Static, type TSchema, Type } from "@sinclair/typebox";
 
 /**
- * Document Model v0（issue 04）。
+ * Document Model v0（issue 04 + issue 05）。
  *
- * 只覆盖首条叙述句所需的节点：段落 + 行内序列（静态文本、DynamicText、InputControl）。
- * 结构节点（ConditionalBlock / RepeatBlock / RepeatRowGroup）、表格、媒体绑定等随后续票加入，
- * 加入时 `modelVersion` 递增并提供迁移。
+ * 覆盖：段落 + 行内序列（静态文本、DynamicText、InputControl）；结构节点 ConditionalBlock / RepeatBlock /
+ * RepeatRowGroup；表格 v0（行/单元格结构，版式属性待 issue 13/23）。媒体绑定等随后续票加入；
+ * v0 冻结前的新增字段均为向后兼容扩展（旧实例仍合法），冻结后 `modelVersion` 递增并提供迁移。
  *
  * 身份约定（spec §4）：
  * - `nodeId`：节点结构身份，全文档唯一；
@@ -215,7 +215,120 @@ export const ParagraphSchema = Type.Object(
   { additionalProperties: false },
 );
 
-export const BlockNodeSchema = Type.Union([ParagraphSchema]);
+/**
+ * 重复键（spec §4）：实例身份 = 模板 nodeId + 重复键。
+ * - `path`：相对当前项的数据路径（如 `id`、`meta.code`），值必须是标量且在同一重复内唯一；
+ * - `ordinal`：以序号作退化键；模板必须显式确认「重排数据会改变实例身份」。
+ */
+export const RepeatKeySchema = Type.Union([
+  Type.Object(
+    { kind: Type.Literal("path"), path: Type.String({ minLength: 1 }) },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      kind: Type.Literal("ordinal"),
+      orderDependentIdentity: Type.Literal(true, {
+        description: "确认：使用序号作退化键时，重排数据会改变实例身份。",
+      }),
+    },
+    { additionalProperties: false },
+  ),
+]);
+
+/** 表格单元格：内容为块序列（段落 / 条件块 / 重复块 / 嵌套表格）。 */
+const tableCellOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("table-cell"),
+      nodeId: identifier,
+      styleId: Type.Optional(identifier),
+      blocks: Type.Array(block),
+    },
+    { additionalProperties: false },
+  );
+
+const tableRowOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("table-row"),
+      nodeId: identifier,
+      cells: Type.Array(tableCellOf(block), { minItems: 1 }),
+    },
+    { additionalProperties: false },
+  );
+
+/** RepeatRowGroup：表格中按序列重复的一组行；每个实例展开为 `rows` 的一份拷贝。 */
+const repeatRowGroupOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("repeat-row-group"),
+      nodeId: identifier,
+      bindingId: identifier,
+      expression: ExpressionSourceSchema,
+      repeatKey: RepeatKeySchema,
+      rows: Type.Array(tableRowOf(block), { minItems: 1 }),
+    },
+    { additionalProperties: false },
+  );
+
+/**
+ * 表格 v0：只承载绑定语义所需的行/单元格结构；列宽、边框、合并、跨页表头等版式属性随 issue 13/23 加入。
+ */
+const tableOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("table"),
+      nodeId: identifier,
+      styleId: Type.Optional(identifier),
+      rows: Type.Array(Type.Union([tableRowOf(block), repeatRowGroupOf(block)]), { minItems: 1 }),
+    },
+    { additionalProperties: false },
+  );
+
+/** ConditionalBlock：表达式为假（按绑定策略的 truthiness 表）时整块不出现，不留空段。 */
+const conditionalBlockOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("conditional-block"),
+      nodeId: identifier,
+      bindingId: identifier,
+      expression: ExpressionSourceSchema,
+      children: Type.Array(block),
+    },
+    { additionalProperties: false },
+  );
+
+/** RepeatBlock：对序列的每一项展开一份 `children`；子节点表达式以该项为当前作用域。 */
+const repeatBlockOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("repeat-block"),
+      nodeId: identifier,
+      bindingId: identifier,
+      expression: ExpressionSourceSchema,
+      repeatKey: RepeatKeySchema,
+      children: Type.Array(block),
+    },
+    { additionalProperties: false },
+  );
+
+/**
+ * 正文块（递归）：段落、表格、ConditionalBlock、RepeatBlock。
+ * JSON Schema 中以 `$id: BlockNode` + `$ref` 表达递归。
+ */
+export const BlockNodeSchema = Type.Recursive(
+  (This) =>
+    Type.Union([ParagraphSchema, tableOf(This), conditionalBlockOf(This), repeatBlockOf(This)]),
+  { $id: "BlockNode" },
+);
+
+export const TableCellSchema = tableCellOf(BlockNodeSchema);
+export const TableRowSchema = tableRowOf(BlockNodeSchema);
+export const RepeatRowGroupSchema = repeatRowGroupOf(BlockNodeSchema);
+export const TableSchema = tableOf(BlockNodeSchema);
+export const ConditionalBlockSchema = conditionalBlockOf(BlockNodeSchema);
+export const RepeatBlockSchema = repeatBlockOf(BlockNodeSchema);
 
 /** 扩展命名空间条目：`required` 为 true 且命名空间未知时加载被拒绝。 */
 export const ExtensionEntrySchema = Type.Object(
@@ -266,7 +379,17 @@ export type DynamicText = Static<typeof DynamicTextSchema>;
 export type InputControl = Static<typeof InputControlSchema>;
 export type InlineNode = Static<typeof InlineNodeSchema>;
 export type Paragraph = Static<typeof ParagraphSchema>;
+export type RepeatKey = Static<typeof RepeatKeySchema>;
+export type TableCell = Static<typeof TableCellSchema>;
+export type TableRow = Static<typeof TableRowSchema>;
+export type RepeatRowGroup = Static<typeof RepeatRowGroupSchema>;
+export type TableRowNode = TableRow | RepeatRowGroup;
+export type Table = Static<typeof TableSchema>;
+export type ConditionalBlock = Static<typeof ConditionalBlockSchema>;
+export type RepeatBlock = Static<typeof RepeatBlockSchema>;
 export type BlockNode = Static<typeof BlockNodeSchema>;
+/** 持有表达式绑定的结构节点（与 DynamicText 一样各有独立 bindingId）。 */
+export type StructureBinding = ConditionalBlock | RepeatBlock | RepeatRowGroup;
 export type ExtensionEntry = Static<typeof ExtensionEntrySchema>;
 export type Provenance = Static<typeof ProvenanceSchema>;
 export type TemplateSource = Static<typeof TemplateSourceSchema>;

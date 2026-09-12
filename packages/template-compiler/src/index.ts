@@ -1,12 +1,15 @@
 export * from "./ast.js";
 export {
   type CompiledBinding,
+  type CompiledRepeatKey,
   type CompiledTemplate,
+  type CompileLimits,
   type CompileOptions,
   type CompileResult,
   compile,
   compiledTemplateFormat,
   compileExpression,
+  defaultCompileLimits,
 } from "./compile.js";
 export { ExpressionCompileError, type ExpressionErrorCode } from "./errors.js";
 export {

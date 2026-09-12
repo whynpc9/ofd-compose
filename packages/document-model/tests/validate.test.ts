@@ -72,7 +72,7 @@ describe("validateTemplateSource", () => {
   it("rejects duplicate nodeId and duplicate bindingId, locating each diagnostic", () => {
     const template = narrativeTemplate();
     const [p] = template.body;
-    if (!p) throw new Error("fixture");
+    if (p?.kind !== "paragraph") throw new Error("fixture");
     p.inlines.push(
       { kind: "text", nodeId: "t1", text: "dup" },
       {
@@ -95,7 +95,7 @@ describe("validateTemplateSource", () => {
   it("rejects a styleId that is not in the style table", () => {
     const template = narrativeTemplate();
     const [p] = template.body;
-    if (!p) throw new Error("fixture");
+    if (p?.kind !== "paragraph") throw new Error("fixture");
     p.styleId = "missing-style";
     const result = validateTemplateSource(template);
     expect(result.ok).toBe(false);
@@ -146,7 +146,7 @@ describe("validateTemplateSource", () => {
   it("keeps nodeId and bindingId as separate identities (same string allowed on different axes)", () => {
     const template = narrativeTemplate();
     const [p] = template.body;
-    const dyn = p?.inlines[1];
+    const dyn = p?.kind === "paragraph" ? p.inlines[1] : undefined;
     if (dyn?.kind !== "dynamic-text") throw new Error("fixture");
     dyn.bindingId = "d1"; // equals its own nodeId: legal, the axes are independent
     expect(validateTemplateSource(template).ok).toBe(true);
@@ -155,7 +155,7 @@ describe("validateTemplateSource", () => {
   it("rejects a numeric InputControl default expressed as a float", () => {
     const template = narrativeTemplate();
     const [p] = template.body;
-    if (!p) throw new Error("fixture");
+    if (p?.kind !== "paragraph") throw new Error("fixture");
     p.inlines.push({
       kind: "input-control",
       nodeId: "c1",
@@ -164,6 +164,143 @@ describe("validateTemplateSource", () => {
       defaultValue: 12.5 as unknown as string,
     });
     expect(validateTemplateSource(template).ok).toBe(false);
+  });
+});
+
+describe("structure nodes (issue 05)", () => {
+  function structuredTemplate(): TemplateSource {
+    return {
+      ...narrativeTemplate(),
+      body: [
+        {
+          kind: "conditional-block",
+          nodeId: "c1",
+          bindingId: "b-cond",
+          expression: { kind: "legacy", text: "flags.showVip" },
+          children: [
+            {
+              kind: "repeat-block",
+              nodeId: "r1",
+              bindingId: "b-rows",
+              expression: { kind: "legacy", text: "institutions|sort:revenue:desc|take:5" },
+              repeatKey: { kind: "path", path: "name" },
+              children: [
+                {
+                  kind: "paragraph",
+                  nodeId: "p1",
+                  inlines: [
+                    {
+                      kind: "dynamic-text",
+                      nodeId: "d1",
+                      bindingId: "b-name",
+                      expression: { kind: "legacy", text: "name" },
+                    },
+                  ],
+                },
+                {
+                  kind: "table",
+                  nodeId: "tbl",
+                  rows: [
+                    {
+                      kind: "table-row",
+                      nodeId: "hdr",
+                      cells: [
+                        {
+                          kind: "table-cell",
+                          nodeId: "hdr-c1",
+                          blocks: [
+                            {
+                              kind: "paragraph",
+                              nodeId: "hdr-p1",
+                              inlines: [{ kind: "text", nodeId: "hdr-t1", text: "科室" }],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    {
+                      kind: "repeat-row-group",
+                      nodeId: "rg",
+                      bindingId: "b-depts",
+                      expression: { kind: "legacy", text: "departments" },
+                      repeatKey: { kind: "ordinal", orderDependentIdentity: true },
+                      rows: [
+                        {
+                          kind: "table-row",
+                          nodeId: "rg-row",
+                          cells: [
+                            {
+                              kind: "table-cell",
+                              nodeId: "rg-c1",
+                              blocks: [
+                                {
+                                  kind: "paragraph",
+                                  nodeId: "rg-p1",
+                                  inlines: [
+                                    {
+                                      kind: "dynamic-text",
+                                      nodeId: "rg-d1",
+                                      bindingId: "b-dept",
+                                      expression: { kind: "legacy", text: "name" },
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
+  it("accepts nested ConditionalBlock → RepeatBlock → Table with a RepeatRowGroup", () => {
+    const result = validateTemplateSource(structuredTemplate());
+    expect(result.diagnostics).toEqual([]);
+    expect(result.ok).toBe(true);
+  });
+
+  it("checks nodeId/bindingId uniqueness across structure nodes and table cells", () => {
+    const template = structuredTemplate();
+    const [cond] = template.body;
+    if (cond?.kind !== "conditional-block") throw new Error("fixture");
+    const [rep] = cond.children;
+    if (rep?.kind !== "repeat-block") throw new Error("fixture");
+    rep.bindingId = "b-dept"; // 与表格内 DynamicText 的 bindingId 冲突
+    rep.children.push({ kind: "paragraph", nodeId: "rg-c1", inlines: [] }); // 与单元格 nodeId 冲突
+    const result = validateTemplateSource(template);
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "MODEL_INVALID", nodeId: "rg-d1", bindingId: "b-dept" }),
+        expect.objectContaining({ code: "MODEL_INVALID", nodeId: "rg-c1" }),
+      ]),
+    );
+  });
+
+  it("requires an explicit order-dependence acknowledgement for ordinal repeat keys", () => {
+    const template = structuredTemplate();
+    const [cond] = template.body;
+    if (cond?.kind !== "conditional-block") throw new Error("fixture");
+    const [rep] = cond.children;
+    if (rep?.kind !== "repeat-block") throw new Error("fixture");
+    rep.repeatKey = { kind: "ordinal" } as unknown as typeof rep.repeatKey;
+    const result = validateTemplateSource(template);
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics[0]?.code).toBe("MODEL_INVALID");
+  });
+
+  it("exports the recursive block union as $id/$ref in JSON Schema", () => {
+    const doc = JSON.stringify(toJsonSchemaDocument(TemplateSourceSchema));
+    expect(doc).toContain('"$id":"BlockNode"');
+    expect(doc).toContain('"$ref":"BlockNode"');
   });
 });
 

@@ -13,3 +13,10 @@ export {
   type ValidateTemplateSourceResult,
   validateTemplateSource,
 } from "./validate.js";
+export {
+  isStructureBinding,
+  isStructureContainer,
+  type TemplateNode,
+  type TemplateNodeVisit,
+  walkTemplateNodes,
+} from "./walk.js";

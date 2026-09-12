@@ -14,7 +14,9 @@
     "revisionId",
     "settings",
     "styles",
-    "body"
+    "body",
+    "structure",
+    "runtime"
   ],
   "properties": {
     "format": {
@@ -130,208 +132,685 @@
     "body": {
       "type": "array",
       "items": {
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "kind",
-          "nodeId",
-          "fragments"
-        ],
-        "properties": {
-          "kind": {
-            "const": "paragraph",
-            "type": "string"
-          },
-          "nodeId": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "styleId": {
-            "minLength": 1,
-            "type": "string"
-          },
-          "fragments": {
-            "type": "array",
-            "items": {
-              "anyOf": [
-                {
+        "$id": "ResolvedBlock",
+        "anyOf": [
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "kind",
+              "nodeId",
+              "fragments"
+            ],
+            "properties": {
+              "kind": {
+                "const": "paragraph",
+                "type": "string"
+              },
+              "nodeId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "styleId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "instancePath": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
                   "additionalProperties": false,
                   "type": "object",
                   "required": [
-                    "kind",
-                    "text",
-                    "origin"
+                    "nodeId",
+                    "bindingId",
+                    "key",
+                    "keyKind",
+                    "ordinal"
                   ],
                   "properties": {
-                    "kind": {
-                      "const": "text",
-                      "type": "string"
-                    },
-                    "text": {
-                      "type": "string"
-                    },
-                    "styleId": {
+                    "nodeId": {
                       "minLength": 1,
                       "type": "string"
                     },
-                    "origin": {
+                    "bindingId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "keyKind": {
                       "anyOf": [
                         {
-                          "additionalProperties": false,
-                          "type": "object",
-                          "required": [
-                            "kind",
-                            "nodeId"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "static",
-                              "type": "string"
-                            },
-                            "nodeId": {
-                              "minLength": 1,
-                              "type": "string"
-                            }
-                          }
+                          "const": "path",
+                          "type": "string"
                         },
                         {
-                          "additionalProperties": false,
-                          "type": "object",
-                          "required": [
-                            "kind",
-                            "nodeId",
-                            "bindingId",
-                            "expression",
-                            "valueState"
-                          ],
-                          "properties": {
-                            "kind": {
-                              "const": "dynamic-text",
-                              "type": "string"
-                            },
-                            "nodeId": {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            "bindingId": {
-                              "minLength": 1,
-                              "type": "string"
-                            },
-                            "expression": {
-                              "type": "string"
-                            },
-                            "dataPath": {
-                              "type": "string"
-                            },
-                            "valueState": {
-                              "anyOf": [
-                                {
-                                  "const": "value",
-                                  "type": "string"
-                                },
-                                {
-                                  "const": "null",
-                                  "type": "string"
-                                },
-                                {
-                                  "const": "missing",
-                                  "type": "string"
-                                }
-                              ]
-                            }
-                          }
+                          "const": "ordinal",
+                          "type": "string"
                         }
                       ]
+                    },
+                    "ordinal": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "dataPath": {
+                      "type": "string"
                     }
                   }
-                },
-                {
+                }
+              },
+              "fragments": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "text",
+                        "origin"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "text",
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string"
+                        },
+                        "styleId": {
+                          "minLength": 1,
+                          "type": "string"
+                        },
+                        "origin": {
+                          "anyOf": [
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "nodeId"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "static",
+                                  "type": "string"
+                                },
+                                "nodeId": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            {
+                              "additionalProperties": false,
+                              "type": "object",
+                              "required": [
+                                "kind",
+                                "nodeId",
+                                "bindingId",
+                                "expression",
+                                "valueState"
+                              ],
+                              "properties": {
+                                "kind": {
+                                  "const": "dynamic-text",
+                                  "type": "string"
+                                },
+                                "nodeId": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "bindingId": {
+                                  "minLength": 1,
+                                  "type": "string"
+                                },
+                                "expression": {
+                                  "type": "string"
+                                },
+                                "dataPath": {
+                                  "type": "string"
+                                },
+                                "valueState": {
+                                  "description": "Missing 与 Null 分别表示。",
+                                  "anyOf": [
+                                    {
+                                      "const": "value",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "null",
+                                      "type": "string"
+                                    },
+                                    {
+                                      "const": "missing",
+                                      "type": "string"
+                                    }
+                                  ]
+                                }
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "nodeId",
+                        "controlId",
+                        "controlType"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "const": "input-control",
+                          "type": "string"
+                        },
+                        "nodeId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "controlId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        },
+                        "controlType": {
+                          "anyOf": [
+                            {
+                              "const": "text",
+                              "type": "string"
+                            },
+                            {
+                              "const": "number",
+                              "type": "string"
+                            },
+                            {
+                              "const": "select",
+                              "type": "string"
+                            },
+                            {
+                              "const": "date",
+                              "type": "string"
+                            },
+                            {
+                              "const": "radio",
+                              "type": "string"
+                            },
+                            {
+                              "const": "checkbox",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "placeholder": {
+                          "type": "string"
+                        },
+                        "defaultValue": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "boolean"
+                            }
+                          ]
+                        },
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "styleId": {
+                          "minLength": 1,
+                          "maxLength": 256,
+                          "pattern": "^[A-Za-z0-9._:-]+$",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "kind",
+              "nodeId",
+              "rows"
+            ],
+            "properties": {
+              "kind": {
+                "const": "table",
+                "type": "string"
+              },
+              "nodeId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "styleId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "instancePath": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "nodeId",
+                    "bindingId",
+                    "key",
+                    "keyKind",
+                    "ordinal"
+                  ],
+                  "properties": {
+                    "nodeId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "bindingId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "keyKind": {
+                      "anyOf": [
+                        {
+                          "const": "path",
+                          "type": "string"
+                        },
+                        {
+                          "const": "ordinal",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "ordinal": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "dataPath": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "rows": {
+                "type": "array",
+                "items": {
                   "additionalProperties": false,
                   "type": "object",
                   "required": [
                     "kind",
                     "nodeId",
-                    "controlId",
-                    "controlType"
+                    "cells"
                   ],
                   "properties": {
                     "kind": {
-                      "const": "input-control",
+                      "const": "table-row",
                       "type": "string"
                     },
                     "nodeId": {
                       "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
                       "type": "string"
                     },
-                    "controlId": {
-                      "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
-                      "type": "string"
-                    },
-                    "controlType": {
-                      "anyOf": [
-                        {
-                          "const": "text",
-                          "type": "string"
-                        },
-                        {
-                          "const": "number",
-                          "type": "string"
-                        },
-                        {
-                          "const": "select",
-                          "type": "string"
-                        },
-                        {
-                          "const": "date",
-                          "type": "string"
-                        },
-                        {
-                          "const": "radio",
-                          "type": "string"
-                        },
-                        {
-                          "const": "checkbox",
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "placeholder": {
-                      "type": "string"
-                    },
-                    "defaultValue": {
-                      "anyOf": [
-                        {
-                          "type": "string"
-                        },
-                        {
-                          "type": "boolean"
-                        }
-                      ]
-                    },
-                    "required": {
-                      "type": "boolean"
-                    },
-                    "options": {
+                    "instancePath": {
+                      "minItems": 1,
                       "type": "array",
                       "items": {
-                        "type": "string"
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "nodeId",
+                          "bindingId",
+                          "key",
+                          "keyKind",
+                          "ordinal"
+                        ],
+                        "properties": {
+                          "nodeId": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "bindingId": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "key": {
+                            "type": "string"
+                          },
+                          "keyKind": {
+                            "anyOf": [
+                              {
+                                "const": "path",
+                                "type": "string"
+                              },
+                              {
+                                "const": "ordinal",
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "ordinal": {
+                            "minimum": 0,
+                            "type": "integer"
+                          },
+                          "dataPath": {
+                            "type": "string"
+                          }
+                        }
                       }
                     },
-                    "styleId": {
+                    "cells": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "kind",
+                          "nodeId",
+                          "blocks"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "const": "table-cell",
+                            "type": "string"
+                          },
+                          "nodeId": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "styleId": {
+                            "minLength": 1,
+                            "type": "string"
+                          },
+                          "blocks": {
+                            "type": "array",
+                            "items": {
+                              "$ref": "ResolvedBlock"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "structure": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "conditionals",
+        "repeats"
+      ],
+      "properties": {
+        "conditionals": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "nodeId",
+              "bindingId",
+              "expression",
+              "visible",
+              "valueState"
+            ],
+            "properties": {
+              "nodeId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "bindingId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "expression": {
+                "type": "string"
+              },
+              "visible": {
+                "type": "boolean"
+              },
+              "valueState": {
+                "description": "Missing 与 Null 分别表示。",
+                "anyOf": [
+                  {
+                    "const": "value",
+                    "type": "string"
+                  },
+                  {
+                    "const": "null",
+                    "type": "string"
+                  },
+                  {
+                    "const": "missing",
+                    "type": "string"
+                  }
+                ]
+              },
+              "dataPath": {
+                "type": "string"
+              },
+              "instancePath": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "nodeId",
+                    "bindingId",
+                    "key",
+                    "keyKind",
+                    "ordinal"
+                  ],
+                  "properties": {
+                    "nodeId": {
                       "minLength": 1,
-                      "maxLength": 256,
-                      "pattern": "^[A-Za-z0-9._:-]+$",
+                      "type": "string"
+                    },
+                    "bindingId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "keyKind": {
+                      "anyOf": [
+                        {
+                          "const": "path",
+                          "type": "string"
+                        },
+                        {
+                          "const": "ordinal",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "ordinal": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "dataPath": {
                       "type": "string"
                     }
                   }
                 }
-              ]
+              }
             }
           }
+        },
+        "repeats": {
+          "type": "array",
+          "items": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "nodeId",
+              "bindingId",
+              "kind",
+              "expression",
+              "valueState",
+              "instanceCount"
+            ],
+            "properties": {
+              "nodeId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "bindingId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "kind": {
+                "anyOf": [
+                  {
+                    "const": "repeat-block",
+                    "type": "string"
+                  },
+                  {
+                    "const": "repeat-row-group",
+                    "type": "string"
+                  }
+                ]
+              },
+              "expression": {
+                "type": "string"
+              },
+              "valueState": {
+                "description": "Missing 与 Null 分别表示。",
+                "anyOf": [
+                  {
+                    "const": "value",
+                    "type": "string"
+                  },
+                  {
+                    "const": "null",
+                    "type": "string"
+                  },
+                  {
+                    "const": "missing",
+                    "type": "string"
+                  }
+                ]
+              },
+              "dataPath": {
+                "type": "string"
+              },
+              "instanceCount": {
+                "minimum": 0,
+                "type": "integer"
+              },
+              "truncated": {
+                "const": true,
+                "type": "boolean"
+              },
+              "instancePath": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "nodeId",
+                    "bindingId",
+                    "key",
+                    "keyKind",
+                    "ordinal"
+                  ],
+                  "properties": {
+                    "nodeId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "bindingId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "keyKind": {
+                      "anyOf": [
+                        {
+                          "const": "path",
+                          "type": "string"
+                        },
+                        {
+                          "const": "ordinal",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "ordinal": {
+                      "minimum": 0,
+                      "type": "integer"
+                    },
+                    "dataPath": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "runtime": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "temporalPolyfillVersion",
+        "tzdataSource",
+        "tzdataVersion"
+      ],
+      "properties": {
+        "temporalPolyfillVersion": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "tzdataSource": {
+          "const": "runtime-icu",
+          "type": "string"
+        },
+        "tzdataVersion": {
+          "anyOf": [
+            {
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
         }
       }
     },

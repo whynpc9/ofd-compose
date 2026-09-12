@@ -9,13 +9,21 @@ import { Value } from "@sinclair/typebox/value";
 import { describe, expect, it } from "vitest";
 import {
   bind,
+  blockText,
   evaluateExpression,
   isValidTimeZone,
   type JsonValue,
   MISSING,
-  paragraphText,
   ResolvedDocumentSchema,
+  type ResolvedParagraph,
 } from "../src/index.js";
+
+/** 取第 n 个正文块并断言它是段落（测试夹具）。 */
+function paragraphAt(body: readonly { kind: string }[], index: number): ResolvedParagraph {
+  const block = body[index];
+  if (block?.kind !== "paragraph") throw new Error(`body[${index}] is not a paragraph`);
+  return block as ResolvedParagraph;
+}
 
 /** 把 `静态{表达式}静态` 形式的段落转成 TemplateSource（测试辅助；nodeId/bindingId 顺序生成）。 */
 function templateOf(
@@ -71,7 +79,7 @@ function render(
     throw new Error(`compile failed: ${JSON.stringify(compiled.diagnostics, null, 2)}`);
   }
   const result = bind(compiled.template, data);
-  return { ...result, texts: result.document.body.map(paragraphText) };
+  return { ...result, texts: result.document.body.map(blockText) };
 }
 
 const institutions = {
@@ -95,8 +103,7 @@ describe("first narrative sentence", () => {
     expect(texts).toEqual(["营收最高的是机构A，收入为1,000,000元。"]);
     expect(document.body).toHaveLength(1);
 
-    const [p] = document.body;
-    if (!p) throw new Error("paragraph");
+    const p = paragraphAt(document.body, 0);
     expect(p.fragments.map((f) => (f.kind === "text" ? f.text : "<control>"))).toEqual([
       "营收最高的是",
       "机构A",
@@ -132,7 +139,8 @@ describe("first narrative sentence", () => {
       bindingPolicyVersion: "strict-1",
     });
     const structured = JSON.parse(JSON.stringify(legacy)) as TemplateSource;
-    const dyn = structured.body[0]?.inlines[1];
+    const first = structured.body[0];
+    const dyn = first?.kind === "paragraph" ? first.inlines[1] : undefined;
     if (dyn?.kind !== "dynamic-text") throw new Error("fixture");
     dyn.expression = {
       kind: "structured",
@@ -159,7 +167,7 @@ describe("first narrative sentence", () => {
     const template = templateOf(["A{x}B{y}C{z}"], { bindingPolicyVersion: "strict-1" });
     template.styles = { body: { fontSize: 10.5 }, em: { bold: true } };
     const [p] = template.body;
-    if (!p) throw new Error("fixture");
+    if (p?.kind !== "paragraph") throw new Error("fixture");
     p.styleId = "body";
     const [, x, , y, , z] = p.inlines;
     if (
@@ -177,7 +185,9 @@ describe("first narrative sentence", () => {
     const compiled = compile(template);
     if (!compiled.ok) throw new Error("compile");
     const { document } = bind(compiled.template, { x: 1, y: 2, z: 3 });
-    const styles = document.body[0]?.fragments.map((f) => (f.kind === "text" ? f.styleId : null));
+    const styles = paragraphAt(document.body, 0).fragments.map((f) =>
+      f.kind === "text" ? f.styleId : null,
+    );
     expect(styles).toEqual([undefined, "body", undefined, "em", undefined, undefined]);
   });
 });
@@ -204,8 +214,8 @@ describe("Missing vs Null", () => {
         details: { expression: "patient.nick" },
       },
     ]);
-    const states = document.body.map((p) => {
-      const f = p.fragments[1];
+    const states = document.body.map((_, i) => {
+      const f = paragraphAt(document.body, i).fragments[1];
       return f?.kind === "text" && f.origin.kind === "dynamic-text" ? f.origin.valueState : null;
     });
     expect(states).toEqual(["null", "missing", "value"]);
@@ -523,8 +533,8 @@ describe("list operations used by narrative sentences", () => {
     );
     expect(r.diagnostics).toEqual([]);
     expect(r.texts).toEqual(["C", "880,000", "D", "2025年7月", "4", "D"]);
-    const paths = r.document.body.map((p) => {
-      const f = p.fragments[0];
+    const paths = r.document.body.map((_, i) => {
+      const f = paragraphAt(r.document.body, i).fragments[0];
       return f?.kind === "text" && f.origin.kind === "dynamic-text" ? f.origin.dataPath : null;
     });
     expect(paths).toEqual([

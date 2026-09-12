@@ -14,6 +14,7 @@ import {
 } from "@ofd-compose/template-compiler";
 import { toDateTimeParts } from "./date.js";
 import { formatDateTime, formatDecimal } from "./format.js";
+import type { ValueState } from "./resolved-document.js";
 import { evaluateTruthiness } from "./truthiness.js";
 import {
   compareValues,
@@ -27,12 +28,30 @@ import {
   type Value,
 } from "./values.js";
 
-/** 作用域链：当前项 / 父级 / 根。issue 04 只有根作用域；重复展开（issue 05）会压入子作用域。 */
+/** 作用域链：当前项 / 父级 / 根。RepeatBlock / RepeatRowGroup 的每个实例压入一层子作用域。 */
 export interface Scope {
   readonly current: JsonValue;
   readonly parent?: Scope;
   readonly root: JsonValue;
+  /**
+   * `current` 在根数据中的路径（如 `orders[1]`）；根作用域省略。
+   * 有值时，当前项 / 父级相对路径的 dataPath 都写成绝对路径（诊断可直接定位到数据）。
+   */
+  readonly dataPath?: string;
 }
+
+/** 一次 bind() 内共享的运行期预算（排序次数）。 */
+export interface EvaluationBudget {
+  readonly maxSortOperations: number;
+  readonly counters: { sortOperations: number };
+}
+
+/**
+ * 表达式结果的消费方式：
+ * - `text`：DynamicText（Missing → 空文本 + BINDING_MISSING）；
+ * - `condition` / `sequence`：ConditionalBlock / Repeat（legacy-compat-1 下 Missing 按旧引擎视为 null 并记 LEGACY_SEMANTIC_CHANGE）。
+ */
+export type EvaluationConsumer = "text" | "condition" | "sequence";
 
 export interface EvaluationContext {
   readonly policy: BindingPolicyVersion;
@@ -42,9 +61,9 @@ export interface EvaluationContext {
   readonly bindingId: string;
   /** 已解析格式模式缓存（同一模板内共享）。 */
   readonly patternCache: Map<string, NumberPattern | DatePattern>;
+  readonly consumer?: EvaluationConsumer;
+  readonly budget?: EvaluationBudget;
 }
-
-export type ValueState = "value" | "null" | "missing";
 
 export interface EvaluationResult {
   readonly value: Value;
@@ -52,6 +71,8 @@ export interface EvaluationResult {
   readonly valueState: ValueState;
   /** 结果对应的数据路径（尽力：sort/take 后仍可追踪原始下标）。 */
   readonly dataPath?: string;
+  /** 结果为数组时，每个元素在原始数据中的路径（sort/take 后仍指向原始下标）。 */
+  readonly elementDataPaths?: readonly string[];
   readonly diagnostics: readonly Diagnostic[];
 }
 
@@ -63,6 +84,8 @@ interface State {
   indices: number[] | undefined;
   /** 首次变为 Missing 时的路径。 */
   missingAt: string | undefined;
+  /** 已经以 error 诊断终止（预算超限等）：结果为空且不再追加 BINDING_MISSING。 */
+  failed?: boolean;
 }
 
 /** 数组值的初始下标表（0..n-1）；非数组没有可追踪的元素。 */
@@ -106,7 +129,7 @@ class Evaluator {
       dataPath =
         dataPath === undefined || dataPath.length === 0
           ? text
-          : segment.kind === "index"
+          : segment.kind === "index" || dataPath.endsWith(".")
             ? `${dataPath}${text}`
             : `${dataPath}.${text}`;
     };
@@ -114,6 +137,14 @@ class Evaluator {
       append(segment);
       if (isMissing(cursor)) return { value: MISSING, dataPath, missingAt: dataPath };
       if (segment.kind === "index") {
+        if (segment.index < 0 && this.ctx.policy === "legacy-compat-1") {
+          // 旧引擎：路径下标为负 → 越界 → null（静默）；`at:-1` 才是倒数取项。strict-1 同样越界，但会报 BINDING_MISSING。
+          this.legacyChange(
+            "negative-path-index",
+            `path index [${segment.index}] is out of range (legacy resolved it to null); use 'at:${segment.index}' to address items from the end`,
+            dataPath,
+          );
+        }
         if (!isJsonArray(cursor) || segment.index < 0 || segment.index >= cursor.length) {
           return { value: MISSING, dataPath, missingAt: dataPath };
         }
@@ -147,11 +178,20 @@ class Evaluator {
       return finish(r.value, r.dataPath, r.missingAt);
     }
     if (path.scope === "current") {
-      const r = this.resolveSegments(scope.current, path.segments, ".");
+      const r = this.resolveSegments(scope.current, path.segments, scope.dataPath ?? ".");
+      return finish(r.value, r.dataPath, r.missingAt);
+    }
+    if (path.scope === "parent") {
+      // 显式父级作用域（strict 与 legacy 一致；不做回溯）。层数不足 → Missing，路径即表达式文本。
+      let target: Scope | undefined = scope;
+      for (let hop = 0; hop < path.hops && target !== undefined; hop++) target = target.parent;
+      if (target === undefined) return finish(MISSING, text, text);
+      const prefix = target.dataPath ?? (target.parent === undefined ? "$" : "^".repeat(path.hops));
+      const r = this.resolveSegments(target.current, path.segments, prefix);
       return finish(r.value, r.dataPath, r.missingAt);
     }
 
-    const fromCurrent = this.resolveSegments(scope.current, path.segments, undefined);
+    const fromCurrent = this.resolveSegments(scope.current, path.segments, scope.dataPath);
     if (policy === "strict-1") {
       return finish(fromCurrent.value, fromCurrent.dataPath, fromCurrent.missingAt);
     }
@@ -164,7 +204,7 @@ class Evaluator {
     let depth = 0;
     while (parent !== undefined) {
       depth++;
-      const r = this.resolveSegments(parent.current, path.segments, undefined);
+      const r = this.resolveSegments(parent.current, path.segments, parent.dataPath);
       if (!isMissing(r.value) && r.value !== null) {
         this.legacyChange(
           "scope-fallback",
@@ -261,7 +301,35 @@ class Evaluator {
     };
   }
 
+  /** 排序/极值一次计一次预算；超限 → RESOURCE_LIMIT error，表达式以空结果终止。 */
+  private chargeSort(state: State, op: "sort" | "maxby" | "minby"): State | undefined {
+    const { budget } = this.ctx;
+    if (budget === undefined) return undefined;
+    budget.counters.sortOperations++;
+    if (budget.counters.sortOperations <= budget.maxSortOperations) return undefined;
+    this.diag({
+      code: "RESOURCE_LIMIT",
+      severity: "error",
+      message: `'${op}' exceeded the sort budget of ${budget.maxSortOperations} operation(s) for this document`,
+      ...(state.dataPath === undefined ? {} : { dataPath: state.dataPath }),
+      details: {
+        limit: "maxSortOperations",
+        max: budget.maxSortOperations,
+        actual: budget.counters.sortOperations,
+        op,
+      },
+    });
+    return {
+      value: MISSING,
+      dataPath: state.dataPath,
+      indices: undefined,
+      missingAt: undefined,
+      failed: true,
+    };
+  }
+
   private apply(state: State, step: OperationNode): State {
+    if (state.failed) return state;
     if (isMissing(state.value)) {
       // 旧引擎不区分 Missing 与 null：`if` 视缺失为假、`count` 视缺失为 0。
       // legacy-compat-1 复刻该行为并标记语义变化；strict-1 让 Missing 一路传播（诊断只报首个缺失路径）。
@@ -280,6 +348,8 @@ class Evaluator {
     switch (step.op) {
       case "sort": {
         if (!isJsonArray(value)) return state;
+        const overBudget = this.chargeSort(state, "sort");
+        if (overBudget) return overBudget;
         const resolved = this.itemKeys(state, value, step.key, "sort");
         if (resolved.keys === undefined) {
           return {
@@ -322,6 +392,8 @@ class Evaluator {
       case "minby": {
         if (!isJsonArray(value)) return state;
         if (value.length === 0) return this.pickIndex(state, 0); // 空列表无极值项 → Missing
+        const overBudget = this.chargeSort(state, step.op);
+        if (overBudget) return overBudget;
         const resolved = this.itemKeys(state, value, step.key, step.op);
         if (resolved.keys === undefined) {
           return {
@@ -446,25 +518,45 @@ class Evaluator {
     }
 
     let valueState: ValueState = "value";
-    if (isMissing(state.value)) {
+    if (state.failed) {
       valueState = "missing";
+    } else if (isMissing(state.value)) {
       const missingPath = state.missingAt ?? state.dataPath ?? pathRefToText(ast.source);
-      this.diag({
-        code: "BINDING_MISSING",
-        severity: this.ctx.policy === "strict-1" ? "error" : "warning",
-        message: `data path '${missingPath}' is missing (distinct from an explicit null)`,
-        dataPath: missingPath,
-        details: { expression: pathRefToText(ast.source) },
-      });
+      const consumer = this.ctx.consumer ?? "text";
+      if (consumer !== "text" && this.ctx.policy === "legacy-compat-1") {
+        // 旧引擎的条件/循环不区分缺失与 null：缺失 → 假 / 零次。复刻并标记，不再报 BINDING_MISSING。
+        this.legacyChange(
+          "missing-as-null",
+          `${consumer === "condition" ? "conditional block" : "repeat"} consumed a missing value as null (legacy); strict-1 reports BINDING_MISSING instead`,
+          missingPath,
+        );
+        state = { value: null, dataPath: state.dataPath, indices: undefined, missingAt: undefined };
+        valueState = "null";
+      } else {
+        valueState = "missing";
+        this.diag({
+          code: "BINDING_MISSING",
+          severity: this.ctx.policy === "strict-1" ? "error" : "warning",
+          message: `data path '${missingPath}' is missing (distinct from an explicit null)`,
+          dataPath: missingPath,
+          details: { expression: pathRefToText(ast.source) },
+        });
+      }
     } else if (state.value === null) {
       valueState = "null";
     }
 
+    const elementDataPaths = isJsonArray(state.value)
+      ? state.value.map((_, i) => `${state.dataPath ?? ""}[${state.indices?.[i] ?? i}]`)
+      : undefined;
+
     return {
       value: state.value,
-      text: this.text(state.value),
+      // 条件 / 序列消费者不需要文本；跳过文本化避免记录无关的 boolean-text 语义变化。
+      text: state.failed || (this.ctx.consumer ?? "text") !== "text" ? "" : this.text(state.value),
       valueState,
       ...(state.dataPath === undefined ? {} : { dataPath: state.dataPath }),
+      ...(elementDataPaths === undefined ? {} : { elementDataPaths }),
       diagnostics: this.diagnostics,
     };
   }

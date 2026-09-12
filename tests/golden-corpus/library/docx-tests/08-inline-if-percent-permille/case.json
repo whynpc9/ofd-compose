@@ -20,6 +20,6 @@
   },
   "result": {
     "status": "pass",
-    "note": "issue 04：叙述类用例在 ResolvedDocument 级通过（Node 与浏览器双模式，tests/golden-corpus/tests/narrative-corpus.dual.test.ts）"
+    "note": "issue 04：叙述类用例在 ResolvedDocument 级通过（Node 与浏览器双模式，tests/golden-corpus/tests/corpus.dual.test.ts）"
   }
 }

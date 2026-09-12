@@ -69,7 +69,7 @@ export function parsePathSegments(path: string): PathSegment[] {
   return segments;
 }
 
-/** 解析表达式源路径：`.`（当前项）、`$`（根）、`$.a`、`$[0]`、裸路径。 */
+/** 解析表达式源路径：`.`（当前项）、`^`/`^^.a`（父级/祖父级）、`$`（根）、`$.a`、`$[0]`、裸路径。 */
 export function parsePathRef(text: string): PathRef {
   const path = text.trim();
   if (path.length === 0) {
@@ -77,6 +77,18 @@ export function parsePathRef(text: string): PathRef {
   }
   if (path === ".") {
     return { scope: "current", segments: [] };
+  }
+  if (path.startsWith("^")) {
+    let hops = 0;
+    while (path[hops] === "^") hops++;
+    const rest = path.slice(hops);
+    if (rest.length > 0 && !rest.startsWith(".") && !rest.startsWith("[")) {
+      throw new PathSyntaxError(
+        text,
+        `invalid parent path '${path}': '^' must be followed by '.', '[' or nothing`,
+      );
+    }
+    return { scope: "parent", hops, segments: parsePathSegments(rest) };
   }
   if (path === "$") {
     return { scope: "root", segments: [] };

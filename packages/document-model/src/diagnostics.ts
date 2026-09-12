@@ -3,7 +3,11 @@
  * 所有 TS 内核模块（Document Model、Template Compiler、Binding Core……）共用同一形状。
  */
 
-/** spec §12 首版错误码 + 本仓库补充码（MODEL_INVALID：文档模型 schema 校验失败）。 */
+/**
+ * spec §12 首版错误码 + 本仓库补充码：
+ * - `MODEL_INVALID`：文档模型 schema 校验失败（issue 04）；
+ * - `REPEAT_KEY_INVALID`：重复键重复 / 为 null / 非标量（issue 05；spec §4「键重复报错」，§12 未列独立码位）。
+ */
 export const diagnosticCodes = [
   "FONT_MISSING",
   "GLYPH_MISSING",
@@ -23,6 +27,7 @@ export const diagnosticCodes = [
   "IR_VERSION_UNSUPPORTED",
   "SIGNATURE_INVALIDATED",
   "MODEL_INVALID",
+  "REPEAT_KEY_INVALID",
 ] as const;
 
 export type DiagnosticCode = (typeof diagnosticCodes)[number];
