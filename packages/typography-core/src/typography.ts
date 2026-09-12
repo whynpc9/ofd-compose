@@ -64,7 +64,11 @@ function validateText(text: string): void {
   }
 }
 
-/** UAX #14 opportunities, in UTF-16 units. Layout Core chooses actual line breaks. */
+/**
+ * UAX #14 opportunities over a complete paragraph, in paragraph-relative UTF-16
+ * units. Call before splitting by font/style/script; run ends are not line ends.
+ * Layout Core chooses actual line breaks and reshapes affected runs.
+ */
 export function lineBreakOpportunities(text: string) {
   validateText(text);
   return [...new Rules().breaks(text)].map(({ position, required }) => ({ position, required }));
@@ -196,7 +200,6 @@ export class TypographyCore {
         shapingAndLineBreakVersions,
         glyphs,
         advance: { x, y },
-        breaks: lineBreakOpportunities(request.text),
       };
     } finally {
       buffer.reset();

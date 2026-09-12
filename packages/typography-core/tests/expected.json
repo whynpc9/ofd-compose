@@ -278,33 +278,7 @@
       "advance": {
         "x": 8000,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 1,
-          "required": false
-        },
-        {
-          "position": 2,
-          "required": false
-        },
-        {
-          "position": 3,
-          "required": false
-        },
-        {
-          "position": 4,
-          "required": false
-        },
-        {
-          "position": 5,
-          "required": false
-        },
-        {
-          "position": 9,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
@@ -643,37 +617,7 @@
       "advance": {
         "x": 15540,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 7,
-          "required": false
-        },
-        {
-          "position": 10,
-          "required": false
-        },
-        {
-          "position": 21,
-          "required": false
-        },
-        {
-          "position": 22,
-          "required": false
-        },
-        {
-          "position": 26,
-          "required": false
-        },
-        {
-          "position": 27,
-          "required": false
-        },
-        {
-          "position": 28,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
@@ -772,21 +716,7 @@
       "advance": {
         "x": 2070,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 3,
-          "required": false
-        },
-        {
-          "position": 7,
-          "required": false
-        },
-        {
-          "position": 9,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
@@ -945,25 +875,7 @@
       "advance": {
         "x": 6490,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 1,
-          "required": false
-        },
-        {
-          "position": 3,
-          "required": false
-        },
-        {
-          "position": 8,
-          "required": false
-        },
-        {
-          "position": 11,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "39ad71264b588165b469e35e6afb162a378dacd1f95348160240ba9038ac3009",
@@ -1134,33 +1046,7 @@
       "advance": {
         "x": 8543,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 1,
-          "required": false
-        },
-        {
-          "position": 2,
-          "required": false
-        },
-        {
-          "position": 3,
-          "required": false
-        },
-        {
-          "position": 6,
-          "required": false
-        },
-        {
-          "position": 10,
-          "required": false
-        },
-        {
-          "position": 13,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
@@ -1319,21 +1205,7 @@
       "advance": {
         "x": 5688,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 7,
-          "required": false
-        },
-        {
-          "position": 10,
-          "required": false
-        },
-        {
-          "position": 13,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "6edf4227ef0fa846aca70e86a307804ca4401741830f5b3af0f2554abe2b8466",
@@ -1492,21 +1364,7 @@
       "advance": {
         "x": 6006,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 7,
-          "required": false
-        },
-        {
-          "position": 10,
-          "required": false
-        },
-        {
-          "position": 13,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
@@ -1641,17 +1499,7 @@
       "advance": {
         "x": 3783,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 7,
-          "required": false
-        },
-        {
-          "position": 9,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
@@ -1738,21 +1586,7 @@
       "advance": {
         "x": 0,
         "y": -5000
-      },
-      "breaks": [
-        {
-          "position": 1,
-          "required": false
-        },
-        {
-          "position": 2,
-          "required": false
-        },
-        {
-          "position": 5,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
@@ -1815,13 +1649,7 @@
       "advance": {
         "x": 1600,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 3,
-          "required": true
-        }
-      ]
+      }
     },
     {
       "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
@@ -1847,13 +1675,187 @@
       "advance": {
         "x": 0,
         "y": 0
-      },
-      "breaks": [
-        {
-          "position": 0,
-          "required": true
-        }
-      ]
+      }
     }
+  ],
+  "paragraphBreaks": [
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 2,
+        "required": false
+      },
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 4,
+        "required": false
+      },
+      {
+        "position": 5,
+        "required": false
+      },
+      {
+        "position": 9,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 21,
+        "required": false
+      },
+      {
+        "position": 22,
+        "required": false
+      },
+      {
+        "position": 26,
+        "required": false
+      },
+      {
+        "position": 27,
+        "required": false
+      },
+      {
+        "position": 28,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 9,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 8,
+        "required": false
+      },
+      {
+        "position": 11,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 2,
+        "required": false
+      },
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 6,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 13,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 13,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 13,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 9,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 2,
+        "required": false
+      },
+      {
+        "position": 5,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 3,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 0,
+        "required": true
+      }
+    ]
   ]
 }

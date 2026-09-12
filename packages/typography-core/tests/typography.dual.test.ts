@@ -62,6 +62,9 @@ describe("identical Node/browser UTF-8 JSON fixtures", () => {
       expect(new TextEncoder().encode(JSON.stringify(shaped))).toEqual(
         new TextEncoder().encode(JSON.stringify(expected.shapes[index])),
       );
+      expect(new TextEncoder().encode(JSON.stringify(lineBreakOpportunities(input.text)))).toEqual(
+        new TextEncoder().encode(JSON.stringify(expected.paragraphBreaks[index])),
+      );
     });
   }
 
@@ -184,6 +187,25 @@ it("exposes UAX #14 candidate breaks, mandatory CRLF, and no combining/surrogate
     { position: 4, required: true },
   ]);
   expect(lineBreakOpportunities("A\u00a0B")).toEqual([{ position: 3, required: true }]);
+});
+
+it("computes paragraph breaks across style runs without forcing a break at run ends", () => {
+  // A style change inside a word must not introduce a mandatory or optional break.
+  const runs = [
+    core.shape(request("hel")),
+    core.shape({ ...request("lo world"), fontSha256: at(manifest, 1).sha256 }),
+  ];
+  const paragraph = runs.map((run) => run.text).join("");
+  expect(lineBreakOpportunities(paragraph)).toEqual([
+    { position: 6, required: false },
+    { position: 11, required: true },
+  ]);
+  for (const run of runs) expect(run).not.toHaveProperty("breaks");
+  // CJK punctuation rules also require context across a script/style boundary.
+  expect(lineBreakOpportunities("中）文")).toEqual([
+    { position: 2, required: false },
+    { position: 3, required: true },
+  ]);
 });
 
 it("rejects malformed and oversized input before shaping", () => {

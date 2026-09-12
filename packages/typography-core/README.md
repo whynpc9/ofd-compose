@@ -24,7 +24,7 @@ const run = core.shape({
 - `shape` 接收已经确定方向、script、language、字体的一个 run。双向段落解析、混合 script 的 run 切分、中文禁则定制、实际断行与分页由后续 Layout Core 完成。调用方在字体就绪后调用；加载顺序不会决定选字。
 - glyph ID、advance、offset、flags、cluster 全部来自 HarfBuzz。位置单位是未缩放的字体设计单位，x 向右、y 向上，`x/y` 含累计 advance 和当前 offset。`advance` 是整段度量；字号换算与坐标量化由 Layout Core 完成。
 - cluster 和断点统一用原文 UTF-16 下标。`[cluster, clusterEnd)` 可被多个字形共享，包含连字、组合字符和代理对；RTL 字形按 HarfBuzz 视觉顺序输出，区间仍指向逻辑原文。
-- `lineBreakOpportunities(text)` 和 `shape().breaks` 返回 UAX #14 候选断点及 `required`；候选并不等于已选中的分页/换行位置。Layout Core 还需结合 cluster/unsafe-to-break flags 在断行处重整形。
+- `lineBreakOpportunities(paragraphText)` 必须接收按字体/样式/script 切分前的完整段落，返回相对段落的 UAX #14 候选断点及 `required`；`shape` 不返回断点，避免把 run 结尾误当成强制段尾。候选并不等于已选中的分页/换行位置，Layout Core 还需结合 cluster/unsafe-to-break flags 在断行处重整形。
 - `features` 是全 run 的 OpenType tag→非负整数值，按 tag 排序传给 HarfBuzz。
 - `style` 省略时使用锁定文件的真实样式；指定时精确比对 OS/2 字重与斜体标记。禁止合成粗体/斜体。中文主字体无真实斜体，不能用拉丁斜体偷偷补中文。
 - `shape` 在 HarfBuzz 前强制检查 `p0CharacterRepertoire`，超范围返回 `CHARACTER_OUT_OF_PROFILE`，`clusters` 附原文 UTF-16 字符起点。字体有字形也不能绕过。范围身份随 `shapingAndLineBreakVersions.repertoire` 输出。

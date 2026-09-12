@@ -29,3 +29,8 @@
 - GitHub Codex review P2：补上 spec §8 的字体独立字符准入。`wp0.4-p0-repertoire-v1` 固定 GB2312 全集、明确拉丁/汉字扩展和符号集合，包含 71850 个码点；输出携带版本及内容摘要。最终业务字符清单批准仍属于 issue 19。
 - 超范围即使字体有 glyph 也报告 `CHARACTER_OUT_OF_PROFILE`；范围内缺字仍报告 `GLYPH_MISSING`。回归包含补充平面的 UTF-16 错误位置及完整准入表摘要重算。
 - Typography Core 修复后 Node 24 项、Chromium 21 项通过；本地 .NET 46/46 与完整许可门禁通过。详见 [review 记录](../issue-06-review.md)。
+
+### 2026-09-12 — 段落断行 review 修复
+
+- 第二项 GitHub P2 已采纳：`shape` 仅整形已切分 run，不再返回将 run 结尾误作段尾的断点。`lineBreakOpportunities` 独立接收完整段落，保留跨字体/样式/script 的上下文。
+- 补充单词内部样式切换与跨 run 中文标点断行回归，完整段落断点继续单独做 Node/Chromium UTF-8 字节基准。Typography Core：Node 25、Chromium 22 通过。

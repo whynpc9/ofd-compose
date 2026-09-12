@@ -1,6 +1,6 @@
 // Explicit maintenance command only: build first, then inspect the fixture diff.
 import { readFile, writeFile } from "node:fs/promises";
-import { TypographyCore } from "../dist/index.mjs";
+import { lineBreakOpportunities, TypographyCore } from "../dist/index.mjs";
 
 const root = new URL("../", import.meta.url);
 const manifest = JSON.parse(await readFile(new URL("fonts/manifest.json", root), "utf8"));
@@ -13,7 +13,10 @@ for (const entry of manifest) {
 const shapes = cases.map(({ name: _name, font, ...input }) =>
   core.shape({ ...input, fontSha256: manifest[font].sha256 }),
 );
+// These fixture texts also serve as complete paragraphs; real callers must not
+// compute this per shaped run when a paragraph spans multiple font/style runs.
+const paragraphBreaks = cases.map(({ text }) => lineBreakOpportunities(text));
 await writeFile(
   new URL("tests/expected.json", root),
-  `${JSON.stringify({ metrics, shapes }, null, 2)}\n`,
+  `${JSON.stringify({ metrics, shapes, paragraphBreaks }, null, 2)}\n`,
 );

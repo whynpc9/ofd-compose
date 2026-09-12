@@ -28,4 +28,10 @@ PR：[Issue 06: deterministic Typography Core](https://github.com/whynpc9/ofd-co
 - 首轮 GitHub CI `34678567287` 全绿，包含 golden corpus 可复现检查；修复提交需再次等待远端 CI。
 - 字体子集、目标阅读器 CFF/TTF 互操作和最终业务字符清单属于后续 issues，本 PR 不宣称其验收完成。PR 尚未合并。
 
-Standards：0 项遗留；Spec：0 项遗留；GitHub P2：1 项已修复。
+Standards：0 项遗留；Spec：0 项遗留；GitHub P2：2 项已修复。
+
+## 第二轮 GitHub review
+
+- **P2 — Compute line breaks at paragraph scope**，线程 `PRRT_kwDOUUjwf86huEp8`，评审提交 `543b1b0`。**采纳并修复**：从 run 的 `shape` 返回值移除断点；独立 `lineBreakOpportunities` 明确要求完整段落。样式 run 的末尾不再产生强制换行，跨 run 的单词和标点规则保留完整上下文。
+- 验证：`hel` + 粗体 `lo world` 只在段落位置 6/11 产生断点，不在 run 边界 3 断行；`中）文` 不在闭标点前断行。完整段落断点和整形结果分别共享字节基准。Typography Core Node 25、Chromium 22 通过；Spec 复审 0 项有效发现。
+- `543b1b0` 的 GitHub CI `34679002942` 全绿（Node 238、Chromium 46、.NET 46）。本轮增加 Node/Chromium 各 1 项；最终 PR checks 为最终验证状态。
