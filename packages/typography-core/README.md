@@ -27,8 +27,17 @@ const run = core.shape({
 - `lineBreakOpportunities(text)` 和 `shape().breaks` 返回 UAX #14 候选断点及 `required`；候选并不等于已选中的分页/换行位置。Layout Core 还需结合 cluster/unsafe-to-break flags 在断行处重整形。
 - `features` 是全 run 的 OpenType tag→非负整数值，按 tag 排序传给 HarfBuzz。
 - `style` 省略时使用锁定文件的真实样式；指定时精确比对 OS/2 字重与斜体标记。禁止合成粗体/斜体。中文主字体无真实斜体，不能用拉丁斜体偷偷补中文。
+- `shape` 在 HarfBuzz 前强制检查 `p0CharacterRepertoire`，超范围返回 `CHARACTER_OUT_OF_PROFILE`，`clusters` 附原文 UTF-16 字符起点。字体有字形也不能绕过。范围身份随 `shapingAndLineBreakVersions.repertoire` 输出。
 - 未加载摘要为 `FONT_MISSING`，摘要不符为 `FONT_DIGEST_MISMATCH`，缺字为 `GLYPH_MISSING`（附 UTF-16 cluster），样式不符为 `FONT_STYLE_UNAVAILABLE`。不会搜索其他已加载字体或系统字体。
 - 单字体上限 32 MiB，每个实例累计 128 MiB，单次文本 100000 个 UTF-16 单元。拒绝不完整代理对。宿主仍负责隔离 Worker、执行超时和进程内存预算。
+
+## WP0.4 字符范围
+
+冻结候选 `wp0.4-p0-repertoire-v1`：GB 2312 的 7445 个字符全集（包含其中希腊/西里尔/假名/注音/符号）、ASCII 可打印字符、U+00A0–024F 拉丁区、U+0300–036F 组合附加符、U+1E00–1EFF 拉丁扩展、U+3400–4DBF / U+4E00–9FFF / U+20000–2A6DF 汉字区（含 GBK 汉字扩展）、另列 € U+20AC 和数学减号 U+2212。共 71850 个允许码点，按排序后 uint32 big-endian 列表计算 SHA-256。允许范围与选定字体实际覆盖是两个检查；范围内缺字仍报 `GLYPH_MISSING`。
+
+源表在 [repertoire-data.ts](src/repertoire-data.ts)，[生成脚本](tools/update-repertoire.py) 使用 Python `gb2312` 映射并验证 7445 个字符；发布运行时仅消费已入库数值表，不依赖系统 codec 或 ICU。首批业务语料是否需要其他符号、收窄范围及最终首版 profile 的批准留给 issue 19；任何调整必须更新范围版本、摘要和共享基准。
+
+换行、制表符、段落分隔符由 Layout Core 在调用 `shape` 前拆分/处理，不是待绘制字符。独立 `lineBreakOpportunities` 是通用 UAX #14 工具，保留换行/CRLF 等控制字符的断点语义，不承担字符准入。
 
 ## 固定资源和 WASM
 

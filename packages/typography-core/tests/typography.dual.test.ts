@@ -1,10 +1,13 @@
+import * as hb from "harfbuzzjs";
 import { beforeAll, describe, expect, it } from "vitest";
 import { loadFontFile } from "#font-loader";
 import manifest from "../fonts/manifest.json";
 import {
   fontDigest,
   fontStylePolicy,
+  isP0Character,
   lineBreakOpportunities,
+  p0CharacterRepertoire,
   type ShapeRequest,
   TypographyCore,
   TypographyError,
@@ -92,17 +95,52 @@ it("keeps supplementary and combining character ranges in UTF-16 units", () => {
 });
 
 it("fails on missing glyphs without consulting another loaded font", () => {
-  expectCode(() => core.shape(request("\u{10ffff}")), "GLYPH_MISSING");
+  expect(isP0Character(0x2a6df)).toBe(true);
+  expectCode(() => core.shape(request("\u{2a6df}")), "GLYPH_MISSING");
   expectCode(
     () => core.shape({ ...request("中"), fontSha256: at(manifest, 3).sha256 }),
     "GLYPH_MISSING",
   );
   try {
-    core.shape(request("A\u{10ffff}"));
+    core.shape(request("A\u{2a6df}"));
   } catch (error) {
     expect((error as TypographyError).clusters).toEqual([1]);
   }
   expect(core.shape(request("A")).glyphs[0]?.glyphId).toBeGreaterThan(0);
+});
+
+it("rejects out-of-profile text even when the locked font contains its glyph", () => {
+  const font = new hb.Font(new hb.Face(new hb.Blob(at(bytes, 3))));
+  const buffer = new hb.Buffer();
+  buffer.addText("₦");
+  buffer.setDirection(hb.Direction.LTR);
+  buffer.setLanguage("en");
+  buffer.setScript("Latn");
+  hb.shape(font, buffer);
+  expect(buffer.getGlyphInfos()[0]?.codepoint).toBeGreaterThan(0);
+  expectCode(
+    () => core.shape({ ...request("₦"), fontSha256: at(manifest, 3).sha256 }),
+    "CHARACTER_OUT_OF_PROFILE",
+  );
+  try {
+    core.shape(request("𠮷₦😀"));
+  } catch (error) {
+    expect((error as TypographyError).code).toBe("CHARACTER_OUT_OF_PROFILE");
+    expect((error as TypographyError).clusters).toEqual([2, 3]);
+  }
+  expectCode(() => core.shape(request("\u{10ffff}")), "CHARACTER_OUT_OF_PROFILE");
+});
+
+it("publishes a font-independent frozen repertoire and admits required GB extensions", () => {
+  expect(p0CharacterRepertoire.version).toBe("wp0.4-p0-repertoire-v1");
+  for (const text of ["中丂㐀𠮷", "Aéắá0123", "αЯあ￥€−×÷℃"]) {
+    expect([...text].every((character) => isP0Character(character.codePointAt(0) ?? -1))).toBe(
+      true,
+    );
+  }
+  for (const point of [-1, NaN, 1.5, 0xd800, 0x20a6, 0x1f600, 0x10ffff]) {
+    expect(isP0Character(point)).toBe(false);
+  }
 });
 
 it("requires the exact font bytes and refuses an unloaded digest", () => {

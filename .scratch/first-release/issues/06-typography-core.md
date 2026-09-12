@@ -22,4 +22,10 @@
 - 5 份完整字体和 OFL 文本入库，记录固定上游提交、文件及许可摘要；WASM 字节摘要也有独立校验。
 - 新增 Node 21 项、Chromium 19 项测试通过；11 组完整整形输出逐字节对照同一基准，另有四表度量、独立 cluster/断点/缺字/身份/样式验证。全仓绕过 Turbo 缓存的 typecheck、Node 235 项、browser 44 项通过。
 - HB_TINY 核查、资源生命周期、浏览器打包说明和剩余 WP0.9 互操作范围见 [Typography Core README](../../../packages/typography-core/README.md)。
-- 当前是实现完成待 PR review 收尾，尚未合并。
+- 实现 PR：[PR #4](https://github.com/whynpc9/ofd-compose/pull/4)，尚未合并。
+
+### 2026-09-12 — Review 修复
+
+- GitHub Codex review P2：补上 spec §8 的字体独立字符准入。`wp0.4-p0-repertoire-v1` 固定 GB2312 全集、明确拉丁/汉字扩展和符号集合，包含 71850 个码点；输出携带版本及内容摘要。最终业务字符清单批准仍属于 issue 19。
+- 超范围即使字体有 glyph 也报告 `CHARACTER_OUT_OF_PROFILE`；范围内缺字仍报告 `GLYPH_MISSING`。回归包含补充平面的 UTF-16 错误位置及完整准入表摘要重算。
+- Typography Core 修复后 Node 24 项、Chromium 21 项通过；本地 .NET 46/46 与完整许可门禁通过。详见 [review 记录](../issue-06-review.md)。

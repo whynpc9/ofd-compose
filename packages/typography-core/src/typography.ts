@@ -4,6 +4,7 @@ import { bytesToHex } from "@noble/hashes/utils.js";
 import * as hb from "harfbuzzjs";
 import { TypographyError } from "./errors.js";
 import { type FontMetrics, readMetrics } from "./metrics.js";
+import { assertP0Characters, p0CharacterRepertoire } from "./repertoire.js";
 
 export const shapingAndLineBreakVersions = Object.freeze({
   harfbuzzjs: "1.6.0",
@@ -12,6 +13,7 @@ export const shapingAndLineBreakVersions = Object.freeze({
   unicode: "17.0.0",
   linebreak: "@cto.af/linebreak@4.0.3",
   fontkit: "2.0.4",
+  repertoire: p0CharacterRepertoire,
 });
 
 export const fontStylePolicy = Object.freeze({
@@ -108,6 +110,7 @@ export class TypographyCore {
 
   shape(request: ShapeRequest) {
     validateText(request.text);
+    assertP0Characters(request.text);
     if (
       !["ltr", "rtl", "ttb", "btt"].includes(request.direction) ||
       !/^[A-Za-z]{4}$/.test(request.script) ||

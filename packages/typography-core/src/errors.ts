@@ -4,6 +4,7 @@ export type TypographyErrorCode =
   | "FONT_INVALID"
   | "FONT_STYLE_UNAVAILABLE"
   | "GLYPH_MISSING"
+  | "CHARACTER_OUT_OF_PROFILE"
   | "TYPOGRAPHY_LIMIT"
   | "TEXT_INVALID";
 

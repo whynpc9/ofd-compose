@@ -170,7 +170,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -314,7 +319,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -678,7 +688,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -786,7 +801,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -958,7 +978,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -1150,7 +1175,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -1318,7 +1348,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -1486,7 +1521,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -1626,7 +1666,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -1722,7 +1767,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [
         {
@@ -1786,7 +1836,12 @@
         "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
         "unicode": "17.0.0",
         "linebreak": "@cto.af/linebreak@4.0.3",
-        "fontkit": "2.0.4"
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
       },
       "glyphs": [],
       "advance": {
