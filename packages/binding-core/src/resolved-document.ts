@@ -246,7 +246,17 @@ export function cellText(cell: ResolvedTableCell): string {
   return cell.blocks.map(blockText).join("\n");
 }
 
-/** 重复实例链的稳定文本身份：`nodeId=key` 以 `/` 连接。 */
+/** 身份编码中转义分隔符 `=` `/` 与转义符 `\` 本身，使编码可逆、不同实例链不会串成同一文本。 */
+function escapeIdentityPart(part: string): string {
+  return part.replace(/[\\/=]/g, (ch) => `\\${ch}`);
+}
+
+/**
+ * 重复实例链的稳定文本身份：`nodeId=key` 以 `/` 连接；nodeId 与 key 中的 `=` `/` `\` 以 `\` 转义。
+ * 键是任意标量文本，不转义时 `[{a, "b/c=d"}]` 与 `[{a,"b"},{c,"d"}]` 会串成同一身份。
+ */
 export function instanceIdentity(instancePath: readonly RepeatInstance[] | undefined): string {
-  return (instancePath ?? []).map((i) => `${i.nodeId}=${i.key}`).join("/");
+  return (instancePath ?? [])
+    .map((i) => `${escapeIdentityPart(i.nodeId)}=${escapeIdentityPart(i.key)}`)
+    .join("/");
 }

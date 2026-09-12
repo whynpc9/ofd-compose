@@ -1,0 +1,4 @@
+Orders
+{#orders}
+- {id}: {amount}
+{/orders}

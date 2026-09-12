@@ -1,7 +1,10 @@
 import { Value } from "@sinclair/typebox/value";
 import type { Diagnostic } from "./diagnostics.js";
 import { type TemplateSource, TemplateSourceSchema } from "./schema.js";
-import { isStructureBinding, walkTemplateNodes } from "./walk.js";
+import { findStructureDepthOverflow, isStructureBinding, walkTemplateNodes } from "./walk.js";
+
+/** 结构嵌套深度的默认预算（编译器 `CompileLimits.maxStructureDepth` 与之共用）。 */
+export const defaultMaxStructureDepth = 16;
 
 export interface ValidateTemplateSourceOptions {
   /**
@@ -9,6 +12,11 @@ export interface ValidateTemplateSourceOptions {
    * 未知但 `required: false` 的条目原样保留（透传）。
    */
   readonly knownExtensionNamespaces?: readonly string[];
+  /**
+   * 结构嵌套深度预算。深度超过该值的结构容器在 schema 校验之前被有界预检拦截（`RESOURCE_LIMIT`），
+   * 避免未受信任的深层嵌套把递归校验推向栈溢出。默认 `defaultMaxStructureDepth`。
+   */
+  readonly maxStructureDepth?: number;
 }
 
 export type ValidateTemplateSourceResult =
@@ -36,6 +44,31 @@ export function validateTemplateSource(
   options: ValidateTemplateSourceOptions = {},
 ): ValidateTemplateSourceResult {
   const diagnostics: Diagnostic[] = [];
+
+  const maxStructureDepth = options.maxStructureDepth ?? defaultMaxStructureDepth;
+  const overflow = findStructureDepthOverflow(
+    typeof input === "object" && input !== null ? (input as { body?: unknown }).body : undefined,
+    maxStructureDepth,
+  );
+  if (overflow !== undefined) {
+    return {
+      ok: false,
+      diagnostics: [
+        {
+          code: "RESOURCE_LIMIT",
+          severity: "error",
+          phase: "model",
+          ...(overflow.nodeId === undefined ? {} : { nodeId: overflow.nodeId }),
+          message: `structure nesting depth ${overflow.structureDepth + 1} exceeds the budget of ${maxStructureDepth}; the template was not validated further`,
+          details: {
+            limit: "maxStructureDepth",
+            actual: overflow.structureDepth + 1,
+            max: maxStructureDepth,
+          },
+        },
+      ],
+    };
+  }
 
   if (!Value.Check(TemplateSourceSchema, input)) {
     for (const error of Value.Errors(TemplateSourceSchema, input)) {

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
+  defaultMaxStructureDepth,
+  findStructureDepthOverflow,
   type TemplateSource,
   TemplateSourceSchema,
   toJsonSchemaDocument,
@@ -295,6 +297,55 @@ describe("structure nodes (issue 05)", () => {
     const result = validateTemplateSource(template);
     expect(result.ok).toBe(false);
     expect(result.diagnostics[0]?.code).toBe("MODEL_INVALID");
+  });
+
+  it("bounded depth preflight rejects hostile nesting with RESOURCE_LIMIT before schema validation (iterative, tolerant of malformed input)", () => {
+    let node: unknown = { kind: "paragraph", nodeId: "leaf", inlines: [] };
+    for (let i = 0; i < 50_000; i++) {
+      node = { kind: "conditional-block", nodeId: `c${i}`, bindingId: `b${i}`, children: [node] };
+    }
+    const result = validateTemplateSource({ ...narrativeTemplate(), body: [node] });
+    expect(result.ok).toBe(false);
+    expect(result.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "RESOURCE_LIMIT",
+        phase: "model",
+        nodeId: `c${50_000 - 1 - (defaultMaxStructureDepth + 1)}`,
+        details: {
+          limit: "maxStructureDepth",
+          actual: defaultMaxStructureDepth + 2,
+          max: defaultMaxStructureDepth,
+        },
+      }),
+    ]);
+    // 深度在预算内 → 交给 schema 校验（这里因缺少 expression 而是 MODEL_INVALID，不是 RESOURCE_LIMIT）。
+    expect(
+      validateTemplateSource(
+        { ...narrativeTemplate(), body: [node] },
+        { maxStructureDepth: 60_000 },
+      ).diagnostics[0]?.code,
+    ).toBe("MODEL_INVALID");
+    // 形态不合法的输入不会让预检抛异常。
+    expect(findStructureDepthOverflow(undefined, 1)).toBeUndefined();
+    expect(
+      findStructureDepthOverflow([null, 1, "x", [], { kind: 3 }, { kind: "table", rows: 5 }], 1),
+    ).toBeUndefined();
+    expect(
+      findStructureDepthOverflow(
+        [
+          {
+            kind: "table",
+            rows: [
+              {
+                kind: "table-row",
+                cells: [{ kind: "table-cell", blocks: [{ kind: "table", nodeId: "inner" }] }],
+              },
+            ],
+          },
+        ],
+        0,
+      ),
+    ).toEqual({ structureDepth: 1, nodeId: "inner" });
   });
 
   it("exports the recursive block union as $id/$ref in JSON Schema", () => {

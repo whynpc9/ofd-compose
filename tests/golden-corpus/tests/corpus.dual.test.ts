@@ -22,6 +22,8 @@ interface Semantics {
   paragraphs?: string[];
   tables?: { rows: string[][] }[];
   conditionalBlocks?: { expression: string; visible: boolean }[];
+  media?: unknown[];
+  barcodes?: unknown[];
 }
 
 const manifests = import.meta.glob<Manifest>("../library/**/case.json", {
@@ -50,16 +52,21 @@ interface ExecutableCase {
   semantics: Semantics;
 }
 
-function collectCases(): { executable: ExecutableCase[]; others: Manifest[] } {
+interface OtherCase {
+  manifest: Manifest;
+  semantics: Semantics | undefined;
+}
+
+function collectCases(): { executable: ExecutableCase[]; others: OtherCase[] } {
   const executable: ExecutableCase[] = [];
-  const others: Manifest[] = [];
+  const others: OtherCase[] = [];
   for (const [manifestPath, manifest] of Object.entries(manifests).sort()) {
     const dir = manifestPath.slice(0, -"/case.json".length);
     const template = manifest.templateDescription
       ? templates[`${dir}/${manifest.templateDescription}`]
       : undefined;
     if (template === undefined || !isExecutableTemplate(template)) {
-      others.push(manifest);
+      others.push({ manifest, semantics: semanticsFiles[`${dir}/expected/semantics.json`] });
       continue;
     }
     const data = dataFiles[`${dir}/data.json`];
@@ -76,7 +83,8 @@ const { executable, others } = collectCases();
 
 /**
  * 文本/结构类用例的固定清单：集合缩小或扩大都必须显式更新（防止用例被静默跳过）。
- * 示例库（examples/）只有 .docx 没有 template.txt，媒体用例 09–14 含 `{%`，均留待后续票。
+ * 示例库（examples/）的 template.txt 由 template.docx 正文转录；媒体用例（示例 06、11、12，测试方法 09–14）
+ * 含 `{%`，留待媒体票。
  */
 const EXPECTED_EXECUTABLE_CASES = [
   "lib-test-01-basic-tags-path-index",
@@ -89,13 +97,22 @@ const EXPECTED_EXECUTABLE_CASES = [
   "lib-test-07-nth-at-ranking",
   "lib-test-08-inline-if-percent-permille",
   "lib-test-15-table-split-runs-date-format",
+  "lib-example-01-basic-tags",
+  "lib-example-02-condition",
+  "lib-example-03-loop",
+  "lib-example-04-table-loop",
+  "lib-example-05-extensions",
+  "lib-example-07-table-date-split-runs",
+  "lib-example-08-inline-friendly",
+  "lib-example-09-inline-ranking",
+  "lib-example-10-inline-conditions-rates",
 ];
 
 /** 把 ResolvedDocument 投影成 `ofd-compose/case-semantics@1` 的可比较子集。 */
 function projectSemantics(
   body: readonly ResolvedBlock[],
   conditionals: readonly { expression: string; visible: boolean }[],
-): Required<Semantics> {
+): Required<Pick<Semantics, "paragraphs" | "tables" | "conditionalBlocks">> {
   return {
     paragraphs: body.filter((b) => b.kind === "paragraph").map(paragraphText),
     tables: body
@@ -108,7 +125,26 @@ function projectSemantics(
 describe("text/structure corpus cases (ResolvedDocument level)", () => {
   it("selects exactly the executable cases", () => {
     expect(executable.map((c) => c.manifest.caseId)).toEqual(EXPECTED_EXECUTABLE_CASES);
-    expect(others.length).toBeGreaterThan(0);
+    // 其余用例全部是媒体用例（图片 / 条码），没有任何纯文本/结构用例被静默留在 others 里。
+    expect(others.map((o) => o.manifest.caseId).sort()).toEqual(
+      [
+        "lib-example-06-images",
+        "lib-example-11-images-scaling",
+        "lib-example-12-barcodes",
+        "lib-test-09-inline-image-data-uri",
+        "lib-test-10-block-image-centered",
+        "lib-test-11-images-in-loop",
+        "lib-test-12-real-png-scaling",
+        "lib-test-13-barcodes-code128-ean13",
+        "lib-test-14-barcodes-upca-itf",
+      ].sort(),
+    );
+    for (const { manifest, semantics } of others) {
+      expect(
+        (semantics?.media?.length ?? 0) + (semantics?.barcodes?.length ?? 0),
+        `${manifest.caseId} must be a media case`,
+      ).toBeGreaterThan(0);
+    }
   });
 
   it.each(executable.map((c) => [c.manifest.caseId, c] as const))(
@@ -167,8 +203,8 @@ describe("text/structure corpus cases (ResolvedDocument level)", () => {
     for (const c of executable) {
       expect(c.manifest.result.status, c.manifest.caseId).toBe("pass");
     }
-    for (const m of others) {
-      expect(m.result.status, m.caseId).toBe("not-executable");
+    for (const { manifest } of others) {
+      expect(manifest.result.status, manifest.caseId).toBe("not-executable");
     }
   });
 });

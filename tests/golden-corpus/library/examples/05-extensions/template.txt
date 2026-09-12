@@ -1,0 +1,5 @@
+Orders count: {orders|count}
+Report date: {reportDate|format:date:yyyy-MM-dd}
+{#orders|sort:amount:desc|take:2}
+{id} -> {amount|format:number:0.00}
+{/orders|sort:amount:desc|take:2}

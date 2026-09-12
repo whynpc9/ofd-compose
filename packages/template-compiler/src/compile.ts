@@ -2,6 +2,7 @@ import {
   type BlockNode,
   type Diagnostic,
   type DynamicText,
+  defaultMaxStructureDepth,
   type ExpressionSource,
   hasErrors,
   isStructureBinding,
@@ -44,7 +45,7 @@ export interface CompileLimits {
 export const defaultCompileLimits: CompileLimits = {
   maxExpressionLength: 1024,
   maxPipelineSteps: 32,
-  maxStructureDepth: 16,
+  maxStructureDepth: defaultMaxStructureDepth,
 };
 
 export type CompiledRepeatKey =
@@ -97,8 +98,18 @@ export type CompileResult =
       readonly diagnostics: readonly Diagnostic[];
     };
 
-export interface CompileOptions extends ValidateTemplateSourceOptions {
+/** `maxStructureDepth` 统一由 `limits.maxStructureDepth` 给出，并同时用于模型校验前的嵌套深度预检。 */
+export interface CompileOptions extends Omit<ValidateTemplateSourceOptions, "maxStructureDepth"> {
   readonly limits?: Partial<CompileLimits>;
+}
+
+function resolveLimits(limits: Partial<CompileLimits> | undefined): CompileLimits {
+  // 逐字段 `??`：显式 undefined 不得关闭预算。
+  return {
+    maxExpressionLength: limits?.maxExpressionLength ?? defaultCompileLimits.maxExpressionLength,
+    maxPipelineSteps: limits?.maxPipelineSteps ?? defaultCompileLimits.maxPipelineSteps,
+    maxStructureDepth: limits?.maxStructureDepth ?? defaultCompileLimits.maxStructureDepth,
+  };
 }
 
 /** 单条表达式（任一来源形态）→ AST + 来源映射。失败抛 ExpressionCompileError。 */
@@ -133,14 +144,7 @@ class TemplateCompiler {
     validationDiagnostics: readonly Diagnostic[],
   ) {
     this.diagnostics = [...validationDiagnostics];
-    // 逐字段 `??`：显式 undefined 不得关闭预算。
-    this.limits = {
-      maxExpressionLength:
-        options.limits?.maxExpressionLength ?? defaultCompileLimits.maxExpressionLength,
-      maxPipelineSteps: options.limits?.maxPipelineSteps ?? defaultCompileLimits.maxPipelineSteps,
-      maxStructureDepth:
-        options.limits?.maxStructureDepth ?? defaultCompileLimits.maxStructureDepth,
-    };
+    this.limits = resolveLimits(options.limits);
   }
 
   private resourceLimit(
@@ -282,7 +286,10 @@ class TemplateCompiler {
  * 施加编译期预算，全部诊断一次返回（不在首个错误处停止）。
  */
 export function compile(input: unknown, options: CompileOptions = {}): CompileResult {
-  const validation = validateTemplateSource(input, options);
+  const validation = validateTemplateSource(input, {
+    ...options,
+    maxStructureDepth: resolveLimits(options.limits).maxStructureDepth,
+  });
   if (!validation.ok) {
     return { ok: false, diagnostics: validation.diagnostics };
   }

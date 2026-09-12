@@ -73,11 +73,11 @@ const rows: readonly DiffRow[] = [
     legacy: { texts: ["Alice"], rules: ["repeat-non-array-once", "repeat-non-array-skipped"] },
   },
   {
-    rule: "negative-path-index：路径 `[-1]` 越界为空（旧 null），`at:-1` 才是倒数取项",
+    rule: "negative-path-index：路径 `[-1]` 越界（strict 缺失 / 旧 null），`at:-1` 才是倒数取项",
     make: (b) => [b.p("[{xs[-1]}][{xs|at:-1}]")],
     data: { xs: ["a", "b"] },
     strict: { texts: ["[][b]"], codes: ["BINDING_MISSING"] },
-    legacy: { texts: ["[][b]"], rules: ["negative-path-index"], codes: ["BINDING_MISSING"] },
+    legacy: { texts: ["[][b]"], rules: ["negative-path-index"] },
   },
   {
     rule: "boolean-text：布尔渲染为 True/False",

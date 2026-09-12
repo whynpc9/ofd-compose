@@ -1,0 +1,5 @@
+Patient: {patient.name}
+{?patient.isVip}
+VIP customer
+{/?patient.isVip}
+End.

@@ -15,7 +15,7 @@
 <case-dir>/
   case.json              manifest（schema: schemas/golden-corpus/case-manifest.schema.json）
   data.json              输入数据；manifest.dataDigest 记录其字节的 sha256
-  template.txt           模板结构文本（测试方法用例）：逐段落/表格行列出标签原文
+  template.txt           模板结构文本：逐段落/表格行列出标签原文（测试方法用例原生；示例用例由 template.docx 转录）
   template.docx          旧模板原件（示例用例）
   assets/                可选：图片等资产（如 chart.png）
   expected/semantics.json  预期语义（schema: schemas/golden-corpus/case-semantics.schema.json）
@@ -46,7 +46,8 @@
 
 `tests/corpus.dual.test.ts` 把 **文本/结构类** 用例（`template.txt` 由静态文本、行内 `{expr}`、控制块 `{#` `{/` `{?`、表格 `@table-begin` / `| a | b |` 及行组标记组成，不含图片/条码 `{%`）经 `src/corpus-template.ts` 转成原生 TemplateSource（`timeZone: UTC`，策略取 manifest `nativeProfile.bindingPolicyVersion`；循环 → RepeatBlock / RepeatRowGroup，序号退化键并显式标注 `orderDependentIdentity`；`{?}` → ConditionalBlock；`<run>` 标注抹平，对应 `allowedDifferences: split-run-flattening`），再经 `compile()` → `bind()` 得到 ResolvedDocument，并把顶层段落文本、表格单元格文本、`structure.conditionals` 的显隐投影成 `case-semantics@1` 的 `paragraphs` / `tables` / `conditionalBlocks` 与 `expected/semantics.json` 逐项比较，同时断言无 error/warning 级诊断。
 
-- 用例清单在测试中固定（当前：测试方法用例 01、02-hidden、02-shown、03、04、05、06、07、08、15 共 10 个）；集合变化必须显式更新，避免用例被静默跳过。示例库（`examples/`）只有 `.docx` 没有 `template.txt`，媒体用例 09–14 含 `{%`，均留待后续票（受限导入器 issue 30、媒体 issue 11+）。
+- 用例清单在测试中固定（当前 19 个：测试方法用例 01、02-hidden、02-shown、03、04、05、06、07、08、15，示例用例 01、02、03、04、05、07、08、09、10）；集合变化必须显式更新，避免用例被静默跳过。测试同时断言其余用例全部是媒体用例（`expected/semantics.json` 含 `media` 或 `barcodes`：示例 06、11、12，测试方法 09–14），留待媒体票（issue 11+）。
+- 示例用例的 `template.txt` 由 `template.docx` 正文（`word/document.xml` 的段落 / 表格 / `w:t` 文本）按同一约定转录，manifest 同时保留 `templateAsset`（原件）与 `templateDescription`（转录）。
 - 同一文件在 Node（`pnpm test`）与浏览器（`pnpm test:browser`，Playwright chromium）两种模式运行；语料经 `import.meta.glob` 读取，不依赖 `node:fs`。浏览器模式下 `document.runtime.tzdataVersion` 为 `null`（ICU 版本不可探测），Node 模式取 `process.versions.tz`。
 - 通过的用例 manifest `result.status` 记为 `pass`（测试同时断言其余用例仍为 `not-executable`）。
 - `src/corpus-template.ts` 是测试支持代码，不是受限导入器（issue 30）。

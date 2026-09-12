@@ -553,6 +553,26 @@ describe("budgets", () => {
     expect(r.texts).toEqual(["1", "2"]);
     expect(codesOf(r.diagnostics)).toEqual([["REPEAT_LIMIT", "error", undefined, undefined]]);
     expect(r.diagnostics[0]?.details).toEqual({ limit: "maxExpandedNodes", max: 7 });
+    // 结构记录反映实际展开的实例数，而不是宣称一个完整的三实例重复。
+    expect(r.document.structure.repeats).toEqual([
+      expect.objectContaining({ instanceCount: 2, truncated: true }),
+    ]);
+  });
+
+  it("REPEAT_LIMIT: a row group cut short by the node budget is also recorded as truncated", () => {
+    const template = build((b) => [b.table([b.rowGroup("xs", [b.row(["{.}"])])])]);
+    // 表格 1 + 行组 1 + 每个实例：实例 1 + 行 1 + 单元格 1 + 段落 1 + 片段 1 = 5。
+    const r = renderTemplate(
+      template,
+      { xs: [1, 2, 3] },
+      { bindingPolicy: { budgets: { maxExpandedNodes: 12 } } },
+    );
+    const table = r.document.body[0];
+    if (table?.kind !== "table") throw new Error("table expected");
+    expect(table.rows.map((row) => row.cells.map(cellText))).toEqual([["1"], ["2"]]);
+    expect(r.document.structure.repeats).toEqual([
+      expect.objectContaining({ kind: "repeat-row-group", instanceCount: 2, truncated: true }),
+    ]);
   });
 
   it("REPEAT_LIMIT: repeat instances and conditional evaluations themselves count as expanded nodes (structure-only nesting cannot bypass the budget)", () => {
@@ -674,6 +694,101 @@ describe("budgets", () => {
       }),
     ]);
     expect(compile(deep).ok).toBe(true);
+  });
+
+  it("thousands of nested blocks from untrusted input are rejected with RESOURCE_LIMIT before recursive validation (no stack overflow)", () => {
+    const depth = 20_000;
+    let node: unknown = { kind: "paragraph", nodeId: "leaf", inlines: [] };
+    for (let i = 0; i < depth; i++) {
+      node = {
+        kind: i % 2 === 0 ? "conditional-block" : "repeat-block",
+        nodeId: `n${i}`,
+        bindingId: `b${i}`,
+        expression: { kind: "legacy", text: "x" },
+        ...(i % 2 === 0 ? {} : { repeatKey: { kind: "ordinal", orderDependentIdentity: true } }),
+        children: [node],
+      };
+    }
+    const hostile = { ...build(() => []), body: [node] };
+    const c = compile(hostile);
+    expect(c.ok).toBe(false);
+    expect(c.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "RESOURCE_LIMIT",
+        phase: "model",
+        // 深度恰为 max 的容器由编译器逐个报告；预检拦截的是更深（编译器本会静默跳过）的第一层。
+        nodeId: `n${depth - 1 - 17}`,
+        details: { limit: "maxStructureDepth", actual: 18, max: 16 },
+      }),
+    ]);
+    // 表格 / 行组 / 单元格链同样受预检覆盖。
+    let cell: unknown = { kind: "paragraph", nodeId: "leaf", inlines: [] };
+    for (let i = 0; i < depth; i++) {
+      cell = {
+        kind: "table",
+        nodeId: `t${i}`,
+        rows: [
+          {
+            kind: "table-row",
+            nodeId: `r${i}`,
+            cells: [{ kind: "table-cell", nodeId: `c${i}`, blocks: [cell] }],
+          },
+        ],
+      };
+    }
+    const hostileTable = { ...build(() => []), body: [cell] };
+    expect(compile(hostileTable).diagnostics[0]).toMatchObject({
+      code: "RESOURCE_LIMIT",
+      phase: "model",
+      details: { limit: "maxStructureDepth", actual: 18, max: 16 },
+    });
+  });
+});
+
+describe("legacy negative path index", () => {
+  it("legacy-compat-1 resolves `xs[-1]` to null (valueState null, no BINDING_MISSING, no missing-as-null in conditions)", () => {
+    const template = build((b) => [b.p("[{xs[-1]}]"), b.cond("xs[-1]", [b.p("shown")])]);
+    const legacy = renderTemplate(template, { xs: ["a", "b"] }, { policy: "legacy-compat-1" });
+    expect(legacy.texts).toEqual(["[]"]);
+    expect(codesOf(legacy.diagnostics)).toEqual([
+      ["LEGACY_SEMANTIC_CHANGE", "info", "xs[-1]", "negative-path-index"],
+      ["LEGACY_SEMANTIC_CHANGE", "info", "xs[-1]", "negative-path-index"],
+    ]);
+    const first = legacy.document.body[0];
+    const fragment = first?.kind === "paragraph" ? first.fragments[1] : undefined;
+    expect(
+      fragment?.kind === "text" && fragment.origin.kind === "dynamic-text"
+        ? fragment.origin.valueState
+        : undefined,
+    ).toBe("null");
+    expect(legacy.document.structure.conditionals[0]).toMatchObject({
+      visible: false,
+      valueState: "null",
+    });
+
+    const strict = renderTemplate(template, { xs: ["a", "b"] }, { policy: "strict-1" });
+    expect(codesOf(strict.diagnostics)).toEqual([
+      ["BINDING_MISSING", "error", "xs[-1]", undefined],
+      ["BINDING_MISSING", "error", "xs[-1]", undefined],
+    ]);
+  });
+});
+
+describe("instanceIdentity encoding", () => {
+  it("escapes `=` `/` `\\` so distinct instance chains never share an identity", () => {
+    const direct = instanceIdentity([
+      { nodeId: "a", bindingId: "x", key: "b/c=d", keyKind: "path", ordinal: 0 },
+    ]);
+    const nested = instanceIdentity([
+      { nodeId: "a", bindingId: "x", key: "b", keyKind: "path", ordinal: 0 },
+      { nodeId: "c", bindingId: "y", key: "d", keyKind: "path", ordinal: 0 },
+    ]);
+    expect(direct).toBe("a=b\\/c\\=d");
+    expect(nested).toBe("a=b/c=d");
+    expect(direct).not.toBe(nested);
+    expect(
+      instanceIdentity([{ nodeId: "a", bindingId: "x", key: "p\\q", keyKind: "path", ordinal: 0 }]),
+    ).toBe("a=p\\\\q");
   });
 });
 

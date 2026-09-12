@@ -1,0 +1,7 @@
+Invoice: {invoice.no}
+@table-begin
+| Item | Qty | Unit Price |
+| {#invoice.lines} |  |  |
+| {name} | {qty} | {price|format:number:0.00} |
+| {/invoice.lines} |  |  |
+@table-end

@@ -138,12 +138,14 @@ class Evaluator {
       if (isMissing(cursor)) return { value: MISSING, dataPath, missingAt: dataPath };
       if (segment.kind === "index") {
         if (segment.index < 0 && this.ctx.policy === "legacy-compat-1") {
-          // 旧引擎：路径下标为负 → 越界 → null（静默）；`at:-1` 才是倒数取项。strict-1 同样越界，但会报 BINDING_MISSING。
+          // 旧引擎：路径下标为负 → 越界 → null（静默，不是缺失）；`at:-1` 才是倒数取项。
+          // strict-1 同样越界，但按 Missing 处理并报 BINDING_MISSING。
           this.legacyChange(
             "negative-path-index",
             `path index [${segment.index}] is out of range (legacy resolved it to null); use 'at:${segment.index}' to address items from the end`,
             dataPath,
           );
+          return { value: null, dataPath, missingAt: undefined };
         }
         if (!isJsonArray(cursor) || segment.index < 0 || segment.index >= cursor.length) {
           return { value: MISSING, dataPath, missingAt: dataPath };

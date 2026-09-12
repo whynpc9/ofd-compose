@@ -36,6 +36,7 @@ import {
   type ResolvedDocument,
   type ResolvedFragment,
   type ResolvedParagraph,
+  type ResolvedRepeat,
   type ResolvedStructure,
   type ResolvedTable,
   type ResolvedTableCell,
@@ -90,6 +91,12 @@ const fallbackTimeZone = "UTC";
 interface RepeatItem {
   readonly value: JsonValue;
   readonly dataPath: string | undefined;
+}
+
+interface RepeatExpansion {
+  readonly instances: readonly { scope: Scope; instance: RepeatInstance }[];
+  /** 已推入 `structure.repeats` 的记录；绑定缺失时为 undefined。 */
+  readonly record: ResolvedRepeat | undefined;
 }
 
 /** 一次 bind() 调用内所有节点共享的状态与展开逻辑。 */
@@ -215,13 +222,18 @@ class Binder {
             out.push(...this.expandBlocks(block.children, scope, instancePath));
           }
           break;
-        case "repeat-block":
+        case "repeat-block": {
           if (!this.charge(block)) break;
-          for (const { scope: itemScope, instance } of this.instances(block, scope, instancePath)) {
-            if (!this.charge(block)) break;
+          const expansion = this.instances(block, scope, instancePath);
+          for (const { scope: itemScope, instance } of expansion.instances) {
+            if (!this.charge(block)) {
+              this.truncateByNodeBudget(expansion.record, instance.ordinal);
+              break;
+            }
             out.push(...this.expandBlocks(block.children, itemScope, [...instancePath, instance]));
           }
           break;
+        }
       }
     }
     return out;
@@ -311,8 +323,12 @@ class Binder {
         continue;
       }
       if (!this.charge(rowNode)) break;
-      for (const { scope: itemScope, instance } of this.instances(rowNode, scope, instancePath)) {
-        if (!this.charge(rowNode)) break;
+      const expansion = this.instances(rowNode, scope, instancePath);
+      for (const { scope: itemScope, instance } of expansion.instances) {
+        if (!this.charge(rowNode)) {
+          this.truncateByNodeBudget(expansion.record, instance.ordinal);
+          break;
+        }
         for (const templateRow of rowNode.rows) {
           const row = this.row(templateRow, itemScope, [...instancePath, instance]);
           if (row) rows.push(row);
@@ -403,14 +419,14 @@ class Binder {
     node: RepeatBlock | RepeatRowGroup,
     scope: Scope,
     instancePath: readonly RepeatInstance[],
-  ): { scope: Scope; instance: RepeatInstance }[] {
+  ): RepeatExpansion {
     const binding = this.binding(node);
     if (
       binding === undefined ||
       binding.role === "dynamic-text" ||
       binding.role === "conditional-block"
     ) {
-      return [];
+      return { instances: [], record: undefined };
     }
     const result = this.evaluate(binding, scope, "sequence");
     let items = this.sequenceItems(node, result);
@@ -433,7 +449,7 @@ class Binder {
     }
 
     const keys = this.repeatKeys(node, binding.repeatKey, items);
-    this.structure.repeats.push({
+    const record: ResolvedRepeat = {
       nodeId: node.nodeId,
       bindingId: node.bindingId,
       kind: node.kind,
@@ -443,9 +459,10 @@ class Binder {
       instanceCount: items.length,
       ...(truncated ? { truncated: true as const } : {}),
       ...(instancePath.length === 0 ? {} : { instancePath: [...instancePath] }),
-    });
+    };
+    this.structure.repeats.push(record);
 
-    return items.map((item, ordinal) => ({
+    const instances = items.map((item, ordinal) => ({
       scope: {
         current: item.value,
         parent: scope,
@@ -461,6 +478,14 @@ class Binder {
         ...(item.dataPath === undefined ? {} : { dataPath: item.dataPath }),
       },
     }));
+    return { instances, record };
+  }
+
+  /** 全文档节点预算在重复中途耗尽：结构记录只保留实际展开的实例数并标注 truncated。 */
+  private truncateByNodeBudget(record: ResolvedRepeat | undefined, expandedCount: number): void {
+    if (record === undefined) return;
+    record.instanceCount = expandedCount;
+    record.truncated = true;
   }
 
   /**
