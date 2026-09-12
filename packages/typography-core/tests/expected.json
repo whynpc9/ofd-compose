@@ -1,0 +1,1861 @@
+{
+  "metrics": [
+    {
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "outline": "cff",
+      "head": {
+        "unitsPerEm": 1000,
+        "xMin": -1002,
+        "yMin": -1048,
+        "xMax": 2928,
+        "yMax": 1808
+      },
+      "hhea": {
+        "ascent": 1160,
+        "descent": -288,
+        "lineGap": 0
+      },
+      "os2": {
+        "weight": 400,
+        "italic": false,
+        "typoAscender": 880,
+        "typoDescender": -120,
+        "typoLineGap": 0,
+        "winAscent": 1160,
+        "winDescent": 288,
+        "useTypoMetrics": false
+      },
+      "name": {
+        "family": "Noto Sans CJK SC",
+        "subfamily": "Regular",
+        "postscript": "NotoSansCJKsc-Regular"
+      }
+    },
+    {
+      "sha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
+      "outline": "cff",
+      "head": {
+        "unitsPerEm": 1000,
+        "xMin": -1013,
+        "yMin": -1046,
+        "xMax": 2926,
+        "yMax": 1806
+      },
+      "hhea": {
+        "ascent": 1160,
+        "descent": -288,
+        "lineGap": 0
+      },
+      "os2": {
+        "weight": 700,
+        "italic": false,
+        "typoAscender": 880,
+        "typoDescender": -120,
+        "typoLineGap": 0,
+        "winAscent": 1160,
+        "winDescent": 288,
+        "useTypoMetrics": false
+      },
+      "name": {
+        "family": "Noto Sans CJK SC",
+        "subfamily": "Bold",
+        "postscript": "NotoSansCJKsc-Bold"
+      }
+    },
+    {
+      "sha256": "39ad71264b588165b469e35e6afb162a378dacd1f95348160240ba9038ac3009",
+      "outline": "truetype",
+      "head": {
+        "unitsPerEm": 1000,
+        "xMin": -1014,
+        "yMin": -304,
+        "xMax": 2988,
+        "yMax": 1102
+      },
+      "hhea": {
+        "ascent": 928,
+        "descent": -256,
+        "lineGap": 0
+      },
+      "os2": {
+        "weight": 400,
+        "italic": false,
+        "typoAscender": 880,
+        "typoDescender": -120,
+        "typoLineGap": 0,
+        "winAscent": 1032,
+        "winDescent": 285,
+        "useTypoMetrics": false
+      },
+      "name": {
+        "family": "LXGW WenKai",
+        "subfamily": "Regular",
+        "postscript": "LXGWWenKai-Regular"
+      }
+    },
+    {
+      "sha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
+      "outline": "truetype",
+      "head": {
+        "unitsPerEm": 1000,
+        "xMin": -665,
+        "yMin": -389,
+        "xMax": 2767,
+        "yMax": 1084
+      },
+      "hhea": {
+        "ascent": 1069,
+        "descent": -293,
+        "lineGap": 0
+      },
+      "os2": {
+        "weight": 400,
+        "italic": true,
+        "typoAscender": 1069,
+        "typoDescender": -293,
+        "typoLineGap": 0,
+        "winAscent": 1069,
+        "winDescent": 293,
+        "useTypoMetrics": false
+      },
+      "name": {
+        "family": "Noto Sans",
+        "subfamily": "Italic",
+        "postscript": "NotoSans-Italic"
+      }
+    },
+    {
+      "sha256": "6edf4227ef0fa846aca70e86a307804ca4401741830f5b3af0f2554abe2b8466",
+      "outline": "truetype",
+      "head": {
+        "unitsPerEm": 1000,
+        "xMin": -680,
+        "yMin": -389,
+        "xMax": 2780,
+        "yMax": 1067
+      },
+      "hhea": {
+        "ascent": 1069,
+        "descent": -293,
+        "lineGap": 0
+      },
+      "os2": {
+        "weight": 700,
+        "italic": true,
+        "typoAscender": 1069,
+        "typoDescender": -293,
+        "typoLineGap": 0,
+        "winAscent": 1069,
+        "winDescent": 293,
+        "useTypoMetrics": false
+      },
+      "name": {
+        "family": "Noto Sans",
+        "subfamily": "Bold Italic",
+        "postscript": "NotoSans-BoldItalic"
+      }
+    }
+  ],
+  "shapes": [
+    {
+      "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "text": "中文扩展㐀𠮷，。",
+      "direction": "ltr",
+      "language": "zh-Hans",
+      "script": "Hani",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 9544,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 20036,
+          "cluster": 1,
+          "clusterEnd": 2,
+          "x": 1000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 18674,
+          "cluster": 2,
+          "clusterEnd": 3,
+          "x": 2000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 15844,
+          "cluster": 3,
+          "clusterEnd": 4,
+          "x": 3000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 2441,
+          "cluster": 4,
+          "clusterEnd": 5,
+          "x": 4000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 59625,
+          "cluster": 5,
+          "clusterEnd": 7,
+          "x": 5000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 59058,
+          "cluster": 7,
+          "clusterEnd": 8,
+          "x": 6000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 1398,
+          "cluster": 8,
+          "clusterEnd": 9,
+          "x": 7000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 8000,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "text": "office AV 0123456789 +−×÷￥€%",
+      "direction": "ltr",
+      "language": "en",
+      "script": "Latn",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 80,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 606,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 58977,
+          "cluster": 1,
+          "clusterEnd": 4,
+          "x": 606,
+          "y": 0,
+          "xAdvance": 918,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 68,
+          "cluster": 4,
+          "clusterEnd": 5,
+          "x": 1524,
+          "y": 0,
+          "xAdvance": 486,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 70,
+          "cluster": 5,
+          "clusterEnd": 6,
+          "x": 2010,
+          "y": 0,
+          "xAdvance": 554,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 1
+        },
+        {
+          "glyphId": 1,
+          "cluster": 6,
+          "clusterEnd": 7,
+          "x": 2564,
+          "y": 0,
+          "xAdvance": 224,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 34,
+          "cluster": 7,
+          "clusterEnd": 8,
+          "x": 2788,
+          "y": 0,
+          "xAdvance": 593,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 55,
+          "cluster": 8,
+          "clusterEnd": 9,
+          "x": 3381,
+          "y": 0,
+          "xAdvance": 575,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 1
+        },
+        {
+          "glyphId": 1,
+          "cluster": 9,
+          "clusterEnd": 10,
+          "x": 3956,
+          "y": 0,
+          "xAdvance": 224,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63153,
+          "cluster": 10,
+          "clusterEnd": 11,
+          "x": 4180,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63154,
+          "cluster": 11,
+          "clusterEnd": 12,
+          "x": 4735,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63155,
+          "cluster": 12,
+          "clusterEnd": 13,
+          "x": 5290,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63156,
+          "cluster": 13,
+          "clusterEnd": 14,
+          "x": 5845,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63157,
+          "cluster": 14,
+          "clusterEnd": 15,
+          "x": 6400,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63158,
+          "cluster": 15,
+          "clusterEnd": 16,
+          "x": 6955,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63159,
+          "cluster": 16,
+          "clusterEnd": 17,
+          "x": 7510,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63160,
+          "cluster": 17,
+          "clusterEnd": 18,
+          "x": 8065,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63161,
+          "cluster": 18,
+          "clusterEnd": 19,
+          "x": 8620,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 63162,
+          "cluster": 19,
+          "clusterEnd": 20,
+          "x": 9175,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 1,
+          "cluster": 20,
+          "clusterEnd": 21,
+          "x": 9730,
+          "y": 0,
+          "xAdvance": 224,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 12,
+          "cluster": 21,
+          "clusterEnd": 22,
+          "x": 9954,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 831,
+          "cluster": 22,
+          "clusterEnd": 23,
+          "x": 10509,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 149,
+          "cluster": 23,
+          "clusterEnd": 24,
+          "x": 11064,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 181,
+          "cluster": 24,
+          "clusterEnd": 25,
+          "x": 12064,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 59210,
+          "cluster": 25,
+          "clusterEnd": 26,
+          "x": 13064,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 751,
+          "cluster": 26,
+          "clusterEnd": 27,
+          "x": 14064,
+          "y": 0,
+          "xAdvance": 555,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 6,
+          "cluster": 27,
+          "clusterEnd": 28,
+          "x": 14619,
+          "y": 0,
+          "xAdvance": 921,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 15540,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
+      "text": "á ẍ́ é",
+      "direction": "ltr",
+      "language": "en",
+      "script": "Latn",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 163,
+          "cluster": 0,
+          "clusterEnd": 2,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 568,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 3,
+          "cluster": 2,
+          "clusterEnd": 3,
+          "x": 568,
+          "y": 0,
+          "xAdvance": 260,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 1566,
+          "cluster": 3,
+          "clusterEnd": 6,
+          "x": 828,
+          "y": 0,
+          "xAdvance": 483,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 3016,
+          "cluster": 3,
+          "clusterEnd": 6,
+          "x": 1344,
+          "y": 194,
+          "xAdvance": 0,
+          "yAdvance": 0,
+          "xOffset": 33,
+          "yOffset": 194,
+          "flags": 0
+        },
+        {
+          "glyphId": 3,
+          "cluster": 6,
+          "clusterEnd": 7,
+          "x": 1311,
+          "y": 0,
+          "xAdvance": 260,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 171,
+          "cluster": 7,
+          "clusterEnd": 9,
+          "x": 1571,
+          "y": 0,
+          "xAdvance": 499,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 2070,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
+      "text": "中文 Bold 123",
+      "direction": "ltr",
+      "language": "zh-Hans",
+      "script": "Hani",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 9544,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 20036,
+          "cluster": 1,
+          "clusterEnd": 2,
+          "x": 1000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 1,
+          "cluster": 2,
+          "clusterEnd": 3,
+          "x": 2000,
+          "y": 0,
+          "xAdvance": 227,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 35,
+          "cluster": 3,
+          "clusterEnd": 4,
+          "x": 2227,
+          "y": 0,
+          "xAdvance": 681,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 80,
+          "cluster": 4,
+          "clusterEnd": 5,
+          "x": 2908,
+          "y": 0,
+          "xAdvance": 626,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 77,
+          "cluster": 5,
+          "clusterEnd": 6,
+          "x": 3534,
+          "y": 0,
+          "xAdvance": 315,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 69,
+          "cluster": 6,
+          "clusterEnd": 7,
+          "x": 3849,
+          "y": 0,
+          "xAdvance": 644,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 1,
+          "cluster": 7,
+          "clusterEnd": 8,
+          "x": 4493,
+          "y": 0,
+          "xAdvance": 227,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 18,
+          "cluster": 8,
+          "clusterEnd": 9,
+          "x": 4720,
+          "y": 0,
+          "xAdvance": 590,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 19,
+          "cluster": 9,
+          "clusterEnd": 10,
+          "x": 5310,
+          "y": 0,
+          "xAdvance": 590,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 20,
+          "cluster": 10,
+          "clusterEnd": 11,
+          "x": 5900,
+          "y": 0,
+          "xAdvance": 590,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 6490,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "39ad71264b588165b469e35e6afb162a378dacd1f95348160240ba9038ac3009",
+      "text": "中文㐀𠮷 ABC 123",
+      "direction": "ltr",
+      "language": "zh-Hans",
+      "script": "Hani",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 4523,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 9140,
+          "cluster": 1,
+          "clusterEnd": 2,
+          "x": 1000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 23058,
+          "cluster": 2,
+          "clusterEnd": 3,
+          "x": 2000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 20827,
+          "cluster": 3,
+          "clusterEnd": 5,
+          "x": 3000,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 3,
+          "cluster": 5,
+          "clusterEnd": 6,
+          "x": 4000,
+          "y": 0,
+          "xAdvance": 350,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 36,
+          "cluster": 6,
+          "clusterEnd": 7,
+          "x": 4350,
+          "y": 0,
+          "xAdvance": 690,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 37,
+          "cluster": 7,
+          "clusterEnd": 8,
+          "x": 5040,
+          "y": 0,
+          "xAdvance": 650,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 38,
+          "cluster": 8,
+          "clusterEnd": 9,
+          "x": 5690,
+          "y": 0,
+          "xAdvance": 703,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 3,
+          "cluster": 9,
+          "clusterEnd": 10,
+          "x": 6393,
+          "y": 0,
+          "xAdvance": 350,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 20,
+          "cluster": 10,
+          "clusterEnd": 11,
+          "x": 6743,
+          "y": 0,
+          "xAdvance": 600,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 21,
+          "cluster": 11,
+          "clusterEnd": 12,
+          "x": 7343,
+          "y": 0,
+          "xAdvance": 600,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 22,
+          "cluster": 12,
+          "clusterEnd": 13,
+          "x": 7943,
+          "y": 0,
+          "xAdvance": 600,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 8543,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
+      "text": "office AV 123",
+      "direction": "ltr",
+      "language": "en",
+      "script": "Latn",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 82,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 563,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 2189,
+          "cluster": 1,
+          "clusterEnd": 4,
+          "x": 563,
+          "y": 0,
+          "xAdvance": 896,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 70,
+          "cluster": 4,
+          "clusterEnd": 5,
+          "x": 1459,
+          "y": 0,
+          "xAdvance": 453,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 72,
+          "cluster": 5,
+          "clusterEnd": 6,
+          "x": 1912,
+          "y": 0,
+          "xAdvance": 499,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 3,
+          "cluster": 6,
+          "clusterEnd": 7,
+          "x": 2411,
+          "y": 0,
+          "xAdvance": 260,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 36,
+          "cluster": 7,
+          "clusterEnd": 8,
+          "x": 2671,
+          "y": 0,
+          "xAdvance": 552,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 57,
+          "cluster": 8,
+          "clusterEnd": 9,
+          "x": 3223,
+          "y": 0,
+          "xAdvance": 552,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 1
+        },
+        {
+          "glyphId": 3,
+          "cluster": 9,
+          "clusterEnd": 10,
+          "x": 3775,
+          "y": 0,
+          "xAdvance": 260,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 20,
+          "cluster": 10,
+          "clusterEnd": 11,
+          "x": 4035,
+          "y": 0,
+          "xAdvance": 551,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 21,
+          "cluster": 11,
+          "clusterEnd": 12,
+          "x": 4586,
+          "y": 0,
+          "xAdvance": 551,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 22,
+          "cluster": 12,
+          "clusterEnd": 13,
+          "x": 5137,
+          "y": 0,
+          "xAdvance": 551,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 5688,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "6edf4227ef0fa846aca70e86a307804ca4401741830f5b3af0f2554abe2b8466",
+      "text": "office AV 123",
+      "direction": "ltr",
+      "language": "en",
+      "script": "Latn",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 82,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 585,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 2189,
+          "cluster": 1,
+          "clusterEnd": 4,
+          "x": 585,
+          "y": 0,
+          "xAdvance": 1000,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 70,
+          "cluster": 4,
+          "clusterEnd": 5,
+          "x": 1585,
+          "y": 0,
+          "xAdvance": 483,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 72,
+          "cluster": 5,
+          "clusterEnd": 6,
+          "x": 2068,
+          "y": 0,
+          "xAdvance": 557,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 3,
+          "cluster": 6,
+          "clusterEnd": 7,
+          "x": 2625,
+          "y": 0,
+          "xAdvance": 260,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 36,
+          "cluster": 7,
+          "clusterEnd": 8,
+          "x": 2885,
+          "y": 0,
+          "xAdvance": 618,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 57,
+          "cluster": 8,
+          "clusterEnd": 9,
+          "x": 3503,
+          "y": 0,
+          "xAdvance": 590,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 1
+        },
+        {
+          "glyphId": 3,
+          "cluster": 9,
+          "clusterEnd": 10,
+          "x": 4093,
+          "y": 0,
+          "xAdvance": 260,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 20,
+          "cluster": 10,
+          "clusterEnd": 11,
+          "x": 4353,
+          "y": 0,
+          "xAdvance": 551,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 21,
+          "cluster": 11,
+          "clusterEnd": 12,
+          "x": 4904,
+          "y": 0,
+          "xAdvance": 551,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 22,
+          "cluster": 12,
+          "clusterEnd": 13,
+          "x": 5455,
+          "y": 0,
+          "xAdvance": 551,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 6006,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
+      "text": "office AV",
+      "direction": "ltr",
+      "language": "en",
+      "script": "Latn",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 82,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 563,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 73,
+          "cluster": 1,
+          "clusterEnd": 2,
+          "x": 563,
+          "y": 0,
+          "xAdvance": 318,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 73,
+          "cluster": 2,
+          "clusterEnd": 3,
+          "x": 881,
+          "y": 0,
+          "xAdvance": 318,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 76,
+          "cluster": 3,
+          "clusterEnd": 4,
+          "x": 1199,
+          "y": 0,
+          "xAdvance": 258,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 70,
+          "cluster": 4,
+          "clusterEnd": 5,
+          "x": 1457,
+          "y": 0,
+          "xAdvance": 453,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 72,
+          "cluster": 5,
+          "clusterEnd": 6,
+          "x": 1910,
+          "y": 0,
+          "xAdvance": 499,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 3,
+          "cluster": 6,
+          "clusterEnd": 7,
+          "x": 2409,
+          "y": 0,
+          "xAdvance": 260,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 36,
+          "cluster": 7,
+          "clusterEnd": 8,
+          "x": 2669,
+          "y": 0,
+          "xAdvance": 562,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 57,
+          "cluster": 8,
+          "clusterEnd": 9,
+          "x": 3231,
+          "y": 0,
+          "xAdvance": 552,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 3783,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "text": "中文（。）",
+      "direction": "ttb",
+      "language": "zh-Hans",
+      "script": "Hani",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 9544,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": -500,
+          "y": -1160,
+          "xAdvance": 0,
+          "yAdvance": -1000,
+          "xOffset": -500,
+          "yOffset": -1160,
+          "flags": 0
+        },
+        {
+          "glyphId": 20036,
+          "cluster": 1,
+          "clusterEnd": 2,
+          "x": -500,
+          "y": -2160,
+          "xAdvance": 0,
+          "yAdvance": -1000,
+          "xOffset": -500,
+          "yOffset": -1160,
+          "flags": 0
+        },
+        {
+          "glyphId": 58994,
+          "cluster": 2,
+          "clusterEnd": 3,
+          "x": -500,
+          "y": -3160,
+          "xAdvance": 0,
+          "yAdvance": -1000,
+          "xOffset": -500,
+          "yOffset": -1160,
+          "flags": 0
+        },
+        {
+          "glyphId": 58981,
+          "cluster": 3,
+          "clusterEnd": 4,
+          "x": -500,
+          "y": -4160,
+          "xAdvance": 0,
+          "yAdvance": -1000,
+          "xOffset": -500,
+          "yOffset": -1160,
+          "flags": 0
+        },
+        {
+          "glyphId": 58995,
+          "cluster": 4,
+          "clusterEnd": 5,
+          "x": -500,
+          "y": -5160,
+          "xAdvance": 0,
+          "yAdvance": -1000,
+          "xOffset": -500,
+          "yOffset": -1160,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 0,
+        "y": -5000
+      }
+    },
+    {
+      "fontSha256": "36cff144df01309dab648bea71baff9bb074026914afe63aeacc8bc90b67a28b",
+      "text": "abc",
+      "direction": "rtl",
+      "language": "en",
+      "script": "Latn",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [
+        {
+          "glyphId": 70,
+          "cluster": 2,
+          "clusterEnd": 3,
+          "x": 0,
+          "y": 0,
+          "xAdvance": 453,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 69,
+          "cluster": 1,
+          "clusterEnd": 2,
+          "x": 453,
+          "y": 0,
+          "xAdvance": 579,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        },
+        {
+          "glyphId": 68,
+          "cluster": 0,
+          "clusterEnd": 1,
+          "x": 1032,
+          "y": 0,
+          "xAdvance": 568,
+          "yAdvance": 0,
+          "xOffset": 0,
+          "yOffset": 0,
+          "flags": 0
+        }
+      ],
+      "advance": {
+        "x": 1600,
+        "y": 0
+      }
+    },
+    {
+      "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "text": "",
+      "direction": "ltr",
+      "language": "en",
+      "script": "Latn",
+      "unitsPerEm": 1000,
+      "shapingAndLineBreakVersions": {
+        "harfbuzzjs": "1.6.0",
+        "harfbuzz": "14.3.0",
+        "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+        "unicode": "17.0.0",
+        "linebreak": "@cto.af/linebreak@4.0.3",
+        "fontkit": "2.0.4",
+        "repertoire": {
+          "version": "wp0.4-p0-repertoire-v1",
+          "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+          "codePointCount": 71850
+        }
+      },
+      "glyphs": [],
+      "advance": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "paragraphBreaks": [
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 2,
+        "required": false
+      },
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 4,
+        "required": false
+      },
+      {
+        "position": 5,
+        "required": false
+      },
+      {
+        "position": 9,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 21,
+        "required": false
+      },
+      {
+        "position": 22,
+        "required": false
+      },
+      {
+        "position": 26,
+        "required": false
+      },
+      {
+        "position": 27,
+        "required": false
+      },
+      {
+        "position": 28,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 9,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 8,
+        "required": false
+      },
+      {
+        "position": 11,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 2,
+        "required": false
+      },
+      {
+        "position": 3,
+        "required": false
+      },
+      {
+        "position": 6,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 13,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 13,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 10,
+        "required": false
+      },
+      {
+        "position": 13,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 7,
+        "required": false
+      },
+      {
+        "position": 9,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 1,
+        "required": false
+      },
+      {
+        "position": 2,
+        "required": false
+      },
+      {
+        "position": 5,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 3,
+        "required": true
+      }
+    ],
+    [
+      {
+        "position": 0,
+        "required": true
+      }
+    ]
+  ]
+}

@@ -6,10 +6,31 @@
 
 **Status:** ready-for-agent
 
-- [ ] 字体资源按 SHA-256 锁定并随 OFL 许可文本入库：Noto Sans CJK SC 静态字重（主候选）与一个 TrueType 轮廓备选；家族名不是身份
-- [ ] harfbuzzjs 整形：输出 glyph ID、位置/advance/offset、cluster；记录 `-DHB_TINY` 精简构建缺失的 API（若有）及应对方案
-- [ ] fontkit 提供 OS/2、hhea、head、name 度量；字形选择只由 HarfBuzz 决定
-- [ ] `@cto.af/linebreak` 提供候选断点；接口暴露 Unicode/HarfBuzz/linebreak 版本组成 `shapingAndLineBreakVersions`
-- [ ] 真实粗体/斜体与合成样式策略显式声明
-- [ ] 测试覆盖：中文扩展字、英文、数字、符号、组合字符、粗斜体、缺字、同名不同字节字体
-- [ ] 同一测试集在 Vitest node 与 browser 模式下结果逐字节一致
+- [x] 字体资源按 SHA-256 锁定并随 OFL 许可文本入库：Noto Sans CJK SC 静态字重（主候选）与一个 TrueType 轮廓备选；家族名不是身份
+- [x] harfbuzzjs 整形：输出 glyph ID、位置/advance/offset、cluster；记录 `-DHB_TINY` 精简构建缺失的 API（若有）及应对方案
+- [x] fontkit 提供 OS/2、hhea、head、name 度量；字形选择只由 HarfBuzz 决定
+- [x] `@cto.af/linebreak` 提供候选断点；接口暴露 Unicode/HarfBuzz/linebreak 版本组成 `shapingAndLineBreakVersions`
+- [x] 真实粗体/斜体与合成样式策略显式声明
+- [x] 测试覆盖：中文扩展字、英文、数字、符号、组合字符、粗斜体、缺字、同名不同字节字体
+- [x] 同一测试集在 Vitest node 与 browser 模式下结果逐字节一致
+
+## Comments
+
+### 2026-09-12 — 实现与验证
+
+- `packages/typography-core` 已实现按完整 SHA-256 加载静态 CFF/TTF、fontkit 四表度量、HarfBuzz glyph/advance/offset/UTF-16 cluster、Unicode 17 UAX #14 候选断点；样式必须匹配真实字体，禁合成与隐式回退。
+- 5 份完整字体和 OFL 文本入库，记录固定上游提交、文件及许可摘要；WASM 字节摘要也有独立校验。
+- 新增 Node 21 项、Chromium 19 项测试通过；11 组完整整形输出逐字节对照同一基准，另有四表度量、独立 cluster/断点/缺字/身份/样式验证。全仓绕过 Turbo 缓存的 typecheck、Node 235 项、browser 44 项通过。
+- HB_TINY 核查、资源生命周期、浏览器打包说明和剩余 WP0.9 互操作范围见 [Typography Core README](../../../packages/typography-core/README.md)。
+- 实现 PR：[PR #4](https://github.com/whynpc9/ofd-compose/pull/4)，尚未合并。
+
+### 2026-09-12 — Review 修复
+
+- GitHub Codex review P2：补上 spec §8 的字体独立字符准入。`wp0.4-p0-repertoire-v1` 固定 GB2312 全集、明确拉丁/汉字扩展和符号集合，包含 71850 个码点；输出携带版本及内容摘要。最终业务字符清单批准仍属于 issue 19。
+- 超范围即使字体有 glyph 也报告 `CHARACTER_OUT_OF_PROFILE`；范围内缺字仍报告 `GLYPH_MISSING`。回归包含补充平面的 UTF-16 错误位置及完整准入表摘要重算。
+- Typography Core 修复后 Node 24 项、Chromium 21 项通过；本地 .NET 46/46 与完整许可门禁通过。详见 [review 记录](../issue-06-review.md)。
+
+### 2026-09-12 — 段落断行 review 修复
+
+- 第二项 GitHub P2 已采纳：`shape` 仅整形已切分 run，不再返回将 run 结尾误作段尾的断点。`lineBreakOpportunities` 独立接收完整段落，保留跨字体/样式/script 的上下文。
+- 补充单词内部样式切换与跨 run 中文标点断行回归，完整段落断点继续单独做 Node/Chromium UTF-8 字节基准。Typography Core：Node 25、Chromium 22 通过。

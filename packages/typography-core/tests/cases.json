@@ -1,0 +1,87 @@
+[
+  {
+    "name": "cjk-extensions",
+    "font": 0,
+    "text": "中文扩展㐀𠮷，。",
+    "script": "Hani",
+    "language": "zh-Hans",
+    "direction": "ltr"
+  },
+  {
+    "name": "latin-numbers-symbols",
+    "font": 0,
+    "text": "office AV 0123456789 +−×÷￥€%",
+    "script": "Latn",
+    "language": "en",
+    "direction": "ltr"
+  },
+  {
+    "name": "combining-clusters",
+    "font": 3,
+    "text": "á ẍ́ é",
+    "script": "Latn",
+    "language": "en",
+    "direction": "ltr"
+  },
+  {
+    "name": "real-bold",
+    "font": 1,
+    "text": "中文 Bold 123",
+    "script": "Hani",
+    "language": "zh-Hans",
+    "direction": "ltr",
+    "style": { "weight": 700, "italic": false }
+  },
+  {
+    "name": "truetype-chinese",
+    "font": 2,
+    "text": "中文㐀𠮷 ABC 123",
+    "script": "Hani",
+    "language": "zh-Hans",
+    "direction": "ltr"
+  },
+  {
+    "name": "real-italic",
+    "font": 3,
+    "text": "office AV 123",
+    "script": "Latn",
+    "language": "en",
+    "direction": "ltr",
+    "style": { "weight": 400, "italic": true }
+  },
+  {
+    "name": "real-bold-italic",
+    "font": 4,
+    "text": "office AV 123",
+    "script": "Latn",
+    "language": "en",
+    "direction": "ltr",
+    "style": { "weight": 700, "italic": true }
+  },
+  {
+    "name": "features-disabled",
+    "font": 3,
+    "text": "office AV",
+    "script": "Latn",
+    "language": "en",
+    "direction": "ltr",
+    "features": { "liga": 0, "kern": 0 }
+  },
+  {
+    "name": "vertical",
+    "font": 0,
+    "text": "中文（。）",
+    "script": "Hani",
+    "language": "zh-Hans",
+    "direction": "ttb"
+  },
+  {
+    "name": "reverse-clusters",
+    "font": 3,
+    "text": "abc",
+    "script": "Latn",
+    "language": "en",
+    "direction": "rtl"
+  },
+  { "name": "empty", "font": 0, "text": "", "script": "Latn", "language": "en", "direction": "ltr" }
+]
