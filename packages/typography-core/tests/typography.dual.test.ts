@@ -1,0 +1,155 @@
+import { beforeAll, describe, expect, it } from "vitest";
+import { loadFontFile } from "#font-loader";
+import manifest from "../fonts/manifest.json";
+import {
+  fontDigest,
+  fontStylePolicy,
+  lineBreakOpportunities,
+  type ShapeRequest,
+  TypographyCore,
+  TypographyError,
+} from "../src/index.js";
+import cases from "./cases.json";
+import expected from "./expected.json";
+
+function at<T>(values: readonly T[], index: number): T {
+  const value = values[index];
+  if (value === undefined) throw new Error(`Missing fixture at ${index}`);
+  return value;
+}
+
+const core = new TypographyCore();
+const bytes: Uint8Array[] = [];
+const regular = at(manifest, 0);
+const request = (text: string): ShapeRequest => ({
+  fontSha256: regular.sha256,
+  text,
+  script: "Latn",
+  language: "en",
+  direction: "ltr",
+});
+
+beforeAll(async () => {
+  for (const entry of manifest) {
+    const data = await loadFontFile(entry.file);
+    bytes.push(data);
+    core.loadFont(data, entry.sha256);
+  }
+}, 60_000);
+
+function expectCode(action: () => unknown, code: string) {
+  expect(action).toThrow(TypographyError);
+  try {
+    action();
+  } catch (error) {
+    expect((error as TypographyError).code).toBe(code);
+  }
+}
+
+describe("identical Node/browser UTF-8 JSON fixtures", () => {
+  for (const [index, entry] of cases.entries()) {
+    it(entry.name, () => {
+      const { name: _name, font, ...input } = entry;
+      const shaped = core.shape({
+        ...input,
+        fontSha256: at(manifest, font).sha256,
+      } as ShapeRequest);
+      // The committed JSON is shared by both runners; compare every serialized
+      // byte, not just a tolerance or a summary of advances.
+      expect(new TextEncoder().encode(JSON.stringify(shaped))).toEqual(
+        new TextEncoder().encode(JSON.stringify(expected.shapes[index])),
+      );
+    });
+  }
+
+  it("compares all four font tables in both runtimes", () => {
+    expect(
+      JSON.stringify(manifest.map((entry, i) => core.loadFont(at(bytes, i), entry.sha256))),
+    ).toBe(JSON.stringify(expected.metrics));
+  });
+});
+
+it("uses real static outlines and declares synthesis forbidden", () => {
+  expect(core.loadFont(at(bytes, 0), regular.sha256).outline).toBe("cff");
+  expect(core.loadFont(at(bytes, 2), at(manifest, 2).sha256).outline).toBe("truetype");
+  expect(fontStylePolicy.syntheticBold).toBe("forbidden");
+  expectCode(
+    () => core.shape({ ...request("abc"), style: { weight: 700, italic: true } }),
+    "FONT_STYLE_UNAVAILABLE",
+  );
+});
+
+it("keeps supplementary and combining character ranges in UTF-16 units", () => {
+  const supplementary = core.shape({ ...request("𠮷A"), script: "Hani", language: "zh-Hans" });
+  expect(supplementary.glyphs.map((g) => [g.cluster, g.clusterEnd])).toEqual([
+    [0, 2],
+    [2, 3],
+  ]);
+  const combining = core.shape({ ...request("ẍ́"), fontSha256: at(manifest, 3).sha256 });
+  expect(combining.glyphs.length).toBeGreaterThan(1);
+  expect(combining.glyphs.every((g) => g.cluster === 0 && g.clusterEnd === 3)).toBe(true);
+  expect(combining.glyphs.some((g) => g.xOffset !== 0 || g.yOffset !== 0)).toBe(true);
+});
+
+it("fails on missing glyphs without consulting another loaded font", () => {
+  expectCode(() => core.shape(request("\u{10ffff}")), "GLYPH_MISSING");
+  expectCode(
+    () => core.shape({ ...request("中"), fontSha256: at(manifest, 3).sha256 }),
+    "GLYPH_MISSING",
+  );
+  try {
+    core.shape(request("A\u{10ffff}"));
+  } catch (error) {
+    expect((error as TypographyError).clusters).toEqual([1]);
+  }
+  expect(core.shape(request("A")).glyphs[0]?.glyphId).toBeGreaterThan(0);
+});
+
+it("requires the exact font bytes and refuses an unloaded digest", () => {
+  expectCode(() => core.loadFont(at(bytes, 1), regular.sha256), "FONT_DIGEST_MISMATCH");
+  expectCode(() => core.shape({ ...request("abc"), fontSha256: "0".repeat(64) }), "FONT_MISSING");
+  const invalid = new Uint8Array([0, 1, 0, 0]);
+  expectCode(() => core.loadFont(invalid, fontDigest(invalid)), "FONT_INVALID");
+});
+
+it("distinguishes same-name different bytes and owns its registered bytes", () => {
+  const source = new Uint8Array(at(bytes, 3));
+  // Change head.fontRevision, leaving the name table and glyph data identical.
+  const view = new DataView(source.buffer);
+  for (let offset = 12; offset < 12 + view.getUint16(4) * 16; offset += 16) {
+    if (view.getUint32(offset) === 0x68656164) {
+      const headOffset = view.getUint32(offset + 8);
+      view.setUint32(headOffset + 4, view.getUint32(headOffset + 4) + 1);
+      break;
+    }
+  }
+  const digest = fontDigest(source);
+  const other = core.loadFont(source, digest);
+  expect(other.name).toEqual(core.loadFont(at(bytes, 3), at(manifest, 3).sha256).name);
+  expect(digest).not.toBe(at(manifest, 3).sha256);
+  const before = core.shape({ ...request("abc"), fontSha256: digest });
+  source.fill(0);
+  expect(core.shape({ ...request("abc"), fontSha256: digest })).toEqual(before);
+});
+
+it("exposes UAX #14 candidate breaks, mandatory CRLF, and no combining/surrogate split", () => {
+  expect(lineBreakOpportunities("中文")).toEqual([
+    { position: 1, required: false },
+    { position: 2, required: true },
+  ]);
+  expect(lineBreakOpportunities("A\r\nB")).toEqual([
+    { position: 3, required: true },
+    { position: 4, required: true },
+  ]);
+  expect(lineBreakOpportunities("𠮷á")).toEqual([
+    { position: 2, required: false },
+    { position: 4, required: true },
+  ]);
+  expect(lineBreakOpportunities("A\u00a0B")).toEqual([{ position: 3, required: true }]);
+});
+
+it("rejects malformed and oversized input before shaping", () => {
+  expectCode(() => core.shape(request("\ud800")), "TEXT_INVALID");
+  expectCode(() => lineBreakOpportunities("a".repeat(100001)), "TYPOGRAPHY_LIMIT");
+  expectCode(() => core.shape({ ...request("abc"), features: { bad: 1 } }), "TEXT_INVALID");
+});
