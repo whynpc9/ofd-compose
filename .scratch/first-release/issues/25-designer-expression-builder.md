@@ -12,3 +12,4 @@
 - [ ] 模板级 locale/时区/舍入设置
 - [ ] 行内诊断：`EXPRESSION_UNSUPPORTED`、`FORMAT_PATTERN_UNSUPPORTED`、`SCOPE_AMBIGUOUS` 即时显示
 - [ ] 保存产物只含 AST（不保存待替换的文本模板）；round-trip 测试
+- [ ] 表达式、绑定、locale/时区/舍入配置与文本编辑共用历史事务；同显示文本但不同 AST 的配置可独立 undo/redo；恢复源 AST/绑定身份/映射及预览 revision，撤销后新编辑清 redo

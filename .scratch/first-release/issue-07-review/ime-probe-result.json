@@ -1,0 +1,94 @@
+{
+  "upstreamCommit": "83985f729cde373eccdcf25314227827b971bb63",
+  "typescript": "5.9.3",
+  "evidence": "isolated-handler-diagnostic",
+  "browserOrSystemImeExecuted": false,
+  "limitations": "Plain text, trace disabled, no controls; DOM/Draw/Range/render are stubs, normalization and style copy are disabled, Array.from segments this BMP fixture. Explicit non-Firefox event sequence only; no claim about OS Esc events, node identity, actual history, or fix.",
+  "checkedSources": [
+    {
+      "path": "src/editor/core/event/handlers/input.ts",
+      "sha256": "583eb286fb4bd38c8bccb2b20137952dd6a08970e0f8045f8df9868f72811c21"
+    },
+    {
+      "path": "src/editor/core/event/handlers/composition.ts",
+      "sha256": "edc13d326018ba838649b50daf07e0bbd5040c1bdfc21c9c38132dce4c0c3424"
+    }
+  ],
+  "cases": [
+    {
+      "name": "collapsed-cancel",
+      "initial": "甲乙丙",
+      "initialSelection": {
+        "startIndex": 0,
+        "endIndex": 0
+      },
+      "finalData": "",
+      "during": "n甲乙丙",
+      "after": "甲乙丙",
+      "finalSelection": {
+        "startIndex": 0,
+        "endIndex": 0
+      },
+      "renderCalls": [
+        {
+          "curIndex": 1,
+          "isSubmitHistory": false
+        },
+        {
+          "curIndex": 0,
+          "isSubmitHistory": false
+        }
+      ]
+    },
+    {
+      "name": "selected-cancel",
+      "initial": "甲乙丙",
+      "initialSelection": {
+        "startIndex": 0,
+        "endIndex": 2
+      },
+      "finalData": "",
+      "during": "n丙",
+      "after": "丙",
+      "finalSelection": {
+        "startIndex": 0,
+        "endIndex": 0
+      },
+      "renderCalls": [
+        {
+          "curIndex": 1,
+          "isSubmitHistory": false
+        },
+        {
+          "curIndex": 0,
+          "isSubmitHistory": false
+        }
+      ]
+    },
+    {
+      "name": "selected-commit",
+      "initial": "甲乙丙",
+      "initialSelection": {
+        "startIndex": 0,
+        "endIndex": 2
+      },
+      "finalData": "你",
+      "during": "n丙",
+      "after": "你丙",
+      "finalSelection": {
+        "startIndex": 1,
+        "endIndex": 1
+      },
+      "renderCalls": [
+        {
+          "curIndex": 1,
+          "isSubmitHistory": false
+        },
+        {
+          "curIndex": 1,
+          "isSubmitHistory": true
+        }
+      ]
+    }
+  ]
+}
