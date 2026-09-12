@@ -1,4 +1,7 @@
-import { Temporal } from "temporal-polyfill";
+// ADR-0001：始终使用 polyfill 实现，不用宿主运行时的原生 Temporal。
+// 包入口 `temporal-polyfill` 在存在 `globalThis.Temporal` 时会改用原生实现（Chromium 已内建），
+// `temporal-polyfill/implementation` 才是强制 polyfill、无副作用的入口。
+import { Temporal } from "temporal-polyfill/implementation";
 
 export interface DateTimeParts {
   readonly year: number;

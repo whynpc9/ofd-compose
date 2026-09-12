@@ -231,6 +231,11 @@ class Binder {
               break;
             }
             out.push(...this.expandBlocks(block.children, itemScope, [...instancePath, instance]));
+            if (this.exhausted) {
+              // 预算在该实例（可能是最后一个）内部耗尽：该实例不完整，同样是截断。
+              this.truncateByNodeBudget(expansion.record, instance.ordinal + 1);
+              break;
+            }
           }
           break;
         }
@@ -332,6 +337,10 @@ class Binder {
         for (const templateRow of rowNode.rows) {
           const row = this.row(templateRow, itemScope, [...instancePath, instance]);
           if (row) rows.push(row);
+        }
+        if (this.exhausted) {
+          this.truncateByNodeBudget(expansion.record, instance.ordinal + 1);
+          break;
         }
       }
     }
@@ -481,7 +490,10 @@ class Binder {
     return { instances, record };
   }
 
-  /** 全文档节点预算在重复中途耗尽：结构记录只保留实际展开的实例数并标注 truncated。 */
+  /**
+   * 全文档节点预算在重复中途耗尽：结构记录只保留实际进入展开的实例数（含不完整的最后一个）并标注 truncated。
+   * 预算恰好在最后一个实例的子树内耗尽时也会标注——只要该重复的某个实例不完整，记录就不能宣称完整。
+   */
   private truncateByNodeBudget(record: ResolvedRepeat | undefined, expandedCount: number): void {
     if (record === undefined) return;
     record.instanceCount = expandedCount;

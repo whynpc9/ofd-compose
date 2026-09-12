@@ -6,6 +6,7 @@ import {
   bind,
   cellText,
   instanceIdentity,
+  isPolyfillTemporal,
   type JsonValue,
   ResolvedDocumentSchema,
   type ResolvedTable,
@@ -559,6 +560,49 @@ describe("budgets", () => {
     ]);
   });
 
+  it("REPEAT_LIMIT: exhaustion inside the last (or only) instance still marks the repeat truncated", () => {
+    // 重复块 1 + 实例 1 + 段落 1 = 3：片段无法计入，段落不完整（空文本）。
+    const only = renderTemplate(
+      build((b) => [b.repeat("xs", [b.p("{.}")])]),
+      { xs: [1] },
+      { bindingPolicy: { budgets: { maxExpandedNodes: 3 } } },
+    );
+    expect(only.texts).toEqual([""]);
+    expect(only.document.structure.repeats).toEqual([
+      expect.objectContaining({ instanceCount: 1, truncated: true }),
+    ]);
+
+    // 预算恰在第 2（最后）个实例内部耗尽：instanceCount 计入该不完整实例。
+    const last = renderTemplate(
+      build((b) => [b.repeat("xs", [b.p("{.}")])]),
+      { xs: [1, 2] },
+      { bindingPolicy: { budgets: { maxExpandedNodes: 6 } } },
+    );
+    expect(last.texts).toEqual(["1", ""]);
+    expect(last.document.structure.repeats).toEqual([
+      expect.objectContaining({ instanceCount: 2, truncated: true }),
+    ]);
+
+    // 行组：表格 1 + 行组 1 + 实例 1 + 行 1 + 单元格 1 + 段落 1 = 6，片段无法计入。
+    const group = renderTemplate(
+      build((b) => [b.table([b.rowGroup("xs", [b.row(["{.}"])])])]),
+      { xs: [1] },
+      { bindingPolicy: { budgets: { maxExpandedNodes: 6 } } },
+    );
+    expect(group.document.structure.repeats).toEqual([
+      expect.objectContaining({ kind: "repeat-row-group", instanceCount: 1, truncated: true }),
+    ]);
+
+    // 预算充足：不标注。
+    const full = renderTemplate(
+      build((b) => [b.repeat("xs", [b.p("{.}")])]),
+      { xs: [1, 2] },
+      { bindingPolicy: { budgets: { maxExpandedNodes: 7 } } },
+    );
+    expect(full.texts).toEqual(["1", "2"]);
+    expect(full.document.structure.repeats[0]).not.toHaveProperty("truncated");
+  });
+
   it("REPEAT_LIMIT: a row group cut short by the node budget is also recorded as truncated", () => {
     const template = build((b) => [b.table([b.rowGroup("xs", [b.row(["{.}"])])])]);
     // 表格 1 + 行组 1 + 每个实例：实例 1 + 行 1 + 单元格 1 + 段落 1 + 片段 1 = 5。
@@ -864,6 +908,20 @@ describe("formats added for structure-level cases", () => {
 });
 
 describe("binding runtime provenance (tzdata)", () => {
+  it("always binds with the polyfill Temporal, never the host's native implementation (ADR-0001)", () => {
+    expect(isPolyfillTemporal()).toBe(true);
+    // 模拟内建 Temporal 的宿主：polyfill 对象与原生对象仍然不同。
+    const g = globalThis as { Temporal?: unknown };
+    const saved = g.Temporal;
+    g.Temporal = { marker: "fake-native" };
+    try {
+      expect(isPolyfillTemporal()).toBe(true);
+    } finally {
+      if (saved === undefined) delete g.Temporal;
+      else g.Temporal = saved;
+    }
+  });
+
   it("records the temporal-polyfill version and the runtime tzdata version (non-semantic provenance)", () => {
     const r = renderLines(["{a}"], { a: 1 });
     expect(r.document.runtime).toEqual({

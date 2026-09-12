@@ -3,7 +3,13 @@
  * 同一文件在 Node（vitest.config.ts）与浏览器（vitest.browser.config.ts）两种模式下运行；
  * 用 import.meta.glob 读取语料，不依赖 node:fs。
  */
-import { bind, cellText, paragraphText, type ResolvedBlock } from "@ofd-compose/binding-core";
+import {
+  bind,
+  cellText,
+  isPolyfillTemporal,
+  paragraphText,
+  type ResolvedBlock,
+} from "@ofd-compose/binding-core";
 import type { BindingPolicyVersion } from "@ofd-compose/document-model";
 import { compile } from "@ofd-compose/template-compiler";
 import { describe, expect, it } from "vitest";
@@ -197,6 +203,11 @@ describe("text/structure corpus cases (ResolvedDocument level)", () => {
     expect(result.document.structure.repeats).toEqual([
       expect.objectContaining({ kind: "repeat-block", expression: "orders", instanceCount: 2 }),
     ]);
+  });
+
+  it("binds with the polyfill Temporal on both ends, even where the host has a native Temporal (ADR-0001)", () => {
+    // Chromium 已内建 Temporal；Node（无 --harmony-temporal）没有。两端都必须走 polyfill 实现。
+    expect(isPolyfillTemporal()).toBe(true);
   });
 
   it("manifests record pass for executable cases and not-executable for the rest", () => {

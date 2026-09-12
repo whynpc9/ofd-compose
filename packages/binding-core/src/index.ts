@@ -17,7 +17,12 @@ export {
 } from "./evaluate.js";
 export { formatDateTime, formatDecimal } from "./format.js";
 export * from "./resolved-document.js";
-export { detectTemporalRuntime, type TemporalRuntime, temporalPolyfillVersion } from "./runtime.js";
+export {
+  detectTemporalRuntime,
+  isPolyfillTemporal,
+  type TemporalRuntime,
+  temporalPolyfillVersion,
+} from "./runtime.js";
 export { evaluateTruthiness, isTruthyLegacy, isTruthyStrict } from "./truthiness.js";
 export {
   compareValues,
