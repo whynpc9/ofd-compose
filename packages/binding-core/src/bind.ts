@@ -8,6 +8,7 @@ import {
   type Paragraph,
 } from "@ofd-compose/document-model";
 import type { CompiledBinding, CompiledTemplate } from "@ofd-compose/template-compiler";
+import { isValidTimeZone } from "./date.js";
 import { type EvaluationContext, evaluateExpression } from "./evaluate.js";
 import {
   type ResolvedDocument,
@@ -33,10 +34,14 @@ export interface BindResult {
 interface BindContext {
   readonly compiled: CompiledTemplate;
   readonly policy: BindingPolicyVersion;
+  /** 经校验的时区；模板时区非法时回退 UTC（已记 error 诊断，文档仍产出供预览）。 */
+  readonly timeZone: string;
   readonly data: JsonValue;
   readonly patternCache: EvaluationContext["patternCache"];
   readonly diagnostics: Diagnostic[];
 }
+
+const fallbackTimeZone = "UTC";
 
 function resolveInline(
   inline: InlineNode,
@@ -80,7 +85,7 @@ function resolveInline(
       }
       const result = evaluateExpression(binding.ast, {
         policy: ctx.policy,
-        timeZone: compiled.settings.timeZone,
+        timeZone: ctx.timeZone,
         scope: { current: ctx.data, root: ctx.data },
         nodeId: inline.nodeId,
         bindingId: inline.bindingId,
@@ -118,12 +123,27 @@ export function bind(
 ): BindResult {
   const bindingPolicyVersion =
     policy.bindingPolicyVersion ?? compiled.settings.bindingPolicyVersion;
+  const diagnostics: Diagnostic[] = [];
+  const { timeZone } = compiled.settings;
+  const timeZoneValid = isValidTimeZone(timeZone);
+  if (!timeZoneValid) {
+    // document-model 只能校验非空字符串；时区表的归属方是 binding-core（temporal-polyfill），
+    // 所以在这里以模板级诊断拦截，而不是让 RangeError 从 bind() 抛出。
+    diagnostics.push({
+      code: "MODEL_INVALID",
+      severity: "error",
+      phase: "bind",
+      message: `settings.timeZone '${timeZone}' is not a recognized IANA time zone; zoned date values were formatted in ${fallbackTimeZone} for this preview`,
+      details: { setting: "timeZone", timeZone, fallbackTimeZone },
+    });
+  }
   const ctx: BindContext = {
     compiled,
     policy: bindingPolicyVersion,
+    timeZone: timeZoneValid ? timeZone : fallbackTimeZone,
     data,
     patternCache: new Map(),
-    diagnostics: [],
+    diagnostics,
   };
 
   const body: ResolvedParagraph[] = compiled.body.map((block) => ({

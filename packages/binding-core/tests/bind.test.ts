@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import {
   bind,
   evaluateExpression,
+  isValidTimeZone,
   type JsonValue,
   MISSING,
   paragraphText,
@@ -447,6 +448,34 @@ describe("date formatting (ISO input, template-locked time zone)", () => {
     }
   });
 
+  it("an unrecognized settings.timeZone is a MODEL_INVALID diagnostic, not a RangeError out of bind()", () => {
+    const data = { at: "2026-02-10T16:45:30Z", day: "2025-03-01" };
+    const r = render(
+      ["{at|format:date:yyyy-MM-dd HH:mm}", "{day|format:date:yyyy年M月}", "{at}"],
+      data,
+      "strict-1",
+      { timeZone: "Mars/Olympus" },
+    );
+    expect(r.ok).toBe(false);
+    expect(r.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "MODEL_INVALID",
+        severity: "error",
+        phase: "bind",
+        details: { setting: "timeZone", timeZone: "Mars/Olympus", fallbackTimeZone: "UTC" },
+      }),
+    ]);
+    // 文档仍然产出（预览定位）：带偏移的值按 UTC 回退取字段，其余片段不受影响。
+    expect(r.texts).toEqual(["2026-02-10 16:45", "2025年3月", "2026-02-10T16:45:30Z"]);
+    expect(r.document.settings.timeZone).toBe("Mars/Olympus");
+
+    expect(isValidTimeZone("Asia/Shanghai")).toBe(true);
+    expect(isValidTimeZone("UTC")).toBe(true);
+    expect(isValidTimeZone("+08:00")).toBe(true);
+    expect(isValidTimeZone("Mars/Olympus")).toBe(false);
+    expect(isValidTimeZone(" ")).toBe(false);
+  });
+
   it("sorting ISO dates compares instants, not text: +08:00 10:00 is earlier than 09:00Z", () => {
     const data = {
       events: [
@@ -568,6 +597,55 @@ describe("list operations used by narrative sentences", () => {
     expect(strict.diagnostics.map((d) => [d.code, d.severity])).toEqual([
       ["BINDING_MISSING", "error"],
       ["BINDING_MISSING", "error"],
+    ]);
+  });
+
+  it("strict-1: a missing sort/extremum key is BINDING_MISSING, never silently compared as the lowest value", () => {
+    // items[1] 没有 score；若把 Missing 当最小值，minby 会错误地选中 "b" 且无诊断。
+    const holes: JsonValue = {
+      items: [{ name: "a", score: 5 }, { name: "b" }, { name: "c", score: 1 }],
+    };
+    for (const expr of [
+      "{items|minby:score|get:name}",
+      "{items|maxby:score|get:name}",
+      "{items|sort:score:asc|first|get:name}",
+    ]) {
+      const r = render([expr], holes, "strict-1");
+      expect(r.texts, expr).toEqual([""]);
+      expect(
+        r.diagnostics.map((d) => [d.code, d.severity, d.dataPath]),
+        expr,
+      ).toEqual([["BINDING_MISSING", "error", "items[1].score"]]);
+    }
+    // 显式 null 是合法值：仍然按最小值参与比较，不产生诊断。
+    const nulls = {
+      items: [
+        { name: "a", score: 5 },
+        { name: "b", score: null },
+      ],
+    };
+    const r = render(["{items|minby:score|get:name}"], nulls, "strict-1");
+    expect(r.texts).toEqual(["b"]);
+    expect(r.diagnostics).toEqual([]);
+  });
+
+  it("legacy-compat-1: a missing sort/extremum key compares as null (legacy) and flags missing-as-null", () => {
+    const holes: JsonValue = {
+      items: [{ name: "a", score: 5 }, { name: "b" }, { name: "c", score: 1 }, { name: "d" }],
+    };
+    const r = render(["{items|sort:score:desc|take:2|minby:score|get:name}"], holes);
+    expect(r.texts).toEqual(["c"]);
+    expect(r.diagnostics.map((d) => [d.code, d.dataPath, d.details?.rule, d.details?.op])).toEqual([
+      ["LEGACY_SEMANTIC_CHANGE", "items[1].score", "missing-as-null", "sort"],
+    ]);
+    // 缺失键的路径在 sort/take 之后仍指向原始下标。
+    const tail = render(["{items|sort:score:asc|take:3|maxby:score|get:name}"], holes);
+    expect(tail.texts).toEqual(["c"]);
+    expect(
+      tail.diagnostics.map((d) => [d.dataPath, d.details?.op, d.details?.missingCount]),
+    ).toEqual([
+      ["items[1].score", "sort", 2],
+      ["items[1].score", "maxby", 2],
     ]);
   });
 });

@@ -1,6 +1,6 @@
 export { type BindingPolicyVersion, bindingPolicyVersions } from "@ofd-compose/document-model";
 export { type BindingPolicy, type BindResult, bind } from "./bind.js";
-export { type DateTimeParts, parseIsoDateTime, toDateTimeParts } from "./date.js";
+export { type DateTimeParts, isValidTimeZone, parseIsoDateTime, toDateTimeParts } from "./date.js";
 export {
   type EvaluationContext,
   type EvaluationResult,

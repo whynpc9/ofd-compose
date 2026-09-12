@@ -43,6 +43,21 @@ export function parseIsoDateTime(value: unknown): ParsedDateTime | undefined {
   }
 }
 
+/**
+ * 模板 `settings.timeZone` 是否为 temporal-polyfill 可识别的时区标识（IANA 名称，如 `Asia/Shanghai`；
+ * 亦接受 `+08:00` 形式的固定偏移）。document-model 只校验非空字符串，这里在绑定前把 `Mars/Olympus` 之类
+ * 的值拦成诊断，避免 `toZonedDateTimeISO` 的 RangeError 从 bind() 逃出。
+ */
+export function isValidTimeZone(timeZone: string): boolean {
+  try {
+    Temporal.Instant.fromEpochMilliseconds(0).toZonedDateTimeISO(timeZone);
+    return true;
+  } catch (error) {
+    if (error instanceof RangeError) return false;
+    throw error;
+  }
+}
+
 /** 比较用的绝对时刻：不带偏移的值按 UTC 字面理解（双方一致即可，比较不依赖模板时区）。 */
 function toEpochNanoseconds(parsed: ParsedDateTime): bigint {
   return parsed.kind === "instant"
