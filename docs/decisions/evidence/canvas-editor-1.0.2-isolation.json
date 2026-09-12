@@ -1,0 +1,385 @@
+{
+  "schemaVersion": 1,
+  "issue": "07",
+  "inspectedAt": "2026-09-12",
+  "evidenceLevel": "static-source-and-published-artifact-inspection",
+  "package": {
+    "name": "@hufe921/canvas-editor",
+    "version": "1.0.2",
+    "gitHead": "83985f729cde373eccdcf25314227827b971bb63",
+    "tarballUrl": "https://registry.npmjs.org/@hufe921/canvas-editor/-/canvas-editor-1.0.2.tgz",
+    "integrity": "sha512-uAdI70JPqakd9+8TmSO1Fv77xDG86vCXaAVfqwMChJnAiz9Ub77l2ep0t8/lnydoIjdFqywcs+dea7x2f9vNEg==",
+    "sha256": "7b17b062f915f31ccae6fa202088fd5443583da2e85e6a017f81a6cde7da4c21",
+    "license": "MIT",
+    "publishedDependencies": {}
+  },
+  "sourceArchive": {
+    "url": "https://codeload.github.com/Hufe921/canvas-editor/tar.gz/83985f729cde373eccdcf25314227827b971bb63",
+    "sha256": "6e9a875b15885e88ed1e710468f75d8a4d5ad44de74faeacef5298e5cf77f2bd"
+  },
+  "checks": {
+    "tarballIntegrityMatchesRegistry": true,
+    "commandProxyMemberCount": 157,
+    "missingCommandMembersInPublishedDeclarations": [],
+    "sourcemapSourceCount": 200,
+    "sourcemapNonNullSourcesContentCount": 3,
+    "runtimeTestsExecuted": false,
+    "upstreamBuildExecuted": false
+  },
+  "commandMembers": [
+    "executeMode",
+    "executeCut",
+    "executeCopy",
+    "executePaste",
+    "executeSelectAll",
+    "executeBackspace",
+    "executeSetRange",
+    "executeReplaceRange",
+    "executeSetPositionContext",
+    "executeForceUpdate",
+    "executeBlur",
+    "executeHideCursor",
+    "executeUndo",
+    "executeRedo",
+    "executePainter",
+    "executeApplyPainterStyle",
+    "executeFormat",
+    "executeFont",
+    "executeSize",
+    "executeSizeAdd",
+    "executeSizeMinus",
+    "executeBold",
+    "executeItalic",
+    "executeUnderline",
+    "executeStrikeout",
+    "executeSuperscript",
+    "executeSubscript",
+    "executeColor",
+    "executeHighlight",
+    "executeTitle",
+    "executeList",
+    "executeRowFlex",
+    "executeRowMargin",
+    "executeInsertTable",
+    "executeInsertTableTopRow",
+    "executeInsertTableBottomRow",
+    "executeInsertTableLeftCol",
+    "executeInsertTableRightCol",
+    "executeDeleteTableRow",
+    "executeDeleteTableCol",
+    "executeDeleteTable",
+    "executeMergeTableCell",
+    "executeCancelMergeTableCell",
+    "executeSplitVerticalTableCell",
+    "executeSplitHorizontalTableCell",
+    "executeTableTdVerticalAlign",
+    "executeTableBorderType",
+    "executeTableBorderColor",
+    "executeTableTdBorderType",
+    "executeTableTdSlashType",
+    "executeTableTdBackgroundColor",
+    "executeTableAutoFitToContent",
+    "executeTableAutoFitToPage",
+    "executeTableSelectAll",
+    "executeImage",
+    "executeHyperlink",
+    "executeDeleteHyperlink",
+    "executeCancelHyperlink",
+    "executeEditHyperlink",
+    "executeSeparator",
+    "executePageBreak",
+    "executeAddWatermark",
+    "executeDeleteWatermark",
+    "executeSearch",
+    "executeSetSpellcheckRangeList",
+    "executeSearchNavigatePre",
+    "executeSearchNavigateNext",
+    "executeReplace",
+    "executePrint",
+    "executeReplaceImageElement",
+    "executeSaveAsImageElement",
+    "executeSetImageCrop",
+    "executeSetImageCaption",
+    "executeChangeImageDisplay",
+    "executePageMode",
+    "executeSetColumns",
+    "executePageScale",
+    "executePageScaleRecovery",
+    "executePageScaleMinus",
+    "executePageScaleAdd",
+    "executePaperSize",
+    "executePaperDirection",
+    "executePageDirection",
+    "executeSetPaperMargin",
+    "executeSetMainBadge",
+    "executeSetAreaBadge",
+    "executeInsertElementList",
+    "executeInsertArea",
+    "executeSetAreaValue",
+    "executeSetAreaProperties",
+    "executeDeleteArea",
+    "executeLocationArea",
+    "executeClearGraffiti",
+    "executeToggleTrace",
+    "executeCompare",
+    "executeToggleRuler",
+    "executeAppendElementList",
+    "executeUpdateElementById",
+    "executeDeleteElementById",
+    "executeSetValue",
+    "executeRemoveControl",
+    "executeTranslate",
+    "executeSetLocale",
+    "executeLocationCatalog",
+    "executeWordTool",
+    "executeSetHTML",
+    "executeSetGroup",
+    "executeDeleteGroup",
+    "executeLocationGroup",
+    "executeSetZone",
+    "executeSetControlValue",
+    "executeSetControlValueList",
+    "executeSetControlExtension",
+    "executeSetControlExtensionList",
+    "executeSetControlProperties",
+    "executeSetControlPropertiesList",
+    "executeSetControlHighlight",
+    "executeValidate",
+    "executeClearValidate",
+    "executeLocationControl",
+    "executeInsertControl",
+    "executeJumpControl",
+    "executeUpdateOptions",
+    "executeInsertTitle",
+    "executeFocus",
+    "executeComputeElementListHeight",
+    "getCatalog",
+    "getImage",
+    "getOptions",
+    "getValue",
+    "getValueAsync",
+    "getAreaValue",
+    "getHTML",
+    "getText",
+    "getSpellcheckWordList",
+    "getWordCount",
+    "getCursorPosition",
+    "getRemainingContentHeight",
+    "getRange",
+    "getRangeText",
+    "getRangeContext",
+    "getRangeRow",
+    "getRangeParagraph",
+    "getKeywordRangeList",
+    "getKeywordContext",
+    "getPaperMargin",
+    "getColumns",
+    "getSearchNavigateInfo",
+    "getLocale",
+    "getGroupIds",
+    "getGroupRectList",
+    "getControlValue",
+    "getControlList",
+    "getContainer",
+    "getTitleValue",
+    "getPositionContextByEvent",
+    "getElementById"
+  ],
+  "additionalCommandMethods": ["setInterceptor"],
+  "eventNames": [
+    "rangeStyleChange",
+    "visiblePageNoListChange",
+    "intersectionPageNoChange",
+    "pageSizeChange",
+    "pageScaleChange",
+    "saved",
+    "contentChange",
+    "controlChange",
+    "controlContentChange",
+    "pageModeChange",
+    "zoneChange",
+    "mousemove",
+    "mouseleave",
+    "mouseenter",
+    "mousedown",
+    "mouseup",
+    "click",
+    "input",
+    "positionContextChange",
+    "imageSizeChange",
+    "imageMousedown",
+    "imageDblclick",
+    "labelMousedown",
+    "rangeChange",
+    "renderChange",
+    "spellcheckClick"
+  ],
+  "sourceFiles": [
+    {
+      "path": "src/editor/index.ts",
+      "sha256": "6bb5607375ec60c3ce3252415d06c4b8477f9e48a130209a5761972d73028b72"
+    },
+    {
+      "path": "src/editor/core/draw/Draw.ts",
+      "sha256": "1543e7994159729489399ab74fd15883a69b41f24a9209f571be65eafed453dc"
+    },
+    {
+      "path": "src/editor/core/command/Command.ts",
+      "sha256": "92b9c3406240cb12acff74e62183a57cb17c8952d800137293ad7ee1c4d56959"
+    },
+    {
+      "path": "src/editor/core/command/CommandAdapt.ts",
+      "sha256": "31e837caf49fa50442d2652c168c4a627d874da6ca142d45ad035d9dc2eb9315"
+    },
+    {
+      "path": "src/editor/core/cursor/Cursor.ts",
+      "sha256": "e75112aecf25251105b95f11f6d685317cf388680b96733555c0e5259f755017"
+    },
+    {
+      "path": "src/editor/core/cursor/CursorAgent.ts",
+      "sha256": "c58e4468b156e0a528d55fb36d4666bbb7d5d1476253423c07d6749e575321c0"
+    },
+    {
+      "path": "src/editor/core/event/CanvasEvent.ts",
+      "sha256": "7cb765b146a57ed39c7bb5093e5fccf321a9d26cd0b507720bec2257c7af14dc"
+    },
+    {
+      "path": "src/editor/core/event/GlobalEvent.ts",
+      "sha256": "ef5e670eddb4f7abf4eae8195b334a0ca60f7dfa97a591a2aadeb3afe7342fb3"
+    },
+    {
+      "path": "src/editor/core/event/handlers/input.ts",
+      "sha256": "583eb286fb4bd38c8bccb2b20137952dd6a08970e0f8045f8df9868f72811c21"
+    },
+    {
+      "path": "src/editor/core/event/handlers/composition.ts",
+      "sha256": "edc13d326018ba838649b50daf07e0bbd5040c1bdfc21c9c38132dce4c0c3424"
+    },
+    {
+      "path": "src/editor/core/event/handlers/mousemove.ts",
+      "sha256": "b105690bf6fb3d229b2d4289b5e117c55540eb16ae8fd6f9b3cab62e1ab8153c"
+    },
+    {
+      "path": "src/editor/core/position/Position.ts",
+      "sha256": "699e37c3114c2ecf41166f1501ad5af88180a27af358036ab050ba65b8f7e5c0"
+    },
+    {
+      "path": "src/editor/core/range/RangeManager.ts",
+      "sha256": "fa997b0a2dafb95268e09fc5d2894ae58fb3fd26cde27edb84badc1e2ac8408e"
+    },
+    {
+      "path": "src/editor/core/history/HistoryManager.ts",
+      "sha256": "c187df7b3959c33259d6ed7fd627bbc9587449b8f82c06508e48c4f08ce30684"
+    },
+    {
+      "path": "src/editor/core/worker/WorkerManager.ts",
+      "sha256": "8550debd46e649defdb0a952dcb8d440b2c90752b6f134ec513651244e888c5e"
+    },
+    {
+      "path": "src/editor/core/observer/ScrollObserver.ts",
+      "sha256": "a9e2625ba801352394bf50ae08975036bf84396f13050936669647530d93b41f"
+    },
+    {
+      "path": "src/editor/core/observer/SelectionObserver.ts",
+      "sha256": "00de892223bfb5f2f2fffaea8d42a8668e5d7a5bcf679d9c8f8b0788a7e12980"
+    },
+    {
+      "path": "src/editor/core/observer/MouseObserver.ts",
+      "sha256": "cfc4ada67f0bf472e4b610d47a98e78aa274f3b2b0036225539db29b7ef2f930"
+    },
+    {
+      "path": "src/editor/core/observer/ImageObserver.ts",
+      "sha256": "41b61b67bc86319024b4ba69fad654bfa8570d4767bc0cb264d930e8fb6a131f"
+    },
+    {
+      "path": "src/editor/core/draw/particle/TextParticle.ts",
+      "sha256": "d0d65f3ac594e3aeb8fdcfb74ad563d248c187914b32a73acf4ad444ddcff363"
+    },
+    {
+      "path": "src/editor/core/register/Register.ts",
+      "sha256": "56d2b108c9a522531e0cb824c526a6d2ae4e05bd4bc1f03bc0c77f8a58a62096"
+    },
+    {
+      "path": "src/editor/core/override/Override.ts",
+      "sha256": "2263994eee755c4a07ebd69c555dcdd0c12b78adc3543ce950262a53a6e3247e"
+    },
+    {
+      "path": "src/editor/core/plugin/Plugin.ts",
+      "sha256": "d07a16225e1adccfa6287afe842ef331b55c4f97ea247e770dedfc704137b2b1"
+    },
+    {
+      "path": "src/editor/core/listener/Listener.ts",
+      "sha256": "ebdcd765d06aa47b2930bfe87de3e929c84487581665012dfb182ef576a0a95a"
+    },
+    {
+      "path": "src/editor/core/event/eventbus/EventBus.ts",
+      "sha256": "54c0164745eb3d82e8e80e5a9aefadc22974983ebce96b6e72713fffcf51f9b9"
+    },
+    {
+      "path": "src/editor/core/actuator/Actuator.ts",
+      "sha256": "cbed70e5e4cd389033c04db99efe5cd56e9784d4e4f12ca04d679a25f51636ce"
+    },
+    {
+      "path": "src/editor/interface/Element.ts",
+      "sha256": "28f596cdd1bc4e6f104f1d8432abc679177e900e3a2e92b18ea2e5514ceb021a"
+    },
+    {
+      "path": "src/editor/interface/Range.ts",
+      "sha256": "252e508dce08b7e7054b710a30ceb0d1046a4c98a15f04a3fdd740542759a556"
+    },
+    {
+      "path": "src/editor/interface/Position.ts",
+      "sha256": "bde64630312c93753513a3ae094e58c6d97254dcc1897e1ce919991ea377b72c"
+    },
+    {
+      "path": "src/editor/interface/EventBus.ts",
+      "sha256": "06ed361f9fd69a9042c3923c44b38316f735834fe36166fd16cf735084494d83"
+    },
+    {
+      "path": "src/editor/interface/Draw.ts",
+      "sha256": "fbf4dd42d642960f6d0c203505d556b489d375d39acbe40a505af0a9c3b13872"
+    },
+    {
+      "path": "src/editor/utils/element.ts",
+      "sha256": "75dea2afb74622f53a099bb8057e06e5c508395c4d0a407b8db249f4d22e52ca"
+    },
+    {
+      "path": "src/editor/utils/index.ts",
+      "sha256": "7796f550f3173665652841fa27823c6b66e53ef12d8ea59807367ccbae26ae19"
+    },
+    {
+      "path": "src/editor/dataset/constant/Element.ts",
+      "sha256": "36c5ef895bcb5781bf592e8a1490cb0ebfffe95ec8a5b63cdeaa1ee65e948003"
+    }
+  ],
+  "publishedFiles": [
+    {
+      "path": "package.json",
+      "sha256": "085c77b31e9fa51716f245e371da290ba04be8f438d93d02ca8ed604fcf8690d"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "19533dd5a511dda071b175e07149f79f2340325c6acb00a80ed4afa45d0f6824"
+    },
+    {
+      "path": "dist/canvas-editor.js",
+      "sha256": "f9fe3eb879a3049acc881282348bc57146fa35e294e96f3db18bac5129249704"
+    },
+    {
+      "path": "dist/canvas-editor.js.map",
+      "sha256": "b5242905d2a8584e3f3498ce56ddf6256976021695d1dbd26e977ee7550eed51"
+    },
+    {
+      "path": "dist/src/editor/index.d.ts",
+      "sha256": "2bbb8dfc740e3afa553b1c853b55bf782de4e18ee3a621c3d062067811ccee3b"
+    },
+    {
+      "path": "dist/src/editor/core/command/Command.d.ts",
+      "sha256": "4f9d05d8a8ccffcb1f5bac960e3395996e983bb54fa4266aed025a19842ab3b4"
+    },
+    {
+      "path": "dist/src/editor/core/command/CommandAdapt.d.ts",
+      "sha256": "fd9395785fe6c4b3a4d6e6b64705a7a621a5ed59864a586a9a21a4062559a0f5"
+    }
+  ]
+}
