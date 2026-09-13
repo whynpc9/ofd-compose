@@ -79,8 +79,13 @@ export function jpegHeader(bytes: Uint8Array, budget: MediaBudget): Uint8Array {
       if (++offset > 65536) fail("RESOURCE_LIMIT", "JPEG header budget exceeded");
     }
     if (offset + 4 > bytes.length) fail("MODEL_INVALID", "Truncated JPEG marker");
-    const marker = bytes[offset + 1],
-      length = view.getUint16(offset + 2),
+    const marker = bytes[offset + 1];
+    // TEM is a standalone marker and has no segment-length field.
+    if (marker === 1) {
+      offset += 2;
+      continue;
+    }
+    const length = view.getUint16(offset + 2),
       end = offset + 2 + length;
     if (length < 2 || end > bytes.length) fail("MODEL_INVALID", "Truncated JPEG segment");
     if (end > 65536) fail("RESOURCE_LIMIT", "JPEG header budget exceeded");

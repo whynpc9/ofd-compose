@@ -1,6 +1,6 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
-import type { ImageOptions, ImageSource } from "@ofd-compose/document-model";
+import { type ImageOptions, type ImageSource, imageReference } from "@ofd-compose/document-model";
 import type { LayoutIR } from "@ofd-compose/layout-ir";
 import { imageSize } from "image-size";
 import { fail, type MediaBudget, MediaError } from "./budget.js";
@@ -141,14 +141,12 @@ export class ImageResolver {
     let bytes: Uint8Array, mime: string | undefined;
     if (typeof source === "string") ({ bytes, mime } = decode(source, this.budget));
     else {
-      if (!source || typeof source !== "object" || Object.keys(source).length !== 1)
-        fail("RESOURCE_FORBIDDEN", "Invalid image reference");
+      const reference = imageReference(source);
+      if (!reference) fail("RESOURCE_FORBIDDEN", "Invalid image reference");
       const id =
-        "resourceId" in source
-          ? source.resourceId
-          : "path" in source
-            ? this.paths.get(relativePath(source.path))
-            : undefined;
+        "resourceId" in reference
+          ? reference.resourceId
+          : this.paths.get(relativePath(reference.path));
       const resource = id === undefined ? undefined : this.resources.get(id);
       if (!resource) fail("RESOURCE_FORBIDDEN", "Image resource is not authorized");
       this.budget.charge("totalBytes", resource.bytes.byteLength);

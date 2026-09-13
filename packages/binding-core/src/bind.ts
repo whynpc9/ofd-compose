@@ -8,8 +8,8 @@ import {
   hasErrors,
   type ImageBinding,
   type ImageSource,
-  ImageSourceSchema,
   type InlineNode,
+  imageReference,
   modelVersion,
   type Paragraph,
   type RepeatBlock,
@@ -25,7 +25,6 @@ import {
   type PathSegment,
   pathSegmentsToText,
 } from "@ofd-compose/template-compiler";
-import { Value as SchemaValue } from "@sinclair/typebox/value";
 import { isValidTimeZone } from "./date.js";
 import {
   type EvaluationBudget,
@@ -318,31 +317,27 @@ class Binder {
     const sources: readonly JsonValue[] = isJsonArray(result.value) ? result.value : [result.value];
     if (sources.length > 64) return invalid("RESOURCE_LIMIT", "Image list exceeds 64 items");
     let characters = 0;
+    const normalized: ImageSource[] = [];
     for (const source of sources) {
       if (typeof source === "string") {
         characters += source.length;
         if (source.length > 12000000 || characters > 48000000)
           return invalid("RESOURCE_LIMIT", "Image text budget exceeded");
-      } else if (
-        !isJsonObject(source) ||
-        Object.keys(source).length !== 1 ||
-        !(
-          (typeof source.resourceId === "string" && source.resourceId.length <= 256) ||
-          (typeof source.path === "string" && source.path.length <= 1024)
-        )
-      ) {
-        return invalid(
-          "MODEL_INVALID",
-          "Image source must be encoded text or an authorized resource/path reference",
-        );
+        normalized.push(source);
+      } else {
+        const reference = imageReference(source);
+        if (!reference)
+          return invalid(
+            "MODEL_INVALID",
+            "Image source must be encoded text or an authorized resource/path reference",
+          );
+        normalized.push(reference);
       }
-      if (!SchemaValue.Check(ImageSourceSchema, source))
-        return invalid("MODEL_INVALID", "Image reference does not match the source contract");
     }
     return {
       ...base,
       kind: node.kind,
-      sources: sources as ImageSource[],
+      sources: normalized,
       options: {
         ...node.options,
         ...(this.policy === "legacy-compat-1" ? { legacyPixelDpi: 96 as const } : {}),

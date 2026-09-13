@@ -13,6 +13,8 @@ Width includes quiet zones. Each side uses at least 10 modules for code128 or 11
 
 The authorization boundary is an explicit byte pack and optional root/path table. No resource callback may turn Core into an implicit filesystem/network reader. Host filesystem adapters must check symlinks/realpath and supply already-authorized bytes. Duplicate external IDs or ambiguous paths fail even when contents match. External IDs are mapped to internal content handles and are never inserted into page/font/object identity space.
 
+Raw image data records use explicit field projection: exactly one own data field `resourceId` or `path` is required; unrelated business fields are not enumerated or retained. Rejecting every extra property would require unbounded key enumeration of the host data record. The projected ResolvedDocument reference remains a strict one-field object, preserving source minimization and avoiding that allocation surface.
+
 The implementation's hard input, pixel, command and deterministic work budgets are documented in `packages/media-core/README.md`. They do not replace Job Host worker isolation and forced wall-clock timeout. Existing typography resource stress and pagination capacities are unchanged.
 
 Source verification used the installed locked sources: bwip `dist/bwip-js-gen.d.ts`, `src/exports.js`, `src/bwipjs.js`, `src/drawing-svg.js` (comparison of line semantics only; not called); image-size `dist/types/png.mjs` and `jpg.mjs`; zxing-wasm reader declarations and local WASM loader. Upstream references: [bwip-js v4.11.4](https://github.com/metafloor/bwip-js/tree/v4.11.4), [image-size v2.0.2](https://github.com/image-size/image-size/tree/v2.0.2), [zxing-wasm v3.1.3](https://github.com/Sec-ant/zxing-wasm/tree/v3.1.3).

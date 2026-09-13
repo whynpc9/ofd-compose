@@ -113,6 +113,23 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
       );
     }
   });
+  it("accepts standalone TEM markers without treating the next marker as a length", () => {
+    const jpeg = Uint8Array.from(atob(fixtures.jpeg), (c) => c.charCodeAt(0));
+    const sof = jpeg.findIndex(
+      (value, i) => value === 255 && [192, 193, 194].includes(jpeg[i + 1] ?? -1),
+    );
+    for (const offset of [2, sof]) {
+      const input = new Uint8Array(jpeg.length + 3);
+      input.set(jpeg.subarray(0, offset));
+      input.set([255, 255, 1], offset);
+      input.set(jpeg.subarray(offset), offset + 3);
+      expect(
+        run({ images: { resourceId: "jpeg" } }, [image()], {
+          resources: [{ id: "jpeg", bytes: input }],
+        }).ok,
+      ).toBe(true);
+    }
+  });
   it("uses the declared EXIF IFD offset in either byte order", () => {
     const jpeg = Uint8Array.from(atob(fixtures.jpeg), (c) => c.charCodeAt(0));
     for (const little of [true, false])
@@ -276,6 +293,35 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
       "Media expressions select",
     );
   });
+  it("projects wide raw records without any own-key enumeration", () => {
+    const target: Record<string, JsonValue> = {};
+    for (let i = 0; i < 10000; i++) target[`extra${i}`] = i;
+    const source = new Proxy(target, {
+      ownKeys() {
+        throw Error("Must not enumerate raw image-reference keys");
+      },
+    });
+    // Missing or ambiguous references fail with no key enumeration.
+    expect(run({ images: source }).diagnostics[0]?.code).toBe("MODEL_INVALID");
+    target.resourceId = "x";
+    target.path = "chart.png";
+    expect(run({ images: source }).diagnostics[0]?.code).toBe("MODEL_INVALID");
+    delete target.path;
+    const result = run({ images: source }, [image()], { resources: [{ id: "x", bytes }] });
+    expect(result.ok).toBe(true);
+    expect(result.blocks[0]?.source.kind).toBe("image-binding");
+    const resolved = result.blocks[0]?.source;
+    if (resolved?.kind !== "image-binding") throw Error("Expected image block");
+    expect(resolved.sources).toEqual([{ resourceId: "x" }]);
+    // Also exercise the public prepareMedia boundary directly, before Binder's projection.
+    resolved.sources = [source as { resourceId: string }];
+    const compiled = compile(template([image()]));
+    if (!compiled.ok) throw Error("Compile failed");
+    const bound = bind(compiled.template, { images: fixtures.png });
+    bound.document.body = [resolved];
+    expect(prepareMedia(bound.document, { resources: [{ id: "x", bytes }] }).ok).toBe(true);
+  });
+
   it("returns only the original budget diagnostic after failed media evaluation", () => {
     const barcodeBlock: BlockNode = {
       kind: "barcode-binding",
