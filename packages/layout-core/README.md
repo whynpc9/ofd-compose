@@ -1,7 +1,7 @@
-# Layout Core: paragraphs and lines
+# Layout Core: paragraphs and pagination
 
-Issue [09](../../.scratch/first-release/issues/09-layout-core-paragraphs-and-lines.md)
-implements `layout(ResolvedDocument, LayoutFont[], LayoutOptions)` in shared TypeScript.
+Issues [09](../../.scratch/first-release/issues/09-layout-core-paragraphs-and-lines.md) and
+[10](../../.scratch/first-release/issues/10-layout-core-pagination-headers-footers-watermark.md) implement `layout(ResolvedDocument, LayoutFont[], LayoutOptions)` in shared TypeScript.
 The host supplies locked font bytes (or promises) and explicit page/default-font/formatting
 options. All fonts finish loading and are digest/style checked before shaping or measuring.
 No filesystem, network, DOM, Canvas, system-font fallback or `Intl` is used by this package.
@@ -39,7 +39,7 @@ uses mm, with these defaults: body role, left alignment, zero indents and paragr
 are positive, strictly increasing, left-aligned distances from the paragraph's left-indent
 origin; after the last stop, the default grid applies. A negative `firstLineIndent` gives
 hanging indentation and cannot place text outside the content area. Paragraph spaces add;
-there is no implicit collapsing. Fixed line height is mm and rejects metric overlap.
+there is no implicit collapsing inside a page; page-edge rules are defined below. Fixed line height is mm and rejects metric overlap.
 
 Heading role chooses levels 1–6 = 24/20/18/16/14/12 pt, bold; paragraph and inline styles
 can override these defaults. List numbering has an explicit `listId`, decimal/lower-alpha/
@@ -104,14 +104,14 @@ must update their schema before accepting newly populated fields.
 This is the LTR horizontal paragraph profile over Typography Core's existing P0 repertoire.
 Latin/Han/Greek/Cyrillic/Kana/Bopomofo script runs are itemized without ICU; common and combining
 characters inherit the neighboring script. Full Unicode bidi, vertical paragraph layout,
-emergency wrapping, tables, input-control rendering and page breaking are not implemented.
-Unsupported block/control types fail; content, spacing or unbreakable text exceeding the one
-page fails with `LAYOUT_OVERFLOW`. Per paragraph limit is 100000 UTF-16 units, checked fragment-by-fragment before text concatenation or run construction; malformed UTF-16 fragments fail at the same point. Per-job
+emergency wrapping, tables and input-control rendering are not implemented.
+Unsupported block/control types fail; an unbreakable line that exceeds the content width or
+height fails with `LAYOUT_OVERFLOW`. Per paragraph limit is 100000 UTF-16 units, checked fragment-by-fragment before text concatenation or run construction; malformed UTF-16 fragments fail at the same point. Per-job
 reshaping work is bounded at 2000000 units; candidate and run visits each have the same 2000000-operation ceiling (including control-only text). Before cloning, input JSON is bounded to 200000 nodes, depth 128 and 8000000 UTF-16 string/key units, with non-JSON object types rejected. Document body text has a separate cumulative 1000000-unit limit. Input count limits are 10000 paragraphs and 100000 fragments per document; output count limits are 100000 source mappings and 100000 text/path objects. A data-descriptor preflight rejects over-budget input before document copying/font loading, without invoking accessors. Output cardinality is reserved before mapping/object allocation. These independent counts include empty fragments and blank paragraphs. Expanded logical/display/source text is bounded at
 8000000 UTF-16 units, counting repeated source strings in the wire representation; controls
 cannot bypass this output budget. Chinese boundary classes are precomputed in two linear passes so candidates sharing a long whitespace run use constant-time checks. Candidate consumption is monotonic; run/source lookups and
 gap counts use ordered indexes, and glyph-cluster membership uses maps. Full strings are checked
-once before per-source logical-range boundary checks. Pagination remains issue 10.
+once before per-source logical-range boundary checks.
 
 `test` includes shared real-font geometry/source/negative cases, the committed corpus 08
 narrative, repeat execution, controlled font readiness, and independent Node `crypto`
@@ -124,3 +124,101 @@ font subsetting, output writers and target readers remain their respective WP0 g
 Repeated same-pack layout uses Typography Core's bounded immutable-face cache; Font/Buffer state remains per core. See its README for the reproduced native failure, recovery tests, GC constraints and required host isolation for hard memory bounds.
 
 Font acquisition is bounded before ownership copies: at most 64 resources, 32 MiB per buffer and 128 MiB across supplied buffers (including repeated resources). All direct buffers are preflighted before any copy; promised buffers reserve cumulative bytes on arrival and failed acquisition stops later copies. Font definitions also bound family aliases and validate static identity fields. Digest/static-face checks still run after the full resource barrier.
+
+
+## Pages, sections and page-edge rules
+
+Template `settings.page` (preserved by compile/bind) declares `paper: "A4" | "A5" |
+{width,height}`, orientation and four margins in mm. Custom dimensions are normalized to
+the selected orientation. Model settings take precedence over the legacy `options.page`
+geometry; the latter remains supported for old callers and can be omitted with model settings.
+A4 is 210×297 mm and A5 is 148×210 mm. The declared header/footer heights are subtracted
+from the margin content area. Nonpositive/quantized-away content dimensions fail.
+
+`Paragraph.layout.pageBreakBefore: true` is the explicit page-break representation. It
+always advances a page, including an initial blank page. `layout.section: {id,page}` begins
+a section on a new page; on the first paragraph it configures the initial page. Section occurrence IDs
+are unique within the resolved document. A repeated section uses `@section:` plus a canonical JSON tuple of the source ID and all
+enclosing node/key pairs. This namespace cannot collide with model-valid explicit source
+IDs; the allocator also avoids the arbitrary implicit root document ID. Optional
+`sectionSourceId` retains the original section ID on pages, semantics and inspection lines.
+If a later non-repeated explicit section uses the public document ID, the implicit root
+uses a separate `@root:` canonical identity and retains the document ID in sectionSourceId.
+This keeps keyed occurrences stable under reordering and gives each occurrence its own page
+numbering/hiding scope; non-repeated section IDs remain unchanged. Section start and explicit break both apply when
+both are declared, deliberately producing a blank section page. This small model extension
+supports the requested page/section contract without introducing another recursive container.
+
+Lines are placed using the selected real font metrics. When the next line does not fit,
+it starts at the next content box's top, with paragraph-relative text offsets, indentation,
+source fragments and numbering identity preserved. Before-spacing is omitted at page top,
+including after an automatic break. After-spacing consumes only the remaining page height;
+it never creates a trailing empty page. Space before a paragraph can cause that paragraph
+to advance, then is omitted on the new page. A single line taller than the content box fails
+instead of repeatedly allocating empty pages. Widow/orphan and keep-with-next policies remain
+their later issue's scope.
+
+Every IR page records paper dimensions, orientation, contentBox, index and section source.
+Each body Semantic Map entry and inspection line also records `pageIndex` and `sectionId`;
+reading order remains the logical body order across page and section boundaries. IR validation
+checks semantic page/section references. Generated labels, page bands and watermarks are
+artifacts, excluded from body source extraction.
+
+## Page bands, total pages and watermarks
+
+`header` / `footer` have a positive fixed `height`, optional `style`, left/center/right
+alignment and ordered `parts`: `{kind:"text",text}`, `{kind:"page-number"}` or
+`{kind:"total-pages"}`. Parts share paragraph shaping/wrapping. Overflow of the declared
+band height is an explicit `LAYOUT_OVERFLOW`; heights never silently expand into body text.
+Band height is reserved even when hidden. Empty parts (or parts joining to an empty string)
+reserve space only, without generating a blank paragraph or requiring a font. `hideFirstPage` and one-based `hiddenPages` refer
+to physical page positions within the section; `startPageNumber` affects displayed page
+numbers only. Total pages counts the entire physical document, including explicit blank pages.
+
+Only total-page fields on actually visible bands participate in convergence; overridden root
+settings and wholly hidden fields do not trigger a repeat pass. Total-page fields start with guess 1 and rerun the full layout until actual count equals the
+guess. Fixed-height bands normally need at most two passes; `pagination.maxIterations`
+(default/hard ceiling 4) bounds attempts, otherwise `PAGINATION_NOT_CONVERGED` is thrown.
+The diagnostic can be exercised with a multi-page total-field document and maxIterations 1.
+No partial IR is returned. `paginationPasses` and cumulative nonsemantic `work` report actual
+work across every attempt. There is no auto-height header convergence/oscillation profile.
+
+`border: {inset,width,color}` uses a closed stroked path within the paper edge. `watermarks`
+accept text or image, opacity, an affine transform, and `layer: "behind" | "above"`. Text
+is shaped with the same fonts; decoration paths use local coordinates so they rotate with
+text. All watermark bounds are transformed to page-space bounding boxes. States use normal
+blend/sRGB; background watermarks precede body objects, foreground watermarks follow them.
+The renderer visits only newly created watermark states, with no full-document state search.
+
+Images reference bounded, host-authorized `options.images` IR descriptors (ID, digest,
+PNG/JPEG MIME and pixel dimensions). Source IDs may use any valid identifier; duplicate source
+IDs are rejected, and internal resource IDs are allocated separately from generated font/page/
+object IDs. Watermark references are rewritten to those internal IDs. Image matrix scale is width/pixelWidth and
+height/pixelHeight; translations and transformed bounds carry physical placement. Layout does
+not fetch, decode or authenticate image bytes. Host media validation and writers must supply
+bytes matching the descriptor; this issue is IR layout evidence, not image-decoder/writer
+acceptance. See Layout IR's matrix/unit convention.
+
+## Pagination budgets and evidence
+
+All issue09 input, font, shaping, candidate/run, source-mapping, output-text and object
+budgets remain per invocation, shared across all pages, bands, watermarks and convergence
+passes. Additional hard ceilings: 1000 pages per pass (caller may lower `maxPages`), 4 passes,
+4000 page allocations across attempts, 30000 body/generated paragraph layouts, 64 image
+descriptors and 100 million cumulative declared image pixels. There are at most 16 watermarks
+per page. Object and state allocations are reserved before insertion; explicit minimum page
+count is rejected before font acquisition. Band text is bounded before joining parts.
+Image descriptors are checked before ownership copy. Page, inspection-line and semantic
+section occurrence/source IDs are charged to the cumulative output string budget before
+allocation, including arbitrarily long root IDs and repeat keys. These are deterministic work/allocation
+limits, not a native RSS ceiling; host Worker memory/time isolation remains required.
+
+Shared Node/Chromium tests include physical sizes, mixed sections, real-font cross-page
+text/range geometry, page-edge spacing, blank pages, hidden bands, numbering/restarts,
+bounded total fields, watermark matrices/bounds/layers and negative budgets. The 50-page
+fixture has 1250 actual shaped lines, repeated-run canonical-byte equality, a shared digest
+and independent Node SHA-256. A separate 1000-page/16000-image-watermark test exercises the
+state traversal at the hard page limit. The 50-page content is a **synthetic capacity sample
+using real locked fonts**, not a supplied anonymized host business document. Real business
+50-page acceptance, Firefox/other browser versions, Linux architecture matrix and final
+OFD/PDF reader interoperability remain unverified.

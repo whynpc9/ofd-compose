@@ -51,3 +51,21 @@ it("validates source and object logical UTF-16 ranges separately in both transpo
       expect(() => (canonical ? validateCanonicalLayoutIR(ir) : validateLayoutIR(ir))).toThrow();
     }
 });
+
+it("preserves repeated section source IDs and rejects mismatched page/semantic sources", () => {
+  const ir = input();
+  const page = ir.pages[0],
+    semantic = ir.semantics[0];
+  if (!page || !semantic) throw new Error("Missing page fixture");
+  page.sectionId = "@section:occurrence";
+  page.sectionSourceId = "original-section";
+  semantic.pageIndex = page.pageIndex;
+  semantic.sectionId = page.sectionId;
+  semantic.sectionSourceId = "original-section";
+  const canonical = canonicalizeLayoutIR(ir);
+  expect(canonical.pages[0]?.sectionSourceId).toBe("original-section");
+  expect(canonical.semantics[0]?.sectionSourceId).toBe("original-section");
+  validateCanonicalLayoutIR(canonical);
+  semantic.sectionSourceId = "wrong-section";
+  expect(() => validateLayoutIR(ir)).toThrowError(/Semantic page\/section mismatch/);
+});

@@ -204,6 +204,7 @@ function contract(canonical: boolean) {
         contentBox: box,
         orientation: Type.Union([Type.Literal("portrait"), Type.Literal("landscape")]),
         sectionId: id,
+        sectionSourceId: Type.Optional(id),
         objects: Type.Array(graphic),
       }),
       { minItems: 1 },
@@ -227,6 +228,9 @@ function contract(canonical: boolean) {
           }),
         ),
         readingOrder: uint,
+        pageIndex: Type.Optional(uint),
+        sectionId: Type.Optional(id),
+        sectionSourceId: Type.Optional(id),
         link: Type.Optional(id),
         /** Multiple source fragments can contribute to one shaped run/ligature. */
         sourceRanges: Type.Optional(

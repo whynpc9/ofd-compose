@@ -140,7 +140,7 @@ it("applies left/center/right/justify, hanging indents, paragraph spacing and fi
   expect(result.lines[0]?.x).toBe(24);
   expect(result.lines[1]?.x).toBe(28);
   expect(result.lines[0]?.height).toBe(12);
-  expect(result.lines[0]?.y).toBe(23);
+  expect(result.lines[0]?.y).toBe(20);
   expect(result.lines[0]?.width).toBe(31);
   const last = result.lines.at(-1),
     before = result.lines.at(-2);
