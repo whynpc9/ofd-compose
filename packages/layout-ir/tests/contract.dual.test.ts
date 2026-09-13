@@ -24,6 +24,7 @@ import {
   validateLayoutIR,
   validateUtf16Range,
 } from "../src/index.js";
+import { boundDocumentFixture } from "./bound-document.js";
 import expected from "./expected.json";
 
 for (const [name, factory] of Object.entries(fixtureFactories)) {
@@ -355,4 +356,81 @@ it.each([
   if (failure === "semantic-digest") canonical.identity.semanticDigest = "0".repeat(64);
   if (failure === "marker-page") canonical.markers[0]!.pageId = canonical.pages[0]!.id;
   expect(() => validateCanonicalLayoutIR(canonical)).toThrow(/IR_/);
+});
+
+it("real bound documents produce the same semantic digest and LayoutIdentity in Node/browser", () => {
+  const bound = boundDocumentFixture();
+  expect(digestSemanticDocument(bound)).toBe(expected.boundDocument);
+  expect(
+    digestLayoutIdentity({
+      ...identityFixture,
+      resolvedDocumentDigest: digestSemanticDocument(bound),
+    }),
+  ).toBe(expected.boundIdentity);
+  const node = { ...bound, runtime: { ...bound.runtime, tzdataVersion: "2026a" } };
+  const browser = { ...bound, runtime: { ...bound.runtime, tzdataVersion: null } };
+  expect(digestSemanticDocument(node)).toBe(digestSemanticDocument(browser));
+  expect(
+    digestSemanticDocument({ ...bound, settings: { ...bound.settings, locale: "en-US" } }),
+  ).not.toBe(expected.boundDocument);
+  expect(
+    digestLayoutIdentity({
+      ...identityFixture,
+      resolvedDocumentDigest: expected.boundDocument,
+      formattingPolicy: { ...identityFixture.formattingPolicy, tzdataVersion: "next" },
+    }),
+  ).not.toBe(expected.boundIdentity);
+});
+it.each([
+  "pages",
+  "objects",
+  "resources",
+  "graphicsStates",
+  "semantics",
+  "markers",
+  "features",
+  "clusters",
+  "object-id",
+  "duplicate-resource",
+  "duplicate-state",
+])("canonical validator rejects noncanonical %s without mutation", (change) => {
+  const source = change === "objects" ? barcodeFixture() : repeatedHeaderFixture();
+  source.graphicsStates.push({ ...source.graphicsStates[0]!, id: "extra-state", opacity: 0.5 });
+  if (source.markers[0])
+    source.markers.push({
+      ...source.markers[0],
+      id: "extra-marker",
+      bounds: { ...source.markers[0].bounds, x: 21 },
+    });
+  const canonical = canonicalizeLayoutIR(source);
+  if (change === "pages") canonical.pages.reverse();
+  if (change === "objects") canonical.pages[0]!.objects.reverse();
+  if (change === "resources") canonical.resources.reverse();
+  if (change === "graphicsStates") canonical.graphicsStates.reverse();
+  if (change === "semantics") {
+    canonical.semantics.reverse();
+    canonical.identity.semanticDigest = digestCanonical(canonical.semantics);
+  }
+  if (change === "markers") canonical.markers.reverse();
+  if (change === "features") canonical.identity.layoutProfile.features.reverse();
+  if (change === "clusters") {
+    const text = canonical.pages[0]!.objects[0]!;
+    if (text.kind === "text") text.clusters.reverse();
+  }
+  if (change === "object-id") {
+    const old = canonical.pages[0]!.objects[0]!.id;
+    canonical.pages[0]!.objects[0]!.id = "renamed";
+    for (const semantic of canonical.semantics)
+      if (semantic.objectId === old) semantic.objectId = "renamed";
+    for (const marker of canonical.markers)
+      if (marker.objectId === old) marker.objectId = "renamed";
+    canonical.identity.semanticDigest = digestCanonical(canonical.semantics);
+  }
+  if (change === "duplicate-resource")
+    canonical.resources.push({ ...canonical.resources[0]!, id: "duplicate-resource" });
+  if (change === "duplicate-state")
+    canonical.graphicsStates.push({ ...canonical.graphicsStates[0]!, id: "duplicate-state" });
+  const before = canonicalSerialize(canonical);
+  expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_NON_CANONICAL");
+  expect(canonicalSerialize(canonical)).toBe(before);
 });

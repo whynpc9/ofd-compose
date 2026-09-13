@@ -79,6 +79,12 @@ importers:
         specifier: 0.34.52
         version: 0.34.52
     devDependencies:
+      '@ofd-compose/binding-core':
+        specifier: workspace:*
+        version: link:../binding-core
+      '@ofd-compose/template-compiler':
+        specifier: workspace:*
+        version: link:../template-compiler
       '@types/node':
         specifier: 24.13.3
         version: 24.13.3

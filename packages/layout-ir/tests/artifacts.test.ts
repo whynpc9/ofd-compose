@@ -10,10 +10,13 @@ import {
   canonicalSerialize,
   digestLayoutIdentity,
   digestLayoutIR,
+  digestSemanticDocument,
   LayoutIdentityInputSchema,
   LayoutIRSchema,
   serializeLayoutIR,
 } from "../src/index.js";
+
+import { boundDocumentFixture } from "./bound-document.js";
 
 const root = fileURLToPath(new URL("../../../", import.meta.url));
 for (const [name, schema] of Object.entries({
@@ -56,6 +59,11 @@ it("publishes writer fixtures and independent Node SHA-256 baselines", async () 
     );
   }
   expected.identity = digestLayoutIdentity(identityFixture);
+  expected.boundDocument = digestSemanticDocument(boundDocumentFixture());
+  expected.boundIdentity = digestLayoutIdentity({
+    ...identityFixture,
+    resolvedDocumentDigest: expected.boundDocument,
+  });
   await expect(`${JSON.stringify(expected, null, 2)}\n`).toMatchFileSnapshot(
     path.join(root, "packages/layout-ir/tests/expected.json"),
   );

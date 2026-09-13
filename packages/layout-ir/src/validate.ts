@@ -1,5 +1,6 @@
 import type { Static, TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
+import { normalizeStructure } from "./normalize.js";
 import {
   type CanonicalLayoutIR,
   CanonicalLayoutIRSchema,
@@ -46,6 +47,13 @@ export function validateCanonicalLayoutIR(input: unknown): asserts input is Cano
       "IR_DIGEST_MISMATCH",
       "identity/semanticDigest",
       "Semantic digest does not match transported map",
+    );
+  }
+  if (canonicalSerialize(input) !== canonicalSerialize(normalizeStructure(input))) {
+    fail(
+      "IR_NON_CANONICAL",
+      "",
+      "Transport must use canonical ordering, IDs and deduplicated definitions",
     );
   }
 }

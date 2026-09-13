@@ -38,3 +38,9 @@
 
 - Bot reviewed `fecd31f` and correctly identified the missing public validator for canonical writer input. Added `validateCanonicalLayoutIR` (canonical schema, shared relational validation and semantic digest verification), exported it from the package and reused it in canonicalization postconditions. No unit conversion or mutation occurs during transport validation.
 - Dual-runtime cases cover all canonical JSON fixtures and negative references, duplicate IDs, split-surrogate clusters, marker/page mismatch and stale semantic digests. Node 51/51, Chromium 45/45 passed; typecheck/build/lint and diff hygiene passed. Fresh-head bot/CI completion remains tracked on PR #5.
+
+### 2026-09-13 — Third bot review dispositions
+
+- Bot reviewed `aff1432`. Both new findings are valid and fixed: Binding Core explicitly classifies `ResolvedDocument.runtime` as nonsemantic; it is now excluded with `provenance`. Separately declared LayoutIdentity formatting-policy fields remain semantic. Real Compiler → Binding Core documents now have pinned, equal Node/Chromium document and LayoutIdentity digests.
+- Canonical transport validation now compares against shared structural normalization (no unit conversion), rejecting noncanonical array ordering, IDs and duplicate definitions without mutating input. Added negative pages/objects/resources/states/semantics/markers/features/clusters/IDs/duplicate definitions cases.
+- Verification: Node 63/63, Chromium 57/57, typecheck/build/lint/diff checks passed. Fresh-head bot/CI evidence remains on PR #5; no merge performed.

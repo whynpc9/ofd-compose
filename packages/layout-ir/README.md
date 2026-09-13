@@ -13,7 +13,8 @@ The implementation follows [spec §9](../../.scratch/first-release/spec.md) and
   subset maps, UTF-16 ranges or inconsistent clusters. Unknown `irVersion` fails
   with `IR_VERSION_UNSUPPORTED`. Versions are independent of `modelVersion`.
 - `validateCanonicalLayoutIR(unknown)`: validates the integer-um writer transport
-  against its schema, the same relational checks and its semantic digest. It
+  against its schema, the same relational checks, semantic digest and canonical
+  ordering/IDs/deduplicated definitions. It
   never changes units, order or IDs, and rejects mm construction input.
 - `canonicalizeLayoutIR(unknown)`: validates and returns a new
   `CanonicalLayoutIR` with `units: "um"` and `canonicalizationVersion`.
@@ -30,6 +31,8 @@ The implementation follows [spec §9](../../.scratch/first-release/spec.md) and
 
 JSON Schema 2020-12 artifacts live in [`schemas/layout-ir`](../../schemas/layout-ir/).
 They are checked for freshness and independently compiled with Ajv in Node tests.
+The object validator checks structural canonical form, not the original JSON text
+spelling or whitespace. Producers must use `canonicalSerialize` for wire bytes.
 Schema validation alone cannot check graph references or cluster relationships;
 TypeScript transport consumers use `validateCanonicalLayoutIR` before writing;
 non-TS writers must apply equivalent relational checks after JSON Schema validation.
@@ -110,8 +113,11 @@ semantic ResolvedDocument digest, the complete font/image SHA-256 manifest, layo
 engine/shaping/line-break versions, versioned formatting policy with explicit
 locale/time zone/tzdata/rounding, capability profile and layout options. Call
 `digestSemanticDocument` on an **already validated ResolvedDocument** to obtain
-its semantic digest: only top-level `provenance` is excluded; nested source/origin
-maps, versions and runtime policy remain. `digestLayoutIdentity` sorts/deduplicates
+its semantic digest: top-level `provenance` and Binding Core
+`runtime` are excluded. The latter records the observed runtime ICU tzdata version
+(Node reports a version while browsers report null), not semantic content. Nested
+source/origin maps, semantic settings and versions remain; the separately declared
+LayoutIdentity formatting policy still locks the required tzdata/rounding policy. `digestLayoutIdentity` sorts/deduplicates
 the manifest and sorts feature sets before hashing; every other declared field
 contributes. Callers must provide the full resource closure, including original
 fonts rather than only output subsets, and the actual options used by layout.
@@ -138,3 +144,7 @@ in real Chromium against hashes independently calculated with Node `crypto`.
 Browser tests do not import the Node hashing API. This proves this tested runtime
 pair; Firefox, another Chromium version, Linux x64/arm64 and target readers remain
 WP0 matrix work, not implied by one local browser run.
+
+The dual suite also runs the real Compiler → Binding Core document path and checks
+its semantic document digest and LayoutIdentity against pinned Node baselines,
+including the different runtime metadata observed by Node and Chromium.
