@@ -642,7 +642,11 @@ class ParagraphLayouter {
   layout() {
     this.doc.body.forEach((block, index) => {
       if (block.kind !== "paragraph")
-        throw new LayoutError("LAYOUT_UNSUPPORTED", "Tables belong to issue 13", block.nodeId);
+        throw new LayoutError(
+          "LAYOUT_UNSUPPORTED",
+          "Block layout requires the media/table layout profile (issues 12/13)",
+          block.nodeId,
+        );
       const section = block.layout?.section;
       if (section && index > 0) {
         const occurrence = sectionOccurrenceId(block, this.doc.documentId);

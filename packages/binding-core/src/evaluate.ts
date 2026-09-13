@@ -51,7 +51,7 @@ export interface EvaluationBudget {
  * - `text`：DynamicText（Missing → 空文本 + BINDING_MISSING）；
  * - `condition` / `sequence`：ConditionalBlock / Repeat（legacy-compat-1 下 Missing 按旧引擎视为 null 并记 LEGACY_SEMANTIC_CHANGE）。
  */
-export type EvaluationConsumer = "text" | "condition" | "sequence";
+export type EvaluationConsumer = "text" | "condition" | "sequence" | "media";
 
 export interface EvaluationContext {
   readonly policy: BindingPolicyVersion;
@@ -93,7 +93,17 @@ function identityIndices(value: Value): number[] | undefined {
   return isJsonArray(value) ? value.map((_, i) => i) : undefined;
 }
 
+class MediaEvaluationLimit extends Error {}
+
 class Evaluator {
+  private checkMediaValue(value: Value): void {
+    if (this.ctx.consumer !== "media") return;
+    if (
+      (isJsonArray(value) && value.length > 64) ||
+      (typeof value === "string" && value.length > 12000000)
+    )
+      throw new MediaEvaluationLimit("Media expression input exceeds its array/string budget");
+  }
   readonly diagnostics: Diagnostic[] = [];
 
   constructor(private readonly ctx: EvaluationContext) {}
@@ -158,6 +168,7 @@ class Evaluator {
       }
       cursor = cursor[segment.name] as JsonValue;
     }
+    this.checkMediaValue(cursor);
     return { value: cursor, dataPath, missingAt: undefined };
   }
 
@@ -525,7 +536,7 @@ class Evaluator {
     } else if (isMissing(state.value)) {
       const missingPath = state.missingAt ?? state.dataPath ?? pathRefToText(ast.source);
       const consumer = this.ctx.consumer ?? "text";
-      if (consumer !== "text" && this.ctx.policy === "legacy-compat-1") {
+      if (consumer !== "text" && consumer !== "media" && this.ctx.policy === "legacy-compat-1") {
         // 旧引擎的条件/循环不区分缺失与 null：缺失 → 假 / 零次。复刻并标记，不再报 BINDING_MISSING。
         this.legacyChange(
           "missing-as-null",
@@ -565,5 +576,24 @@ class Evaluator {
 }
 
 export function evaluateExpression(ast: ExpressionAst, ctx: EvaluationContext): EvaluationResult {
-  return new Evaluator(ctx).evaluate(ast);
+  try {
+    return new Evaluator(ctx).evaluate(ast);
+  } catch (error) {
+    if (!(error instanceof MediaEvaluationLimit)) throw error;
+    return {
+      value: MISSING,
+      text: "",
+      valueState: "missing",
+      diagnostics: [
+        {
+          code: "RESOURCE_LIMIT",
+          severity: "error",
+          phase: "bind",
+          message: error.message,
+          ...(ctx.nodeId === undefined ? {} : { nodeId: ctx.nodeId }),
+          ...(ctx.bindingId === undefined ? {} : { bindingId: ctx.bindingId }),
+        },
+      ],
+    };
+  }
 }

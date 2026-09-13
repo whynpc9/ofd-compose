@@ -1,10 +1,13 @@
 import {
+  type BarcodeBinding,
   type BindingPolicyVersion,
   type BlockNode,
   type ConditionalBlock,
   type Diagnostic,
   documentModelSchemaVersion,
   hasErrors,
+  type ImageBinding,
+  type ImageSource,
   type InlineNode,
   modelVersion,
   type Paragraph,
@@ -35,6 +38,7 @@ import {
   type ResolvedBlock,
   type ResolvedDocument,
   type ResolvedFragment,
+  type ResolvedMedia,
   type ResolvedParagraph,
   type ResolvedRepeat,
   type ResolvedStructure,
@@ -212,6 +216,14 @@ class Binder {
           if (paragraph) out.push(paragraph);
           break;
         }
+        case "image-binding":
+        case "barcode-binding": {
+          if (this.charge(block)) {
+            const media = this.media(block, scope, instancePath);
+            if (media) out.push(media);
+          }
+          break;
+        }
         case "table": {
           const table = this.table(block, scope, instancePath);
           if (table) out.push(table);
@@ -262,6 +274,74 @@ class Binder {
       ...(instancePath.length === 0 ? {} : { instancePath: [...instancePath] }),
       ...(paragraph.layout === undefined ? {} : { layout: paragraph.layout }),
       fragments,
+    };
+  }
+
+  private media(
+    node: ImageBinding | BarcodeBinding,
+    scope: Scope,
+    instancePath: readonly RepeatInstance[],
+  ): ResolvedMedia | undefined {
+    const binding = this.binding(node);
+    if (!binding) return undefined;
+    const result = this.evaluate(binding, scope, "media");
+    const base = {
+      nodeId: node.nodeId,
+      bindingId: node.bindingId,
+      ...(instancePath.length ? { instancePath: [...instancePath] } : {}),
+      ...(result.dataPath === undefined ? {} : { dataPath: result.dataPath }),
+    };
+    const invalid = (
+      code: "RESOURCE_LIMIT" | "MODEL_INVALID" | "BARCODE_VALUE_INVALID",
+      message: string,
+    ) => {
+      this.diag(node, {
+        code,
+        severity: "error",
+        message,
+        ...(result.dataPath === undefined ? {} : { dataPath: result.dataPath }),
+      });
+      return undefined;
+    };
+    if (node.kind === "barcode-binding") {
+      if (typeof result.value !== "string")
+        return invalid("BARCODE_VALUE_INVALID", "Barcode value must be a string");
+      if (result.value.length > 256)
+        return invalid("RESOURCE_LIMIT", "Barcode value exceeds 256 characters");
+      return { ...base, kind: node.kind, value: result.value, options: node.options };
+    }
+    if (isMissing(result.value) || result.value === null)
+      return invalid("MODEL_INVALID", "Image value is missing or null");
+    const sources: readonly JsonValue[] = isJsonArray(result.value) ? result.value : [result.value];
+    if (sources.length > 64) return invalid("RESOURCE_LIMIT", "Image list exceeds 64 items");
+    let characters = 0;
+    for (const source of sources) {
+      if (typeof source === "string") {
+        characters += source.length;
+        if (source.length > 12000000 || characters > 48000000)
+          return invalid("RESOURCE_LIMIT", "Image text budget exceeded");
+      } else if (
+        !isJsonObject(source) ||
+        Object.keys(source).length !== 1 ||
+        !(
+          (typeof source.resourceId === "string" && source.resourceId.length <= 256) ||
+          (typeof source.path === "string" && source.path.length <= 1024)
+        )
+      ) {
+        return invalid(
+          "MODEL_INVALID",
+          "Image source must be encoded text or an authorized resource/path reference",
+        );
+      }
+    }
+    return {
+      ...base,
+      kind: node.kind,
+      sources: sources as ImageSource[],
+      options: {
+        ...node.options,
+        ...(this.policy === "legacy-compat-1" ? { legacyPixelDpi: 96 as const } : {}),
+      },
     };
   }
 
@@ -434,11 +514,7 @@ class Binder {
     instancePath: readonly RepeatInstance[],
   ): RepeatExpansion {
     const binding = this.binding(node);
-    if (
-      binding === undefined ||
-      binding.role === "dynamic-text" ||
-      binding.role === "conditional-block"
-    ) {
+    if (binding === undefined || !("repeatKey" in binding)) {
       return { instances: [], record: undefined };
     }
     const result = this.evaluate(binding, scope, "sequence");

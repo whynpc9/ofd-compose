@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "lib": ["ES2024", "DOM"],
+    "resolveJsonModule": true,
+    "paths": { "#decoder": ["./tests/decoder.node.ts"] }
+  },
+  "include": ["tests", "*.config.ts"]
+}

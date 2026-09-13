@@ -44,6 +44,7 @@
         "packages/binding-core/**",
         "packages/document-model/**",
         "packages/layout-core/**",
+        "packages/media-core/**",
         "packages/layout-ir/**",
         "packages/template-compiler/**",
         "packages/typography-core/**"
@@ -100,6 +101,7 @@
         "**/packages/binding-core/**",
         "**/packages/document-model/**",
         "**/packages/layout-core/**",
+        "**/packages/media-core/**",
         "**/packages/layout-ir/**",
         "**/packages/template-compiler/**",
         "**/packages/typography-core/**"
@@ -111,6 +113,7 @@
         "**/packages/binding-core/**",
         "**/packages/document-model/**",
         "**/packages/layout-core/**",
+        "**/packages/media-core/**",
         "**/packages/layout-ir/**",
         "**/packages/template-compiler/**",
         "**/packages/typography-core/**"

@@ -260,6 +260,73 @@ export const ExpressionSourceSchema = Type.Union([
   StructuredExpressionSchema,
 ]);
 
+/** Media lengths: native numeric values are mm; legacy numeric values are px at 96 dpi. */
+export const MediaLengthSchema = Type.Union([
+  Type.Number({ exclusiveMinimum: 0, maximum: 1000000 }),
+  Type.String({ minLength: 1, maxLength: 64 }),
+]);
+export const ImageOptionsSchema = Type.Object(
+  {
+    width: Type.Optional(MediaLengthSchema),
+    height: Type.Optional(MediaLengthSchema),
+    maxWidth: Type.Optional(MediaLengthSchema),
+    maxHeight: Type.Optional(MediaLengthSchema),
+    w: Type.Optional(MediaLengthSchema),
+    h: Type.Optional(MediaLengthSchema),
+    maxwidth: Type.Optional(MediaLengthSchema),
+    maxheight: Type.Optional(MediaLengthSchema),
+    scale: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 1000 })),
+    preserveAspectRatio: Type.Optional(Type.Boolean()),
+    legacyPixelDpi: Type.Optional(Type.Literal(96)),
+  },
+  { additionalProperties: false },
+);
+export const BarcodeOptionsSchema = Type.Object(
+  {
+    symbology: Type.Union([Type.Literal("code128"), Type.Literal("ean13")]),
+    width: MediaLengthSchema,
+    height: MediaLengthSchema,
+    /** Physical whitespace on each side (mm); omission uses the symbology minimum in modules. */
+    quietZone: Type.Optional(MediaLengthSchema),
+    /** P0 emits bars only. false requires the future shaped human-readable-label profile. */
+    pure: Type.Optional(Type.Boolean()),
+  },
+  { additionalProperties: false },
+);
+export const ImageBindingSchema = Type.Object(
+  {
+    kind: Type.Literal("image-binding"),
+    nodeId: identifier,
+    bindingId: identifier,
+    expression: ExpressionSourceSchema,
+    options: Type.Optional(ImageOptionsSchema),
+  },
+  { additionalProperties: false },
+);
+export const BarcodeBindingSchema = Type.Object(
+  {
+    kind: Type.Literal("barcode-binding"),
+    nodeId: identifier,
+    bindingId: identifier,
+    expression: ExpressionSourceSchema,
+    options: BarcodeOptionsSchema,
+  },
+  { additionalProperties: false },
+);
+export const ImageSourceSchema = Type.Union([
+  Type.String({ maxLength: 12000000 }),
+  Type.Object({ resourceId: identifier }, { additionalProperties: false }),
+  Type.Object(
+    { path: Type.String({ minLength: 1, maxLength: 1024 }) },
+    { additionalProperties: false },
+  ),
+]);
+export type ImageOptions = Static<typeof ImageOptionsSchema>;
+export type BarcodeOptions = Static<typeof BarcodeOptionsSchema>;
+export type ImageBinding = Static<typeof ImageBindingSchema>;
+export type BarcodeBinding = Static<typeof BarcodeBindingSchema>;
+export type ImageSource = Static<typeof ImageSourceSchema>;
+
 export const StaticTextSchema = Type.Object(
   {
     kind: Type.Literal("text"),
@@ -494,7 +561,14 @@ const repeatBlockOf = <T extends TSchema>(block: T) =>
  */
 export const BlockNodeSchema = Type.Recursive(
   (This) =>
-    Type.Union([ParagraphSchema, tableOf(This), conditionalBlockOf(This), repeatBlockOf(This)]),
+    Type.Union([
+      ParagraphSchema,
+      ImageBindingSchema,
+      BarcodeBindingSchema,
+      tableOf(This),
+      conditionalBlockOf(This),
+      repeatBlockOf(This),
+    ]),
   { $id: "BlockNode" },
 );
 

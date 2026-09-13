@@ -1,5 +1,26 @@
-# media-core
+# Media Core
 
-Media Core：图片尺寸解析与规范化、条码生成、资源内容寻址与几何冻结。
+`compile(template)` → `bind(compiled, data)` → `prepareMedia(bound.document, options)` resolves media before placement. Both runtimes execute the same production code with ES2024 types and no DOM, file or network access. `bwip-js/generic` receives a custom drawing context; SVG, Canvas, raster output and ZXing are absent from the production path.
 
-> 占位包：实现随对应 issue 落地（见 `.scratch/first-release/issues/`）。
+```ts
+const result = prepareMedia(bound.document, {
+  resources: [{ id: "chart", bytes: authorizedPngBytes }],
+  root: { id: "approved-charts", entries: [{ path: "charts/q1.png", resourceId: "chart" }] },
+});
+```
+
+ImageBinding expressions yield a string (strict padded base64 or `data:image/png;base64,...` / `data:image/jpeg;base64,...`), `{ resourceId }`, `{ path }`, or a list of those. Empty lists are valid. Missing/null and non-image values fail. Resource IDs and root entries must be unique even when bytes match. Roots are **host-authorized byte tables**, not filesystem directories: the host checks realpath/symlink containment and reads bytes before supplying entries. Core rejects absolute paths, URLs, backslashes, percent escapes, empty segments and `.`/`..`; it never resolves a path against a working directory. File/URL-looking plain strings fail `RESOURCE_FORBIDDEN`.
+
+PNG/JPEG bytes are copied, sniffed, dimension-probed with `image-size@2.0.2`, and SHA-256 hashed. The PNG container has bounded chunk/CRC/termination validation. JPEG header length and segment count are bounded before the upstream parser's suffix-copy loop; EOI and scan/frame presence are required. This is not a full pixel decoder: writers must validate/decode compressed image data within their pixel budget. EXIF orientation other than 1, metadata after SOF, APNG, and GIF/BMP/TIFF return `UNSUPPORTED_FEATURE`; no silent conversion occurs. The returned byte snapshots belong to the result and must not be mutated before writing.
+
+`width/height` (`w/h`) and `maxWidth/maxHeight` (`maxwidth/maxheight`) normalize first; conflicting aliases fail. Numeric native lengths are mm. Strings accept case-insensitive `mm/cm/in/inch/pt/px`; `px` always means 96 dpi. Migration bindings set `legacyPixelDpi=96`, making numeric lengths pixels. Intrinsic bitmap size is consistently 96 dpi regardless of embedded print metadata. The order is target size (contain-fit when both dimensions and aspect preservation are supplied), scale, then maximum bounds. Aspect preservation defaults to true; false allows each axis to change independently. Maximum bounds never upscale. Nonfinite, zero, negative, out-of-range and sub-micrometre output dimensions fail.
+
+BarcodeBinding requires a string and `options: { symbology: "code128" | "ean13", width, height }`. Code128 P0 accepts printable ASCII, with literal carets and no FNC/parse escapes; EAN13 requires exactly 13 digits including the validated checksum. `pure` defaults to true. `pure:false` fails explicitly: human-readable labels must later use Typography Core and its font identity, not bwip's built-in font. Width includes symmetric quiet zones: at least 10 modules for code128, 11 for ean13 (the larger EAN side minimum is used on both sides). `quietZone` can specify physical whitespace per side but cannot undercut that minimum. Modules must be at least 0.1 mm, height at least 1 mm, width/height at most 1000 mm. This P0 geometry profile is not a claim of GS1 production certification.
+
+Each barcode contains an immutable local-mm IR path, generator version `bwip-js@4.11.4/drawing-context@1`, exact value/symbology, quiet zone, physical size and geometry digest. Placement must preserve this aspect/quiet zone and assign its own object/state IDs; repeated equal barcodes intentionally share geometry identity. External image IDs never become IR IDs: images get content-derived local handles. `mediaIdentity` hashes source instances, byte digests/dimensions, final dimensions and barcode geometry. Consumers must put it in LayoutIdentity layout options and include image digests in resource identity. Layout IR canonicalization alone performs mm → integer µm; Media Core never pre-quantizes input lengths. Issue12 owns page placement, centering, image transforms and semantic objects; the current paragraph layout entry rejects these new block kinds explicitly.
+
+All media in one call share hard ceilings (host limits may only reduce them): 256 bindings, 64 images, 12M encoded characters per image, 8MB bytes per image / 32MB decoded total, 32768 pixels per axis / 40M pixels total, 256 barcode characters, 100K reserved path commands and 64M deterministic work units. Array/string bounds are checked during media expression resolution before index/path-array allocations. Byte budgets precede decoding/copying, pixel limits precede pixel work, and conservative barcode path/work reservations precede BWIPP execution. Headers have additional bounds (PNG 4096 chunks; JPEG 64KiB/256 segments). Work units bound synchronous work; the isolated Job Host remains responsible for wall-clock deadlines and hard worker termination (this package does not claim a hard elapsed-time guarantee). Any failure returns diagnostics and no partial media output.
+
+The same `tests/media.dual.test.ts` runs in Node and Chromium. Test-only CPU rasterization reads the actual IR commands, including a canonical-mm round trip; zxing-wasm@3.1.3 independently asserts source text and code format. WASM is loaded from the locked local package, never a CDN. Snapshot geometry digests freeze generator changes across runtimes. The PNG fixture comes from the repository golden corpus; JPEG is a local encoding of that same image, stored as fixture bytes.
+
+See [ADR-0003](../../docs/decisions/ADR-0003-media-core-profile.md) for the WP0 decision and remaining writer/reader gates.
