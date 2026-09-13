@@ -469,3 +469,42 @@ it.each(["\ud800", "\udc00", "\ud800X", "X\udc00", "\udc00\ud800", "\ud800\ud800
     expect(() => validateUtf16Range(text, { start: 0, end: 0 })).toThrow("IR_TEXT_INVALID");
   },
 );
+it.each(["en_US", "en US", "a--b", "-en", "en-", ""])(
+  "rejects run language %j unsupported by TypographyCore",
+  (language) => {
+    const input = textFixture();
+    const canonical = canonicalizeLayoutIR(input);
+    for (const candidate of [input, canonical]) {
+      const text = candidate.pages[0]!.objects[0]!;
+      if (text.kind !== "text") throw new Error("Missing fixture text");
+      text.language = language;
+    }
+    expect(() => validateLayoutIR(input)).toThrow("IR_SCHEMA");
+    expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_SCHEMA");
+  },
+);
+it("accepts the same language syntax as the repository shaper", () => {
+  for (const language of ["en", "zh-CN", "und", "zh-Hans-CN"]) {
+    const input = textFixture();
+    const text = input.pages[0]!.objects[0]!;
+    if (text.kind !== "text") throw new Error("Missing fixture text");
+    text.language = language;
+    expect(() => canonicalizeLayoutIR(input)).not.toThrow();
+  }
+});
+it("accepts solid and mixed-zero dashes but rejects zero-length cycles before and after quantization", () => {
+  for (const dash of [[], [0, 1], [1, 0], [0.0005, 0]]) {
+    const input = textFixture();
+    input.graphicsStates[0]!.dash = dash;
+    expect(() => canonicalizeLayoutIR(input)).not.toThrow();
+  }
+  const input = textFixture();
+  input.graphicsStates[0]!.dash = [0, 0];
+  expect(() => validateLayoutIR(input)).toThrow("IR_SCHEMA");
+  const canonical = canonicalizeLayoutIR(textFixture());
+  canonical.graphicsStates[0]!.dash = [0, 0];
+  expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_SCHEMA");
+  input.graphicsStates[0]!.dash = [0.0001, 0.0001];
+  expect(() => validateLayoutIR(input)).not.toThrow();
+  expect(() => canonicalizeLayoutIR(input)).toThrow("IR_SCHEMA");
+});

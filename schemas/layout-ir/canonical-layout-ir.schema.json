@@ -519,12 +519,32 @@
             "type": "integer"
           },
           "dash": {
-            "type": "array",
-            "items": {
-              "minimum": 0,
-              "maximum": 1000000000,
-              "type": "integer"
-            }
+            "anyOf": [
+              {
+                "maxItems": 0,
+                "type": "array",
+                "items": {
+                  "minimum": 0,
+                  "maximum": 1000000000,
+                  "type": "integer"
+                }
+              },
+              {
+                "minItems": 1,
+                "contains": {
+                  "minimum": 0,
+                  "maximum": 1000000000,
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                "type": "array",
+                "items": {
+                  "minimum": 0,
+                  "maximum": 1000000000,
+                  "type": "integer"
+                }
+              }
+            ]
           },
           "dashOffset": {
             "minimum": -1000000000,
@@ -747,7 +767,7 @@
                       "exclusiveMinimum": 0
                     },
                     "language": {
-                      "minLength": 1,
+                      "pattern": "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$",
                       "type": "string"
                     },
                     "direction": {

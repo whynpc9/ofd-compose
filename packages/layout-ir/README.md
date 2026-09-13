@@ -86,6 +86,10 @@ then through the graphics-state matrix into page space. Bounds are page-space
 metadata; they do not imply another translation or scaling. Each clip uses the
 local space of its owning state/image, with an explicit fill rule. Only `normal`
 blend mode and sRGB color are in this provisional profile; unsupported modes fail.
+Run language syntax matches TypographyCore: alphanumeric segments separated by
+single hyphens (`en`, `zh-Hans-CN`), not underscores or empty segments. A dash array
+is empty (solid) or has at least one positive length, including after quantization,
+following [PDF 32000-1 line dash patterns](https://raw.githubusercontent.com/adobe/dc-acrobat-sdk-docs/master/docs/standards/pdfstandards/pdf/PDF32000_2008.pdf).
 
 ## Text, semantics and identity
 

@@ -90,7 +90,7 @@ function contract(canonical: boolean) {
       displayText: Type.String(),
       fontId: id,
       fontSize: positive,
-      language: id,
+      language: Type.String({ pattern: "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$" }),
       direction: Type.Union([
         Type.Literal("ltr"),
         Type.Literal("rtl"),
@@ -181,7 +181,10 @@ function contract(canonical: boolean) {
         opacity: unit,
         blendMode: Type.Literal("normal"),
         lineWidth: nonnegative,
-        dash: Type.Array(nonnegative),
+        dash: Type.Union([
+          Type.Array(nonnegative, { maxItems: 0 }),
+          Type.Array(nonnegative, { minItems: 1, contains: positive }),
+        ]),
         dashOffset: length,
         lineCap: Type.Union([Type.Literal("butt"), Type.Literal("round"), Type.Literal("square")]),
         lineJoin: Type.Union([Type.Literal("miter"), Type.Literal("round"), Type.Literal("bevel")]),

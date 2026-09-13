@@ -105,3 +105,41 @@ it("exported schemas preserve vertical directions and enforce uint32 OpenType va
     expect(validate(input)).toBe(false);
   }
 });
+it("exported schemas enforce the shaper language syntax", () => {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false });
+  ajv.addKeyword("x-unit");
+  for (const schema of [LayoutIRSchema, CanonicalLayoutIRSchema]) {
+    const validate = ajv.compile(JSON.parse(JSON.stringify(schema)));
+    const input =
+      schema === LayoutIRSchema
+        ? fixtureFactories.text()
+        : canonicalizeLayoutIR(fixtureFactories.text());
+    const text = input.pages[0]?.objects[0];
+    if (text?.kind !== "text") throw new Error("Missing fixture text");
+    for (const language of ["en_US", "en US", "a--b"]) {
+      text.language = language;
+      expect(validate(input)).toBe(false);
+    }
+    text.language = "zh-Hans-CN";
+    expect(validate(input)).toBe(true);
+  }
+});
+it("both exported schemas reject nonempty all-zero dash cycles", () => {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false });
+  ajv.addKeyword("x-unit");
+  for (const schema of [LayoutIRSchema, CanonicalLayoutIRSchema]) {
+    const validate = ajv.compile(JSON.parse(JSON.stringify(schema)));
+    const input =
+      schema === LayoutIRSchema
+        ? fixtureFactories.text()
+        : canonicalizeLayoutIR(fixtureFactories.text());
+    const state = input.graphicsStates[0];
+    if (!state) throw new Error("Missing fixture state");
+    for (const dash of [[], [0, 1], [1, 0]]) {
+      state.dash = dash;
+      expect(validate(input)).toBe(true);
+    }
+    state.dash = [0, 0];
+    expect(validate(input)).toBe(false);
+  }
+});
