@@ -9,7 +9,7 @@ import {
   LayoutIRSchema,
 } from "./schema.js";
 import { canonicalSerialize, digestCanonical, formatNumber } from "./serialize.js";
-import { clusterOffsetTable, fail, validateUtf16Range } from "./text.js";
+import { clusterOffsetTable, fail, validateRangeBoundaries, validateUtf16Range } from "./text.js";
 
 export function assertSchema<T extends TSchema>(
   schema: T,
@@ -143,14 +143,35 @@ export function validateReferences(
         fail("IR_REFERENCE", item.id, "Missing image resource");
     }
   }
+  const checkedSources = new Set<string>();
+  const sourceRange = (text: string, range: { start: number; end: number }, path: string) => {
+    if (checkedSources.has(text)) validateRangeBoundaries(text, range, path);
+    else {
+      validateUtf16Range(text, range, path);
+      checkedSources.add(text);
+    }
+  };
   for (const semantic of input.semantics) {
+    for (const source of semantic.sourceRanges ?? []) {
+      sourceRange(
+        source.sourceText.text,
+        source.sourceText.range,
+        "semantics/sourceRanges/sourceText",
+      );
+      const target = objects.get(semantic.objectId)?.object;
+      if (target?.kind !== "text")
+        fail("IR_REFERENCE", "semantics/sourceRanges", "Source ranges require a text object");
+      // Every text target was fully checked by clusterOffsetTable above.
+      validateRangeBoundaries(
+        target.logicalText,
+        source.logicalRange,
+        "semantics/sourceRanges/logicalRange",
+      );
+    }
+
     if (!objects.has(semantic.objectId)) fail("IR_REFERENCE", "semantics", "Missing object");
     if (semantic.sourceText)
-      validateUtf16Range(
-        semantic.sourceText.text,
-        semantic.sourceText.range,
-        "semantics/sourceText",
-      );
+      sourceRange(semantic.sourceText.text, semantic.sourceText.range, "semantics/sourceText");
   }
   for (const marker of input.markers) {
     if (

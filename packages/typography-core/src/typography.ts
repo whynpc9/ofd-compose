@@ -74,6 +74,25 @@ export function lineBreakOpportunities(text: string) {
   return [...new Rules().breaks(text)].map(({ position, required }) => ({ position, required }));
 }
 
+interface LoadedStaticFace {
+  face: hb.Face;
+  metrics: FontMetrics;
+  bytes: number;
+}
+// WASM allocations are not reliably reflected in JS GC pressure. Repeated short-lived
+// cores must not duplicate the same large static face until finalizers happen to run.
+// Keep an LRU bounded by font-file bytes; every core still owns its own access registry/budget.
+const staticFaces = new Map<string, LoadedStaticFace>();
+let staticFaceBytes = 0;
+const maxFontBytes = 128 * 1024 * 1024;
+export const staticFaceCachePolicy = Object.freeze({
+  maxEntries: 4,
+  maxFontBytes,
+  eviction: "least-recently-used",
+  identity: "sha256/static-face-0",
+  reclamation: "garbage-collection-after-eviction",
+});
+
 export class TypographyCore {
   private readonly fonts = new Map<string, { font: hb.Font; metrics: FontMetrics }>();
   // harfbuzzjs 1.6 owns native lifetimes through FinalizationRegistry. Reuse the
@@ -96,20 +115,38 @@ export class TypographyCore {
     }
     const existing = this.fonts.get(digest);
     if (existing) return existing.metrics;
-    if (this.fontBytes + bytes.byteLength > 128 * 1024 * 1024) {
+    if (this.fontBytes + bytes.byteLength > maxFontBytes) {
       throw new TypographyError("TYPOGRAPHY_LIMIT", "Loaded fonts exceed 128 MiB");
     }
     const signature = Array.from(owned.subarray(0, 4)).join(",");
     if (signature !== "79,84,84,79" && signature !== "0,1,0,0") {
       throw new TypographyError("FONT_INVALID", "Expected a static OpenType CFF or TrueType font");
     }
-    const metrics = readMetrics(owned, digest);
-    const face = new hb.Face(new hb.Blob(owned));
-    const font = new hb.Font(face);
-    font.setScale(metrics.head.unitsPerEm, metrics.head.unitsPerEm);
-    this.fonts.set(digest, { font, metrics });
+    let loaded = staticFaces.get(digest);
+    if (!loaded) {
+      const metrics = readMetrics(owned, digest);
+      while (
+        staticFaces.size >= staticFaceCachePolicy.maxEntries ||
+        staticFaceBytes + owned.byteLength > maxFontBytes
+      ) {
+        const oldest = staticFaces.keys().next().value;
+        if (oldest === undefined) break;
+        staticFaceBytes -= staticFaces.get(oldest)?.bytes ?? 0;
+        staticFaces.delete(oldest);
+      }
+      const face = new hb.Face(new hb.Blob(owned));
+      loaded = { face, metrics, bytes: owned.byteLength };
+      staticFaceBytes += owned.byteLength;
+    } else {
+      staticFaces.delete(digest);
+    }
+    staticFaces.set(digest, loaded);
+    // Font scale/functions and the shaping buffer remain private to this core.
+    const font = new hb.Font(loaded.face);
+    font.setScale(loaded.metrics.head.unitsPerEm, loaded.metrics.head.unitsPerEm);
+    this.fonts.set(digest, { font, metrics: loaded.metrics });
     this.fontBytes += owned.byteLength;
-    return metrics;
+    return loaded.metrics;
   }
 
   shape(request: ShapeRequest) {

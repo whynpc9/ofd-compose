@@ -9,5 +9,6 @@ export {
   type PositionedGlyph,
   type ShapeRequest,
   shapingAndLineBreakVersions,
+  staticFaceCachePolicy,
   TypographyCore,
 } from "./typography.js";

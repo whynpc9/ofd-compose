@@ -3,6 +3,7 @@ import {
   documentModelSchemaVersion,
   InputControlSchema,
   modelVersion,
+  ParagraphLayoutSchema,
   ProvenanceSchema,
   TemplateSettingsSchema,
   TextStyleSchema,
@@ -49,6 +50,9 @@ export const ResolvedTextFragmentSchema = Type.Object(
     text: Type.String(),
     styleId: Type.Optional(identifier),
     origin: Type.Union([StaticOriginSchema, DynamicTextOriginSchema]),
+    styleInheritance: Type.Optional(
+      Type.Union([Type.Literal("inherit-paragraph"), Type.Literal("explicit")]),
+    ),
   },
   { additionalProperties: false },
 );
@@ -87,6 +91,7 @@ export const ResolvedParagraphSchema = Type.Object(
     nodeId: identifier,
     styleId: Type.Optional(identifier),
     instancePath,
+    layout: Type.Optional(ParagraphLayoutSchema),
     fragments: Type.Array(ResolvedFragmentSchema),
   },
   { additionalProperties: false },

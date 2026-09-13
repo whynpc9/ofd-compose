@@ -54,6 +54,14 @@ export const TextStyleSchema = Type.Object(
     strikethrough: Type.Optional(Type.Boolean()),
     /** #RRGGBB。 */
     color: Type.Optional(Type.String({ pattern: "^#[0-9A-Fa-f]{6}$" })),
+    verticalAlign: Type.Optional(
+      Type.Union([
+        Type.Literal("baseline"),
+        Type.Literal("superscript"),
+        Type.Literal("subscript"),
+      ]),
+    ),
+    link: Type.Optional(Type.String({ minLength: 1 })),
     highlight: Type.Optional(Type.String({ pattern: "^#[0-9A-Fa-f]{6}$" })),
   },
   { additionalProperties: false },
@@ -205,11 +213,69 @@ export const InlineNodeSchema = Type.Union([
   InputControlSchema,
 ]);
 
+/** Paragraph geometry uses mm; font sizes remain pt. Heading/list are paragraph roles. */
+export const ParagraphLayoutSchema = Type.Object(
+  {
+    role: Type.Optional(
+      Type.Union([Type.Literal("body"), Type.Literal("heading"), Type.Literal("list-item")]),
+    ),
+    headingLevel: Type.Optional(Type.Integer({ minimum: 1, maximum: 6 })),
+    alignment: Type.Optional(
+      Type.Union([
+        Type.Literal("left"),
+        Type.Literal("center"),
+        Type.Literal("right"),
+        Type.Literal("justify"),
+      ]),
+    ),
+    leftIndent: Type.Optional(Type.Number({ minimum: 0 })),
+    rightIndent: Type.Optional(Type.Number({ minimum: 0 })),
+    firstLineIndent: Type.Optional(Type.Number()),
+    spaceBefore: Type.Optional(Type.Number({ minimum: 0 })),
+    spaceAfter: Type.Optional(Type.Number({ minimum: 0 })),
+    lineHeight: Type.Optional(
+      Type.Union([
+        Type.Object(
+          { kind: Type.Literal("multiple"), value: Type.Number({ exclusiveMinimum: 0 }) },
+          { additionalProperties: false },
+        ),
+        Type.Object(
+          { kind: Type.Literal("fixed"), value: Type.Number({ exclusiveMinimum: 0 }) },
+          { additionalProperties: false },
+        ),
+      ]),
+    ),
+    tabStops: Type.Optional(
+      Type.Array(Type.Number({ exclusiveMinimum: 0 }), { uniqueItems: true }),
+    ),
+    defaultTabInterval: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+    numbering: Type.Optional(
+      Type.Object(
+        {
+          listId: identifier,
+          format: Type.Union([
+            Type.Literal("decimal"),
+            Type.Literal("lower-alpha"),
+            Type.Literal("upper-alpha"),
+            Type.Literal("bullet"),
+          ]),
+          start: Type.Optional(Type.Integer({ minimum: 1, maximum: 1000000 })),
+          suffix: Type.Optional(Type.String({ maxLength: 16 })),
+        },
+        { additionalProperties: false },
+      ),
+    ),
+  },
+  { additionalProperties: false },
+);
+export type ParagraphLayout = Static<typeof ParagraphLayoutSchema>;
+
 export const ParagraphSchema = Type.Object(
   {
     kind: Type.Literal("paragraph"),
     nodeId: identifier,
     styleId: Type.Optional(identifier),
+    layout: Type.Optional(ParagraphLayoutSchema),
     inlines: Type.Array(InlineNodeSchema),
   },
   { additionalProperties: false },

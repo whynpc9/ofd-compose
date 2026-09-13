@@ -68,7 +68,33 @@ importers:
         specifier: 5.0.0
         version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
 
-  packages/layout-core: {}
+  packages/layout-core:
+    dependencies:
+      '@ofd-compose/binding-core':
+        specifier: workspace:*
+        version: link:../binding-core
+      '@ofd-compose/document-model':
+        specifier: workspace:*
+        version: link:../document-model
+      '@ofd-compose/layout-ir':
+        specifier: workspace:*
+        version: link:../layout-ir
+      '@ofd-compose/typography-core':
+        specifier: workspace:*
+        version: link:../typography-core
+      '@sinclair/typebox':
+        specifier: 0.34.52
+        version: 0.34.52
+    devDependencies:
+      '@ofd-compose/template-compiler':
+        specifier: workspace:*
+        version: link:../template-compiler
+      vite:
+        specifier: 8.2.2
+        version: 8.2.2(@types/node@24.13.3)
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
 
   packages/layout-ir:
     dependencies:

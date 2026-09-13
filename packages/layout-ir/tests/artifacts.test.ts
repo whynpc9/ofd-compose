@@ -191,3 +191,29 @@ it("exported schemas bound glyph IDs and subset map IDs to uint32", () => {
     }
   }
 });
+it("both exported schemas accept optional ordered source ranges and reject malformed mappings", () => {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false });
+  ajv.addKeyword("x-unit");
+  for (const schema of [LayoutIRSchema, CanonicalLayoutIRSchema]) {
+    const validate = ajv.compile(JSON.parse(JSON.stringify(schema)));
+    const input =
+      schema === LayoutIRSchema
+        ? fixtureFactories.text()
+        : canonicalizeLayoutIR(fixtureFactories.text());
+    const semantic = input.semantics[0];
+    if (!semantic) throw new Error("Missing fixture semantic");
+    semantic.sourceRanges = [
+      {
+        nodeId: "fragment",
+        bindingId: "binding",
+        sourceText: { text: "A😀fi", range: { start: 0, end: 5 } },
+        logicalRange: { start: 0, end: 5 },
+      },
+    ];
+    expect(validate(input), JSON.stringify(validate.errors)).toBe(true);
+    const source = semantic.sourceRanges[0];
+    if (!source) throw new Error("Missing fixture source");
+    source.logicalRange.start = -1;
+    expect(validate(input)).toBe(false);
+  }
+});
