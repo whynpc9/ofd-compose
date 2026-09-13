@@ -43,7 +43,10 @@ Heading role chooses levels 1–6 = 24/20/18/16/14/12 pt, bold; paragraph and in
 can override these defaults. List numbering has an explicit `listId`, decimal/lower-alpha/
 upper-alpha/bullet format, optional restart `start` and suffix. The bullet is middle dot
 U+00B7 within the existing P0 repertoire. Numbering continues by list identity in resolved
-body order. Markers are shaped text before the first line; default indent reserves marker
+body order. For a paragraph expanded by a RepeatBlock, explicit `start` initializes only its
+first occurrence within the same parent-instance chain; subsequent inner instances increment.
+A new outer group initializes its own start, and a separate non-repeated paragraph with an
+explicit start still restarts the list. Markers are shaped text before the first line; default indent reserves marker
 width plus 2 mm. A supplied indent must fit the marker. Generated labels have no source
 semantic entry; source-text extraction follows Semantic Map reading order and therefore
 returns the original ResolvedDocument text, without generated labels or decoration paths.
@@ -100,7 +103,7 @@ Latin/Han/Greek/Cyrillic/Kana/Bopomofo script runs are itemized without ICU; com
 characters inherit the neighboring script. Full Unicode bidi, vertical paragraph layout,
 emergency wrapping, tables, input-control rendering and page breaking are not implemented.
 Unsupported block/control types fail; content, spacing or unbreakable text exceeding the one
-page fails with `LAYOUT_OVERFLOW`. Per paragraph limit is 100000 UTF-16 units and per-job
+page fails with `LAYOUT_OVERFLOW`. Per paragraph limit is 100000 UTF-16 units, checked fragment-by-fragment before text concatenation or run construction; malformed UTF-16 fragments fail at the same point. Per-job
 reshaping work is bounded at 2000000 units; candidate and run visits each have the same 2000000-operation ceiling (including control-only text). Expanded logical/display/source text is bounded at
 8000000 UTF-16 units, counting repeated source strings in the wire representation; controls
 cannot bypass this output budget. Candidate consumption is monotonic; run/source lookups and

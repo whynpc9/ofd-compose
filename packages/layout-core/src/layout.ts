@@ -228,6 +228,7 @@ class ParagraphLayouter {
   private readonly ir: LayoutIR;
   private readonly lines: LayoutLine[] = [];
   private readonly counts = new Map<string, number>();
+  private readonly initializedRepeatStarts = new Set<string>();
   private shapedUnits = 0;
   private candidateVisits = 0;
   private runVisits = 0;
@@ -351,7 +352,7 @@ class ParagraphLayouter {
       style: { weight: run.face.definition.weight, italic: run.face.definition.italic },
     });
   }
-  private runs(paragraph: ResolvedParagraph, text: string, spans: Span[], base: TextStyle): Run[] {
+  private runs(text: string, spans: Span[], base: TextStyle): Run[] {
     const runs: Run[] = [];
     const styles = new Map<string, { style: TextStyle; face: Face }>();
     const definitions = new Map<string, { style: TextStyle; face: Face }>();
@@ -392,12 +393,6 @@ class ParagraphLayouter {
         i += char.length;
       }
     }
-    if (text.length > 100_000 || !text.isWellFormed())
-      throw new LayoutError(
-        "LAYOUT_INPUT",
-        "Paragraph must be well-formed UTF-16 with at most 100000 units",
-        paragraph.nodeId,
-      );
     return runs;
   }
   private metrics(run: Run) {
@@ -485,14 +480,33 @@ class ParagraphLayouter {
           "InputControl layout is not implemented",
           paragraph.nodeId,
         );
+      if (fragment.text.length > 100_000 - text.length || !fragment.text.isWellFormed())
+        throw new LayoutError(
+          "LAYOUT_INPUT",
+          "Paragraph must be well-formed UTF-16 with at most 100000 units",
+          paragraph.nodeId,
+        );
       spans.push({ start: text.length, end: text.length + fragment.text.length, fragment });
       text += fragment.text;
     }
-    const runs = this.runs(paragraph, text, spans, base);
+    const runs = this.runs(text, spans, base);
     const number = properties.numbering;
     let label = "";
     if (number) {
-      const count = number.start ?? (this.counts.get(number.listId) ?? 0) + 1;
+      let startValue = number.start;
+      if (startValue !== undefined && paragraph.instancePath?.length) {
+        // The innermost repeat varies item identity; its parent chain identifies the list group.
+        const startKey = canonicalSerialize({
+          listId: number.listId,
+          nodeId: paragraph.nodeId,
+          parents: paragraph.instancePath
+            .slice(0, -1)
+            .map((instance) => ({ nodeId: instance.nodeId, key: instance.key })),
+        });
+        if (this.initializedRepeatStarts.has(startKey)) startValue = undefined;
+        else this.initializedRepeatStarts.add(startKey);
+      }
+      const count = startValue ?? (this.counts.get(number.listId) ?? 0) + 1;
       this.counts.set(number.listId, count);
       label =
         (number.format === "decimal"

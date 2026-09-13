@@ -5,7 +5,8 @@ import {
   digestCanonical,
   validateCanonicalLayoutIR,
 } from "@ofd-compose/layout-ir";
-import { beforeAll, expect, it } from "vitest";
+import { beforeAll, expect, it, vi } from "vitest";
+import { renderTemplate, TemplateBuilder } from "../../binding-core/tests/helpers.js";
 import { type LayoutFont, layout, permitsChineseBreak } from "../src/index.js";
 import expected from "./expected.json";
 import { document, fonts, narrative, options, p } from "./fixtures.js";
@@ -466,3 +467,60 @@ it("bounds optional control-only candidate measurement even when no glyph is sha
     }),
   ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
 }, 20000);
+
+it("rejects over-limit or malformed fragments before iterating text to construct runs", async () => {
+  for (const invalid of ["A\n".repeat(50001), "\ud800"]) {
+    const original = String.prototype[Symbol.iterator];
+    let visited = 0;
+    const spy = vi.spyOn(String.prototype, Symbol.iterator).mockImplementation(function (
+      this: string,
+    ) {
+      if (String(this) === invalid) visited++;
+      return original.call(this);
+    });
+    try {
+      await expect(layout(document([p(invalid)]), resources, options)).rejects.toMatchObject({
+        code: "LAYOUT_INPUT",
+      });
+      expect(visited).toBe(0);
+    } finally {
+      spy.mockRestore();
+    }
+  }
+  const oversizedSum = document([
+    {
+      ...p("", "p"),
+      inlines: [
+        { kind: "text", nodeId: "a", text: "A".repeat(60000) },
+        { kind: "text", nodeId: "b", text: "B".repeat(60000) },
+      ],
+    },
+  ]);
+  await expect(layout(oversizedSum, resources, options)).rejects.toMatchObject({
+    code: "LAYOUT_INPUT",
+  });
+});
+it("initializes explicit list starts once per repeated paragraph and restarts for a new parent group", async () => {
+  for (const nested of [false, true]) {
+    const builder = new TemplateBuilder();
+    const item = builder.p("{name}");
+    item.layout = {
+      role: "list-item",
+      numbering: { listId: "items", format: "decimal", start: 5 },
+    };
+    const repeat = builder.repeat("items", [item]);
+    const source = builder.template(nested ? [builder.repeat("groups", [repeat])] : [repeat]);
+    const items = [{ name: "A" }, { name: "B" }, { name: "C" }];
+    const result = renderTemplate(
+      source,
+      nested ? { groups: [{ items }, { items: items.slice(0, 2) }] } : { items },
+    );
+    expect(result.ok).toBe(true);
+    const { ir } = await layout(result.document, resources, options);
+    expect(
+      texts(ir)
+        .map((t) => t.logicalText)
+        .filter((t) => /^\d+\. $/u.test(t)),
+    ).toEqual(nested ? ["5. ", "6. ", "7. ", "5. ", "6. "] : ["5. ", "6. ", "7. "]);
+  }
+});
