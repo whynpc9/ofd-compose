@@ -1,13 +1,14 @@
-import { paragraphText } from "@ofd-compose/binding-core";
+import { type JsonValue, paragraphText } from "@ofd-compose/binding-core";
 import type { CanonicalLayoutIR, TextObject } from "@ofd-compose/layout-ir";
 import {
   canonicalSerialize,
   digestCanonical,
   validateCanonicalLayoutIR,
 } from "@ofd-compose/layout-ir";
+import { TypographyCore } from "@ofd-compose/typography-core";
 import { beforeAll, expect, it, vi } from "vitest";
 import { renderTemplate, TemplateBuilder } from "../../binding-core/tests/helpers.js";
-import { type LayoutFont, layout, permitsChineseBreak } from "../src/index.js";
+import { type LayoutFont, layout, paragraphProfile, permitsChineseBreak } from "../src/index.js";
 import expected from "./expected.json";
 import { document, fonts, narrative, options, p } from "./fixtures.js";
 
@@ -523,4 +524,142 @@ it("initializes explicit list starts once per repeated paragraph and restarts fo
         .filter((t) => /^\d+\. $/u.test(t)),
     ).toEqual(nested ? ["5. ", "6. ", "7. ", "5. ", "6. "] : ["5. ", "6. ", "7. "]);
   }
+});
+it("does not resolve an unused paragraph face when every visible fragment explicitly overrides it", async () => {
+  const doc = document(
+    [
+      {
+        kind: "paragraph",
+        nodeId: "p",
+        styleId: "unavailable",
+        inlines: [
+          {
+            kind: "dynamic-text",
+            nodeId: "empty",
+            bindingId: "empty-binding",
+            styleId: "unavailable",
+            expression: { kind: "legacy", text: "empty" },
+          },
+          {
+            kind: "dynamic-text",
+            nodeId: "visible",
+            bindingId: "visible-binding",
+            styleInheritance: "explicit",
+            expression: { kind: "legacy", text: "value" },
+          },
+        ],
+      },
+    ],
+    { unavailable: { fontFamily: "NotLoaded" } },
+    { empty: "", value: "Visible" },
+  );
+  const { ir } = await layout(doc, resources, options);
+  expect(extract(ir)).toBe("Visible");
+  expect(ir.semantics.flatMap((s) => s.sourceRanges ?? []).map((s) => s.bindingId)).toEqual([
+    "empty-binding",
+    "visible-binding",
+  ]);
+});
+it("preserves empty/null/missing DynamicText identities as ordered zero-length sources", async () => {
+  const cases: JsonValue[] = [{ value: "" }, { value: null }, {}];
+  for (const data of cases) {
+    const builder = new TemplateBuilder();
+    const source = builder.template([builder.p("{value}")]);
+    // Even a missing-value diagnostic's preview document must retain its binding location.
+    const bound = renderTemplate(source, data);
+    const fragment = bound.document.body[0];
+    if (fragment?.kind !== "paragraph") throw new Error("Missing paragraph");
+    const origin = fragment.fragments[0];
+    if (origin?.kind !== "text" || origin.origin.kind !== "dynamic-text")
+      throw new Error("Missing dynamic origin");
+    const { ir } = await layout(bound.document, resources, options);
+    expect(ir.semantics[0]).toMatchObject({
+      nodeId: origin.origin.nodeId,
+      bindingId: origin.origin.bindingId,
+    });
+    expect(ir.semantics[0]?.sourceRanges).toEqual([
+      {
+        nodeId: origin.origin.nodeId,
+        bindingId: origin.origin.bindingId,
+        sourceText: { text: "", range: { start: 0, end: 0 } },
+        logicalRange: { start: 0, end: 0 },
+      },
+    ]);
+  }
+});
+it("assigns zero-length sources exactly once at paragraph, style/run and line boundaries", async () => {
+  const builder = new TemplateBuilder();
+  const paragraph = builder.p("{empty}甲{empty}乙{empty}\n{empty}");
+  const secondText = paragraph.inlines.find((i) => i.kind === "text" && i.text === "乙");
+  if (secondText) secondText.styleId = "bold";
+  const source = builder.template([paragraph]);
+  source.styles = { bold: { bold: true } };
+  const bound = renderTemplate(source, { empty: "" });
+  const { ir } = await layout(bound.document, resources, {
+    ...options,
+    page: { ...options.page, contentBox: { ...options.page.contentBox, width: 5 } },
+  });
+  const emptySources = ir.semantics.flatMap((s) => s.sourceRanges ?? []).filter((s) => s.bindingId);
+  const bindings = paragraph.inlines
+    .filter((i) => i.kind === "dynamic-text")
+    .map((i) => i.bindingId);
+  expect(emptySources.map((s) => s.bindingId)).toEqual(bindings);
+  expect(
+    emptySources.every(
+      (s) =>
+        s.logicalRange.start === s.logicalRange.end &&
+        s.sourceText.range.start === 0 &&
+        s.sourceText.range.end === 0,
+    ),
+  ).toBe(true);
+  expect(extract(ir)).toBe("甲乙\n");
+});
+
+it("itemizes generated numbering suffixes with the same Latin/Han/Kana shaping logic", async () => {
+  const spy = vi.spyOn(TypographyCore.prototype, "shape");
+  try {
+    const { ir } = await layout(
+      document([
+        p("Body", "p", { numbering: { listId: "list", format: "decimal", suffix: "A项ア " } }),
+      ]),
+      resources,
+      options,
+    );
+    expect(
+      texts(ir)
+        .slice(0, -1)
+        .map((t) => t.logicalText),
+    ).toEqual(["1A", "项", "ア "]);
+    expect(
+      spy.mock.calls
+        .map(([r]) => ({ text: r.text, script: r.script }))
+        .filter((r) => ["1A", "项", "ア "].includes(r.text)),
+    ).toEqual([
+      { text: "1A", script: "Latn" },
+      { text: "项", script: "Hani" },
+      { text: "ア ", script: "Kana" },
+    ]);
+    expect(extract(ir)).toBe("Body");
+  } finally {
+    spy.mockRestore();
+  }
+  await expect(
+    layout(
+      document([
+        p("Body", "p", { numbering: { listId: "list", format: "decimal", suffix: "\n" } }),
+      ]),
+      resources,
+      options,
+    ),
+  ).rejects.toMatchObject({ code: "LAYOUT_INPUT" });
+});
+it("prevents exported profile metadata from changing future layout identities", async () => {
+  const before = await layout(narrative(), resources, options);
+  expect(Object.isFrozen(paragraphProfile)).toBe(true);
+  expect(Object.isFrozen(paragraphProfile.features)).toBe(true);
+  expect(Reflect.set(paragraphProfile, "name", "changed")).toBe(false);
+  expect(Reflect.set(paragraphProfile.features, "0", "changed")).toBe(false);
+  expect(digestCanonical((await layout(narrative(), resources, options)).ir)).toBe(
+    digestCanonical(before.ir),
+  );
 });

@@ -6,6 +6,7 @@ The host supplies locked font bytes (or promises) and explicit page/default-font
 options. All fonts finish loading and are digest/style checked before shaping or measuring.
 No filesystem, network, DOM, Canvas, system-font fallback or `Intl` is used by this package.
 
+The exported paragraph profile and its feature list are frozen; each invocation owns its internal profile copy.
 The result contains canonical integer-µm `ir`, its `semanticMap`, diagnostic-free success,
 and paragraph-relative UTF-16 `lines` with **mm** geometry for inspection. Nonsemantic `work` counters report shaped units, candidate/run visits and expanded output-text units. Failure throws
 `LayoutError` (code/nodeId) or the existing Typography/IR validation error. Never pass the
@@ -27,6 +28,7 @@ checks locale/time zone agreement and records the whole policy in LayoutIdentity
 not retroactively verify date computations. Font family is an explicit host alias; each
 family/weight/italic tuple must map to exactly one static file, independently of arrival or
 resource-array order. Bold selects weight 700, regular 400; italic must be a real face.
+A paragraph-base face is resolved only when a marker or an otherwise empty line actually needs it; explicit visible overrides can therefore render without loading an unused base face.
 A Chinese italic request fails if that exact font lacks Chinese glyphs.
 
 ## Paragraph model
@@ -46,7 +48,7 @@ U+00B7 within the existing P0 repertoire. Numbering continues by list identity i
 body order. For a paragraph expanded by a RepeatBlock, explicit `start` initializes only its
 first occurrence within the same parent-instance chain; subsequent inner instances increment.
 A new outer group initializes its own start, and a separate non-repeated paragraph with an
-explicit start still restarts the list. Markers are shaped text before the first line; default indent reserves marker
+explicit start still restarts the list. Markers use the same script itemization as body text, including Latin/Han/Kana suffixes. They must be well-formed single-line text without Tab or break controls. Markers are shaped text before the first line; default indent reserves marker
 width plus 2 mm. A supplied indent must fit the marker. Generated labels have no source
 semantic entry; source-text extraction follows Semantic Map reading order and therefore
 returns the original ResolvedDocument text, without generated labels or decoration paths.
@@ -87,7 +89,8 @@ single `sourceText` cannot represent that relationship, so issue 09 adds optiona
 and object-local logicalRange. Array order remains logical source order and contributes
 to semanticDigest. Each range is independently checked as well-formed UTF-16 without
 splitting a surrogate pair; one cluster may overlap several source ranges. Single-source
-runs also retain the earlier nodeId/bindingId/sourceText fields. Multi-source run nodeId
+runs also retain the earlier nodeId/bindingId/sourceText fields. Zero-length fragments remain ordered source entries: boundary entries attach to the preceding object, while paragraph-start entries attach to the first (possibly empty) object. They are not duplicated across run/line boundaries.
+Multi-source run nodeId
 is the containing paragraph; repeat-instance chains remain on that semantic entry.
 
 Text model verticalAlign/link, paragraph layout, resolved styleInheritance and IR
@@ -117,3 +120,5 @@ cases in actual Chromium. The pinned digest was generated on Node 24.14.1 with l
 and shaper; explicit geometric and text assertions give independent behavioral evidence.
 This proves the tested Node/Chromium pair; another Chromium version, Firefox, Linux x64/arm64,
 font subsetting, output writers and target readers remain their respective WP0 gates.
+
+Repeated same-pack layout uses Typography Core's bounded immutable-face cache; Font/Buffer state remains per core. See its README for the reproduced native failure, recovery tests, GC constraints and required host isolation for hard memory bounds.

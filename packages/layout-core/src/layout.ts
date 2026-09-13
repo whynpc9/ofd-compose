@@ -23,11 +23,17 @@ import {
 import { Value } from "@sinclair/typebox/value";
 
 export const layoutEngineVersion = "ofd-compose/paragraph-layout@0";
-export const paragraphProfile = {
+export const paragraphProfile = Object.freeze({
   name: "paragraphs-ltr",
   version: "0",
-  features: ["paragraphs", "headings", "numbering", "text-decoration", "source-ranges"],
-};
+  features: Object.freeze([
+    "paragraphs",
+    "headings",
+    "numbering",
+    "text-decoration",
+    "source-ranges",
+  ]),
+});
 const pt = 25.4 / 72;
 export class LayoutError extends Error {
   constructor(
@@ -259,6 +265,7 @@ class ParagraphLayouter {
     private readonly options: LayoutOptions,
   ) {
     const { page, formattingPolicy, defaultStyle } = options;
+    const profile = { ...paragraphProfile, features: [...paragraphProfile.features] };
     if (
       !page ||
       !defaultStyle?.fontFamily ||
@@ -285,13 +292,13 @@ class ParagraphLayouter {
           shapingVersion: canonicalSerialize(shapingAndLineBreakVersions),
           lineBreakVersion: `${shapingAndLineBreakVersions.linebreak}/chinese-v1`,
           formattingPolicy,
-          profile: paragraphProfile,
+          profile,
           layoutOptions: {
             ...JSON.parse(canonicalSerialize(options)),
             fonts: faces.map((f) => f.definition),
           },
         }),
-        layoutProfile: paragraphProfile,
+        layoutProfile: profile,
       },
       resources: faces.map((f) => ({
         id: f.id,
@@ -376,6 +383,7 @@ class ParagraphLayouter {
     const definitions = new Map<string, { style: TextStyle; face: Face }>();
     let script = Array.from(text).map(scriptOf).find(Boolean) ?? "Latn";
     for (const span of spans) {
+      if (span.start === span.end) continue;
       const key = `${span.fragment.styleInheritance === "explicit" ? "e" : "p"}:${span.fragment.styleId ?? ""}`;
       let selected = styles.get(key);
       if (!selected) {
@@ -535,15 +543,39 @@ class ParagraphLayouter {
               ? alpha(count).toUpperCase()
               : alpha(count)) + (number.suffix ?? (number.format === "bullet" ? " " : ". "));
     }
-    const labelRun: Run = {
+    const baseRun = (): Run => ({
       start: 0,
       end: label.length,
       style: base,
       face: this.face(base),
       script: "Latn",
       control: false,
-    };
-    const labelPieces = label ? this.measure(label, [labelRun], 0, label.length, {}, 0) : [];
+    });
+    if (!label.isWellFormed() || /[\t\r\n\u2028\u2029]/u.test(label))
+      throw new LayoutError(
+        "LAYOUT_INPUT",
+        "Numbering markers must be well-formed single-line text without Tabs",
+        paragraph.nodeId,
+      );
+    const labelRuns = label
+      ? this.runs(
+          label,
+          [
+            {
+              start: 0,
+              end: label.length,
+              fragment: {
+                kind: "text",
+                text: label,
+                origin: { kind: "static", nodeId: paragraph.nodeId },
+              },
+            },
+          ],
+          base,
+        )
+      : [];
+    const labelRun = labelRuns[0];
+    const labelPieces = this.measure(label, labelRuns, 0, label.length, {}, 0);
     const labelWidth = labelPieces.reduce((sum, piece) => sum + piece.width, 0);
     const left = properties.leftIndent ?? (label ? labelWidth + 2 : 0),
       right = properties.rightIndent ?? 0;
@@ -613,7 +645,7 @@ class ParagraphLayouter {
           "Unbreakable text exceeds line width",
           paragraph.nodeId,
         );
-      const blankRun = runs.at(-1) ?? labelRun;
+      const blankRun = runs.at(-1) ?? labelRun ?? baseRun();
       const blankMetrics = this.metrics(blankRun);
       const metricPieces = [...pieces, ...(lineIndex === 0 ? labelPieces : [])];
       const ascent = metricPieces.length
@@ -676,17 +708,11 @@ class ParagraphLayouter {
         height,
         baseline,
       });
-      if (lineIndex === 0 && labelPieces[0])
-        this.emit(
-          labelPieces[0],
-          box.x + left + indent - labelWidth,
-          baseline,
-          paragraph,
-          [],
-          [],
-          0,
-          true,
-        );
+      if (lineIndex === 0) {
+        let labelX = box.x + left + indent - labelWidth;
+        for (const labelPiece of labelPieces)
+          labelX += this.emit(labelPiece, labelX, baseline, paragraph, [], [], 0, true);
+      }
       for (const piece of pieces) {
         x += this.emit(piece, x, baseline, paragraph, spans, gaps, extra);
       }
@@ -777,10 +803,18 @@ class ParagraphLayouter {
     const selected: Span[] = [];
     let sourceUnits = 0;
     if (!generated)
-      for (let index = firstEndingAfter(spans, piece.start); index < spans.length; index++) {
+      for (let index = firstEndingAfter(spans, piece.start - 1); index < spans.length; index++) {
         const span = spans[index];
-        if (!span || span.start >= piece.end) break;
-        if (span.end <= span.start) continue;
+        if (!span || span.start > piece.end) break;
+        const empty = span.start === span.end;
+        // Empty origins belong to the preceding piece, except paragraph-start origins
+        // which belong to the first (possibly empty) object. Never duplicate at run/line edges.
+        const ownsEmpty =
+          empty &&
+          ((span.start > piece.start && span.start <= piece.end) ||
+            (span.start === 0 && piece.start === 0));
+        const intersects = !empty && span.start < piece.end && span.end > piece.start;
+        if (!ownsEmpty && !intersects) continue;
         sourceUnits += span.fragment.text.length;
         if (sourceUnits > 8_000_000 - this.outputTextUnits)
           throw new LayoutError(

@@ -56,3 +56,34 @@ const run = core.shape({
 `pnpm --filter @ofd-compose/typography-core test` 与 `test:browser` 执行同一 `typography.dual.test.ts`。两端每个完整结果序列化为 UTF-8 字节后与同一个 [expected.json](tests/expected.json) 比较，涵盖中文扩展 A/B、拉丁、数字、符号、组合字符、真实粗斜体、连字开关、竖排、RTL 与空串；另有缺字、同名不同字节、调用方缓冲区修改、UAX #14 和错误输入断言。
 
 基准初始值由锁定依赖的 Node 实现生成，属于回归与跨端一致性证据；cluster、mark offset、断点、样式和错误还用独立断言验证。它不代表所有 Unicode 官方用例或所有浏览器均已验收。需要更新时先 `pnpm --filter @ofd-compose/typography-core build`，再显式执行 `node packages/typography-core/tools/update-fixtures.mjs` 并审查差异；普通测试不会改写基准。
+
+## Repeated-layout face lifetime (issue 09 integration)
+
+Repeated Layout Core calls exposed a real native failure: the complete Node suite reached
+`memory access out of bounds` while creating another HarfBuzz Face/Blob, and the corresponding
+Chromium run stalled. The three new source-map cases passed separately. Inspection of the
+locked `harfbuzzjs@1.6.0/dist/index.mjs` confirms its public objects are registered with
+`FinalizationRegistry`; the package exports no public deterministic dispose/unregister API.
+No private destroy function, forced GC, WASM limit override or dependency fork is used here.
+
+Static **Face** data is now reused by full file SHA-256 and the sole supported face index 0.
+`staticFaceCachePolicy` publishes a frozen policy: at most four cached faces and 128 MiB of
+font-file bytes, evicting the least recently accessed shared-cache entry. Each TypographyCore
+still creates its own Font (scale/functions state) and Buffer. It independently registers
+allowed digests and charges its existing 128 MiB budget. Every load copies and hashes supplied
+bytes before cache lookup; cached data does not authorize `shape` on an unregistered core.
+Only validated static files enter this cache, and frozen metrics are reused with their face.
+
+The limits describe retained cache entries/file bytes. Native tables, Font/Buffer allocations,
+and faces retained by live cores or awaiting GC have separate lifetimes. LRU eviction makes
+references eligible for eventual reclamation; it cannot guarantee immediate native-memory
+recovery or a process RSS ceiling under arbitrary font rotation. Hosts needing a hard bound
+must enforce memory/time/job limits and recycle an isolated Worker/process. Those Worker
+lifecycle gates remain outside paragraph layout; the cache is not a replacement for them.
+
+Shared tests retain 160 simultaneously live cores loading and shaping the same complete
+16,437,364-byte font, alternate fonts, force five-face/four-entry eviction while old cores
+remain usable, reject damaged bytes with a cached digest, reject unregistered access, and
+verify multi-instance feature results stay independent. These tests and the previously failing
+complete layout suites provide recovery evidence for tested reuse/eviction scenarios, without
+claiming an unbounded font-rotation stress guarantee or measured native-memory ceiling.
