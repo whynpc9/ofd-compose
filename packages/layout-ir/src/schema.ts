@@ -227,6 +227,19 @@ function contract(canonical: boolean) {
           }),
         ),
         readingOrder: uint,
+        link: Type.Optional(id),
+        /** Multiple source fragments can contribute to one shaped run/ligature. */
+        sourceRanges: Type.Optional(
+          Type.Array(
+            object({
+              nodeId: id,
+              bindingId: Type.Optional(id),
+              sourceText: object({ text: Type.String(), range }),
+              logicalRange: range,
+            }),
+            { minItems: 1 },
+          ),
+        ),
         sourceText: Type.Optional(object({ text: Type.String(), range })),
         repeatedHeader: Type.Optional(object({ originalNodeId: id, instanceIndex: uint })),
       }),
