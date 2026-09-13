@@ -90,6 +90,26 @@
               "pattern": "^#[0-9A-Fa-f]{6}$",
               "type": "string"
             },
+            "verticalAlign": {
+              "anyOf": [
+                {
+                  "const": "baseline",
+                  "type": "string"
+                },
+                {
+                  "const": "superscript",
+                  "type": "string"
+                },
+                {
+                  "const": "subscript",
+                  "type": "string"
+                }
+              ]
+            },
+            "link": {
+              "minLength": 1,
+              "type": "string"
+            },
             "highlight": {
               "pattern": "^#[0-9A-Fa-f]{6}$",
               "type": "string"
@@ -127,6 +147,169 @@
                 "maxLength": 256,
                 "pattern": "^[A-Za-z0-9._:-]+$",
                 "type": "string"
+              },
+              "layout": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "role": {
+                    "anyOf": [
+                      {
+                        "const": "body",
+                        "type": "string"
+                      },
+                      {
+                        "const": "heading",
+                        "type": "string"
+                      },
+                      {
+                        "const": "list-item",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "headingLevel": {
+                    "minimum": 1,
+                    "maximum": 6,
+                    "type": "integer"
+                  },
+                  "alignment": {
+                    "anyOf": [
+                      {
+                        "const": "left",
+                        "type": "string"
+                      },
+                      {
+                        "const": "center",
+                        "type": "string"
+                      },
+                      {
+                        "const": "right",
+                        "type": "string"
+                      },
+                      {
+                        "const": "justify",
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "leftIndent": {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "rightIndent": {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "firstLineIndent": {
+                    "type": "number"
+                  },
+                  "spaceBefore": {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "spaceAfter": {
+                    "minimum": 0,
+                    "type": "number"
+                  },
+                  "lineHeight": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "kind",
+                          "value"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "const": "multiple",
+                            "type": "string"
+                          },
+                          "value": {
+                            "exclusiveMinimum": 0,
+                            "type": "number"
+                          }
+                        }
+                      },
+                      {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "kind",
+                          "value"
+                        ],
+                        "properties": {
+                          "kind": {
+                            "const": "fixed",
+                            "type": "string"
+                          },
+                          "value": {
+                            "exclusiveMinimum": 0,
+                            "type": "number"
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "tabStops": {
+                    "uniqueItems": true,
+                    "type": "array",
+                    "items": {
+                      "exclusiveMinimum": 0,
+                      "type": "number"
+                    }
+                  },
+                  "defaultTabInterval": {
+                    "exclusiveMinimum": 0,
+                    "type": "number"
+                  },
+                  "numbering": {
+                    "additionalProperties": false,
+                    "type": "object",
+                    "required": [
+                      "listId",
+                      "format"
+                    ],
+                    "properties": {
+                      "listId": {
+                        "minLength": 1,
+                        "maxLength": 256,
+                        "pattern": "^[A-Za-z0-9._:-]+$",
+                        "type": "string"
+                      },
+                      "format": {
+                        "anyOf": [
+                          {
+                            "const": "decimal",
+                            "type": "string"
+                          },
+                          {
+                            "const": "lower-alpha",
+                            "type": "string"
+                          },
+                          {
+                            "const": "upper-alpha",
+                            "type": "string"
+                          },
+                          {
+                            "const": "bullet",
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "start": {
+                        "minimum": 1,
+                        "maximum": 1000000,
+                        "type": "integer"
+                      },
+                      "suffix": {
+                        "maxLength": 16,
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
               },
               "inlines": {
                 "type": "array",

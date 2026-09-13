@@ -1603,6 +1603,86 @@
             "maximum": 9007199254740991,
             "type": "integer"
           },
+          "link": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sourceRanges": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "nodeId",
+                "sourceText",
+                "logicalRange"
+              ],
+              "properties": {
+                "nodeId": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "bindingId": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "sourceText": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "text",
+                    "range"
+                  ],
+                  "properties": {
+                    "text": {
+                      "type": "string"
+                    },
+                    "range": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "start",
+                        "end"
+                      ],
+                      "properties": {
+                        "start": {
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "type": "integer"
+                        },
+                        "end": {
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "logicalRange": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "start",
+                    "end"
+                  ],
+                  "properties": {
+                    "start": {
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "type": "integer"
+                    },
+                    "end": {
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "sourceText": {
             "additionalProperties": false,
             "type": "object",

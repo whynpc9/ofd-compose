@@ -171,3 +171,16 @@ WP0 matrix work, not implied by one local browser run.
 The dual suite also runs the real Compiler → Binding Core document path and checks
 its semantic document digest and LayoutIdentity against pinned Node baselines,
 including the different runtime metadata observed by Node and Chromium.
+
+### Paragraph source ranges (issue 09)
+
+The provisional v0 semantic entry optionally accepts `sourceRanges`, an **ordered** array
+of `{ nodeId, bindingId?, sourceText: { text, range }, logicalRange }`. Source range offsets
+are relative to the supplied source fragment; logicalRange offsets are relative to the
+referenced text object's logicalText. Both are independently UTF-16 validated; neither may
+split a surrogate pair, and the target must be text. Several source ranges can overlap one
+shaped cluster (e.g. a ligature crossing StaticText/DynamicText). Canonicalization preserves
+array order and includes every field in semanticDigest; it does not sort this as a set.
+Optional `link` retains a text run's target as semantic metadata. These additive fields
+leave old fixtures byte-identical but require older strict-schema consumers to update before
+accepting new populated fields. They do not freeze v0 or alter integer-µm transport rules.

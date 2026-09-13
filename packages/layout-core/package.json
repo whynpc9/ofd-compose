@@ -8,6 +8,20 @@
   },
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
+    "test": "vitest run",
+    "test:browser": "vitest run --config vitest.browser.config.ts"
+  },
+  "dependencies": {
+    "@ofd-compose/binding-core": "workspace:*",
+    "@ofd-compose/document-model": "workspace:*",
+    "@ofd-compose/layout-ir": "workspace:*",
+    "@ofd-compose/typography-core": "workspace:*",
+    "@sinclair/typebox": "0.34.52"
+  },
+  "devDependencies": {
+    "@ofd-compose/template-compiler": "workspace:*",
+    "vitest": "5.0.0",
+    "vite": "8.2.2"
   }
 }

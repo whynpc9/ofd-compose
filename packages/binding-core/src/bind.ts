@@ -260,6 +260,7 @@ class Binder {
       nodeId: paragraph.nodeId,
       ...(paragraph.styleId === undefined ? {} : { styleId: paragraph.styleId }),
       ...(instancePath.length === 0 ? {} : { instancePath: [...instancePath] }),
+      ...(paragraph.layout === undefined ? {} : { layout: paragraph.layout }),
       fragments,
     };
   }
@@ -297,6 +298,9 @@ class Binder {
         return {
           kind: "text",
           text: result.text,
+          ...(binding.styleInheritance === "explicit"
+            ? { styleInheritance: "explicit" as const }
+            : {}),
           ...(styleId === undefined ? {} : { styleId }),
           origin: {
             kind: "dynamic-text",

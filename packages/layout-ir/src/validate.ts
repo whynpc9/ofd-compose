@@ -144,6 +144,22 @@ export function validateReferences(
     }
   }
   for (const semantic of input.semantics) {
+    for (const source of semantic.sourceRanges ?? []) {
+      validateUtf16Range(
+        source.sourceText.text,
+        source.sourceText.range,
+        "semantics/sourceRanges/sourceText",
+      );
+      const target = objects.get(semantic.objectId)?.object;
+      if (target?.kind !== "text")
+        fail("IR_REFERENCE", "semantics/sourceRanges", "Source ranges require a text object");
+      validateUtf16Range(
+        target.logicalText,
+        source.logicalRange,
+        "semantics/sourceRanges/logicalRange",
+      );
+    }
+
     if (!objects.has(semantic.objectId)) fail("IR_REFERENCE", "semantics", "Missing object");
     if (semantic.sourceText)
       validateUtf16Range(
