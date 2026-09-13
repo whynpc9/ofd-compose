@@ -35,6 +35,13 @@ export const paragraphProfile = Object.freeze({
   ]),
 });
 export const layoutResourceLimits = Object.freeze({
+  inputTextUnits: 1000000,
+  inputJsonNodes: 200000,
+  inputJsonStringUnits: 8000000,
+  inputJsonDepth: 128,
+  fontResources: 64,
+  fontFileBytes: 32 * 1024 * 1024,
+  fontPackBytes: 128 * 1024 * 1024,
   paragraphs: 10000,
   fragments: 100000,
   sourceMappings: 100000,
@@ -46,6 +53,46 @@ function ownData(value: unknown, key: string): unknown {
     ? Object.getOwnPropertyDescriptor(value, key)?.value
     : undefined;
 }
+function preflightJsonTree(value: unknown): void {
+  const pending = [{ value, depth: 0 }];
+  let nodes = 0,
+    strings = 0;
+  while (pending.length) {
+    const entry = pending.pop();
+    if (!entry) break;
+    nodes++;
+    if (
+      nodes > layoutResourceLimits.inputJsonNodes ||
+      entry.depth > layoutResourceLimits.inputJsonDepth
+    )
+      throw new LayoutError("LAYOUT_LIMIT", "Input JSON node/depth budget exceeded");
+    if (typeof entry.value === "string") strings += entry.value.length;
+    else if (entry.value !== null && typeof entry.value === "object") {
+      const prototype = Object.getPrototypeOf(entry.value);
+      if (!Array.isArray(entry.value) && prototype !== Object.prototype && prototype !== null)
+        throw new LayoutError(
+          "LAYOUT_INPUT",
+          "Document and options must contain plain JSON objects",
+        );
+      const remaining = layoutResourceLimits.inputJsonNodes - nodes - pending.length;
+      if (Array.isArray(entry.value) && (ownData(entry.value, "length") as number) > remaining)
+        throw new LayoutError("LAYOUT_LIMIT", "Input JSON array budget exceeded");
+      const keys = Object.keys(entry.value);
+      if (keys.length > remaining)
+        throw new LayoutError("LAYOUT_LIMIT", "Input JSON property budget exceeded");
+      for (const key of keys) {
+        strings += key.length;
+        if (strings > layoutResourceLimits.inputJsonStringUnits)
+          throw new LayoutError("LAYOUT_LIMIT", "Input JSON string budget exceeded");
+        const descriptor = Object.getOwnPropertyDescriptor(entry.value, key);
+        if (descriptor && "value" in descriptor)
+          pending.push({ value: descriptor.value, depth: entry.depth + 1 });
+      }
+    }
+    if (strings > layoutResourceLimits.inputJsonStringUnits)
+      throw new LayoutError("LAYOUT_LIMIT", "Input JSON string budget exceeded");
+  }
+}
 function preflightDocument(value: unknown): void {
   const body = ownData(value, "body");
   if (!Array.isArray(body)) return;
@@ -53,6 +100,7 @@ function preflightDocument(value: unknown): void {
   if (count > layoutResourceLimits.paragraphs)
     throw new LayoutError("LAYOUT_LIMIT", "Document exceeds paragraph budget");
   let fragments = 0;
+  let documentUnits = 0;
   for (let i = 0; i < count; i++) {
     const block = ownData(body, String(i));
     const entries = ownData(block, "fragments");
@@ -66,6 +114,9 @@ function preflightDocument(value: unknown): void {
       const text = ownData(ownData(entries, String(j)), "text");
       if (typeof text !== "string") continue;
       units += text.length;
+      documentUnits += text.length;
+      if (documentUnits > layoutResourceLimits.inputTextUnits)
+        throw new LayoutError("LAYOUT_LIMIT", "Document input text budget exceeded");
       if (units > 100000 || !text.isWellFormed())
         throw new LayoutError(
           "LAYOUT_INPUT",
@@ -245,6 +296,8 @@ export async function layout(
   options: LayoutOptions,
 ) {
   preflightDocument(document);
+  preflightJsonTree(document);
+  preflightJsonTree(options);
   // Own inputs before any await: arrival timing and caller mutation cannot change layout identity.
   const doc = JSON.parse(canonicalSerialize(document)) as ResolvedDocument;
   const opts = JSON.parse(canonicalSerialize(options)) as LayoutOptions;
@@ -252,16 +305,58 @@ export async function layout(
     throw new LayoutError("LAYOUT_INPUT", "Invalid default style");
   if (!Value.Check(ResolvedDocumentSchema, doc))
     throw new LayoutError("LAYOUT_INPUT", "Invalid ResolvedDocument");
-  const fontInputs = resources.map(({ bytes, ...definition }) => ({
-    definition: { ...definition },
-    bytes:
-      bytes instanceof Uint8Array
-        ? Promise.resolve(new Uint8Array(bytes))
-        : bytes.then((value) => new Uint8Array(value)),
-  }));
-  const loaded = await Promise.all(
-    fontInputs.map(async ({ definition, bytes }) => ({ definition, bytes: await bytes })),
-  );
+  if (!Array.isArray(resources) || resources.length > layoutResourceLimits.fontResources)
+    throw new LayoutError("LAYOUT_LIMIT", "Font resource count budget exceeded");
+  const inputs = resources.map((resource) => {
+    const { family, weight, italic, sha256, bytes } = resource;
+    if (
+      typeof family !== "string" ||
+      !family.length ||
+      family.length > 256 ||
+      !Number.isInteger(weight) ||
+      weight < 1 ||
+      weight > 1000 ||
+      typeof italic !== "boolean" ||
+      typeof sha256 !== "string" ||
+      !/^[a-f0-9]{64}$/.test(sha256)
+    )
+      throw new LayoutError("LAYOUT_INPUT", "Invalid font resource definition");
+    return { definition: { family, weight, italic, sha256 }, source: bytes };
+  });
+  let fontBytes = 0,
+    failed = false;
+  const reserve = (bytes: Uint8Array) => {
+    if (!(bytes instanceof Uint8Array))
+      throw new LayoutError("LAYOUT_INPUT", "Font bytes must be Uint8Array");
+    if (
+      bytes.byteLength > layoutResourceLimits.fontFileBytes ||
+      bytes.byteLength > layoutResourceLimits.fontPackBytes - fontBytes
+    )
+      throw new LayoutError("LAYOUT_LIMIT", "Font byte budget exceeded before ownership copy");
+    fontBytes += bytes.byteLength;
+  };
+  // Preflight all direct buffers before copying any; promised buffers reserve atomically on arrival.
+  for (const input of inputs) if (input.source instanceof Uint8Array) reserve(input.source);
+  const pending = inputs.map(({ definition, source }) => {
+    if (source instanceof Uint8Array)
+      return Promise.resolve({ definition, bytes: new Uint8Array(source) });
+    return Promise.resolve(source)
+      .then((bytes) => {
+        if (failed) throw new LayoutError("LAYOUT_LIMIT", "Font acquisition was aborted");
+        try {
+          reserve(bytes);
+          return { definition, bytes: new Uint8Array(bytes) };
+        } catch (error) {
+          failed = true;
+          throw error;
+        }
+      })
+      .catch((error) => {
+        failed = true;
+        throw error;
+      });
+  });
+  const loaded = await Promise.all(pending);
   loaded.sort((a, b) =>
     canonicalSerialize(a.definition) < canonicalSerialize(b.definition)
       ? -1

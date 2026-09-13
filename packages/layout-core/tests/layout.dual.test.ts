@@ -704,3 +704,76 @@ it("bounds empty fragment and paragraph counts before font loading or document c
   expect(valid.work.emittedObjects).toBe(2);
   expect(valid.work.sourceMappings).toBe(2);
 });
+
+it("bounds total document text before copying or font loading", async () => {
+  const doc = document([]);
+  const text = "A".repeat(100000);
+  doc.body = Array.from(
+    { length: Math.floor(layoutResourceLimits.inputTextUnits / text.length) + 1 },
+    (_, i) => ({
+      kind: "paragraph",
+      nodeId: `p${i}`,
+      fragments: [{ kind: "text", text, origin: { kind: "static", nodeId: `n${i}` } }],
+    }),
+  );
+  const spy = vi.spyOn(TypographyCore.prototype, "loadFont");
+  try {
+    await expect(layout(doc, resources, options)).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+    const metadata = document([]);
+    metadata.documentId = "x".repeat(layoutResourceLimits.inputJsonStringUnits + 1);
+    await expect(layout(metadata, resources, options)).rejects.toMatchObject({
+      code: "LAYOUT_LIMIT",
+    });
+    const exotic = document([]);
+    Object.defineProperty(exotic, "runtime", { value: new Uint8Array(1000000), enumerable: true });
+    await expect(layout(exotic, resources, options)).rejects.toMatchObject({
+      code: "LAYOUT_INPUT",
+    });
+    expect(spy).not.toHaveBeenCalled();
+  } finally {
+    spy.mockRestore();
+  }
+});
+it("bounds direct and promised font buffers before ownership copies or registration", async () => {
+  const definition = { family: "F", weight: 400, italic: false, sha256: "0".repeat(64) };
+  const large = new Uint8Array(layoutResourceLimits.fontFileBytes + 1);
+  const shared = new Uint8Array(layoutResourceLimits.fontFileBytes);
+  const spy = vi.spyOn(TypographyCore.prototype, "loadFont");
+  try {
+    await expect(
+      layout(document([]), [{ ...definition, bytes: large }], options),
+    ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+    await expect(
+      layout(
+        document([]),
+        Array.from({ length: 5 }, (_, i) => ({ ...definition, family: `F${i}`, bytes: shared })),
+        options,
+      ),
+    ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+    await expect(
+      layout(
+        document([]),
+        Array.from({ length: layoutResourceLimits.fontResources + 1 }, (_, i) => ({
+          ...definition,
+          family: `F${i}`,
+          bytes: new Uint8Array(),
+        })),
+        options,
+      ),
+    ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+    const release: ((value: Uint8Array) => void)[] = [];
+    const promised = Array.from({ length: 5 }, (_, i) => ({
+      ...definition,
+      family: `F${i}`,
+      bytes: new Promise<Uint8Array>((resolve) => {
+        release.push(resolve);
+      }),
+    }));
+    const result = layout(document([]), promised, options);
+    for (const resolve of release.reverse()) resolve(shared);
+    await expect(result).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+    expect(spy).not.toHaveBeenCalled();
+  } finally {
+    spy.mockRestore();
+  }
+});

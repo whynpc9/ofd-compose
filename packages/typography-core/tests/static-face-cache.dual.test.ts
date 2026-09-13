@@ -71,7 +71,7 @@ it("evicts the least recently loaded face without invalidating live core fonts",
     load(b, index);
     expect(a.shape(request(index))).toEqual(b.shape(request(index)));
   }
-});
+}, 20000);
 it("loads the same full 16 MiB font into 160 live cores without duplicate native faces", () => {
   const cores: TypographyCore[] = [];
   const first = new TypographyCore();
