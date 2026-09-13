@@ -680,6 +680,7 @@ class ParagraphLayouter {
       this.work.pages >= layoutResourceLimits.pages * layoutResourceLimits.paginationPasses
     )
       throw new LayoutError("LAYOUT_LIMIT", "Page budget exceeded before page allocation");
+    this.reserveSectionMetadata();
     this.work.pages++;
     this.pageIndex = this.ir.pages.length;
     this.ir.pages.push({
@@ -878,6 +879,18 @@ class ParagraphLayouter {
       state.opacity = watermark.opacity;
       state.transform = { ...watermark.transform };
     }
+  }
+  private reserveSectionMetadata(nodeId?: string) {
+    const units =
+      this.sectionId.length +
+      (this.sectionId !== this.sectionSourceId ? this.sectionSourceId.length : 0);
+    if (units > 8_000_000 - this.work.outputTextUnits)
+      throw new LayoutError(
+        "LAYOUT_LIMIT",
+        "Output section metadata exceeds string budget before allocation",
+        nodeId,
+      );
+    this.work.outputTextUnits += units;
   }
   private reserveObjects(count: number) {
     if (count > layoutResourceLimits.objects - this.work.emittedObjects)
@@ -1254,7 +1267,8 @@ class ParagraphLayouter {
               ? (available - width) / 2
               : 0;
       let x = box.x + left + indent + offset;
-      if (!this.decoration)
+      if (!this.decoration) {
+        this.reserveSectionMetadata(paragraph.nodeId);
         this.lines.push({
           nodeId: paragraph.nodeId,
           paragraphIndex,
@@ -1271,6 +1285,7 @@ class ParagraphLayouter {
           height,
           baseline,
         });
+      }
       if (lineIndex === 0) {
         let labelX = box.x + left + indent - labelWidth;
         for (const labelPiece of labelPieces)
@@ -1358,6 +1373,7 @@ class ParagraphLayouter {
     generated = false,
   ) {
     generated ||= this.decoration;
+    if (!generated) this.reserveSectionMetadata(paragraph.nodeId);
     // Reserve cardinality and wire-text expansion before allocating any IR objects/maps.
     const style = piece.run.style;
     const objectCount =

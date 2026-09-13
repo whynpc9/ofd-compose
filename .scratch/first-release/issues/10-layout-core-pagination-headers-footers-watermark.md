@@ -44,3 +44,8 @@ The completed bot review of `45bd0c84d77128079a763c4fe3ffc8855ed13dd5` found tha
 ## Bot review round 3
 
 The completed bot review of `d1d648438dff708c2d32235f98844f41d4cd00cb` found an implicit-root collision with a later non-repeated section using the document ID, and spurious blank-line layout for empty bands. The root now uses a separate canonical `@root:` identity only when needed, preserving its public source ID. Empty bands reserve their declared height without generating a paragraph, requiring fonts or allocating text objects. Shared tests cover exact page/semantic identities and reservation-only bands below a normal line height with an empty font pack. Final-head review remains required after this fix is pushed.
+
+
+### Section metadata budget follow-up
+
+A controlled 100KB root ID with 100 lines reproduced uncharged replication of the new section identity fields. Page, inspection-line and semantic section occurrence/source IDs now reserve the existing cumulative output string budget before record allocation. The negative case explicitly requires LAYOUT_LIMIT, preventing multi-page metadata from bypassing the retained issue09 text protection.

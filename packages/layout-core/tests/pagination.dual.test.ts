@@ -777,3 +777,9 @@ it("reserves empty bands without requiring fonts, allocating empty text, or enfo
     expect(result.work.paragraphs).toBe(0);
   }
 });
+
+it("charges repeated section metadata before source IDs can amplify output strings across lines", async () => {
+  const input = document([p(Array.from({ length: 100 }, () => "甲").join("\n"))]);
+  input.documentId = "root".repeat(25000);
+  await expect(layout(input, resources, options)).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+});

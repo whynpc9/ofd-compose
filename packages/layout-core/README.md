@@ -208,7 +208,9 @@ passes. Additional hard ceilings: 1000 pages per pass (caller may lower `maxPage
 descriptors and 100 million cumulative declared image pixels. There are at most 16 watermarks
 per page. Object and state allocations are reserved before insertion; explicit minimum page
 count is rejected before font acquisition. Band text is bounded before joining parts.
-Image descriptors are checked before ownership copy. These are deterministic work/allocation
+Image descriptors are checked before ownership copy. Page, inspection-line and semantic
+section occurrence/source IDs are charged to the cumulative output string budget before
+allocation, including arbitrarily long root IDs and repeat keys. These are deterministic work/allocation
 limits, not a native RSS ceiling; host Worker memory/time isolation remains required.
 
 Shared Node/Chromium tests include physical sizes, mixed sections, real-font cross-page
