@@ -60,3 +60,9 @@
 
 - Additional executable self-check reproduced a false `IR_PAGE_BOUNDS` for a 0.3 mm page with content x=0.1, width=0.2, caused by binary addition. Containment now compares exact sums of the shortest decimal spellings used by normalization, without epsilon tolerance; a genuine 0.20000000000000004 mm width still fails.
 - Verification: Node 83/83, Chromium 75/75, typecheck/build/lint/diff checks passed. Fresh-head bot and CI remain required; no merge performed.
+
+### 2026-09-13 — Sixth bot review disposition (capability boundary)
+
+- Bot reviewed `ca9cb5d` and suggested blanket rejection of nonempty font variations because today's TypographyCore uses static fonts. The cited implementation limitation is correct, but blanket IR rejection is not applied: issue 08 explicitly allows any component to construct the generic fixed IR, and the coordinator explicitly requires preserving distinct face/features/variations identities. Spec §10 places supported font types/features at release-profile/producer/writer boundaries. The independent Spec reviewer confirmed this distinction.
+- Clarified README: preserving variation metadata is contract-level identity support, not a claim of implemented variable-font shaping/embedding. Current TypographyCore still rejects variable fonts; no new variation-aware shaping or capability flag is introduced. This is a documented boundary disposition, not an unresolved implementation finding.
+- Seven prior valid bot findings and two additional verified issues (dash cycles and decimal containment) are fixed. Supplementary Standards duplicate-traversal suggestion remains nonblocking pending WP0 capacity evidence. Final-head bot completion and CI still required; no merge performed.
