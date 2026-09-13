@@ -112,7 +112,12 @@ export function validateTemplateSource(
   for (const { node } of walkTemplateNodes(template.body)) {
     seenNode(node.nodeId);
     if ("styleId" in node) checkStyle(node.styleId, node.nodeId);
-    if (node.kind === "dynamic-text" || isStructureBinding(node)) {
+    if (
+      node.kind === "dynamic-text" ||
+      node.kind === "image-binding" ||
+      node.kind === "barcode-binding" ||
+      isStructureBinding(node)
+    ) {
       seenBinding(node.nodeId, node.bindingId);
     } else if (node.kind === "input-control") {
       if (controlIds.has(node.controlId)) {

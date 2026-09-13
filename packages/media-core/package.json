@@ -1,0 +1,29 @@
+{
+  "name": "@ofd-compose/media-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
+    "test": "vitest run",
+    "test:browser": "vitest run --config vitest.browser.config.ts"
+  },
+  "dependencies": {
+    "@ofd-compose/binding-core": "workspace:*",
+    "@ofd-compose/document-model": "workspace:*",
+    "@ofd-compose/layout-ir": "workspace:*",
+    "@noble/hashes": "2.0.1",
+    "bwip-js": "4.11.4",
+    "image-size": "2.0.2"
+  },
+  "devDependencies": {
+    "@ofd-compose/template-compiler": "workspace:*",
+    "zxing-wasm": "3.1.3",
+    "vitest": "5.0.0",
+    "vite": "8.2.2"
+  }
+}

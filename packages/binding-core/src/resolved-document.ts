@@ -1,6 +1,9 @@
 import {
+  BarcodeOptionsSchema,
   BindingPolicyVersionSchema,
   documentModelSchemaVersion,
+  ImageOptionsSchema,
+  ImageSourceSchema,
   InputControlSchema,
   modelVersion,
   ParagraphLayoutSchema,
@@ -97,6 +100,34 @@ export const ResolvedParagraphSchema = Type.Object(
   { additionalProperties: false },
 );
 
+export const ResolvedImageSchema = Type.Object(
+  {
+    kind: Type.Literal("image-binding"),
+    nodeId: identifier,
+    bindingId: identifier,
+    instancePath,
+    dataPath: Type.Optional(Type.String()),
+    options: ImageOptionsSchema,
+    sources: Type.Array(ImageSourceSchema, { maxItems: 64 }),
+  },
+  { additionalProperties: false },
+);
+export const ResolvedBarcodeSchema = Type.Object(
+  {
+    kind: Type.Literal("barcode-binding"),
+    nodeId: identifier,
+    bindingId: identifier,
+    instancePath,
+    dataPath: Type.Optional(Type.String()),
+    options: BarcodeOptionsSchema,
+    value: Type.String({ maxLength: 256 }),
+  },
+  { additionalProperties: false },
+);
+export type ResolvedImage = Static<typeof ResolvedImageSchema>;
+export type ResolvedBarcode = Static<typeof ResolvedBarcodeSchema>;
+export type ResolvedMedia = ResolvedImage | ResolvedBarcode;
+
 const resolvedTableCellOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
@@ -133,7 +164,13 @@ const resolvedTableOf = <T extends TSchema>(block: T) =>
   );
 
 export const ResolvedBlockSchema = Type.Recursive(
-  (This) => Type.Union([ResolvedParagraphSchema, resolvedTableOf(This)]),
+  (This) =>
+    Type.Union([
+      ResolvedParagraphSchema,
+      ResolvedImageSchema,
+      ResolvedBarcodeSchema,
+      resolvedTableOf(This),
+    ]),
   { $id: "ResolvedBlock" },
 );
 
@@ -243,6 +280,7 @@ export function paragraphText(paragraph: ResolvedParagraph): string {
 /** 块的最终文本：段落文本；表格按行 / 单元格以 `\n` / `\t` 连接。 */
 export function blockText(block: ResolvedBlock): string {
   if (block.kind === "paragraph") return paragraphText(block);
+  if (block.kind !== "table") return "";
   return block.rows.map((row) => row.cells.map(cellText).join("\t")).join("\n");
 }
 

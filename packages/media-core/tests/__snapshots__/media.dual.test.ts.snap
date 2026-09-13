@@ -1,0 +1,11 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`real compile/bind/media inputs in Node and Chromium > decodes code128 01234567890123456789 from actual IR rectangles 1`] = `"c58f4d7011ec4b4b1faf3479b81aace8fd704bc76a91c6bb1584ee87ab81f0bc"`;
+
+exports[`real compile/bind/media inputs in Node and Chromium > decodes code128 A20260303001 from actual IR rectangles 1`] = `"199231806327886689c2bcac3d8fc60cf8addacb3b524849a0d7ce7fccf202ad"`;
+
+exports[`real compile/bind/media inputs in Node and Chromium > decodes code128 Hello-123 ^FNC1 from actual IR rectangles 1`] = `"37db081794e662094330165c303415854f57cb048d2ace20cabbe83fa0a51463"`;
+
+exports[`real compile/bind/media inputs in Node and Chromium > decodes ean13 4006381333931 from actual IR rectangles 1`] = `"28e59e6a2a173c4d5b95c1e4e18b9685d19b328c890398b08adde7f5b7208b24"`;
+
+exports[`real compile/bind/media inputs in Node and Chromium > decodes ean13 6901234567892 from actual IR rectangles 1`] = `"3313d5d865a30e979b5a363a10cf901ed2a9f7994eee71f2fb8e4acf987d3408"`;

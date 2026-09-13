@@ -2,6 +2,8 @@ import { expect, it, vi } from "vitest";
 import { fixtureFactories } from "../fixtures/index.js";
 import { validateLayoutIR } from "../src/index.js";
 
+// This is an operation-count regression, not a wall-clock benchmark. Shared CI runners
+// need headroom for the full 100k fixture while other package suites execute.
 it("validates a large target once rather than once per fragment source range", () => {
   const ir = fixtureFactories.text();
   const target = ir.pages[0]?.objects[0];
@@ -31,4 +33,4 @@ it("validates a large target once rather than once per fragment source range", (
   } finally {
     spy.mockRestore();
   }
-});
+}, 30000);

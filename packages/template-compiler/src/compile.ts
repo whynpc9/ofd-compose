@@ -1,10 +1,12 @@
 import {
+  type BarcodeBinding,
   type BlockNode,
   type Diagnostic,
   type DynamicText,
   defaultMaxStructureDepth,
   type ExpressionSource,
   hasErrors,
+  type ImageBinding,
   isStructureBinding,
   isStructureContainer,
   modelVersion,
@@ -66,7 +68,9 @@ export type CompiledBinding =
       readonly styleId?: string;
       readonly styleInheritance: "inherit-paragraph" | "explicit";
     })
-  | (CompiledBindingBase & { readonly role: "conditional-block" })
+  | (CompiledBindingBase & {
+      readonly role: "conditional-block" | "image-binding" | "barcode-binding";
+    })
   | (CompiledBindingBase & {
       readonly role: "repeat-block" | "repeat-row-group";
       readonly repeatKey: CompiledRepeatKey;
@@ -164,7 +168,9 @@ class TemplateCompiler {
   }
 
   /** 编译一条表达式并施加长度/步骤数预算；失败时记诊断并返回 undefined。 */
-  private expression(node: DynamicText | StructureBinding): CompiledExpression | undefined {
+  private expression(
+    node: DynamicText | ImageBinding | BarcodeBinding | StructureBinding,
+  ): CompiledExpression | undefined {
     const { expression } = node;
     const { maxExpressionLength, maxPipelineSteps } = this.limits;
     const rawLength =
@@ -259,6 +265,28 @@ class TemplateCompiler {
           ...(node.styleId === undefined ? {} : { styleId: node.styleId }),
           styleInheritance: node.styleInheritance ?? "inherit-paragraph",
         };
+      } else if (node.kind === "image-binding" || node.kind === "barcode-binding") {
+        const compiled = this.expression(node);
+        if (compiled?.ast.steps.some((step) => step.op === "format")) {
+          this.diagnostics.push({
+            code: "EXPRESSION_UNSUPPORTED",
+            severity: "error",
+            phase: "compile",
+            nodeId: node.nodeId,
+            bindingId: node.bindingId,
+            message:
+              "Media expressions select image sources/barcode strings; formatting belongs in host data or DynamicText",
+          });
+          continue;
+        }
+        if (compiled)
+          this.bindings[node.bindingId] = {
+            role: node.kind,
+            nodeId: node.nodeId,
+            bindingId: node.bindingId,
+            ast: compiled.ast,
+            sourceMap: compiled.sourceMap,
+          };
       } else if (isStructureBinding(node)) {
         const compiled = this.expression(node);
         if (compiled === undefined) continue;

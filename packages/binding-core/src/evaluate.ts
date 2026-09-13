@@ -43,7 +43,7 @@ export interface Scope {
 /** 一次 bind() 内共享的运行期预算（排序次数）。 */
 export interface EvaluationBudget {
   readonly maxSortOperations: number;
-  readonly counters: { sortOperations: number };
+  readonly counters: { sortOperations: number; mediaWorkUnits?: number };
 }
 
 /**
@@ -51,7 +51,7 @@ export interface EvaluationBudget {
  * - `text`：DynamicText（Missing → 空文本 + BINDING_MISSING）；
  * - `condition` / `sequence`：ConditionalBlock / Repeat（legacy-compat-1 下 Missing 按旧引擎视为 null 并记 LEGACY_SEMANTIC_CHANGE）。
  */
-export type EvaluationConsumer = "text" | "condition" | "sequence";
+export type EvaluationConsumer = "text" | "condition" | "sequence" | "media";
 
 export interface EvaluationContext {
   readonly policy: BindingPolicyVersion;
@@ -93,7 +93,33 @@ function identityIndices(value: Value): number[] | undefined {
   return isJsonArray(value) ? value.map((_, i) => i) : undefined;
 }
 
+class MediaEvaluationLimit extends Error {}
+
 class Evaluator {
+  private mediaWorkUnits = 0;
+  private chargeMedia(units: number): void {
+    const counters = this.ctx.budget?.counters;
+    const previous = counters?.mediaWorkUnits ?? this.mediaWorkUnits;
+    if (units > 64000000 - previous)
+      throw new MediaEvaluationLimit("Media expression work budget exceeded");
+    this.mediaWorkUnits = previous + units;
+    if (counters) counters.mediaWorkUnits = this.mediaWorkUnits;
+  }
+  private indices(value: Value): number[] | undefined {
+    this.checkMediaValue(value);
+    return identityIndices(value);
+  }
+  private checkMediaValue(value: Value): void {
+    if (this.ctx.consumer !== "media") return;
+    this.chargeMedia(
+      typeof value === "string" ? value.length : isJsonArray(value) ? value.length : 1,
+    );
+    if (
+      (isJsonArray(value) && value.length > 64) ||
+      (typeof value === "string" && value.length > 12000000)
+    )
+      throw new MediaEvaluationLimit("Media expression input exceeds its array/string budget");
+  }
   readonly diagnostics: Diagnostic[] = [];
 
   constructor(private readonly ctx: EvaluationContext) {}
@@ -158,6 +184,7 @@ class Evaluator {
       }
       cursor = cursor[segment.name] as JsonValue;
     }
+    this.checkMediaValue(cursor);
     return { value: cursor, dataPath, missingAt: undefined };
   }
 
@@ -171,7 +198,7 @@ class Evaluator {
     ): State => ({
       value,
       dataPath,
-      indices: identityIndices(value),
+      indices: this.indices(value),
       missingAt,
     });
 
@@ -250,6 +277,17 @@ class Evaluator {
       const itemPath = `${state.dataPath ?? ""}[${original}]`;
       const r = this.resolveSegments(array[i] as JsonValue, key, itemPath);
       if (r.missingAt === undefined) {
+        if (this.ctx.consumer === "media") {
+          if (
+            isJsonObject(r.value) ||
+            isJsonArray(r.value) ||
+            (typeof r.value === "string" && r.value.length > 1024) ||
+            (typeof r.value === "number" && !Number.isFinite(r.value))
+          )
+            throw new MediaEvaluationLimit("Media sorting keys must be bounded scalar values");
+          // Reserve comparisons/case-folding before sort or extrema search.
+          this.chargeMedia((typeof r.value === "string" ? r.value.length : 16) * array.length * 2);
+        }
         keys.push(r.value);
         continue;
       }
@@ -298,7 +336,7 @@ class Evaluator {
     return {
       value,
       dataPath: `${state.dataPath ?? ""}[${original}]`,
-      indices: identityIndices(value),
+      indices: this.indices(value),
       missingAt: undefined,
     };
   }
@@ -346,6 +384,14 @@ class Evaluator {
       return state;
     }
     const value = state.value;
+    if (
+      this.ctx.consumer === "media" &&
+      isJsonObject(value) &&
+      (step.op === "if" || (step.op === "count" && this.ctx.policy === "legacy-compat-1"))
+    )
+      throw new MediaEvaluationLimit(
+        "Object-consuming media operations require host-provided scalar values",
+      );
 
     switch (step.op) {
       case "sort": {
@@ -419,7 +465,7 @@ class Evaluator {
         return {
           value: r.value,
           dataPath: r.dataPath,
-          indices: identityIndices(r.value),
+          indices: this.indices(r.value),
           missingAt: r.missingAt,
         };
       }
@@ -525,7 +571,7 @@ class Evaluator {
     } else if (isMissing(state.value)) {
       const missingPath = state.missingAt ?? state.dataPath ?? pathRefToText(ast.source);
       const consumer = this.ctx.consumer ?? "text";
-      if (consumer !== "text" && this.ctx.policy === "legacy-compat-1") {
+      if (consumer !== "text" && consumer !== "media" && this.ctx.policy === "legacy-compat-1") {
         // 旧引擎的条件/循环不区分缺失与 null：缺失 → 假 / 零次。复刻并标记，不再报 BINDING_MISSING。
         this.legacyChange(
           "missing-as-null",
@@ -565,5 +611,24 @@ class Evaluator {
 }
 
 export function evaluateExpression(ast: ExpressionAst, ctx: EvaluationContext): EvaluationResult {
-  return new Evaluator(ctx).evaluate(ast);
+  try {
+    return new Evaluator(ctx).evaluate(ast);
+  } catch (error) {
+    if (!(error instanceof MediaEvaluationLimit)) throw error;
+    return {
+      value: MISSING,
+      text: "",
+      valueState: "missing",
+      diagnostics: [
+        {
+          code: "RESOURCE_LIMIT",
+          severity: "error",
+          phase: "bind",
+          message: error.message,
+          ...(ctx.nodeId === undefined ? {} : { nodeId: ctx.nodeId }),
+          ...(ctx.bindingId === undefined ? {} : { bindingId: ctx.bindingId }),
+        },
+      ],
+    };
+  }
 }

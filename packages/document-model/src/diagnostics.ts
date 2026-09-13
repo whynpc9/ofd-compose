@@ -35,7 +35,7 @@ export type DiagnosticCode = (typeof diagnosticCodes)[number];
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
 /** 产生诊断的阶段。排版/写出阶段由后续票追加。 */
-export type DiagnosticPhase = "model" | "compile" | "bind";
+export type DiagnosticPhase = "model" | "compile" | "bind" | "media";
 
 export interface Diagnostic {
   readonly code: DiagnosticCode;
