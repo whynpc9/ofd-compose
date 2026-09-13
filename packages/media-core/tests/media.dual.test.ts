@@ -208,7 +208,7 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
           nodeId: `img${i}`,
           bindingId: `ib${i}`,
           expression: { kind: "legacy", text: `images[${i}]` },
-          options: opts,
+          options: { ...opts, legacyPixelDpi: 96 },
         })),
       );
       sourceTemplate.settings.bindingPolicyVersion = "legacy-compat-1";
@@ -238,6 +238,25 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
         expect(actual[i]?.bytes).toEqual(bytes);
       }
       expect(new Set(actual.map((i) => i.resource.digest)).size).toBe(1);
+    },
+  );
+  it.each(["strict-1", "legacy-compat-1"] as const)(
+    "keeps image sizing independent of %s expression policy",
+    (policy) => {
+      for (const options of [{ width: 25.4 }, { width: 96, legacyPixelDpi: 96 as const }]) {
+        const input = template([image(options)]);
+        input.settings.bindingPolicyVersion = policy;
+        const compiled = compile(input);
+        if (!compiled.ok) throw Error(JSON.stringify(compiled.diagnostics));
+        const bound = bind(compiled.template, { images: fixtures.png });
+        expect(bound.ok).toBe(true);
+        const resolved = bound.document.body[0];
+        if (resolved?.kind !== "image-binding") throw Error("Expected image");
+        expect(resolved.options).toEqual(options);
+        const result = prepareMedia(bound.document);
+        expect(result.ok).toBe(true);
+        expect(result.blocks[0]?.images?.[0]?.width).toBeCloseTo(25.4, 10);
+      }
     },
   );
   it("keeps repeated media source scope and instance identity", () => {

@@ -338,10 +338,7 @@ class Binder {
       ...base,
       kind: node.kind,
       sources: normalized,
-      options: {
-        ...node.options,
-        ...(this.policy === "legacy-compat-1" ? { legacyPixelDpi: 96 as const } : {}),
-      },
+      options: { ...node.options },
     };
   }
 
