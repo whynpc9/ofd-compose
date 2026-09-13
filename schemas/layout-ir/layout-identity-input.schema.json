@@ -1,0 +1,155 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "resolvedDocumentDigest",
+    "resources",
+    "layoutEngineVersion",
+    "shapingVersion",
+    "lineBreakVersion",
+    "formattingPolicy",
+    "profile",
+    "layoutOptions"
+  ],
+  "properties": {
+    "resolvedDocumentDigest": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "digest",
+          "kind"
+        ],
+        "properties": {
+          "digest": {
+            "pattern": "^[a-f0-9]{64}$",
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "const": "font",
+                "type": "string"
+              },
+              {
+                "const": "image",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "layoutEngineVersion": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "shapingVersion": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "lineBreakVersion": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "formattingPolicy": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "version",
+        "locale",
+        "timeZone",
+        "tzdataVersion",
+        "rounding"
+      ],
+      "properties": {
+        "version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "locale": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "timeZone": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "tzdataVersion": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "rounding": {
+          "minLength": 1,
+          "type": "string"
+        }
+      }
+    },
+    "profile": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "name",
+        "version",
+        "features"
+      ],
+      "properties": {
+        "name": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "version": {
+          "minLength": 1,
+          "type": "string"
+        },
+        "features": {
+          "uniqueItems": true,
+          "type": "array",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          }
+        }
+      }
+    },
+    "layoutOptions": {
+      "$id": "LayoutJsonValue",
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "boolean"
+        },
+        {
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991,
+          "type": "number"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "type": "array",
+          "items": {
+            "$ref": "LayoutJsonValue"
+          }
+        },
+        {
+          "type": "object",
+          "patternProperties": {
+            "^(.*)$": {
+              "$ref": "LayoutJsonValue"
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,287 @@
+// biome-ignore-all lint/style/noNonNullAssertion: Fixed-cardinality fixtures are deliberately mutated in negative cases.
+import { Value } from "@sinclair/typebox/value";
+import { expect, it } from "vitest";
+import {
+  barcodeFixture,
+  fixtureFactories,
+  identityFixture,
+  repeatedHeaderFixture,
+  textFixture,
+} from "../fixtures/index.js";
+import {
+  CanonicalLayoutIRSchema,
+  canonicalizeLayoutIR,
+  canonicalSerialize,
+  clustersAtOffset,
+  digestCanonical,
+  digestLayoutIdentity,
+  digestLayoutIR,
+  digestSemanticDocument,
+  formatNumber,
+  offsetsForCluster,
+  quantizeMm,
+  validateLayoutIR,
+  validateUtf16Range,
+} from "../src/index.js";
+import expected from "./expected.json";
+
+for (const [name, factory] of Object.entries(fixtureFactories)) {
+  it(`${name}: browser/Node match independently pinned SHA-256`, () => {
+    const ir = factory(),
+      before = JSON.stringify(ir);
+    expect(digestLayoutIR(ir)).toBe(expected[name as keyof typeof expected]);
+    expect(Value.Check(CanonicalLayoutIRSchema, canonicalizeLayoutIR(ir))).toBe(true);
+    expect(JSON.stringify(ir)).toBe(before);
+    const shuffled = JSON.parse(canonicalSerialize(ir));
+    shuffled.resources.reverse();
+    shuffled.pages.reverse();
+    shuffled.graphicsStates.reverse();
+    shuffled.semantics.reverse();
+    shuffled.markers.reverse();
+    for (const p of shuffled.pages) {
+      p.objects.reverse();
+      for (const o of p.objects) if (o.kind === "text") o.clusters.reverse();
+    }
+    expect(digestLayoutIR(shuffled)).toBe(digestLayoutIR(ir));
+  });
+}
+it("ID renaming does not alter layout identity; preserves source node IDs", () => {
+  const ir = repeatedHeaderFixture(),
+    before = digestLayoutIR(ir);
+  for (const r of ir.resources) r.id = `x-${r.id}`;
+  for (const s of ir.graphicsStates) s.id = `x-${s.id}`;
+  for (const p of ir.pages) {
+    p.id = `x-${p.id}`;
+    for (const o of p.objects) {
+      o.id = `x-${o.id}`;
+      o.stateId = `x-${o.stateId}`;
+      if (o.kind === "text") {
+        o.fontId = `x-${o.fontId}`;
+        for (const c of o.clusters) c.clusterId += 100;
+        for (const g of o.glyphs) g.clusterId += 100;
+      }
+    }
+  }
+  for (const s of ir.semantics) s.objectId = `x-${s.objectId}`;
+  for (const m of ir.markers) {
+    m.id = `x-${m.id}`;
+    m.pageId = `x-${m.pageId}`;
+    if (m.objectId) m.objectId = `x-${m.objectId}`;
+  }
+  expect(digestLayoutIR(ir)).toBe(before);
+  ir.semantics[0]!.nodeId = "changed-source";
+  expect(digestLayoutIR(ir)).not.toBe(before);
+});
+it("actual draw and reading order changes alter digest", () => {
+  const ir = barcodeFixture(),
+    before = digestLayoutIR(ir),
+    objects = ir.pages[0]!.objects;
+  [objects[0]!.drawOrder, objects[1]!.drawOrder] = [objects[1]!.drawOrder, objects[0]!.drawOrder];
+  expect(digestLayoutIR(ir)).not.toBe(before);
+  const headers = repeatedHeaderFixture(),
+    original = digestLayoutIR(headers);
+  [headers.semantics[0]!.readingOrder, headers.semantics[1]!.readingOrder] = [1, 0];
+  expect(digestLayoutIR(headers)).not.toBe(original);
+});
+it("keeps font faces, features and variations distinct even with identical bytes", () => {
+  const ir = textFixture(),
+    font = ir.resources.find((r) => r.kind === "font")!;
+  if (font.kind !== "font") throw new Error("font");
+  const before = digestLayoutIR(ir);
+  font.faceIndex = 1;
+  expect(digestLayoutIR(ir)).not.toBe(before);
+  font.faceIndex = 0;
+  font.features.liga = 0;
+  expect(digestLayoutIR(ir)).not.toBe(before);
+  font.features.liga = 1;
+  font.variations.wght = 700;
+  expect(digestLayoutIR(ir)).not.toBe(before);
+  ir.resources.push({ ...font, id: "font-variant", variations: { wght: 400 } });
+  expect(canonicalizeLayoutIR(ir).resources.filter((r) => r.kind === "font")).toHaveLength(2);
+});
+it("deduplicates identical resources and rewrites references", () => {
+  const ir = textFixture(),
+    before = digestLayoutIR(ir),
+    font = ir.resources[0]!;
+  ir.resources.push({ ...font, id: "duplicate" });
+  const text = ir.pages[0]!.objects[0]!;
+  if (text.kind === "text") text.fontId = "duplicate";
+  expect(digestLayoutIR(ir)).toBe(before);
+});
+it.each([
+  [1.2345, 1235],
+  [-1.2345, -1235],
+  [1.0055, 1006],
+  [-0.0005, -1],
+  [0.0004999, 0],
+  [-0, 0],
+  [1_000_000, 1_000_000_000],
+  [1e-7, 0],
+])("rounds %s mm to %s integer um", (mm, um) => expect(quantizeMm(mm)).toBe(um));
+it("quantizes lengths only, includes matrix translations, rejects double quantization", () => {
+  const ir = textFixture();
+  ir.graphicsStates[0]!.transform = { a: 0.1234567, b: 0, c: 0, d: 1, e: 1.0055, f: -1.0055 };
+  const result = canonicalizeLayoutIR(ir),
+    state = result.graphicsStates[0]!;
+  expect(state.transform).toEqual({ a: 0.1234567, b: 0, c: 0, d: 1, e: 1006, f: -1006 });
+  expect(result.pages[0]!.width).toBe(210000);
+  expect(() => canonicalizeLayoutIR(result)).toThrow("IR_SCHEMA");
+  const text = ir.pages[0]!.objects[0]!;
+  if (text.kind === "text") text.fontSize = 0.0001;
+  expect(() => canonicalizeLayoutIR(ir)).toThrow("IR_SCHEMA");
+});
+it("provides ligature and surrogate cluster/offset mappings", () => {
+  const text = textFixture().pages[0]!.objects[0]!;
+  if (text.kind !== "text") throw new Error("text");
+  expect(clustersAtOffset(text, 1)).toEqual([20]);
+  expect(clustersAtOffset(text, 4)).toEqual([30]);
+  expect(offsetsForCluster(text, 30).displayRange).toEqual({ start: 3, end: 5 });
+  expect(() => clustersAtOffset(text, 2)).toThrow("IR_TEXT_RANGE");
+  expect(() => validateUtf16Range("😀", { start: 0, end: 1 })).toThrow("IR_TEXT_RANGE");
+  expect(clustersAtOffset(text, 5)).toEqual([]);
+});
+it("supports RTL glyph order and many-to-one combining clusters", () => {
+  const ir = textFixture(),
+    text = ir.pages[0]!.objects[0]!;
+  if (text.kind !== "text") throw new Error("text");
+  text.direction = "rtl";
+  text.glyphs.reverse();
+  for (const c of text.clusters) c.glyphIndices = c.glyphIndices.map((i) => 2 - i);
+  expect(() => validateLayoutIR(ir)).not.toThrow();
+  text.logicalText = "a\u0301";
+  text.displayText = "a\u0301";
+  for (const g of text.glyphs) g.clusterId = 9;
+  text.clusters = [
+    {
+      clusterId: 9,
+      logicalRange: { start: 0, end: 2 },
+      displayRange: { start: 0, end: 2 },
+      glyphIndices: [0, 1, 2],
+    },
+  ];
+  expect(clustersAtOffset(text, 1)).toEqual([9]);
+});
+it.each([
+  "missing-font",
+  "missing-state",
+  "duplicate-id",
+  "duplicate-order",
+  "invalid-range",
+  "bad-cluster",
+  "wrong-marker-page",
+  "bad-subset",
+])("rejects %s", (kind) => {
+  const ir = repeatedHeaderFixture(),
+    text = ir.pages[0]!.objects[0]!;
+  if (text.kind !== "text") throw new Error("text");
+  if (kind === "missing-font") text.fontId = "absent";
+  if (kind === "missing-state") text.stateId = "absent";
+  if (kind === "duplicate-id") ir.resources[0]!.id = ir.pages[0]!.id;
+  if (kind === "duplicate-order") ir.pages[1]!.pageIndex = 0;
+  if (kind === "invalid-range") text.clusters[0]!.displayRange.end = 2;
+  if (kind === "bad-cluster") text.glyphs[0]!.clusterId = 999;
+  if (kind === "wrong-marker-page") ir.markers[0]!.pageId = ir.pages[0]!.id;
+  if (kind === "bad-subset") {
+    const font = ir.resources[0]!;
+    if (font.kind === "font") {
+      font.subsetDigest = "c".repeat(64);
+      font.glyphIdMap = [{ original: 0, subset: 0 }];
+    }
+  }
+  expect(() => canonicalizeLayoutIR(ir)).toThrow(/IR_/);
+});
+it("provenance is excluded; supplied semantic digest is checked", () => {
+  const ir = textFixture(),
+    before = digestLayoutIR(ir);
+  ir.provenance = { machine: "other", elapsedMs: 123, logId: "random" };
+  expect(digestLayoutIR(ir)).toBe(before);
+  ir.identity.semanticDigest = canonicalizeLayoutIR(ir).identity.semanticDigest;
+  expect(digestLayoutIR(ir)).toBe(before);
+  ir.identity.semanticDigest = "0".repeat(64);
+  expect(() => digestLayoutIR(ir)).toThrow("IR_DIGEST_MISMATCH");
+});
+it("LayoutIdentity is order independent and includes every declared input", () => {
+  const input = structuredClone(identityFixture),
+    before = digestLayoutIdentity(input);
+  expect(before).toBe(expected.identity);
+  input.resources.reverse();
+  input.profile.features.reverse();
+  expect(digestLayoutIdentity(input)).toBe(before);
+  for (const change of [
+    () => {
+      input.resolvedDocumentDigest = "9".repeat(64);
+    },
+    () => {
+      input.resources[0]!.digest = "c".repeat(64);
+    },
+    () => {
+      input.layoutOptions = { pagination: "other" };
+    },
+    () => {
+      input.profile.version = "1";
+    },
+    () => {
+      input.formattingPolicy.tzdataVersion = "next";
+    },
+    () => {
+      input.shapingVersion = "next";
+    },
+  ]) {
+    Object.assign(input, structuredClone(identityFixture));
+    change();
+    expect(digestLayoutIdentity(input)).not.toBe(before);
+  }
+  expect(() => digestLayoutIdentity({ ...input, provenance: { elapsedMs: 1 } })).toThrow(
+    "IR_SCHEMA",
+  );
+  expect(
+    digestSemanticDocument({ modelVersion: 1, body: ["hi"], provenance: { machine: "a" } }),
+  ).toBe(digestSemanticDocument({ provenance: { machine: "b" }, body: ["hi"], modelVersion: 1 }));
+});
+it("serializes sorted keys, fixed decimals and standard SHA-256 bytes", () => {
+  expect(canonicalSerialize({ z: -0, a: 1e-7 })).toBe('{"a":0.0000001,"z":0}');
+  expect(formatNumber(-1.23e-8)).toBe("-0.0000000123");
+  expect(digestCanonical("abc")).toBe(
+    "6cc43f858fbb763301637b5af970e2a46b46f461f27e5a0f41e009c59b827b25",
+  );
+  for (const invalid of [
+    NaN,
+    Infinity,
+    undefined,
+    new Date(),
+    { a: undefined },
+    new Array(2),
+    {
+      get a() {
+        throw new Error("accessor invoked");
+      },
+    },
+  ])
+    expect(() => canonicalSerialize(invalid)).toThrow(/IR_/);
+  const cyclic: unknown[] = [];
+  cyclic.push(cyclic);
+  expect(() => canonicalSerialize(cyclic)).toThrow("IR_CYCLIC_VALUE");
+});
+it("rejects unsupported version, nonfinite lengths and out-of-range coordinates", () => {
+  expect(() => canonicalizeLayoutIR({ ...textFixture(), irVersion: "next" })).toThrow(
+    "IR_VERSION_UNSUPPORTED",
+  );
+  for (const value of [NaN, Infinity, 1_000_001]) {
+    const ir = textFixture();
+    ir.pages[0]!.width = value;
+    expect(() => canonicalizeLayoutIR(ir)).toThrow(/IR_/);
+  }
+});
+it("keeps canonical JSON byte order even for integer-looking object keys", () => {
+  expect(canonicalSerialize({ "10": "ten", "2": "two", "1": "one" })).toBe(
+    '{"1":"one","10":"ten","2":"two"}',
+  );
+  const hidden: unknown[] = [];
+  Object.defineProperty(hidden, "hidden", { value: 1 });
+  expect(() => canonicalSerialize(hidden)).toThrow("IR_NON_JSON_VALUE");
+});
+it("quantization error stays within half a micrometre across the supported range", () => {
+  for (const value of [-999_999.9995, -20.000499, -1e-8, 0, 0.0005, 1.0055, 999_999.9995]) {
+    expect(Math.abs(quantizeMm(value) / 1000 - value)).toBeLessThanOrEqual(0.000500001);
+  }
+});

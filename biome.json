@@ -14,6 +14,8 @@
       "!**/coverage",
       "!**/packages.lock.json",
       "!schemas/document-model/*.schema.json",
+      "!schemas/layout-ir/*.schema.json",
+      "!packages/layout-ir/fixtures/*.json",
       "!**/*.grit"
     ]
   },
@@ -42,6 +44,7 @@
         "packages/binding-core/**",
         "packages/document-model/**",
         "packages/layout-core/**",
+        "packages/layout-ir/**",
         "packages/template-compiler/**",
         "packages/typography-core/**"
       ],
@@ -97,6 +100,7 @@
         "**/packages/binding-core/**",
         "**/packages/document-model/**",
         "**/packages/layout-core/**",
+        "**/packages/layout-ir/**",
         "**/packages/template-compiler/**",
         "**/packages/typography-core/**"
       ]
@@ -107,6 +111,7 @@
         "**/packages/binding-core/**",
         "**/packages/document-model/**",
         "**/packages/layout-core/**",
+        "**/packages/layout-ir/**",
         "**/packages/template-compiler/**",
         "**/packages/typography-core/**"
       ]

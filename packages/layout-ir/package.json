@@ -1,0 +1,25 @@
+{
+  "name": "@ofd-compose/layout-ir",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./fixtures": "./fixtures/index.ts"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.tests.json",
+    "test": "vitest run",
+    "test:browser": "vitest run --config vitest.browser.config.ts"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "0.34.52",
+    "@noble/hashes": "2.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "24.13.3",
+    "ajv": "8.17.1",
+    "vitest": "5.0.0"
+  }
+}
