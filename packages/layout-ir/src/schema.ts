@@ -91,7 +91,12 @@ function contract(canonical: boolean) {
       fontId: id,
       fontSize: positive,
       language: id,
-      direction: Type.Union([Type.Literal("ltr"), Type.Literal("rtl")]),
+      direction: Type.Union([
+        Type.Literal("ltr"),
+        Type.Literal("rtl"),
+        Type.Literal("ttb"),
+        Type.Literal("btt"),
+      ]),
       baseline: point,
       glyphs: Type.Array(
         object({ glyphId: uint, position: point, advance: point, offset: point, clusterId: uint }),
@@ -143,9 +148,13 @@ function contract(canonical: boolean) {
             Type.Literal("italic"),
             Type.Literal("oblique"),
           ]),
-          features: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), uint, {
-            additionalProperties: false,
-          }),
+          features: Type.Record(
+            Type.String({ pattern: "^[ -~]{4}$" }),
+            Type.Integer({ minimum: 0, maximum: 0xffffffff }),
+            {
+              additionalProperties: false,
+            },
+          ),
           variations: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), finite, {
             additionalProperties: false,
           }),

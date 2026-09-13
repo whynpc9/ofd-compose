@@ -75,3 +75,25 @@ it("exported schema rejects unrecognized OpenType tags independently of TypeBox"
   font.features.invalidFeature = 1;
   expect(validate(input)).toBe(false);
 });
+it("exported schemas preserve vertical directions and enforce uint32 OpenType values", () => {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false });
+  ajv.addKeyword("x-unit");
+  for (const schema of [LayoutIRSchema, CanonicalLayoutIRSchema]) {
+    const validate = ajv.compile(JSON.parse(JSON.stringify(schema)));
+    const input =
+      schema === LayoutIRSchema
+        ? fixtureFactories.text()
+        : canonicalizeLayoutIR(fixtureFactories.text());
+    const text = input.pages[0]?.objects[0];
+    const font = input.resources.find((resource) => resource.kind === "font");
+    if (text?.kind !== "text" || font?.kind !== "font")
+      throw new Error("Missing fixture resources");
+    font.features.liga = 0xffffffff;
+    for (const direction of ["ttb", "btt"] as const) {
+      text.direction = direction;
+      expect(validate(input), JSON.stringify(validate.errors)).toBe(true);
+    }
+    font.features.liga = 0x100000000;
+    expect(validate(input)).toBe(false);
+  }
+});

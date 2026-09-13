@@ -22,7 +22,14 @@
 - Added `packages/layout-ir`: nine-part TypeBox contract, mm construction and separate integer-um writer schema, relational/UTF-16 validation, cluster conversion table, canonical serialization and SHA-256, LayoutIdentity input contract.
 - Deterministic IDs preserve draw/reading order and font instance distinctions. Only mm lengths are quantized; ties round half away from zero with a 0.0005 mm scalar error bound. Canonical input is explicitly rejected to prevent double quantization.
 - Five synthetic contract fixtures, JSON Schema 2020-12 artifacts and Node-crypto reference digests are committed. Resource hashes/glyphs are synthetic; real asset/shaping/reader acceptance belongs to the dependent writer and WP0 matrix work.
-- Local verification: Layout IR Node 40/40, Chromium 35/35; full `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm test`, `pnpm test:browser` passed (unchanged packages can use Turbo cache). .NET locked restore and single-node build passed with SDK 10.0.302; MTP tests 46/46 after separate build and `dotnet test --solution ... --no-build --no-restore` (build flags otherwise reach the MTP executable). License check uses the task NuGet cache via `NUGET_PACKAGES`.
+- Local verification: Layout IR Node 44/44, Chromium 38/38; full `pnpm lint`, `pnpm typecheck`, `pnpm build`, `pnpm test`, `pnpm test:browser` passed (unchanged packages can use Turbo cache). .NET locked restore and single-node build passed with SDK 10.0.302; MTP tests 46/46 after separate build and `dotnet test --solution ... --no-build --no-restore` (build flags otherwise reach the MTP executable). License check uses the task NuGet cache via `NUGET_PACKAGES`.
 - Reference: [Layout IR contract and conventions](../../../packages/layout-ir/README.md). PR bot review and CI remain pending; `ready-for-human` does not authorize merge. WP0.10 precision/capacity freeze and unexecuted runtime/reader matrices remain separate gates.
 
 - PR: https://github.com/whynpc9/ofd-compose/pull/5. First head `df63f74` passed all GitHub CI gates. During review wait, tightened OpenType tag dictionaries with `additionalProperties: false`, with TypeBox and independent Ajv negative tests; final-head bot/CI evidence is tracked on the PR.
+
+### 2026-09-13 — First bot review dispositions
+
+- Bot reviewed `644d7e2` and reported two P2 findings. Both are valid against `TypographyCore.shape`.
+- Vertical directions: added `ttb`/`btt` to construction and canonical schemas; dual-runtime tests preserve vertical advance/offset geometry and assert direction affects the digest. Independent Ajv checks cover both schemas.
+- OpenType feature bounds: limited feature values to 0..0xffffffff, matching the shaper. Added maximum/overflow/negative/fraction cases in both runtimes and exported-schema tests.
+- Targeted verification after fixes: Node 44/44, Chromium 38/38, typecheck/build/lint and diff hygiene passed. Awaiting fresh bot review and CI on the follow-up head; earlier completion is not final-head approval.

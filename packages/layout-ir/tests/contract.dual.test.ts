@@ -294,3 +294,36 @@ it("rejects unknown font feature and variation tags instead of passing them thro
     expect(() => validateLayoutIR(ir)).toThrow("IR_SCHEMA");
   }
 });
+it.each(["ttb", "btt"] as const)(
+  "preserves %s shaping direction and vertical glyph geometry",
+  (direction) => {
+    const ir = textFixture();
+    const text = ir.pages[0]!.objects[0]!;
+    if (text.kind !== "text") throw new Error("Missing fixture text");
+    text.direction = direction;
+    for (const [index, glyph] of text.glyphs.entries()) {
+      glyph.position = { x: 20, y: 25 + index * 4 };
+      glyph.advance = { x: 0, y: direction === "ttb" ? 4.2335 : -4.2335 };
+      glyph.offset = { x: -0.1255, y: 0.5 };
+    }
+    const canonicalText = canonicalizeLayoutIR(ir).pages[0]!.objects[0]!;
+    if (canonicalText.kind !== "text") throw new Error("Missing canonical text");
+    expect(canonicalText.direction).toBe(direction);
+    expect(canonicalText.glyphs[0]!.advance.y).toBe(direction === "ttb" ? 4234 : -4234);
+    expect(canonicalText.glyphs[0]!.offset).toEqual({ x: -126, y: 500 });
+    const before = digestLayoutIR(ir);
+    text.direction = "ltr";
+    expect(digestLayoutIR(ir)).not.toBe(before);
+  },
+);
+it("accepts the uint32 feature boundary and rejects values the shaper cannot consume", () => {
+  const ir = textFixture();
+  const font = ir.resources.find((resource) => resource.kind === "font");
+  if (font?.kind !== "font") throw new Error("Missing fixture font");
+  font.features.liga = 0xffffffff;
+  expect(() => canonicalizeLayoutIR(ir)).not.toThrow();
+  for (const value of [0x100000000, Number.MAX_SAFE_INTEGER, -1, 1.5]) {
+    font.features.liga = value;
+    expect(() => validateLayoutIR(ir)).toThrow("IR_SCHEMA");
+  }
+});

@@ -85,7 +85,7 @@ blend mode and sRGB color are in this provisional profile; unsupported modes fai
 All ranges are half-open UTF-16 offsets `[start,end)` and cannot bisect a surrogate
 pair. Display clusters uniquely cover all displayed text and all glyph indices.
 Logical ranges are explicit and may overlap for display transformations; a logical
-offset can therefore return multiple clusters. Glyph order may be RTL/nonmonotonic,
+offset can therefore return multiple clusters. Run direction preserves the shaper's `ltr`/`rtl`/`ttb`/`btt` values, including vertical advances and offsets. OpenType feature values are unsigned 32-bit integers, matching TypographyCore. Glyph order may be RTL/nonmonotonic,
 and clusters can represent ligatures or combining sequences. End-of-text offset
 maps to no cluster. Source text ranges are checked against their supplied source
 text, not against a potentially transformed display string.
