@@ -19,6 +19,7 @@ import {
   digestSemanticDocument,
   irVersion,
   type LayoutIR,
+  LayoutIRSchema,
   type TextObject,
 } from "@ofd-compose/layout-ir";
 import {
@@ -336,7 +337,12 @@ export async function layout(
     throw new LayoutError("LAYOUT_INPUT", "Invalid ResolvedDocument");
   // Reject a known minimum page count and impossible section geometry before acquiring fonts.
   let minimumPages = 1;
-  if (doc.settings.page) pageGeometry(doc.settings.page);
+  const firstBlock = doc.body[0];
+  const initialPage =
+    firstBlock?.kind === "paragraph"
+      ? (firstBlock.layout?.section?.page ?? doc.settings.page)
+      : doc.settings.page;
+  if (initialPage) pageGeometry(initialPage);
   const sections = new Set<string>();
   for (const [index, block] of doc.body.entries()) {
     if (block.kind !== "paragraph") continue;
@@ -445,8 +451,15 @@ export async function layout(
   const maxIterations = opts.pagination?.maxIterations ?? layoutResourceLimits.paginationPasses;
   let totalPages = 1;
   for (let iteration = 1; iteration <= maxIterations; iteration++) {
-    const result = new ParagraphLayouter(doc, faces, core, opts, work, totalPages).layout();
-    if (!hasTotalPages(doc) || result.ir.pages.length === totalPages)
+    const { usesTotalPages, ...result } = new ParagraphLayouter(
+      doc,
+      faces,
+      core,
+      opts,
+      work,
+      totalPages,
+    ).layout();
+    if (!usesTotalPages || result.ir.pages.length === totalPages)
       return { ...result, paginationPasses: iteration };
     totalPages = result.ir.pages.length;
   }
@@ -456,16 +469,6 @@ export async function layout(
   );
 }
 
-function hasTotalPages(doc: ResolvedDocument): boolean {
-  const has = (page?: PageSettings) =>
-    [page?.header, page?.footer].some((band) =>
-      band?.parts.some((part) => part.kind === "total-pages"),
-    );
-  return (
-    has(doc.settings.page) ||
-    doc.body.some((block) => block.kind === "paragraph" && has(block.layout?.section?.page))
-  );
-}
 interface LayoutWork {
   shapedUnits: number;
   candidateVisits: number;
@@ -486,10 +489,17 @@ function validatePaginationOptions(options: LayoutOptions) {
         "LAYOUT_INPUT",
         "Pagination limits must be positive integers within engine limits",
       );
+  if (options.images !== undefined && !Array.isArray(options.images))
+    throw new LayoutError("LAYOUT_INPUT", "Images must be a descriptor array");
   if ((options.images?.length ?? 0) > layoutResourceLimits.imageResources)
     throw new LayoutError("LAYOUT_LIMIT", "Image descriptor budget exceeded");
   let pixels = 0;
+  const imageIds = new Set<string>();
   for (const image of options.images ?? []) {
+    if (!Value.Check(LayoutIRSchema.properties.resources.items, image) || image.kind !== "image")
+      throw new LayoutError("LAYOUT_INPUT", "Invalid image descriptor");
+    if (imageIds.has(image.id)) throw new LayoutError("LAYOUT_INPUT", "Duplicate image source ID");
+    imageIds.add(image.id);
     pixels += image.pixelWidth * image.pixelHeight;
     if (!Number.isSafeInteger(pixels) || pixels > layoutResourceLimits.imagePixels)
       throw new LayoutError("LAYOUT_LIMIT", "Image pixel budget exceeded");
@@ -503,6 +513,11 @@ class ParagraphLayouter {
   private readonly initializedRepeatStarts = new Set<string>();
   private y: number;
   private pageIndex = 0;
+  private usesTotalPages = false;
+  private readonly imagesBySourceId = new Map<
+    string,
+    Extract<LayoutIR["resources"][number], { kind: "image" }>
+  >();
   private sectionId: string;
   private sectionStart = 0;
   private pageSettings?: PageSettings;
@@ -547,6 +562,8 @@ class ParagraphLayouter {
       );
     this.geometry = page;
     this.y = page.contentBox.y;
+    for (const [index, image] of (options.images ?? []).entries())
+      this.imagesBySourceId.set(image.id, { ...image, id: `image${index}` });
     this.ir = {
       irVersion,
       units: "mm",
@@ -581,7 +598,7 @@ class ParagraphLayouter {
           features: {},
           variations: {},
         })),
-        ...(options.images ?? []),
+        ...this.imagesBySourceId.values(),
       ],
       graphicsStates: [],
       pages: [],
@@ -618,6 +635,7 @@ class ParagraphLayouter {
     const ir = canonicalizeLayoutIR(this.ir);
     return {
       ir,
+      usesTotalPages: this.usesTotalPages,
       semanticMap: ir.semantics,
       lines: this.lines,
       diagnostics: [],
@@ -699,6 +717,7 @@ class ParagraphLayouter {
       const parts: string[] = [];
       let units = 0;
       for (const part of band.parts) {
+        if (part.kind === "total-pages") this.usesTotalPages = true;
         const text =
           part.kind === "text"
             ? part.text
@@ -762,7 +781,7 @@ class ParagraphLayouter {
     const start = page.objects.length;
     const firstState = this.ir.graphicsStates.length;
     if (watermark.kind === "image") {
-      const image = (this.options.images ?? []).find((image) => image.id === watermark.resourceId);
+      const image = this.imagesBySourceId.get(watermark.resourceId);
       if (!image) throw new LayoutError("LAYOUT_INPUT", "Watermark image resource is missing");
       this.reserveObjects(1);
       page.objects.push({
@@ -776,7 +795,7 @@ class ParagraphLayouter {
           width: watermark.width,
           height: watermark.height,
         },
-        resourceId: watermark.resourceId,
+        resourceId: image.id,
         transform: {
           a: watermark.width / image.pixelWidth,
           b: 0,

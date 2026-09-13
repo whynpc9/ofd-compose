@@ -519,3 +519,69 @@ it("reflects image pixels with negative scaling and keeps page bounds and alpha 
     transform: { a: -2, b: 0, c: 0, d: -3, e: 180000, f: 200000 },
   });
 });
+
+it("ignores overridden root fields and wholly hidden total fields when deciding to repeat layout", async () => {
+  const root: PageSettings = { ...page, footer: { height: 12, parts: [{ kind: "total-pages" }] } };
+  const input = configured(
+    [p("甲", "a", { section: { id: "effective", page } }), p("乙", "b", { pageBreakBefore: true })],
+    root,
+  );
+  const result = await layout(input, resources, { ...options, pagination: { maxIterations: 1 } });
+  expect(result.ir.pages).toHaveLength(2);
+  expect(result.paginationPasses).toBe(1);
+  expect(result.work.paragraphs).toBe(2);
+  // Even an impossible *inactive* root geometry must not override the valid first section.
+  input.settings.page = { ...root, margins: { ...page.margins, top: 1000 } };
+  expect(
+    (await layout(input, resources, { ...options, pagination: { maxIterations: 1 } })).ir.pages,
+  ).toHaveLength(2);
+  const hidden = configured([p("甲", "a"), p("乙", "b", { pageBreakBefore: true })], {
+    ...root,
+    footer: { height: 12, parts: [{ kind: "total-pages" }], hideFirstPage: true, hiddenPages: [2] },
+  });
+  expect(
+    (await layout(hidden, resources, { ...options, pagination: { maxIterations: 1 } }))
+      .paginationPasses,
+  ).toBe(1);
+});
+it("maps arbitrary image source IDs into a collision-free IR namespace and preserves references", async () => {
+  const ids = ["font0", "page0", "page0object0", "state0", "image0"];
+  const input = configured([p("正文")], {
+    ...page,
+    watermarks: ids.map((resourceId) => ({
+      kind: "image" as const,
+      resourceId,
+      x: 20,
+      y: 20,
+      width: 10,
+      height: 10,
+      opacity: 0.2,
+      layer: "behind" as const,
+      transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+    })),
+  });
+  const images = ids.map((id, index) => ({
+    kind: "image" as const,
+    id,
+    digest: String(index + 1).repeat(64),
+    mimeType: "image/png" as const,
+    pixelWidth: 100,
+    pixelHeight: 100,
+  }));
+  const { ir } = await layout(input, resources, { ...options, images });
+  const imageObjects = ir.pages[0]?.objects.filter((o) => o.kind === "image") ?? [];
+  expect(
+    imageObjects
+      .map((o) => ir.resources.find((r) => r.id === o.resourceId))
+      .map((r) => (r?.kind === "image" ? r.digest : undefined)),
+  ).toEqual(images.map((i) => i.digest));
+  validateCanonicalLayoutIR(ir);
+  const firstImage = images[0];
+  if (!firstImage) throw new Error("Missing fixture image");
+  await expect(
+    layout(input, [], { ...options, images: [firstImage, firstImage] }),
+  ).rejects.toMatchObject({ code: "LAYOUT_INPUT" });
+  await expect(
+    layout(input, [], { ...options, images: [{ ...firstImage, id: "" }] }),
+  ).rejects.toMatchObject({ code: "LAYOUT_INPUT" });
+});

@@ -167,7 +167,8 @@ Band height is reserved even when hidden. `hideFirstPage` and one-based `hiddenP
 to physical page positions within the section; `startPageNumber` affects displayed page
 numbers only. Total pages counts the entire physical document, including explicit blank pages.
 
-Total-page fields start with guess 1 and rerun the full layout until actual count equals the
+Only total-page fields on actually visible bands participate in convergence; overridden root
+settings and wholly hidden fields do not trigger a repeat pass. Total-page fields start with guess 1 and rerun the full layout until actual count equals the
 guess. Fixed-height bands normally need at most two passes; `pagination.maxIterations`
 (default/hard ceiling 4) bounds attempts, otherwise `PAGINATION_NOT_CONVERGED` is thrown.
 The diagnostic can be exercised with a multi-page total-field document and maxIterations 1.
@@ -182,7 +183,9 @@ blend/sRGB; background watermarks precede body objects, foreground watermarks fo
 The renderer visits only newly created watermark states, with no full-document state search.
 
 Images reference bounded, host-authorized `options.images` IR descriptors (ID, digest,
-PNG/JPEG MIME and pixel dimensions). Image matrix scale is width/pixelWidth and
+PNG/JPEG MIME and pixel dimensions). Source IDs may use any valid identifier; duplicate source
+IDs are rejected, and internal resource IDs are allocated separately from generated font/page/
+object IDs. Watermark references are rewritten to those internal IDs. Image matrix scale is width/pixelWidth and
 height/pixelHeight; translations and transformed bounds carry physical placement. Layout does
 not fetch, decode or authenticate image bytes. Host media validation and writers must supply
 bytes matching the descriptor; this issue is IR layout evidence, not image-decoder/writer

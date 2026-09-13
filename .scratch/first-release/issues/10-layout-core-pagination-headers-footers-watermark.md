@@ -29,3 +29,8 @@
 ### Scope of evidence
 
 Fixed reserved band heights are deliberate (no auto-height page-band profile). Image bytes are supplied/validated by the host and writer; Layout accepts authorized digest/dimension descriptors and does not fetch/decode media. Actual native RSS/timeout enforcement remains host Worker isolation. Host business samples, long tables, other browser/architecture versions and reader/writer interoperability remain their later issue gates, not extra blockers for issue10.
+
+
+## Bot review round 1
+
+The completed bot review of `7eea848af1fc916053d82de415a80c37d2131b1c` reported two valid P2 findings: inactive root total-page fields causing unnecessary convergence passes, and external image IDs colliding with generated IR IDs. The fix checks only rendered total-page fields, ignores overridden root geometry, validates unique image source IDs and maps them to a collision-free internal namespace. Shared tests cover root overrides, wholly hidden fields, arbitrary generated-looking image IDs, duplicate IDs and malformed descriptors. Final-head review remains required after this fix is pushed.
