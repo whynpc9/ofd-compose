@@ -434,3 +434,38 @@ it.each([
   expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_NON_CANONICAL");
   expect(canonicalSerialize(canonical)).toBe(before);
 });
+it.each(["\ud800", "\udc00"])(
+  "rejects lone surrogate %j across construction and canonical text fields",
+  (malformed) => {
+    for (const field of ["logicalText", "displayText", "sourceText"] as const) {
+      const ir = textFixture();
+      const canonical = canonicalizeLayoutIR(ir);
+      for (const candidate of [ir, canonical]) {
+        const text = candidate.pages[0]!.objects[0]!;
+        if (text.kind !== "text") throw new Error("Missing fixture text");
+        if (field === "sourceText")
+          candidate.semantics[0]!.sourceText = { text: malformed, range: { start: 0, end: 1 } };
+        else text[field] = malformed;
+      }
+      expect(() => validateLayoutIR(ir)).toThrow("IR_TEXT_INVALID");
+      expect(() => canonicalizeLayoutIR(ir)).toThrow("IR_TEXT_INVALID");
+      expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_TEXT_INVALID");
+    }
+  },
+);
+it("validates complete logical text even when no display clusters exist", () => {
+  const ir = textFixture();
+  const text = ir.pages[0]!.objects[0]!;
+  if (text.kind !== "text") throw new Error("Missing fixture text");
+  text.logicalText = "\ud800";
+  text.displayText = "";
+  text.clusters = [];
+  text.glyphs = [];
+  expect(() => validateLayoutIR(ir)).toThrow("IR_TEXT_INVALID");
+});
+it.each(["\ud800", "\udc00", "\ud800X", "X\udc00", "\udc00\ud800", "\ud800\ud800"])(
+  "range validation rejects malformed complete string %j even outside the selected range",
+  (text) => {
+    expect(() => validateUtf16Range(text, { start: 0, end: 0 })).toThrow("IR_TEXT_INVALID");
+  },
+);

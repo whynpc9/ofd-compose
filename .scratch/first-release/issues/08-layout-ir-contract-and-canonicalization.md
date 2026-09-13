@@ -44,3 +44,8 @@
 - Bot reviewed `aff1432`. Both new findings are valid and fixed: Binding Core explicitly classifies `ResolvedDocument.runtime` as nonsemantic; it is now excluded with `provenance`. Separately declared LayoutIdentity formatting-policy fields remain semantic. Real Compiler → Binding Core documents now have pinned, equal Node/Chromium document and LayoutIdentity digests.
 - Canonical transport validation now compares against shared structural normalization (no unit conversion), rejecting noncanonical array ordering, IDs and duplicate definitions without mutating input. Added negative pages/objects/resources/states/semantics/markers/features/clusters/IDs/duplicate definitions cases.
 - Verification: Node 63/63, Chromium 57/57, typecheck/build/lint/diff checks passed. Fresh-head bot/CI evidence remains on PR #5; no merge performed.
+
+### 2026-09-13 — Fourth bot review disposition
+
+- Bot reviewed `6caef15` and correctly identified that boundary-only UTF-16 checks admitted lone surrogates. Full logical/display/source strings are now checked for well-formed UTF-16 before range checks, including logical text with no display clusters. Each run string is checked once to avoid quadratic per-cluster rescanning.
+- Verification: Node 72/72, Chromium 66/66, typecheck/build/lint/diff checks passed. Both public validators and canonicalization reject malformed text with `IR_TEXT_INVALID`; existing valid astral/ligature/combining/vertical fixtures remain accepted. Fresh-head bot/CI completion remains on PR #5.

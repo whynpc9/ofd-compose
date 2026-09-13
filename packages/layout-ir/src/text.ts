@@ -19,6 +19,18 @@ export function validateUtf16Range(
   range: { start: number; end: number },
   path = "range",
 ): void {
+  validateText(text, path);
+  validateRangeBoundaries(text, range, path);
+}
+function validateText(text: string, path: string): void {
+  if (!text.isWellFormed())
+    fail("IR_TEXT_INVALID", path, "Text contains an unpaired UTF-16 surrogate");
+}
+function validateRangeBoundaries(
+  text: string,
+  range: { start: number; end: number },
+  path: string,
+): void {
   const boundary = (offset: number) => {
     const before = text.charCodeAt(offset - 1),
       after = text.charCodeAt(offset);
@@ -38,14 +50,17 @@ export function validateUtf16Range(
 
 /** Table supports ligatures, combining marks, astral characters and non-monotonic RTL glyph order. */
 export function clusterOffsetTable(text: TextObject): TextObject["clusters"] {
+  // Validate each complete string once, not once per cluster (which would be quadratic).
+  validateText(text.logicalText, "logicalText");
+  validateText(text.displayText, "displayText");
   const clusters = [...text.clusters].sort((a, b) => a.displayRange.start - b.displayRange.start);
   const ids = new Set<number>(),
     glyphs = new Set<number>();
   let displayEnd = 0;
   for (const cluster of clusters) {
     const path = `clusters/${cluster.clusterId}`;
-    validateUtf16Range(text.logicalText, cluster.logicalRange, path);
-    validateUtf16Range(text.displayText, cluster.displayRange, path);
+    validateRangeBoundaries(text.logicalText, cluster.logicalRange, path);
+    validateRangeBoundaries(text.displayText, cluster.displayRange, path);
     if (
       ids.has(cluster.clusterId) ||
       cluster.displayRange.start !== displayEnd ||
