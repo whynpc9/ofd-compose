@@ -143,3 +143,20 @@ it("both exported schemas reject nonempty all-zero dash cycles", () => {
     expect(validate(input)).toBe(false);
   }
 });
+
+it("exported current-profile schemas require empty variation coordinates", () => {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false });
+  ajv.addKeyword("x-unit");
+  for (const schema of [LayoutIRSchema, CanonicalLayoutIRSchema]) {
+    const validate = ajv.compile(JSON.parse(JSON.stringify(schema)));
+    const input =
+      schema === LayoutIRSchema
+        ? fixtureFactories.text()
+        : canonicalizeLayoutIR(fixtureFactories.text());
+    expect(validate(input)).toBe(true);
+    const font = input.resources.find((resource) => resource.kind === "font");
+    if (font?.kind !== "font") throw new Error("Missing fixture font");
+    font.variations.wght = 400;
+    expect(validate(input)).toBe(false);
+  }
+});

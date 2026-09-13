@@ -137,6 +137,7 @@
                 }
               },
               "variations": {
+                "maxProperties": 0,
                 "additionalProperties": false,
                 "type": "object",
                 "patternProperties": {

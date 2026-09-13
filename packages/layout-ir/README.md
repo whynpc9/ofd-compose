@@ -66,7 +66,8 @@ listed below. Undefined, sparse arrays, accessors, non-JSON objects and cycles f
 - Page/object IDs become `p0` / `p0o0`, etc. Resources and graphics states sort by
   their complete canonical definitions, deduplicate equivalent definitions and
   receive `r0` / `s0` IDs. Every reference is rewritten. Same font bytes with a
-  different face, weight, style, feature or variation remain distinct instances.
+  different face, weight, style or feature remain distinct instances. The current
+  static-font profile requires `variations: {}`.
 - Font subset maps sort by original glyph ID. An absent map with a subset digest
   means retain-GIDs; an explicit map is original → subset and must cover every
   referenced glyph. Both sides of an explicit map are unique.
@@ -93,19 +94,18 @@ single hyphens (`en`, `zh-Hans-CN`), not underscores or empty segments. A dash a
 is empty (solid) or has at least one positive length, including after quantization,
 following [PDF 32000-1 line dash patterns](https://raw.githubusercontent.com/adobe/dc-acrobat-sdk-docs/master/docs/standards/pdfstandards/pdf/PDF32000_2008.pdf).
 
-## Contract validity and producer capability
+## Current static-font profile
 
-This package validates the generic, already-positioned IR described by issue 08;
-valid IR is not a certification that today's TypographyCore can produce it. In
-particular, nonempty `variations` preserve font-instance identity for producers or
-capability probes that supply those coordinates. They do **not** advertise working
-variable-font shaping or embedding in the current platform. Current
-[TypographyCore](../typography-core/README.md) deliberately accepts static font
-faces only and rejects variable font bytes; its behavior is unchanged. Release
-profiles/producers/writers must reject resources and features they cannot support
-(spec §10 / ADR-0001). Generic validation cannot establish font support or actual
-shaping provenance without the resource bytes. Do not erase variation metadata or
-invent a capability opt-in solely because the current producer does not support it.
+The current v0 contract preserves the `variations` field but requires an empty
+mapping in both construction and canonical transport. This matches
+[TypographyCore](../typography-core/README.md), which accepts exact static faces,
+rejects fonts with variation axes and has no shaping-coordinate input. Nonempty
+variation maps fail schema validation, including nominal/default axis values.
+Supporting variable-font instances later requires an explicit profile/version
+change backed by real shaping, subsetting and writer evidence; this issue does not
+implement that pipeline. Generic structural validation still does not prove that
+resource bytes match the declared digest or that a producer faithfully rendered
+its declared inputs. Those resource/capability checks remain producer/writer duties.
 
 ## Text, semantics and identity
 

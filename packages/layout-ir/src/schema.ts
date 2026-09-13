@@ -156,6 +156,7 @@ function contract(canonical: boolean) {
             },
           ),
           variations: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), finite, {
+            maxProperties: 0,
             additionalProperties: false,
           }),
           subsetDigest: Type.Optional(digest),

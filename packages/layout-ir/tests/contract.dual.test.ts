@@ -85,7 +85,7 @@ it("actual draw and reading order changes alter digest", () => {
   [headers.semantics[0]!.readingOrder, headers.semantics[1]!.readingOrder] = [1, 0];
   expect(digestLayoutIR(headers)).not.toBe(original);
 });
-it("keeps font faces, features and variations distinct even with identical bytes", () => {
+it("keeps static font face and feature instances distinct even with identical bytes", () => {
   const ir = textFixture(),
     font = ir.resources.find((r) => r.kind === "font")!;
   if (font.kind !== "font") throw new Error("font");
@@ -95,10 +95,7 @@ it("keeps font faces, features and variations distinct even with identical bytes
   font.faceIndex = 0;
   font.features.liga = 0;
   expect(digestLayoutIR(ir)).not.toBe(before);
-  font.features.liga = 1;
-  font.variations.wght = 700;
-  expect(digestLayoutIR(ir)).not.toBe(before);
-  ir.resources.push({ ...font, id: "font-variant", variations: { wght: 400 } });
+  ir.resources.push({ ...font, id: "font-variant", features: { liga: 1 } });
   expect(canonicalizeLayoutIR(ir).resources.filter((r) => r.kind === "font")).toHaveLength(2);
 });
 it("deduplicates identical resources and rewrites references", () => {
@@ -522,4 +519,18 @@ it("compares decimal page boundaries without binary-addition false positives or 
   page.contentBox.width = 0.2;
   page.contentBox.height = 0.20000000000000004;
   expect(() => validateLayoutIR(input)).toThrow("IR_PAGE_BOUNDS");
+});
+
+it("current static-font profile reserves an empty variations map", () => {
+  const input = textFixture();
+  const canonical = canonicalizeLayoutIR(input);
+  for (const candidate of [input, canonical]) {
+    const font = candidate.resources.find((resource) => resource.kind === "font");
+    if (font?.kind !== "font") throw new Error("Missing fixture font");
+    expect(font.variations).toEqual({});
+    font.variations.wght = 400;
+  }
+  expect(() => validateLayoutIR(input)).toThrow("IR_SCHEMA");
+  expect(() => canonicalizeLayoutIR(input)).toThrow("IR_SCHEMA");
+  expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_SCHEMA");
 });
