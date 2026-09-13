@@ -325,3 +325,65 @@ it("retains terminal line offsets and rejects unsupported blocks/controls explic
     nodeId: "t",
   });
 });
+it("uses the selected font metrics for blank paragraphs and terminal lines, including fixed-height thresholds", async () => {
+  const result = await layout(
+    document([p("甲", "text"), p("", "empty"), p("甲\n", "terminal")]),
+    resources,
+    options,
+  );
+  const heights = result.lines.map((l) => l.height);
+  expect(heights).toHaveLength(4);
+  for (const height of heights) expect(height).toBeCloseTo(heights[0] ?? 0, 10);
+  const natural = (heights[0] ?? 0) / 1.2;
+  for (const text of ["甲", "", "甲\n"]) {
+    const exact = document([p(text, "p", { lineHeight: { kind: "fixed", value: natural } })]);
+    expect(
+      (await layout(exact, resources, options)).lines.every(
+        (l) => Math.abs(l.height - natural) < 1e-9,
+      ),
+    ).toBe(true);
+    const short = document([
+      p(text, "p", { lineHeight: { kind: "fixed", value: natural - 0.01 } }),
+    ]);
+    await expect(layout(short, resources, options)).rejects.toMatchObject({
+      code: "LAYOUT_OVERFLOW",
+    });
+  }
+  const heading = await layout(
+    document([p("标题\n", "h", { role: "heading", headingLevel: 2 })]),
+    resources,
+    options,
+  );
+  expect(heading.lines[0]?.height).toBeCloseTo(heading.lines[1]?.height ?? 0, 10);
+});
+it("justifies punctuation-separated Chinese at legal boundaries and fills the actual glyph advance", async () => {
+  const text = "甲，乙，丙，丁，戊，己，庚，辛，壬，癸。";
+  const { ir, lines } = await layout(
+    document([p(text, "p", { alignment: "justify" })]),
+    resources,
+    {
+      ...options,
+      page: { ...options.page, contentBox: { ...options.page.contentBox, width: 27 } },
+    },
+  );
+  expect(lines.length).toBeGreaterThan(1);
+  for (const line of lines.slice(0, -1)) {
+    expect(line.width).toBeCloseTo(27, 10);
+    const run = texts(ir).find((t) => Math.abs(t.baseline.y - line.baseline * 1000) < 1);
+    expect(run).toBeDefined();
+    const last = run?.glyphs.at(-1);
+    expect(last).toBeDefined();
+    expect(Math.abs((last?.position.x ?? 0) + (last?.advance.x ?? 0) - 47000)).toBeLessThanOrEqual(
+      1,
+    );
+    expect(permitsChineseBreak(text, line.end)).toBe(true);
+  }
+  expect(extract(ir)).toBe(text);
+});
+it("rejects inherited object property names as missing styles in a supplied ResolvedDocument", async () => {
+  const doc = document([p("text")]);
+  const paragraph = doc.body[0];
+  if (paragraph?.kind !== "paragraph") throw new Error("Missing paragraph");
+  paragraph.styleId = "constructor";
+  await expect(layout(doc, resources, options)).rejects.toMatchObject({ code: "LAYOUT_INPUT" });
+});

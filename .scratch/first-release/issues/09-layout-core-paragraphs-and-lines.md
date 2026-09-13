@@ -26,3 +26,18 @@
 - Scope remains LTR horizontal P0 paragraphs. Tables/InputControl layout fail explicitly; oversized words, too-small line heights and page overflow fail without truncation or pagination. Full browser/OS matrix, writers/readers, subsetting and page layout remain later issues. See `packages/layout-core/README.md` for defaults and compatibility.
 - .NET: locked restore with SDK 10.0.302, single-node build (0 warnings/errors), then MTP `--no-build --no-restore`: **46 passed, 0 failed, 0 skipped** on macOS arm64. The MTP named pipe needed execution outside the filesystem/network sandbox; no product failure was suppressed.
 - PR bot review at the final pushed head and CI are still required and will be tracked on the PR; `ready-for-human` records local implementation evidence, not final acceptance.
+
+### 2026-09-13 — First bot review and supplemental two-axis review
+
+- Bot completed review of `b704bca` at 03:39:07 UTC. Its blank-line metrics P2 is valid: empty paragraphs and terminal blank lines now use the same OS/2/hhea metrics and script scaling as visible text. Shared tests compare default heights and fixed-height acceptance/rejection thresholds, including a heading ending in a newline.
+
+#### Standards
+
+Independent review of fixed range `630bf992...b704bca`: no hard documented-standard violations. Four nonblocking heuristics are deferred: repeated stretch-gap calculation, positional `emit` parameter clump, terse conversion/numbering/state names, and duplicated test extraction helpers. These do not alter current output behavior or require expanding this issue into a structural refactor.
+
+#### Spec
+
+Independent review reproduced one P2: punctuation-separated Chinese justified lines retained left-aligned width. Stretch opportunities now include legal UAX #14 / Chinese-rule boundaries adjacent to Han or punctuation; a real-font test verifies both 27 mm line width and actual final glyph position+advance. No other high-confidence missing requirements or scope creep were reported.
+
+- Additional source inspection found inherited object properties could masquerade as styles in a supplied ResolvedDocument; style lookup now requires an own property and tests `constructor` as an absent style.
+- Validation after fixes: Layout Core Node **17/17**, Chromium **16/16**, typecheck/build/lint/diff checks passed. Prior full repository/IR/.NET evidence remains applicable to unchanged components. The prior head's GitHub CI succeeded; the pushed revision still needs fresh bot/CI completion.

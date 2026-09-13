@@ -59,7 +59,7 @@ CR/LF/CRLF and U+2028/U+2029 are mandatory breaks, and Tab/newline logical text 
 in zero-glyph text objects. A terminal break creates a following empty line.
 
 Left/center/right alignment applies to each line. Justification distributes remaining width
-between shaped space clusters or adjacent Han clusters on non-final, non-mandatory lines.
+between shaped space clusters or legal Han/punctuation cluster boundaries on non-final, non-mandatory lines.
 It preserves clusters and never justifies lines containing Tabs. Trailing spaces retain their
 shaped advance in the width calculation; whitespace is not trimmed from source extraction.
 

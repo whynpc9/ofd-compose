@@ -280,7 +280,7 @@ class ParagraphLayouter {
   }
   private style(styleId?: string): TextStyle {
     if (styleId === undefined) return {};
-    const style = this.doc.styles[styleId];
+    const style = Object.hasOwn(this.doc.styles, styleId) ? this.doc.styles[styleId] : undefined;
     if (!style) throw new LayoutError("LAYOUT_INPUT", `Unknown style ${styleId}`);
     return style;
   }
@@ -344,6 +344,27 @@ class ParagraphLayouter {
       );
     return runs;
   }
+  private metrics(run: Run) {
+    const nominal = (run.style.fontSize ?? this.options.defaultStyle.fontSize) * pt;
+    const size =
+      nominal * (run.style.verticalAlign && run.style.verticalAlign !== "baseline" ? 0.65 : 1);
+    const shift =
+      run.style.verticalAlign === "superscript"
+        ? -nominal * 0.35
+        : run.style.verticalAlign === "subscript"
+          ? nominal * 0.2
+          : 0;
+    const scale = size / run.face.metrics.head.unitsPerEm;
+    const metrics = run.face.metrics;
+    const ascender = metrics.os2.useTypoMetrics ? metrics.os2.typoAscender : metrics.hhea.ascent;
+    const descender = metrics.os2.useTypoMetrics ? metrics.os2.typoDescender : metrics.hhea.descent;
+    return {
+      size,
+      shift,
+      ascent: Math.max(0, ascender * scale - shift),
+      descent: Math.max(0, -descender * scale + shift),
+    };
+  }
   private measure(
     text: string,
     runs: Run[],
@@ -359,21 +380,8 @@ class ParagraphLayouter {
         b = Math.min(end, run.end);
       if (a >= b) continue;
       const slice = text.slice(a, b);
-      const nominal = (run.style.fontSize ?? this.options.defaultStyle.fontSize) * pt;
-      const size =
-        nominal * (run.style.verticalAlign && run.style.verticalAlign !== "baseline" ? 0.65 : 1);
-      const shift =
-        run.style.verticalAlign === "superscript"
-          ? -nominal * 0.35
-          : run.style.verticalAlign === "subscript"
-            ? nominal * 0.2
-            : 0;
+      const { size, shift, ascent, descent } = this.metrics(run);
       const scale = size / run.face.metrics.head.unitsPerEm;
-      const metrics = run.face.metrics;
-      const ascender = metrics.os2.useTypoMetrics ? metrics.os2.typoAscender : metrics.hhea.ascent;
-      const descender = metrics.os2.useTypoMetrics
-        ? metrics.os2.typoDescender
-        : metrics.hhea.descent;
       const shaped = run.control ? undefined : this.shape(slice, run);
       let width = shaped ? shaped.advance.x * scale : 0;
       if (slice === "\t") {
@@ -391,8 +399,8 @@ class ParagraphLayouter {
         size,
         shift,
         width,
-        ascent: Math.max(0, ascender * scale - shift),
-        descent: Math.max(0, -descender * scale + shift),
+        ascent,
+        descent,
         ...(shaped ? { shaped } : {}),
       });
       x += width;
@@ -476,6 +484,7 @@ class ParagraphLayouter {
     const candidates = lineBreakOpportunities(text).filter(
       (b) => b.required || (safe.has(b.position) && permitsChineseBreak(text, b.position)),
     );
+    const breakPositions = new Set(candidates.map((candidate) => candidate.position));
     this.y += properties.spaceBefore ?? 0;
     let start = 0,
       lineIndex = 0;
@@ -501,14 +510,15 @@ class ParagraphLayouter {
           "Unbreakable text exceeds line width",
           paragraph.nodeId,
         );
-      const blankSize = (base.fontSize ?? 12) * pt;
+      const blankRun = runs.at(-1) ?? labelRun;
+      const blankMetrics = this.metrics(blankRun);
       const metricPieces = [...pieces, ...(lineIndex === 0 ? labelPieces : [])];
       const ascent = metricPieces.length
         ? Math.max(...metricPieces.map((p) => p.ascent))
-        : blankSize;
+        : blankMetrics.ascent;
       const descent = metricPieces.length
         ? Math.max(...metricPieces.map((p) => p.descent))
-        : blankSize * 0.2;
+        : blankMetrics.descent;
       const natural = ascent + descent;
       const height =
         properties.lineHeight?.kind === "fixed"
@@ -530,7 +540,7 @@ class ParagraphLayouter {
       const width = pieces.reduce((sum, p) => sum + p.width, 0);
       const alignment = properties.alignment ?? "left";
       const justify = alignment === "justify" && end < text.length && !forced;
-      const gaps = justify ? this.justificationGaps(pieces, text, end) : [];
+      const gaps = justify ? this.justificationGaps(pieces, text, end, breakPositions) : [];
       const extra = gaps.length ? (available - width) / gaps.length : 0;
       const offset =
         alignment === "right"
@@ -567,15 +577,12 @@ class ParagraphLayouter {
       }
       if (!pieces.length) {
         const empty: Piece = {
-          run: labelRun,
-          start: 0,
-          end: 0,
+          run: blankRun,
+          start,
+          end,
           text: "",
-          size: blankSize,
-          shift: 0,
+          ...blankMetrics,
           width: 0,
-          ascent,
-          descent,
         };
         this.emit(empty, x, baseline, paragraph, spans, [], 0);
       }
@@ -595,7 +602,12 @@ class ParagraphLayouter {
         paragraph.nodeId,
       );
   }
-  private justificationGaps(pieces: Piece[], text: string, end: number): number[] {
+  private justificationGaps(
+    pieces: Piece[],
+    text: string,
+    end: number,
+    breakPositions: Set<number>,
+  ): number[] {
     if (pieces.some((p) => p.text === "\t")) return [];
     const gaps: number[] = [];
     for (const piece of pieces)
@@ -603,12 +615,16 @@ class ParagraphLayouter {
         const at = piece.start + glyph.clusterEnd;
         if (at >= end || gaps.includes(at)) continue;
         const cluster = text.slice(piece.start + glyph.cluster, at);
-        if (
-          / $/u.test(cluster) ||
-          (scriptOf(Array.from(cluster).at(-1) ?? "") === "Hani" &&
-            scriptOf(String.fromCodePoint(text.codePointAt(at) ?? 0)) === "Hani")
-        )
-          gaps.push(at);
+        const left = Array.from(cluster).at(-1) ?? "";
+        const right = String.fromCodePoint(text.codePointAt(at) ?? 0);
+        const cjkEdge =
+          scriptOf(left) === "Hani" ||
+          scriptOf(right) === "Hani" ||
+          opening.has(left) ||
+          closing.has(left) ||
+          opening.has(right) ||
+          closing.has(right);
+        if (/ $/u.test(cluster) || (breakPositions.has(at) && cjkEdge)) gaps.push(at);
       }
     return gaps;
   }
