@@ -13,6 +13,7 @@
     "test:browser": "vitest run --config vitest.browser.config.ts"
   },
   "dependencies": {
+    "@ofd-compose/media-core": "workspace:*",
     "@ofd-compose/binding-core": "workspace:*",
     "@ofd-compose/document-model": "workspace:*",
     "@ofd-compose/layout-ir": "workspace:*",
@@ -20,6 +21,7 @@
     "@sinclair/typebox": "0.34.52"
   },
   "devDependencies": {
+    "zxing-wasm": "3.1.3",
     "@ofd-compose/template-compiler": "workspace:*",
     "vitest": "5.0.0",
     "vite": "8.2.2"

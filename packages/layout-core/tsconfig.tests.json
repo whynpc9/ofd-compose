@@ -4,7 +4,10 @@
     "types": ["node", "vite/client"],
     "lib": ["ES2024", "DOM"],
     "resolveJsonModule": true,
-    "paths": { "#font-loader": ["./tests/load.node.ts"] }
+    "paths": {
+      "#decoder": ["../media-core/tests/decoder.node.ts"],
+      "#font-loader": ["./tests/load.node.ts"]
+    }
   },
   "include": ["tests", "*.config.ts"]
 }

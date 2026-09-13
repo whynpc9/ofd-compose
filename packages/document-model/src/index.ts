@@ -6,6 +6,7 @@ export {
   diagnosticCodes,
   hasErrors,
 } from "./diagnostics.js";
+export * from "./graphics.js";
 export { imageReference } from "./image-reference.js";
 export { toJsonSchemaDocument } from "./json-schema.js";
 export * from "./schema.js";

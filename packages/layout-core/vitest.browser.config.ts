@@ -4,7 +4,10 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   resolve: {
-    alias: { "#font-loader": fileURLToPath(new URL("./tests/load.browser.ts", import.meta.url)) },
+    alias: {
+      "#decoder": fileURLToPath(new URL("../media-core/tests/decoder.browser.ts", import.meta.url)),
+      "#font-loader": fileURLToPath(new URL("./tests/load.browser.ts", import.meta.url)),
+    },
   },
   // Preserve Emscripten's import.meta.url-relative WASM asset loading.
   optimizeDeps: { exclude: ["harfbuzzjs"] },

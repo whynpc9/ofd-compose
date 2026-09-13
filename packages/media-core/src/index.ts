@@ -1,6 +1,8 @@
+import { sha256 } from "@noble/hashes/sha2.js";
+import { bytesToHex } from "@noble/hashes/utils.js";
 import type { ResolvedBlock, ResolvedDocument, ResolvedMedia } from "@ofd-compose/binding-core";
-import type { Diagnostic, ImageSource } from "@ofd-compose/document-model";
-import { digestCanonical } from "@ofd-compose/layout-ir";
+import { type Diagnostic, type ImageSource, imageReference } from "@ofd-compose/document-model";
+import { canonicalSerialize, digestCanonical } from "@ofd-compose/layout-ir";
 import { barcode, type PreparedBarcode } from "./barcodes.js";
 import {
   configurationField,
@@ -79,7 +81,8 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
         fail("RESOURCE_LIMIT", "Media document traversal budget exceeded");
       for (const block of body) {
         if (++visited > 200000) fail("RESOURCE_LIMIT", "Media document traversal budget exceeded");
-        if (block.kind === "table") {
+        if (block.kind === "region") visit(block.children, depth + 1);
+        else if (block.kind === "table") {
           if (block.rows.length > 10000)
             fail("RESOURCE_LIMIT", "Media table traversal budget exceeded");
           for (const row of block.rows) {
@@ -125,7 +128,62 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
         ...(block.barcode ? { barcode: block.barcode.geometryDigest } : {}),
       })),
     });
-    return { ok: true as const, blocks, mediaIdentity, diagnostics };
+    const result = { ok: true as const, blocks, mediaIdentity, diagnostics };
+    const identitySources = blocks.map(({ source }) =>
+      source.kind === "image-binding"
+        ? {
+            ...source,
+            sources: source.sources.map((value) =>
+              typeof value === "string" ? value : imageReference(value),
+            ),
+          }
+        : source,
+    );
+    // Reserve JSON escaping, UTF-8 copies and hashing before allocating the source
+    // fingerprints. A second source hash and byte check are prepaid for layout consumption.
+    for (const [index, block] of blocks.entries()) {
+      let units = 0;
+      const visit = (value: unknown): void => {
+        units += 32;
+        if (typeof value === "string") units += value.length * 6;
+        else if (value && typeof value === "object")
+          for (const [key, child] of Object.entries(value)) {
+            units += key.length * 6 + 8;
+            visit(child);
+          }
+      };
+      visit(identitySources[index]);
+      budget.charge("workUnits", units * 2);
+      for (const image of block.images ?? []) budget.charge("workUnits", image.bytes.byteLength);
+      if (block.barcode) budget.charge("workUnits", block.barcode.path.commands.length * 256);
+    }
+    const snapshot: LayoutMediaSnapshot = {
+      mediaIdentity,
+      blocks: blocks.map((block, index) => ({
+        sourceDigest: digestCanonical(identitySources[index]),
+        ...(block.images
+          ? { images: block.images.map(({ bytes: _bytes, ...image }) => image) }
+          : {}),
+        ...(block.barcode ? { barcode: block.barcode } : {}),
+      })),
+    };
+    layoutSnapshots.set(result, {
+      json: canonicalSerialize(snapshot),
+      blocks,
+      containers: blocks.map((block) => ({
+        block,
+        images: block.images,
+        entries: [...(block.images ?? [])],
+      })),
+      images: blocks.flatMap((block) =>
+        (block.images ?? []).map((image) => ({
+          image,
+          bytes: image.bytes,
+          digest: image.resource.digest,
+        })),
+      ),
+    });
+    return result;
   } catch (error) {
     if (!(error instanceof MediaError)) throw error;
     diagnostics.push({
@@ -143,4 +201,59 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
     });
     return { ok: false as const, blocks: [], diagnostics };
   }
+}
+
+/** Private preparation provenance: layout consumes owned geometry, never caller-provided descriptors. */
+export interface LayoutMediaSnapshot {
+  mediaIdentity: string;
+  blocks: {
+    sourceDigest: string;
+    images?: Omit<PreparedImage, "bytes">[];
+    barcode?: PreparedBarcode;
+  }[];
+}
+const layoutSnapshots = new WeakMap<
+  object,
+  {
+    json: string;
+    blocks: PreparedMediaBlock[];
+    containers: {
+      block: PreparedMediaBlock;
+      images: readonly PreparedImage[] | undefined;
+      entries: PreparedImage[];
+    }[];
+    images: { image: PreparedImage; bytes: Uint8Array; digest: string }[];
+  }
+>();
+/** Only successful in-process prepareMedia results have this provenance. Returned geometry is owned. */
+export function mediaForLayout(prepared: object): LayoutMediaSnapshot {
+  const serialized = layoutSnapshots.get(prepared);
+  if (!serialized)
+    throw new MediaError("MODEL_INVALID", "Layout requires a successful prepareMedia result");
+  const data = (object: object, key: string) => Object.getOwnPropertyDescriptor(object, key)?.value;
+  if (
+    data(prepared, "blocks") !== serialized.blocks ||
+    serialized.blocks.length !== serialized.containers.length
+  )
+    throw new MediaError("MODEL_INVALID", "Prepared media containers changed after preparation");
+  for (const [index, container] of serialized.containers.entries()) {
+    if (
+      data(serialized.blocks, String(index)) !== container.block ||
+      data(container.block, "images") !== container.images ||
+      (container.images &&
+        (container.images.length !== container.entries.length ||
+          container.entries.some(
+            (entry, i) => data(container.images as object, String(i)) !== entry,
+          )))
+    )
+      throw new MediaError("MODEL_INVALID", "Prepared image containers changed after preparation");
+  }
+  for (const entry of serialized.images) {
+    if (
+      Object.getOwnPropertyDescriptor(entry.image, "bytes")?.value !== entry.bytes ||
+      bytesToHex(sha256(entry.bytes)) !== entry.digest
+    )
+      throw new MediaError("MODEL_INVALID", "Prepared image bytes changed after preparation");
+  }
+  return JSON.parse(serialized.json) as LayoutMediaSnapshot;
 }

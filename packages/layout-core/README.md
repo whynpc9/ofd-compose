@@ -1,4 +1,4 @@
-# Layout Core: paragraphs and pagination
+# Layout Core: paragraphs, pagination, media and regions
 
 Issues [09](../../.scratch/first-release/issues/09-layout-core-paragraphs-and-lines.md) and
 [10](../../.scratch/first-release/issues/10-layout-core-pagination-headers-footers-watermark.md) implement `layout(ResolvedDocument, LayoutFont[], LayoutOptions)` in shared TypeScript.
@@ -7,7 +7,7 @@ options. All fonts finish loading and are digest/style checked before shaping or
 No filesystem, network, DOM, Canvas, system-font fallback or `Intl` is used by this package.
 
 The exported paragraph profile and its feature list are frozen; each invocation owns its internal profile copy.
-The result contains canonical integer-µm `ir`, its `semanticMap`, diagnostic-free success,
+The result contains canonical integer-µm `ir`, its `semanticMap`, explicit-policy diagnostics,
 and paragraph-relative UTF-16 `lines` with **mm** geometry for inspection. Nonsemantic `work` counters report shaped units, candidate/run visits and expanded output-text units. Failure throws
 `LayoutError` (code/nodeId) or the existing Typography/IR validation error. Never pass the
 returned canonical IR back to `canonicalizeLayoutIR`.
@@ -222,3 +222,77 @@ state traversal at the hard page limit. The 50-page content is a **synthetic cap
 using real locked fonts**, not a supplied anonymized host business document. Real business
 50-page acceptance, Firefox/other browser versions, Linux architecture matrix and final
 OFD/PDF reader interoperability remain unverified.
+
+## Issue 12: frozen media, paths and regions
+
+Call `prepareMedia(resolved, authorizedOptions)` first, then pass its successful result as
+`layout(resolved, fonts, options, prepared)`. The fourth argument is optional for existing
+paragraph-only callers. Media Core retains a private owned geometry snapshot; layout rejects
+unrecognized results and mismatched current media sources, options, placement or repeat identity.
+It verifies prepared image bytes have not changed before loading fonts. The host still passes
+those prepared bytes to the writer; layout does not read files, URLs or reimplement dimensions.
+Preparation and layout must use the same in-process Media Core instance; transported results need
+a new trusted preparation step. A copied JSON object is not preparation provenance.
+
+Image source dimensions, explicit/fit dimensions, scale and maximum bounds come directly from
+issue 11, including its explicit legacy 96-dpi stage rounding. `placement.alignment` is left
+(default), center or right. Image lists are vertical atomic items, with optional `placement.gap`
+in mm between list entries. Each item moves whole to the next page; an item larger than the
+content area fails. `placement.crop` is an explicit rectangle **in the frozen physical image's
+local mm**, checked inside that image; its dimensions become the flow allocation while its
+pixel-local IR clip preserves the original image transform. Unknown dimensions never enter IR.
+Every item gets a unique object and Semantic Map binding/repeat entry, including repeated lists.
+
+Barcodes retain the exact prepared local path and full quiet-zone physical bounds. Placement
+only translates. Region scaling is uniform and rejects a final module smaller than 0.1 mm or
+bar height smaller than 1 mm. Clipping a barcode's allocated quiet zones or bars is an error.
+Both code128 and ean13 tests independently decode the *placed, scaled canonical IR geometry*
+with ZXing in Node and Chromium. This is still core evidence, not printer/reader certification.
+
+A `path` block declares `width`, `height`, local move/line/cubic/close commands, optional fill
+color/fillRule, stroke and affine transform. Control points must lie in the declared local box;
+this provides conservative bounds without expensive path flattening. Stroke expansion uses a
+conservative cap/join/miter envelope. Affine rotation/reflection transforms that whole envelope
+and the commands' graphics state together; the result is translated into flow without losing
+negative transformed extents. Singular/degenerate matrices, invalid command ordering, invisible
+paths and all-zero dash patterns fail. A horizontal two-command path is a separator; its declared
+positive-height box controls flow spacing. `Stroke` contains width/color/dash/dashOffset/cap/join/
+miterLimit. Paragraph `layout.border` emits an inset rectangle per paragraph page fragment.
+`borderPath(box, stroke)` is the shared inset-path builder for issue 13. Table and cell `border`
+are preserved by compile/bind and exported schemas; complete cell sizing, shared-edge resolution,
+row spans and table pagination remain issue 13. Layout still rejects table blocks pending that work.
+
+A `region` contains bound children and `layout: {mode, box, overflow?}`. Fixed boxes use absolute
+page mm and leave the surrounding flow cursor unchanged; intentional overlap is the template's
+responsibility. Flow boxes use x/y offsets from the current content origin/cursor and reserve
+height as one atomic item. Both boxes must fit their assigned page area. P0 regions contain
+paragraphs/media/paths and expanded conditionals/repeats; nested regions, section changes and
+page breaks inside a region are explicit input errors.
+
+Overflow defaults to `{kind: "error"}` and throws `LAYOUT_OVERFLOW`. Explicit policies are:
+
+- `{kind: "truncate"}`: lay out the full content, retain source semantics, add real local clips
+  and intersect page bounds. A warning records whether anything was clipped. It does not delete
+  hidden source strings from Semantic Map; consumers must distinguish source from visible text.
+- `{kind: "scale", minScale}`: uniformly transform all text/image/path geometry and bounds to fit;
+  page-coordinate decoration paths become local paths before that transform. Fail below minScale.
+- `{kind: "min-font-size", minFontSize}`: actually reshape and rebreak text at eight descending
+  scale steps after the original-size attempt, clamping each nominal font at the declared floor
+  without enlarging existing smaller text. Fixed line heights, image dimensions and path geometry
+  remain explicit constraints. Failure at the floor is an error. Existing superscript/subscript
+  ratios remain relative to nominal font size. The successful warning records the chosen scale.
+
+Every non-default policy produces a node/page diagnostic, even if no overflow occurred. Region
+attempts share shaping, source mappings, output text, object, command and page work across the
+whole job and total-page convergence passes. Discarded attempts do not refund budgets. New hard
+ceilings: 256 region attempts and 1,000,000 path/clip commands per job; empty regions and empty
+media lists are charged too. Numbering state is restored for reflow while resource work is not.
+Combined prepared-image and watermark resources share the 64-resource/100M-pixel layout ceilings.
+Media source fingerprinting and byte revalidation are reserved before serialization/hashing in
+Media Core's existing 64M work budget, including its lower host limits. Nested input paragraphs
+participate in the existing cumulative input/fragment limits before font acquisition.
+
+Tests pin one shared Node/Chromium canonical digest covering image cropping, region transforms
+and paragraph borders; unchanged paragraph/pagination fixtures retain their previous digests.
+Full writer integration, Firefox, Linux x64/arm64 and human reader/printing acceptance remain
+unverified by this issue.
