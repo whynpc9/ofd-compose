@@ -1,5 +1,4 @@
 import {
-  instanceIdentity,
   type ResolvedDocument,
   ResolvedDocumentSchema,
   type ResolvedParagraph,
@@ -221,6 +220,7 @@ export interface LayoutLine {
   paragraphIndex: number;
   pageIndex: number;
   sectionId: string;
+  sectionSourceId?: string;
   start: number;
   end: number;
   x: number;
@@ -349,7 +349,7 @@ export async function layout(
     if (block.kind !== "paragraph") continue;
     const section = block.layout?.section;
     if (section) {
-      const occurrence = sectionOccurrenceId(block);
+      const occurrence = sectionOccurrenceId(block, doc.documentId);
       if (sections.has(occurrence))
         throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
       sections.add(occurrence);
@@ -471,12 +471,16 @@ export async function layout(
   );
 }
 
-/** Static source IDs exclude @; the escaped complete instance chain makes occurrence IDs unambiguous. */
-function sectionOccurrenceId(paragraph: ResolvedParagraph): string {
+/** Canonical tuples retain source identity and every enclosing node/key boundary. */
+function sectionOccurrenceId(paragraph: ResolvedParagraph, rootSectionId: string): string {
   const section = paragraph.layout?.section;
   if (!section) throw new Error("Missing section marker");
-  const instance = instanceIdentity(paragraph.instancePath);
-  return instance ? `${section.id}@${instance}` : section.id;
+  if (!paragraph.instancePath?.length) return section.id;
+  // Explicit source section IDs cannot start with @ under the model schema. The implicit
+  // root uses an arbitrary documentId, so avoid that one value too. Doubling @ cannot
+  // collide with another generated ID, which always starts with the single @section: prefix.
+  const generated = `@section:${canonicalSerialize([section.id, paragraph.instancePath.map((instance) => [instance.nodeId, instance.key])])}`;
+  return generated === rootSectionId ? `@${generated}` : generated;
 }
 
 interface LayoutWork {
@@ -529,6 +533,7 @@ class ParagraphLayouter {
     Extract<LayoutIR["resources"][number], { kind: "image" }>
   >();
   private sectionId: string;
+  private sectionSourceId: string;
   private sectionStart = 0;
   private pageSettings?: PageSettings;
   private geometry: PageGeometry;
@@ -553,8 +558,10 @@ class ParagraphLayouter {
     const page = this.pageSettings ? pageGeometry(this.pageSettings) : options.page;
     this.sectionId =
       first?.kind === "paragraph" && first.layout?.section
-        ? sectionOccurrenceId(first)
+        ? sectionOccurrenceId(first, doc.documentId)
         : doc.documentId;
+    this.sectionSourceId =
+      first?.kind === "paragraph" ? (first.layout?.section?.id ?? doc.documentId) : doc.documentId;
     this.sectionIds.add(this.sectionId);
     const profile = { ...paragraphProfile, features: [...paragraphProfile.features] };
     if (
@@ -625,13 +632,14 @@ class ParagraphLayouter {
         throw new LayoutError("LAYOUT_UNSUPPORTED", "Tables belong to issue 13", block.nodeId);
       const section = block.layout?.section;
       if (section && index > 0) {
-        const occurrence = sectionOccurrenceId(block);
+        const occurrence = sectionOccurrenceId(block, this.doc.documentId);
         if (this.sectionIds.has(occurrence))
           throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
         this.sectionIds.add(occurrence);
         this.pageSettings = section.page;
         this.geometry = pageGeometry(section.page);
         this.sectionId = occurrence;
+        this.sectionSourceId = section.id;
         this.sectionStart = this.ir.pages.length;
         this.newPage();
       }
@@ -669,6 +677,7 @@ class ParagraphLayouter {
         this.pageSettings?.orientation ??
         (this.geometry.width <= this.geometry.height ? "portrait" : "landscape"),
       sectionId: this.sectionId,
+      ...(this.sectionId !== this.sectionSourceId ? { sectionSourceId: this.sectionSourceId } : {}),
       objects: [],
     });
     this.pageSettingsByIndex.push(this.pageSettings);
@@ -1237,6 +1246,9 @@ class ParagraphLayouter {
           paragraphIndex,
           pageIndex: this.pageIndex,
           sectionId: this.sectionId,
+          ...(this.sectionId !== this.sectionSourceId
+            ? { sectionSourceId: this.sectionSourceId }
+            : {}),
           start,
           end,
           x,
@@ -1491,6 +1503,9 @@ class ParagraphLayouter {
         readingOrder: this.ir.semantics.length,
         pageIndex: this.pageIndex,
         sectionId: this.sectionId,
+        ...(this.sectionId !== this.sectionSourceId
+          ? { sectionSourceId: this.sectionSourceId }
+          : {}),
         ...(sources.length ? { sourceRanges: sources } : {}),
         ...(sources.length === 1 && first
           ? {

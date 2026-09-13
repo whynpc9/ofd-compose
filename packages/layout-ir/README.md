@@ -192,6 +192,8 @@ Optional `link` retains a text run's target as semantic metadata. These additive
 leave old fixtures byte-identical but require older strict-schema consumers to update before
 accepting new populated fields. They do not freeze v0 or alter integer-µm transport rules.
 
-Issue 10 adds optional semantic `pageIndex` and `sectionId`. When present, validation
+Issue 10 adds optional semantic `pageIndex`, `sectionId` and `sectionSourceId`, plus optional
+page `sectionSourceId` for repeated-section occurrence IDs. When present, validation
 requires them to match the page owning `objectId`; canonicalization preserves these
-source fields and includes them in the semantic digest. Old fixtures remain valid.
+source fields and includes them in the semantic digest. A semantic sectionSourceId must
+match its page's sectionSourceId (or sectionId for an unexpanded section). Old fixtures remain valid.

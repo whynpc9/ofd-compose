@@ -665,3 +665,67 @@ it("lays out nested keyed repeat sections with stable occurrence identity and in
     layout(bound.document, resources, { ...options, pagination: { maxPages: 7 } }),
   ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
 });
+
+it("keeps section occurrence tuples collision-free for arbitrary keys, node IDs and the implicit root", async () => {
+  const keys = ["", "汉字😀", "a/b=c\\d@", "a", "b"];
+  const generatedRoot = `@section:${canonicalSerialize(["report", [["left", ""]]])}`;
+  const repeat = (nodeId: string): TemplateSource["body"][number] => ({
+    kind: "repeat-block",
+    nodeId,
+    bindingId: `${nodeId}-binding`,
+    expression: { kind: "legacy", text: "items" },
+    repeatKey: { kind: "path", path: "id" },
+    children: [p("甲", `${nodeId}-paragraph`, { section: { id: "report", page } })],
+  });
+  const source: TemplateSource = {
+    schemaVersion: "ofd-compose/document-model@0",
+    documentId: generatedRoot,
+    revisionId: "1",
+    settings: { locale: "zh-CN", timeZone: "UTC", bindingPolicyVersion: "strict-1", page },
+    styles: {},
+    body: [
+      p("根", "root"),
+      repeat("left"),
+      repeat("right"),
+      {
+        kind: "repeat-block",
+        nodeId: "outer",
+        bindingId: "outer-binding",
+        expression: { kind: "legacy", text: "outer" },
+        repeatKey: { kind: "path", path: "id" },
+        children: [repeat("nested")],
+      },
+    ],
+  };
+  const compiled = compile(source);
+  if (!compiled.ok) throw new Error(JSON.stringify(compiled.diagnostics));
+  const result = bind(compiled.template, {
+    items: keys.map((id) => ({ id })),
+    outer: [{ id: "", items: [{ id: "" }] }],
+  });
+  if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+  const laidOut = await layout(result.document, resources, options);
+  const ids = laidOut.ir.pages.map((p) => p.sectionId);
+  expect(new Set(ids).size).toBe(12);
+  expect(ids[0]).toBe(generatedRoot);
+  expect(ids[1]).toBe(`@${generatedRoot}`);
+  expect(ids[6]).toBe(`@section:${canonicalSerialize(["report", [["right", ""]]])}`);
+  expect(ids[11]).toBe(
+    `@section:${canonicalSerialize([
+      "report",
+      [
+        ["outer", ""],
+        ["nested", ""],
+      ],
+    ])}`,
+  );
+  for (const current of laidOut.ir.pages.slice(1)) {
+    expect(current.sectionSourceId).toBe("report");
+    expect(
+      laidOut.ir.semantics
+        .filter((s) => s.pageIndex === current.pageIndex)
+        .every((s) => s.sectionSourceId === "report"),
+    ).toBe(true);
+  }
+  validateCanonicalLayoutIR(laidOut.ir);
+});

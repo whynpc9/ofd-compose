@@ -156,7 +156,9 @@ export function validateReferences(
     const targetPage = targetPageId ? pages.get(targetPageId) : undefined;
     if (
       (semantic.pageIndex !== undefined && semantic.pageIndex !== targetPage?.pageIndex) ||
-      (semantic.sectionId !== undefined && semantic.sectionId !== targetPage?.sectionId)
+      (semantic.sectionId !== undefined && semantic.sectionId !== targetPage?.sectionId) ||
+      (semantic.sectionSourceId !== undefined &&
+        semantic.sectionSourceId !== (targetPage?.sectionSourceId ?? targetPage?.sectionId))
     )
       fail("IR_REFERENCE", "semantics", "Semantic page/section mismatch");
     for (const source of semantic.sourceRanges ?? []) {

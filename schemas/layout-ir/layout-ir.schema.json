@@ -699,6 +699,10 @@
             "minLength": 1,
             "type": "string"
           },
+          "sectionSourceId": {
+            "minLength": 1,
+            "type": "string"
+          },
           "objects": {
             "type": "array",
             "items": {
@@ -1609,6 +1613,10 @@
             "type": "integer"
           },
           "sectionId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "sectionSourceId": {
             "minLength": 1,
             "type": "string"
           },

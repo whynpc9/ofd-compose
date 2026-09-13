@@ -138,8 +138,10 @@ from the margin content area. Nonpositive/quantized-away content dimensions fail
 `Paragraph.layout.pageBreakBefore: true` is the explicit page-break representation. It
 always advances a page, including an initial blank page. `layout.section: {id,page}` begins
 a section on a new page; on the first paragraph it configures the initial page. Section occurrence IDs
-are unique within the resolved document. A repeated section uses the source section ID plus
-`@` and Binding Core's escaped complete `instanceIdentity` chain (all enclosing node/key pairs).
+are unique within the resolved document. A repeated section uses `@section:` plus a canonical JSON tuple of the source ID and all
+enclosing node/key pairs. This namespace cannot collide with model-valid explicit source
+IDs; the allocator also avoids the arbitrary implicit root document ID. Optional
+`sectionSourceId` retains the original section ID on pages, semantics and inspection lines.
 This keeps keyed occurrences stable under reordering and gives each occurrence its own page
 numbering/hiding scope; non-repeated section IDs remain unchanged. Section start and explicit break both apply when
 both are declared, deliberately producing a blank section page. This small model extension
