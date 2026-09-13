@@ -93,6 +93,34 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
     );
     expect(jpg.blocks[0]?.images?.[0]?.resource.mimeType).toBe("image/jpeg");
   });
+  it("uses the declared EXIF IFD offset in either byte order", () => {
+    const jpeg = Uint8Array.from(atob(fixtures.jpeg), (c) => c.charCodeAt(0));
+    for (const little of [true, false])
+      for (const ifdOffset of [8, 16])
+        for (const orientation of [1, 6]) {
+          const exif = new Uint8Array(6 + ifdOffset + 18);
+          exif.set([69, 120, 105, 102, 0, 0]);
+          const tiff = new DataView(exif.buffer, 6);
+          tiff.setUint16(0, little ? 0x4949 : 0x4d4d);
+          tiff.setUint16(2, 42, little);
+          tiff.setUint32(4, ifdOffset, little);
+          tiff.setUint16(ifdOffset, 1, little);
+          tiff.setUint16(ifdOffset + 2, 274, little);
+          tiff.setUint16(ifdOffset + 4, 3, little);
+          tiff.setUint32(ifdOffset + 6, 1, little);
+          tiff.setUint16(ifdOffset + 10, orientation, little);
+          const input = new Uint8Array(jpeg.length + exif.length + 4);
+          input.set(jpeg.subarray(0, 2));
+          input.set([255, 225, (exif.length + 2) >>> 8, (exif.length + 2) & 255], 2);
+          input.set(exif, 6);
+          input.set(jpeg.subarray(2), 6 + exif.length);
+          const result = run({ images: { resourceId: "exif" } }, [image()], {
+            resources: [{ id: "exif", bytes: input }],
+          });
+          expect(result.ok).toBe(orientation === 1);
+          if (orientation !== 1) expect(result.diagnostics[0]?.code).toBe("UNSUPPORTED_FEATURE");
+        }
+  });
   it("rejects a truncated image and CRC mismatch", () => {
     const truncated = bytes.slice(0, 33);
     const corrupted = bytes.slice();
@@ -177,6 +205,57 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
     "rejects GIF/BMP/TIFF explicitly (%#)",
     (source) => expect(run({ images: source }).diagnostics[0]?.code).toBe("UNSUPPORTED_FEATURE"),
   );
+  it("rejects a nested oversized media list before indexing its elements", () => {
+    const nested: JsonValue[] = Array(65).fill(null);
+    Object.defineProperty(nested, "0", {
+      get() {
+        throw Error("Must reject before copying/indexing oversized input");
+      },
+    });
+    for (const expression of ["images | first", "images | first | take:1", "images | at:0"]) {
+      const block = image();
+      if (block.kind !== "image-binding") throw Error("Expected image");
+      block.expression = { kind: "legacy", text: expression };
+      expect(run({ images: [nested] }, [block]).diagnostics[0]?.code).toBe("RESOURCE_LIMIT");
+    }
+  });
+  it("rejects object/oversized media sort keys before serialization", () => {
+    const objectKey = {
+      get payload(): string {
+        throw Error("Must not serialize unbounded key");
+      },
+    };
+    for (const key of [objectKey, "a".repeat(1025), [1, 2]])
+      for (const op of ["sort", "maxby", "minby"]) {
+        const block = image();
+        if (block.kind !== "image-binding") throw Error("Expected image");
+        block.expression = { kind: "legacy", text: `images | ${op}:key` };
+        expect(run({ images: [{ key }, { key }] }, [block]).diagnostics[0]?.code).toBe(
+          "RESOURCE_LIMIT",
+        );
+      }
+  });
+  it("keeps bounded media sorting and prevents format pipelines", () => {
+    const block = image();
+    if (block.kind !== "image-binding") throw Error("Expected image");
+    block.expression = { kind: "legacy", text: "images | sort:key | first | get:src" };
+    expect(
+      run(
+        {
+          images: [
+            { key: 2, src: fixtures.png },
+            { key: 1, src: fixtures.png },
+          ],
+        },
+        [block],
+      ).ok,
+    ).toBe(true);
+    block.expression = { kind: "legacy", text: "images | format:numeric:0.00" };
+    expect(compile(template([block])).diagnostics[0]?.code).toBe("EXPRESSION_UNSUPPORTED");
+    expect(compile(template([block])).diagnostics[0]?.message).toContain(
+      "Media expressions select",
+    );
+  });
   it("enforces list, decoded-byte, pixel, and work budgets before output", () => {
     expect(run({ images: Array(65).fill(fixtures.png) }).diagnostics[0]?.code).toBe(
       "RESOURCE_LIMIT",
@@ -260,6 +339,27 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
   });
 });
 describe("physical image dimensions", () => {
+  it("rejects invalid intrinsic pixels even when explicit targets hide them", () => {
+    for (const [w, h] of [
+      [-96, -48],
+      [0, 48],
+      [NaN, 48],
+      [96, Infinity],
+      [0.5, 48],
+      [32769, 1],
+      [32768, 32768],
+    ])
+      error(
+        () =>
+          imageDimensions(w as number, h as number, {
+            width: 10,
+            height: 5,
+            preserveAspectRatio: false,
+          }),
+        "RESOURCE_LIMIT",
+      );
+  });
+
   it.each([
     [{}, 25.4, 12.7],
     [{ width: 100 }, 100, 50],

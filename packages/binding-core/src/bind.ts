@@ -8,6 +8,7 @@ import {
   hasErrors,
   type ImageBinding,
   type ImageSource,
+  ImageSourceSchema,
   type InlineNode,
   modelVersion,
   type Paragraph,
@@ -24,6 +25,7 @@ import {
   type PathSegment,
   pathSegmentsToText,
 } from "@ofd-compose/template-compiler";
+import { Value as SchemaValue } from "@sinclair/typebox/value";
 import { isValidTimeZone } from "./date.js";
 import {
   type EvaluationBudget,
@@ -333,6 +335,8 @@ class Binder {
           "Image source must be encoded text or an authorized resource/path reference",
         );
       }
+      if (!SchemaValue.Check(ImageSourceSchema, source))
+        return invalid("MODEL_INVALID", "Image reference does not match the source contract");
     }
     return {
       ...base,

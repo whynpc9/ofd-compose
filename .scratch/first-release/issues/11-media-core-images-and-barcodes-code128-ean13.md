@@ -20,3 +20,7 @@
 - Added model/resolved schemas and shared budgets. External resource IDs are not IR identities; duplicate IDs are rejected. Host roots are explicit authorized byte tables with safe relative path keys, never implicit filesystem/network access.
 - [ADR-0003](../../../../docs/decisions/ADR-0003-media-core-profile.md) records GIF/BMP/TIFF rejection, pure bars-only label policy and writer/WP0.10 gates. Code128/ean13 only; issue12 block placement and issue27 other formats remain separate.
 - Same Node/Chromium tests independently rasterize actual IR commands and decode with local zxing-wasm 3.1.3; geometry digests and physical dimensions are frozen. Full gate evidence and final PR head review are recorded in the PR/task, not inferred from this checklist.
+
+### Pre-review closure
+
+Two-axis independent review found and closed: public intrinsic-pixel validation (Standards), nested media array/sort-key work allocation (Spec), and EXIF IFD offset handling (Spec). Shared regression tests cover each. Spec reviewer additionally ran 11 independent Node probes (8 EXIF combinations and 3 sorting getter sentinels), all passing. No remaining high-confidence findings on either axis; external final-head bot review remains a separate gate.

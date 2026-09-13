@@ -267,6 +267,18 @@ class TemplateCompiler {
         };
       } else if (node.kind === "image-binding" || node.kind === "barcode-binding") {
         const compiled = this.expression(node);
+        if (compiled?.ast.steps.some((step) => step.op === "format")) {
+          this.diagnostics.push({
+            code: "EXPRESSION_UNSUPPORTED",
+            severity: "error",
+            phase: "compile",
+            nodeId: node.nodeId,
+            bindingId: node.bindingId,
+            message:
+              "Media expressions select image sources/barcode strings; formatting belongs in host data or DynamicText",
+          });
+          continue;
+        }
         if (compiled)
           this.bindings[node.bindingId] = {
             role: node.kind,

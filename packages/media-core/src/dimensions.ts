@@ -1,5 +1,5 @@
 import type { ImageOptions } from "@ofd-compose/document-model";
-import { fail } from "./budget.js";
+import { fail, mediaLimits } from "./budget.js";
 
 export const mediaVersion = "ofd-compose/media@1";
 /** Reject sub-micrometre dimensions which collapse during IR canonicalization. */
@@ -28,6 +28,16 @@ export function imageDimensions(
   pixelHeight: number,
   options: ImageOptions = {},
 ) {
+  if (
+    !Number.isSafeInteger(pixelWidth) ||
+    !Number.isSafeInteger(pixelHeight) ||
+    pixelWidth < 1 ||
+    pixelHeight < 1 ||
+    pixelWidth > mediaLimits.pixelDimension ||
+    pixelHeight > mediaLimits.pixelDimension ||
+    pixelWidth * pixelHeight > mediaLimits.pixels
+  )
+    fail("RESOURCE_LIMIT", "Invalid or excessive intrinsic image dimensions");
   if (options.legacyPixelDpi !== undefined && options.legacyPixelDpi !== 96)
     fail("MODEL_INVALID", "Only legacyPixelDpi=96 is supported");
   if (options.preserveAspectRatio !== undefined && typeof options.preserveAspectRatio !== "boolean")

@@ -37,6 +37,31 @@ export function checkPng(bytes: Uint8Array): void {
   }
   fail("MODEL_INVALID", "PNG is missing IEND");
 }
+/** Read TIFF IFD0 using its declared offset, not image-size's fixed offset=8 assumption. */
+function checkExif(bytes: Uint8Array): void {
+  if (bytes.length < 6 || ![69, 120, 105, 102, 0, 0].every((v, i) => bytes[i] === v)) return;
+  if (bytes.length < 14) fail("MODEL_INVALID", "Truncated JPEG EXIF header");
+  const tiff = new DataView(bytes.buffer, bytes.byteOffset + 6, bytes.length - 6);
+  const endian = tiff.getUint16(0);
+  if (endian !== 0x4949 && endian !== 0x4d4d) fail("MODEL_INVALID", "Invalid EXIF byte order");
+  const little = endian === 0x4949;
+  if (tiff.getUint16(2, little) !== 42) fail("MODEL_INVALID", "Invalid EXIF TIFF marker");
+  const offset = tiff.getUint32(4, little);
+  if (offset < 8 || offset + 2 > tiff.byteLength) fail("MODEL_INVALID", "Invalid EXIF IFD offset");
+  const count = tiff.getUint16(offset, little);
+  if (count > 1024) fail("RESOURCE_LIMIT", "EXIF entry budget exceeded");
+  if (offset + 2 + count * 12 + 4 > tiff.byteLength) fail("MODEL_INVALID", "Truncated EXIF IFD");
+  for (let i = 0; i < count; i++) {
+    const at = offset + 2 + i * 12;
+    if (tiff.getUint16(at, little) !== 274) continue;
+    if (tiff.getUint16(at + 2, little) !== 3 || tiff.getUint32(at + 4, little) !== 1)
+      fail("MODEL_INVALID", "Invalid EXIF orientation field");
+    const orientation = tiff.getUint16(at + 8, little);
+    if (orientation < 1 || orientation > 8) fail("MODEL_INVALID", "Invalid EXIF orientation");
+    if (orientation !== 1)
+      fail("UNSUPPORTED_FEATURE", "JPEG EXIF orientation requires normalization before P0 input");
+  }
+}
 /** Bound image-size 2.0.2's repeated suffix copying before calling its JPEG parser. */
 export function jpegHeader(bytes: Uint8Array, budget: MediaBudget): Uint8Array {
   if (bytes[bytes.length - 2] !== 255 || bytes[bytes.length - 1] !== 217)
@@ -44,7 +69,8 @@ export function jpegHeader(bytes: Uint8Array, budget: MediaBudget): Uint8Array {
   const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
   let offset = 2,
     segments = 0,
-    sofEnd = 0;
+    sofEnd = 0,
+    sofStart = 0;
   while (offset + 4 <= bytes.length) {
     if (++segments > 256 || offset > 65536) fail("RESOURCE_LIMIT", "JPEG header budget exceeded");
     if (bytes[offset] !== 255) fail("MODEL_INVALID", "Malformed JPEG marker");
@@ -56,20 +82,19 @@ export function jpegHeader(bytes: Uint8Array, budget: MediaBudget): Uint8Array {
     if (marker === 192 || marker === 193 || marker === 194) {
       if (length < 8 || sofEnd) fail("MODEL_INVALID", "Invalid JPEG frame header");
       sofEnd = end;
+      sofStart = offset;
     }
     if (marker === 218) {
       if (!sofEnd) fail("MODEL_INVALID", "JPEG scan precedes frame header");
-      // The probe only needs metadata through SOF. Whole bytes are retained for the writer.
-      budget.charge("workUnits", sofEnd * segments);
-      const header = bytes.subarray(0, sofEnd);
-      if (bytes[3] === 192 || bytes[3] === 193 || bytes[3] === 194) {
-        const padded = new Uint8Array(header.length + 4);
-        padded.set([255, 216, 255, 224, 0, 2]);
-        padded.set(header.subarray(2), 6);
-        return padded;
-      }
+      // Metadata has been validated above. Probe only the original frame dimensions,
+      // avoiding both upstream repeated suffix copies and its fixed EXIF IFD offset.
+      const header = new Uint8Array(6 + sofEnd - sofStart);
+      header.set([255, 216, 255, 224, 0, 2]);
+      header.set(bytes.subarray(sofStart, sofEnd), 6);
+      budget.charge("workUnits", header.length * 2);
       return header;
     }
+    if (marker === 225) checkExif(bytes.subarray(offset + 4, end));
     if (marker === 225 && sofEnd)
       fail("UNSUPPORTED_FEATURE", "JPEG metadata after SOF requires normalization");
     offset = end;

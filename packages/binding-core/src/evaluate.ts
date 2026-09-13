@@ -43,7 +43,7 @@ export interface Scope {
 /** 一次 bind() 内共享的运行期预算（排序次数）。 */
 export interface EvaluationBudget {
   readonly maxSortOperations: number;
-  readonly counters: { sortOperations: number };
+  readonly counters: { sortOperations: number; mediaWorkUnits?: number };
 }
 
 /**
@@ -96,8 +96,24 @@ function identityIndices(value: Value): number[] | undefined {
 class MediaEvaluationLimit extends Error {}
 
 class Evaluator {
+  private mediaWorkUnits = 0;
+  private chargeMedia(units: number): void {
+    const counters = this.ctx.budget?.counters;
+    const previous = counters?.mediaWorkUnits ?? this.mediaWorkUnits;
+    if (units > 64000000 - previous)
+      throw new MediaEvaluationLimit("Media expression work budget exceeded");
+    this.mediaWorkUnits = previous + units;
+    if (counters) counters.mediaWorkUnits = this.mediaWorkUnits;
+  }
+  private indices(value: Value): number[] | undefined {
+    this.checkMediaValue(value);
+    return identityIndices(value);
+  }
   private checkMediaValue(value: Value): void {
     if (this.ctx.consumer !== "media") return;
+    this.chargeMedia(
+      typeof value === "string" ? value.length : isJsonArray(value) ? value.length : 1,
+    );
     if (
       (isJsonArray(value) && value.length > 64) ||
       (typeof value === "string" && value.length > 12000000)
@@ -182,7 +198,7 @@ class Evaluator {
     ): State => ({
       value,
       dataPath,
-      indices: identityIndices(value),
+      indices: this.indices(value),
       missingAt,
     });
 
@@ -261,6 +277,17 @@ class Evaluator {
       const itemPath = `${state.dataPath ?? ""}[${original}]`;
       const r = this.resolveSegments(array[i] as JsonValue, key, itemPath);
       if (r.missingAt === undefined) {
+        if (this.ctx.consumer === "media") {
+          if (
+            isJsonObject(r.value) ||
+            isJsonArray(r.value) ||
+            (typeof r.value === "string" && r.value.length > 1024) ||
+            (typeof r.value === "number" && !Number.isFinite(r.value))
+          )
+            throw new MediaEvaluationLimit("Media sorting keys must be bounded scalar values");
+          // Reserve comparisons/case-folding before sort or extrema search.
+          this.chargeMedia((typeof r.value === "string" ? r.value.length : 16) * array.length * 2);
+        }
         keys.push(r.value);
         continue;
       }
@@ -309,7 +336,7 @@ class Evaluator {
     return {
       value,
       dataPath: `${state.dataPath ?? ""}[${original}]`,
-      indices: identityIndices(value),
+      indices: this.indices(value),
       missingAt: undefined,
     };
   }
@@ -430,7 +457,7 @@ class Evaluator {
         return {
           value: r.value,
           dataPath: r.dataPath,
-          indices: identityIndices(r.value),
+          indices: this.indices(r.value),
           missingAt: r.missingAt,
         };
       }
