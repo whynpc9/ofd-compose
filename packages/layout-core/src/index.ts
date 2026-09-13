@@ -1,4 +1,6 @@
 export const moduleId = "@ofd-compose/layout-core" as const;
+
+export { borderPath } from "./graphics.js";
 export {
   LayoutError,
   type LayoutFont,
@@ -7,6 +9,7 @@ export {
   layout,
   layoutEngineVersion,
   layoutResourceLimits,
+  mediaRegionProfile,
   paragraphProfile,
   permitsChineseBreak,
 } from "./layout.js";

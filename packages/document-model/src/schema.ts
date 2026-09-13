@@ -1,4 +1,5 @@
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
+import { PathNodeSchema, PlacementSchema, RegionLayoutSchema, StrokeSchema } from "./graphics.js";
 
 /**
  * Document Model v0（issue 04 + issue 05）。
@@ -308,6 +309,7 @@ export const BarcodeOptionsSchema = Type.Object(
 export const ImageBindingSchema = Type.Object(
   {
     kind: Type.Literal("image-binding"),
+    placement: Type.Optional(PlacementSchema),
     nodeId: identifier,
     bindingId: identifier,
     expression: ExpressionSourceSchema,
@@ -318,6 +320,7 @@ export const ImageBindingSchema = Type.Object(
 export const BarcodeBindingSchema = Type.Object(
   {
     kind: Type.Literal("barcode-binding"),
+    placement: Type.Optional(PlacementSchema),
     nodeId: identifier,
     bindingId: identifier,
     expression: ExpressionSourceSchema,
@@ -398,6 +401,7 @@ export const InlineNodeSchema = Type.Union([
 /** Paragraph geometry uses mm; font sizes remain pt. Heading/list are paragraph roles. */
 export const ParagraphLayoutSchema = Type.Object(
   {
+    border: Type.Optional(StrokeSchema),
     /** Explicit page break before this paragraph (including an initial blank page). */
     pageBreakBefore: Type.Optional(Type.Boolean()),
     /** Starts a new section on a new page; the first paragraph configures the initial page. */
@@ -495,6 +499,7 @@ const tableCellOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-cell"),
+      border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),
       blocks: Type.Array(block),
@@ -533,6 +538,7 @@ const tableOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table"),
+      border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),
       rows: Type.Array(Type.Union([tableRowOf(block), repeatRowGroupOf(block)]), { minItems: 1 }),
@@ -571,10 +577,22 @@ const repeatBlockOf = <T extends TSchema>(block: T) =>
  * 正文块（递归）：段落、表格、ConditionalBlock、RepeatBlock。
  * JSON Schema 中以 `$id: BlockNode` + `$ref` 表达递归。
  */
+const regionOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("region"),
+      nodeId: identifier,
+      layout: RegionLayoutSchema,
+      children: Type.Array(block),
+    },
+    { additionalProperties: false },
+  );
 export const BlockNodeSchema = Type.Recursive(
   (This) =>
     Type.Union([
       ParagraphSchema,
+      PathNodeSchema,
+      regionOf(This),
       ImageBindingSchema,
       BarcodeBindingSchema,
       tableOf(This),
@@ -584,6 +602,7 @@ export const BlockNodeSchema = Type.Recursive(
   { $id: "BlockNode" },
 );
 
+export const RegionSchema = regionOf(BlockNodeSchema);
 export const TableCellSchema = tableCellOf(BlockNodeSchema);
 export const TableRowSchema = tableRowOf(BlockNodeSchema);
 export const RepeatRowGroupSchema = repeatRowGroupOf(BlockNodeSchema);

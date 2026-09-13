@@ -10,6 +10,7 @@ export interface TemplateNodeVisit {
 }
 
 const structureContainerKinds: ReadonlySet<string> = new Set([
+  "region",
   "conditional-block",
   "repeat-block",
   "table",
@@ -38,6 +39,7 @@ function* walkNode(node: TemplateNode, structureDepth: number): Generator<Templa
     case "paragraph":
       for (const inline of node.inlines) yield { node: inline, structureDepth };
       return;
+    case "region":
     case "conditional-block":
       yield* walkTemplateNodes(node.children, childDepth);
       return;
@@ -94,7 +96,7 @@ export function findStructureDepthOverflow(
     }
     const childDepth = isContainer ? structureDepth + 1 : structureDepth;
     const children =
-      kind === "conditional-block" || kind === "repeat-block"
+      kind === "region" || kind === "conditional-block" || kind === "repeat-block"
         ? record.children
         : kind === "table" || kind === "repeat-row-group"
           ? record.rows

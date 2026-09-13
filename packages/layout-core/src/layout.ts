@@ -1,6 +1,8 @@
 import {
+  type ResolvedBlock,
   type ResolvedDocument,
   ResolvedDocumentSchema,
+  type ResolvedMedia,
   type ResolvedParagraph,
   type ResolvedTextFragment,
 } from "@ofd-compose/binding-core";
@@ -8,6 +10,7 @@ import {
   type PageBand,
   type PageSettings,
   type ParagraphLayout,
+  type Stroke,
   type TextStyle,
   TextStyleSchema,
   type Watermark,
@@ -15,6 +18,7 @@ import {
 import {
   canonicalizeLayoutIR,
   canonicalSerialize,
+  digestCanonical,
   digestLayoutIdentity,
   digestSemanticDocument,
   irVersion,
@@ -22,6 +26,7 @@ import {
   LayoutIRSchema,
   type TextObject,
 } from "@ofd-compose/layout-ir";
+import { type LayoutMediaSnapshot, mediaForLayout } from "@ofd-compose/media-core";
 import {
   type FontMetrics,
   lineBreakOpportunities,
@@ -29,6 +34,17 @@ import {
   TypographyCore,
 } from "@ofd-compose/typography-core";
 import { Value } from "@sinclair/typebox/value";
+import {
+  borderPath,
+  clipRectangle,
+  compose,
+  identity,
+  intersect,
+  inverse,
+  type Matrix,
+  rectangle,
+  transformedBox,
+} from "./graphics.js";
 import { type PageGeometry, pageGeometry } from "./page.js";
 
 export const layoutEngineVersion = "ofd-compose/paginated-layout@0";
@@ -44,6 +60,16 @@ export const paragraphProfile = Object.freeze({
     "pagination",
     "page-bands",
     "watermarks",
+  ]),
+});
+export const mediaRegionProfile = Object.freeze({
+  name: "media-regions-ltr",
+  version: "0",
+  features: Object.freeze([
+    ...paragraphProfile.features,
+    "frozen-media",
+    "vector-paths",
+    "regions",
   ]),
 });
 export const layoutResourceLimits = Object.freeze({
@@ -118,27 +144,47 @@ function preflightDocument(value: unknown): void {
     throw new LayoutError("LAYOUT_LIMIT", "Document exceeds paragraph budget");
   let fragments = 0;
   let documentUnits = 0;
-  for (let i = 0; i < count; i++) {
-    const block = ownData(body, String(i));
-    const entries = ownData(block, "fragments");
-    if (!Array.isArray(entries)) continue;
-    const size = ownData(entries, "length") as number;
-    fragments += size;
-    if (fragments > layoutResourceLimits.fragments)
-      throw new LayoutError("LAYOUT_LIMIT", "Document exceeds fragment budget");
-    let units = 0;
-    for (let j = 0; j < size; j++) {
-      const text = ownData(ownData(entries, String(j)), "text");
-      if (typeof text !== "string") continue;
-      units += text.length;
-      documentUnits += text.length;
-      if (documentUnits > layoutResourceLimits.inputTextUnits)
-        throw new LayoutError("LAYOUT_LIMIT", "Document input text budget exceeded");
-      if (units > 100000 || !text.isWellFormed())
-        throw new LayoutError(
-          "LAYOUT_INPUT",
-          "Paragraph must be well-formed UTF-16 with at most 100000 units",
-        );
+  const pending: unknown[] = [body];
+  let blockCount = 0;
+  while (pending.length) {
+    const children = pending.pop();
+    if (!Array.isArray(children)) continue;
+    if (children.length > layoutResourceLimits.paragraphs - blockCount)
+      throw new LayoutError("LAYOUT_LIMIT", "Nested block budget exceeded");
+    for (let i = 0; i < children.length; i++) {
+      blockCount++;
+      const block = ownData(children, String(i));
+      if (ownData(block, "kind") === "region") pending.push(ownData(block, "children"));
+      if (ownData(block, "kind") === "table") {
+        const rows = ownData(block, "rows");
+        if (Array.isArray(rows))
+          for (const row of rows) {
+            const cells = ownData(row, "cells");
+            if (Array.isArray(cells))
+              for (const cell of cells) pending.push(ownData(cell, "blocks"));
+          }
+      }
+
+      const entries = ownData(block, "fragments");
+      if (!Array.isArray(entries)) continue;
+      const size = ownData(entries, "length") as number;
+      fragments += size;
+      if (fragments > layoutResourceLimits.fragments)
+        throw new LayoutError("LAYOUT_LIMIT", "Document exceeds fragment budget");
+      let units = 0;
+      for (let j = 0; j < size; j++) {
+        const text = ownData(ownData(entries, String(j)), "text");
+        if (typeof text !== "string") continue;
+        units += text.length;
+        documentUnits += text.length;
+        if (documentUnits > layoutResourceLimits.inputTextUnits)
+          throw new LayoutError("LAYOUT_LIMIT", "Document input text budget exceeded");
+        if (units > 100000 || !text.isWellFormed())
+          throw new LayoutError(
+            "LAYOUT_INPUT",
+            "Paragraph must be well-formed UTF-16 with at most 100000 units",
+          );
+      }
     }
   }
 }
@@ -318,9 +364,10 @@ export async function layout(
   document: ResolvedDocument,
   resources: readonly LayoutFont[],
   options: LayoutOptions,
+  preparedMedia?: object,
 ) {
-  preflightDocument(document);
   preflightJsonTree(document);
+  preflightDocument(document);
   preflightJsonTree(options);
   const imageInputs = ownData(options, "images");
   if (
@@ -336,6 +383,38 @@ export async function layout(
     throw new LayoutError("LAYOUT_INPUT", "Invalid default style");
   if (!Value.Check(ResolvedDocumentSchema, doc))
     throw new LayoutError("LAYOUT_INPUT", "Invalid ResolvedDocument");
+  const media = preparedMedia === undefined ? undefined : mediaForLayout(preparedMedia);
+  const sourceDigests: string[] = [];
+  const collectMedia = (blocks: ResolvedBlock[]) => {
+    for (const block of blocks) {
+      if (block.kind === "region") collectMedia(block.children);
+      else if (block.kind === "table")
+        for (const row of block.rows) for (const cell of row.cells) collectMedia(cell.blocks);
+      else if (block.kind === "image-binding" || block.kind === "barcode-binding")
+        sourceDigests.push(digestCanonical(block));
+    }
+  };
+  collectMedia(doc.body);
+  if (
+    sourceDigests.length !== (media?.blocks.length ?? 0) ||
+    sourceDigests.some((digest, i) => digest !== media?.blocks[i]?.sourceDigest)
+  )
+    throw new LayoutError(
+      "LAYOUT_INPUT",
+      "Media preparation does not match current resolved input",
+    );
+  const preparedResources = new Map<string, { pixelWidth: number; pixelHeight: number }>();
+  for (const block of media?.blocks ?? [])
+    for (const image of block.images ?? [])
+      preparedResources.set(image.resource.id, image.resource);
+  let aggregatePixels = 0;
+  if ((opts.images?.length ?? 0) + preparedResources.size > layoutResourceLimits.imageResources)
+    throw new LayoutError("LAYOUT_LIMIT", "Combined media/watermark resource count exceeds budget");
+  for (const image of [...(opts.images ?? []), ...preparedResources.values()]) {
+    aggregatePixels += image.pixelWidth * image.pixelHeight;
+    if (aggregatePixels > layoutResourceLimits.imagePixels)
+      throw new LayoutError("LAYOUT_LIMIT", "Combined media/watermark pixels exceed budget");
+  }
   // Reject a known minimum page count and impossible section geometry before acquiring fonts.
   let minimumPages = 1;
   const firstBlock = doc.body[0];
@@ -449,6 +528,8 @@ export async function layout(
     emittedObjects: 0,
     paragraphs: 0,
     pages: 0,
+    pathCommands: 0,
+    regionAttempts: 0,
   };
   const maxIterations = opts.pagination?.maxIterations ?? layoutResourceLimits.paginationPasses;
   let totalPages = 1;
@@ -460,6 +541,7 @@ export async function layout(
       opts,
       work,
       totalPages,
+      media,
     ).layout();
     if (!usesTotalPages || result.ir.pages.length === totalPages)
       return { ...result, paginationPasses: iteration };
@@ -505,6 +587,8 @@ interface LayoutWork {
   emittedObjects: number;
   paragraphs: number;
   pages: number;
+  pathCommands: number;
+  regionAttempts: number;
 }
 function validatePaginationOptions(options: LayoutOptions) {
   for (const [value, limit] of [
@@ -535,6 +619,24 @@ function validatePaginationOptions(options: LayoutOptions) {
 
 class ParagraphLayouter {
   private readonly ir: LayoutIR;
+  private readonly diagnostics: {
+    code: "LAYOUT_OVERFLOW";
+    severity: "warning";
+    phase: "layout";
+    nodeId: string;
+    pageIndex: number;
+    message: string;
+  }[] = [];
+  private mediaIndex = 0;
+  private fontScale = 1;
+  private fontFloor = 0;
+  private inRegion = false;
+  private horizontalOverflow = false;
+  private readonly barcodeObjects = new Map<string, { height: number; moduleWidth: number }>();
+  private readonly mediaImages = new Map<
+    string,
+    Extract<LayoutIR["resources"][number], { kind: "image" }>
+  >();
   private readonly lines: LayoutLine[] = [];
   private readonly counts = new Map<string, number>();
   private readonly initializedRepeatStarts = new Set<string>();
@@ -562,6 +664,7 @@ class ParagraphLayouter {
     private readonly options: LayoutOptions,
     private readonly work: LayoutWork,
     private readonly totalPages: number,
+    private readonly media?: LayoutMediaSnapshot,
   ) {
     const { formattingPolicy, defaultStyle } = options;
     this.pageSettings = doc.settings.page;
@@ -576,7 +679,12 @@ class ParagraphLayouter {
     this.sectionSourceId =
       first?.kind === "paragraph" ? (first.layout?.section?.id ?? doc.documentId) : doc.documentId;
     this.sectionIds.add(this.sectionId);
-    const profile = { ...paragraphProfile, features: [...paragraphProfile.features] };
+    const selectedProfile = doc.body.some(
+      (block) => block.kind !== "paragraph" || block.layout?.border,
+    )
+      ? mediaRegionProfile
+      : paragraphProfile;
+    const profile = { ...selectedProfile, features: [...selectedProfile.features] };
     if (
       !page ||
       !defaultStyle?.fontFamily ||
@@ -594,6 +702,14 @@ class ParagraphLayouter {
     this.y = page.contentBox.y;
     for (const [index, image] of (options.images ?? []).entries())
       this.imagesBySourceId.set(image.id, { ...image, id: `image${index}` });
+    for (const block of media?.blocks ?? [])
+      for (const image of block.images ?? []) {
+        if (!this.mediaImages.has(image.resource.id))
+          this.mediaImages.set(image.resource.id, {
+            ...image.resource,
+            id: `mediaImage${this.mediaImages.size}`,
+          });
+      }
     this.ir = {
       irVersion,
       units: "mm",
@@ -604,6 +720,7 @@ class ParagraphLayouter {
           resources: [
             ...faces.map((f) => ({ kind: "font", digest: f.definition.sha256 })),
             ...(options.images ?? []).map((i) => ({ kind: "image", digest: i.digest })),
+            ...[...this.mediaImages.values()].map((i) => ({ kind: "image", digest: i.digest })),
           ],
           layoutEngineVersion,
           shapingVersion: canonicalSerialize(shapingAndLineBreakVersions),
@@ -613,6 +730,7 @@ class ParagraphLayouter {
           layoutOptions: {
             ...JSON.parse(canonicalSerialize(options)),
             fonts: faces.map((f) => f.definition),
+            ...(media ? { mediaIdentity: media.mediaIdentity } : {}),
           },
         }),
         layoutProfile: profile,
@@ -629,6 +747,7 @@ class ParagraphLayouter {
           variations: {},
         })),
         ...this.imagesBySourceId.values(),
+        ...this.mediaImages.values(),
       ],
       graphicsStates: [],
       pages: [],
@@ -641,27 +760,7 @@ class ParagraphLayouter {
   }
   layout() {
     this.doc.body.forEach((block, index) => {
-      if (block.kind !== "paragraph")
-        throw new LayoutError(
-          "LAYOUT_UNSUPPORTED",
-          "Block layout requires the media/table layout profile (issues 12/13)",
-          block.nodeId,
-        );
-      const section = block.layout?.section;
-      if (section && index > 0) {
-        const occurrence = sectionOccurrenceId(block, this.doc.documentId);
-        if (this.sectionIds.has(occurrence))
-          throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
-        this.sectionIds.add(occurrence);
-        this.pageSettings = section.page;
-        this.geometry = pageGeometry(section.page);
-        this.sectionId = occurrence;
-        this.sectionSourceId = section.id;
-        this.sectionStart = this.ir.pages.length;
-        this.newPage();
-      }
-      if (block.layout?.pageBreakBefore) this.newPage();
-      this.paragraph(block, index);
+      this.block(block, index);
     });
     // Decorations share this job's shaping/output budgets. They cannot allocate a fresh budget per page.
     for (let index = 0; index < this.ir.pages.length; index++) {
@@ -674,10 +773,516 @@ class ParagraphLayouter {
       usesTotalPages: this.usesTotalPages,
       semanticMap: ir.semantics,
       lines: this.lines,
-      diagnostics: [],
+      diagnostics: this.diagnostics,
       work: { ...this.work },
     };
   }
+  private block(block: ResolvedBlock, index: number) {
+    if (block.kind === "image-binding" || block.kind === "barcode-binding") {
+      this.placeMedia(block);
+      return;
+    }
+    if (block.kind === "path") {
+      this.placePath(block);
+      return;
+    }
+    if (block.kind === "region") {
+      this.region(block, index);
+      return;
+    }
+    if (block.kind !== "paragraph")
+      throw new LayoutError(
+        "LAYOUT_UNSUPPORTED",
+        "Complete table layout belongs to issue13",
+        block.nodeId,
+      );
+    if (this.inRegion && (block.layout?.section || block.layout?.pageBreakBefore))
+      throw new LayoutError(
+        "LAYOUT_INPUT",
+        "Region children cannot change page or section",
+        block.nodeId,
+      );
+    const section = block.layout?.section;
+    if (section && index > 0) {
+      const occurrence = sectionOccurrenceId(block, this.doc.documentId);
+      if (this.sectionIds.has(occurrence))
+        throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
+      this.sectionIds.add(occurrence);
+      this.pageSettings = section.page;
+      this.geometry = pageGeometry(section.page);
+      this.sectionId = occurrence;
+      this.sectionSourceId = section.id;
+      this.sectionStart = this.ir.pages.length;
+      this.newPage();
+    }
+    if (block.layout?.pageBreakBefore) this.newPage();
+    this.paragraph(block, index);
+  }
+  private commands(count: number) {
+    if (count > 1000000 - this.work.pathCommands)
+      throw new LayoutError("LAYOUT_LIMIT", "Shared path/clip command budget exceeded");
+    this.work.pathCommands += count;
+  }
+  private metadata(block: ResolvedBlock, extra = 0) {
+    let units = block.nodeId.length + extra;
+    if ("bindingId" in block) units += block.bindingId.length;
+    if ("instancePath" in block)
+      for (const instance of block.instancePath ?? [])
+        units += instance.nodeId.length + instance.key.length;
+    if (units > 8_000_000 - this.work.outputTextUnits)
+      throw new LayoutError("LAYOUT_LIMIT", "Output source metadata exceeds budget", block.nodeId);
+    this.work.outputTextUnits += units;
+  }
+  private semantic(block: ResolvedBlock, id: string) {
+    this.metadata(block);
+    this.reserveSectionMetadata(block.nodeId);
+    if (++this.work.sourceMappings > layoutResourceLimits.sourceMappings)
+      throw new LayoutError("LAYOUT_LIMIT", "Source mapping budget exceeded", block.nodeId);
+    this.ir.semantics.push({
+      objectId: id,
+      nodeId: block.nodeId,
+      readingOrder: this.ir.semantics.length,
+      pageIndex: this.pageIndex,
+      sectionId: this.sectionId,
+      ...(this.sectionId !== this.sectionSourceId ? { sectionSourceId: this.sectionSourceId } : {}),
+      ...("bindingId" in block ? { bindingId: block.bindingId } : {}),
+      ...("instancePath" in block && block.instancePath
+        ? { repeatInstance: block.instancePath.map((i) => ({ nodeId: i.nodeId, key: i.key })) }
+        : {}),
+    });
+  }
+  private atomicBox(width: number, height: number, nodeId: string, alignment = "left") {
+    const box = this.decorationBox ?? this.geometry.contentBox;
+    if (
+      !Number.isFinite(width) ||
+      !Number.isFinite(height) ||
+      width < 0.001 ||
+      height < 0.001 ||
+      height > box.height + 1e-9 ||
+      (!this.horizontalOverflow && width > box.width + 1e-9)
+    )
+      throw new LayoutError("LAYOUT_OVERFLOW", "Atomic block cannot fit its content area", nodeId);
+    if (this.y + height > box.y + box.height + 1e-9) {
+      if (this.inRegion)
+        throw new LayoutError("LAYOUT_OVERFLOW", "Region content exceeds layout ceiling", nodeId);
+      this.newPage();
+    }
+    return {
+      x:
+        box.x +
+        (this.horizontalOverflow ? box.width - width : Math.max(0, box.width - width)) *
+          (alignment === "center" ? 0.5 : alignment === "right" ? 1 : 0),
+      y: this.y,
+      width,
+      height,
+    };
+  }
+  private graphicState(stroke?: Stroke, fill?: string, transform: Matrix = identity) {
+    const id = this.state(fill, stroke?.width ?? 0);
+    const state = this.ir.graphicsStates.at(-1);
+    if (!state) throw new Error("Missing graphics state");
+    if (stroke) {
+      if (stroke.dash?.length && !stroke.dash.some((n) => n > 0))
+        throw new LayoutError("LAYOUT_INPUT", "Dash array must contain a positive length");
+      state.strokeColor = color(stroke.color);
+      state.dash = stroke.dash ?? [];
+      state.dashOffset = stroke.dashOffset ?? 0;
+      state.lineCap = stroke.cap ?? "butt";
+      state.lineJoin = stroke.join ?? "miter";
+      state.miterLimit = stroke.miterLimit ?? 10;
+    }
+    state.transform = transform;
+    return id;
+  }
+  private placeMedia(block: ResolvedMedia) {
+    const prepared = this.media?.blocks[this.mediaIndex++];
+    if (!prepared) throw new LayoutError("LAYOUT_INPUT", "Media is not ready", block.nodeId);
+    const objects = this.ir.pages[this.pageIndex]?.objects;
+    if (!objects) throw new Error("Missing page");
+    // Empty lists still consume traversal/source metadata work.
+    this.metadata(block);
+    if (block.kind === "barcode-binding" && block.placement?.crop)
+      throw new LayoutError("LAYOUT_INPUT", "Barcode quiet zones cannot be cropped", block.nodeId);
+    const entries = prepared.images ?? (prepared.barcode ? [prepared.barcode] : []);
+    for (const [index, entry] of entries.entries()) {
+      const crop = block.kind === "image-binding" ? block.placement?.crop : undefined;
+      if (
+        crop &&
+        (crop.x < 0 ||
+          crop.y < 0 ||
+          crop.x + crop.width > entry.width + 1e-9 ||
+          crop.y + crop.height > entry.height + 1e-9)
+      )
+        throw new LayoutError(
+          "LAYOUT_INPUT",
+          "Image crop must be inside frozen physical dimensions",
+          block.nodeId,
+        );
+      if (index > 0) this.y += block.placement?.gap ?? 0;
+      const bounds = this.atomicBox(
+        crop?.width ?? entry.width,
+        crop?.height ?? entry.height,
+        block.nodeId,
+        block.placement?.alignment,
+      );
+      this.reserveObjects(1);
+      const page = this.ir.pages[this.pageIndex];
+      if (!page) throw new Error("Missing page");
+      const id = `page${this.pageIndex}object${page.objects.length}`;
+      if ("resource" in entry) {
+        const resource = this.mediaImages.get(entry.resource.id);
+        if (!resource)
+          throw new LayoutError("LAYOUT_INPUT", "Image resource is not ready", block.nodeId);
+        const sx = entry.width / resource.pixelWidth,
+          sy = entry.height / resource.pixelHeight;
+        if (crop) this.commands(5);
+        page.objects.push({
+          kind: "image",
+          id,
+          drawOrder: page.objects.length,
+          stateId: this.state(),
+          bounds,
+          resourceId: resource.id,
+          transform: {
+            a: sx,
+            b: 0,
+            c: 0,
+            d: sy,
+            e: bounds.x - (crop?.x ?? 0),
+            f: bounds.y - (crop?.y ?? 0),
+          },
+          ...(crop
+            ? {
+                clip: {
+                  coordinateSpace: "local",
+                  fillRule: "nonzero",
+                  commands: rectangle({
+                    x: crop.x / sx,
+                    y: crop.y / sy,
+                    width: crop.width / sx,
+                    height: crop.height / sy,
+                  }),
+                },
+              }
+            : {}),
+        });
+      } else {
+        this.commands(entry.path.commands.length);
+        page.objects.push({
+          ...entry.path,
+          id,
+          drawOrder: page.objects.length,
+          bounds,
+          stateId: this.graphicState(undefined, "#000000", {
+            ...identity,
+            e: bounds.x,
+            f: bounds.y,
+          }),
+        });
+        let moduleWidth = Infinity;
+        for (let i = 0; i < entry.path.commands.length; i += 5) {
+          const a = entry.path.commands[i],
+            b = entry.path.commands[i + 1];
+          if (a?.op === "move" && b?.op === "line") moduleWidth = Math.min(moduleWidth, b.x - a.x);
+        }
+        this.barcodeObjects.set(id, { height: entry.height, moduleWidth });
+      }
+      this.semantic(block, id);
+      this.y += bounds.height;
+    }
+  }
+  private placePath(block: Extract<ResolvedBlock, { kind: "path" }>) {
+    this.commands(block.commands.length);
+    if (!block.fill && !block.stroke)
+      throw new LayoutError("LAYOUT_INPUT", "Path must declare fill or stroke", block.nodeId);
+    const transform = block.transform ?? identity;
+    inverse(transform);
+    let opened = false;
+    for (const command of block.commands) {
+      if (command.op === "move") opened = true;
+      else if (!opened)
+        throw new LayoutError("LAYOUT_INPUT", "Path requires a leading move", block.nodeId);
+      if (command.op === "close") {
+        opened = false;
+        continue;
+      }
+      const coords =
+        command.op === "cubic"
+          ? [
+              [command.x, command.y],
+              [command.x1, command.y1],
+              [command.x2, command.y2],
+            ]
+          : [[command.x, command.y]];
+      for (const [x = 0, y = 0] of coords)
+        if (x < 0 || y < 0 || x > block.width || y > block.height)
+          throw new LayoutError(
+            "LAYOUT_INPUT",
+            "Path control points must lie inside its declared local box",
+            block.nodeId,
+          );
+    }
+    const pad = block.stroke
+      ? (block.stroke.width / 2) *
+        Math.max(
+          block.stroke.cap === "square" ? Math.SQRT2 : 1,
+          block.stroke.join === "miter" || !block.stroke.join ? (block.stroke.miterLimit ?? 10) : 1,
+        )
+      : 0;
+    const extents = transformedBox(
+      { x: -pad, y: -pad, width: block.width + 2 * pad, height: block.height + 2 * pad },
+      transform,
+    );
+    const bounds = this.atomicBox(extents.width, extents.height, block.nodeId);
+    const placed = compose(
+      { ...identity, e: bounds.x - extents.x, f: bounds.y - extents.y },
+      transform,
+    );
+    this.reserveObjects(1);
+    const page = this.ir.pages[this.pageIndex];
+    if (!page) throw new Error("Missing page");
+    const id = `page${this.pageIndex}object${page.objects.length}`;
+    page.objects.push({
+      id,
+      kind: "path",
+      drawOrder: page.objects.length,
+      stateId: this.graphicState(block.stroke, block.fill, placed),
+      bounds,
+      coordinateSpace: "local",
+      commands: block.commands,
+      fill: !!block.fill,
+      stroke: !!block.stroke,
+      fillRule: block.fillRule ?? "nonzero",
+    });
+    this.semantic(block, id);
+    this.y += bounds.height;
+  }
+  private region(block: Extract<ResolvedBlock, { kind: "region" }>, index: number) {
+    if (this.inRegion)
+      throw new LayoutError(
+        "LAYOUT_INPUT",
+        "P0 regions cannot contain another region",
+        block.nodeId,
+      );
+    const spec = block.layout,
+      policy = spec.overflow ?? { kind: "error" as const };
+    if (spec.mode === "flow" && (spec.box.x < 0 || spec.box.y < 0))
+      throw new LayoutError("LAYOUT_INPUT", "Flow region offsets cannot be negative", block.nodeId);
+    const parent = this.geometry.contentBox;
+    const bounds =
+      spec.mode === "fixed"
+        ? spec.box
+        : this.atomicBox(spec.box.width, spec.box.height + spec.box.y, block.nodeId);
+    const box =
+      spec.mode === "fixed"
+        ? { ...bounds }
+        : {
+            x: parent.x + spec.box.x,
+            y: bounds.y + spec.box.y,
+            width: spec.box.width,
+            height: spec.box.height,
+          };
+    const page = this.ir.pages[this.pageIndex];
+    if (!page) throw new Error("Missing page");
+    if (
+      box.x < 0 ||
+      box.y < 0 ||
+      box.x + box.width > page.width ||
+      box.y + box.height > page.height ||
+      (spec.mode === "flow" && (box.x < parent.x || box.x + box.width > parent.x + parent.width))
+    )
+      throw new LayoutError(
+        "LAYOUT_OVERFLOW",
+        "Region box is outside its assigned page area",
+        block.nodeId,
+      );
+    const savedY = this.y,
+      startObjects = page.objects.length,
+      startStates = this.ir.graphicsStates.length,
+      startSemantics = this.ir.semantics.length,
+      startLines = this.lines.length,
+      startMedia = this.mediaIndex;
+    this.work.runVisits += this.counts.size + this.initializedRepeatStarts.size;
+    if (this.work.runVisits > 2000000)
+      throw new LayoutError(
+        "LAYOUT_LIMIT",
+        "Region state snapshot exceeds shared work budget",
+        block.nodeId,
+      );
+    const counts = new Map(this.counts),
+      starts = new Set(this.initializedRepeatStarts);
+    const reset = () => {
+      for (let i = startObjects; i < page.objects.length; i++) {
+        const object = page.objects[i];
+        if (object) this.barcodeObjects.delete(object.id);
+      }
+      page.objects.length = startObjects;
+      this.ir.graphicsStates.length = startStates;
+      this.ir.semantics.length = startSemantics;
+      this.lines.length = startLines;
+      this.mediaIndex = startMedia;
+      this.counts.clear();
+      for (const [k, v] of counts) this.counts.set(k, v);
+      this.initializedRepeatStarts.clear();
+      for (const k of starts) this.initializedRepeatStarts.add(k);
+      this.y = box.y;
+    };
+    let contentLeft = box.x,
+      contentTop = box.y;
+    let naturalHeight = 0,
+      naturalWidth = box.width,
+      appliedScale = 1,
+      success = false;
+    try {
+      this.inRegion = true;
+      this.horizontalOverflow = policy.kind === "scale" || policy.kind === "truncate";
+      this.decorationBox = { ...box, height: 100000 };
+      const attempts = policy.kind === "min-font-size" ? 9 : 1;
+      for (let attempt = 0; attempt < attempts; attempt++) {
+        if (++this.work.regionAttempts > 256)
+          throw new LayoutError(
+            "LAYOUT_LIMIT",
+            "Shared region retry budget exceeded",
+            block.nodeId,
+          );
+        reset();
+        this.metadata(block);
+        this.fontScale = policy.kind === "min-font-size" ? 1 - attempt / 8 : 1;
+        this.fontFloor = policy.kind === "min-font-size" ? policy.minFontSize : 0;
+        try {
+          block.children.forEach((child, i) => {
+            this.block(child, index + i);
+          });
+        } catch (error) {
+          if (
+            error instanceof LayoutError &&
+            error.code === "LAYOUT_OVERFLOW" &&
+            attempt + 1 < attempts
+          )
+            continue;
+          throw error;
+        }
+        let contentRight = box.x + box.width,
+          contentBottom = this.y;
+        contentLeft = box.x;
+        contentTop = box.y;
+        for (let i = startObjects; i < page.objects.length; i++) {
+          const b = page.objects[i]?.bounds;
+          if (b) {
+            contentLeft = Math.min(contentLeft, b.x);
+            contentTop = Math.min(contentTop, b.y);
+            contentRight = Math.max(contentRight, b.x + b.width);
+            contentBottom = Math.max(contentBottom, b.y + b.height);
+          }
+        }
+        naturalWidth = contentRight - contentLeft;
+        naturalHeight = contentBottom - contentTop;
+        const overflow = naturalHeight > box.height + 1e-9 || naturalWidth > box.width + 1e-9;
+        if (!overflow) {
+          success = true;
+          break;
+        }
+        if (policy.kind === "truncate") {
+          success = true;
+          break;
+        }
+        if (policy.kind === "scale") {
+          appliedScale = Math.min(1, box.height / naturalHeight, box.width / naturalWidth);
+          if (appliedScale < policy.minScale)
+            throw new LayoutError(
+              "LAYOUT_OVERFLOW",
+              "Required region scale is below minScale",
+              block.nodeId,
+            );
+          success = true;
+          break;
+        }
+        if (policy.kind === "error") break;
+      }
+      if (!success)
+        throw new LayoutError(
+          "LAYOUT_OVERFLOW",
+          "Region content exceeds its explicit overflow policy",
+          block.nodeId,
+        );
+      const truncated =
+        policy.kind === "truncate" &&
+        (naturalHeight > box.height + 1e-9 || naturalWidth > box.width + 1e-9);
+      const scaleMatrix = {
+        a: appliedScale,
+        b: 0,
+        c: 0,
+        d: appliedScale,
+        e: policy.kind === "scale" ? box.x - contentLeft * appliedScale : 0,
+        f: policy.kind === "scale" ? box.y - contentTop * appliedScale : 0,
+      };
+      for (let i = startObjects; i < page.objects.length; i++) {
+        const object = page.objects[i];
+        if (!object) continue;
+        const barcode = this.barcodeObjects.get(object.id);
+        if (barcode) {
+          if (
+            truncated &&
+            (object.bounds.x < box.x ||
+              object.bounds.y < box.y ||
+              object.bounds.x + object.bounds.width > box.x + box.width + 1e-9 ||
+              object.bounds.y + object.bounds.height > box.y + box.height + 1e-9)
+          )
+            throw new LayoutError(
+              "LAYOUT_OVERFLOW",
+              "Region clipping would remove barcode quiet zones or bars",
+              block.nodeId,
+            );
+          if (barcode.height * appliedScale < 1 || barcode.moduleWidth * appliedScale < 0.1 - 1e-9)
+            throw new LayoutError(
+              "LAYOUT_OVERFLOW",
+              "Region scale violates barcode physical minimum",
+              block.nodeId,
+            );
+        }
+        const state = this.ir.graphicsStates[Number(object.stateId.slice(5))];
+        if (!state) throw new Error("Missing state");
+        // Page-space paths bypass state transforms under the IR contract. Reclassify the
+        // already positioned commands as local before composing the region transform.
+        if (object.kind === "path" && object.coordinateSpace === "page")
+          object.coordinateSpace = "local";
+        state.transform = compose(scaleMatrix, state.transform);
+        object.bounds = transformedBox(object.bounds, scaleMatrix);
+        if (truncated) {
+          this.commands(5);
+          state.clip = clipRectangle(box, state.transform);
+          object.bounds = intersect(object.bounds, box);
+        }
+      }
+      for (let i = startLines; i < this.lines.length; i++) {
+        const line = this.lines[i];
+        if (line) {
+          const b = transformedBox(line, scaleMatrix);
+          Object.assign(line, b);
+          line.baseline = line.baseline * appliedScale + scaleMatrix.f;
+        }
+      }
+      if (policy.kind !== "error") {
+        this.metadata(block, 128);
+        this.diagnostics.push({
+          code: "LAYOUT_OVERFLOW",
+          severity: "warning",
+          phase: "layout",
+          nodeId: block.nodeId,
+          pageIndex: this.pageIndex,
+          message: `Explicit ${policy.kind}: truncated=${truncated}, scale=${appliedScale}, fontScale=${this.fontScale}, minimumFontSize=${this.fontFloor}`,
+        });
+      }
+    } finally {
+      this.inRegion = false;
+      this.horizontalOverflow = false;
+      this.fontScale = 1;
+      this.fontFloor = 0;
+      this.decorationBox = undefined;
+      this.y = spec.mode === "fixed" ? savedY : box.y + box.height;
+    }
+  }
+
   private newPage(initial = false) {
     if (
       this.ir.pages.length >= (this.options.pagination?.maxPages ?? layoutResourceLimits.pages) ||
@@ -976,7 +1581,14 @@ class ParagraphLayouter {
     return runs;
   }
   private metrics(run: Run) {
-    const nominal = (run.style.fontSize ?? this.options.defaultStyle.fontSize) * pt;
+    const nominal =
+      Math.min(
+        run.style.fontSize ?? this.options.defaultStyle.fontSize,
+        Math.max(
+          this.fontFloor,
+          (run.style.fontSize ?? this.options.defaultStyle.fontSize) * this.fontScale,
+        ),
+      ) * pt;
     const size =
       nominal * (run.style.verticalAlign && run.style.verticalAlign !== "baseline" ? 0.65 : 1);
     const shift =
@@ -1049,6 +1661,7 @@ class ParagraphLayouter {
   ) {
     if (++this.work.paragraphs > layoutResourceLimits.layoutParagraphs)
       throw new LayoutError("LAYOUT_LIMIT", "Paragraph layout budget exceeded", paragraph.nodeId);
+    const firstLine = this.lines.length;
     const properties = paragraph.layout ?? {};
     if (properties.tabStops?.some((value, i, values) => i > 0 && value <= (values[i - 1] ?? 0)))
       throw new LayoutError("LAYOUT_INPUT", "Tab stops must increase", paragraph.nodeId);
@@ -1204,6 +1817,14 @@ class ParagraphLayouter {
         forced = candidate.required && end < text.length;
         if (candidate.required) break;
       }
+      if (end === start && text.length > start && this.horizontalOverflow) {
+        const candidate = candidates[candidateIndex];
+        if (candidate) {
+          end = candidate.position;
+          pieces = this.measure(text, runs, start, end, properties, indent);
+          forced = candidate.required && end < text.length;
+        }
+      }
       if (end === start && text.length > start)
         throw new LayoutError(
           "LAYOUT_OVERFLOW",
@@ -1237,7 +1858,7 @@ class ParagraphLayouter {
           paragraph.nodeId,
         );
       if (this.y + height > box.y + box.height + 1e-9) {
-        if (this.decoration)
+        if (this.decoration || this.inRegion)
           throw new LayoutError(
             "LAYOUT_OVERFLOW",
             "Page decoration exceeds its reserved area",
@@ -1317,6 +1938,40 @@ class ParagraphLayouter {
         terminalEmptyPending = false;
       }
     } while (start <= text.length);
+    if (properties.border) {
+      let first = firstLine;
+      while (first < this.lines.length) {
+        const initial = this.lines[first];
+        if (!initial) break;
+        let last = first;
+        while (this.lines[last + 1]?.pageIndex === initial.pageIndex) last++;
+        const bottom = this.lines[last];
+        if (!bottom) break;
+        const borderBox = {
+          x: box.x,
+          y: initial.y,
+          width: box.width,
+          height: bottom.y + bottom.height - initial.y,
+        };
+        this.commands(5);
+        this.reserveObjects(1);
+        const target = this.ir.pages[initial.pageIndex];
+        if (!target) throw new Error("Missing page");
+        target.objects.push({
+          id: `page${initial.pageIndex}object${target.objects.length}`,
+          kind: "path",
+          drawOrder: target.objects.length,
+          stateId: this.graphicState(properties.border),
+          bounds: borderBox,
+          coordinateSpace: "page",
+          commands: borderPath(borderBox, properties.border),
+          fill: false,
+          stroke: true,
+          fillRule: "nonzero",
+        });
+        first = last + 1;
+      }
+    }
     // Trailing space consumes remaining space only; it never creates a blank page itself.
     this.y = Math.min(box.y + box.height, this.y + (properties.spaceAfter ?? 0));
   }
@@ -1377,7 +2032,10 @@ class ParagraphLayouter {
     generated = false,
   ) {
     generated ||= this.decoration;
-    if (!generated) this.reserveSectionMetadata(paragraph.nodeId);
+    if (!generated) {
+      this.reserveSectionMetadata(paragraph.nodeId);
+      this.metadata(paragraph);
+    }
     // Reserve cardinality and wire-text expansion before allocating any IR objects/maps.
     const style = piece.run.style;
     const objectCount =
@@ -1402,6 +2060,13 @@ class ParagraphLayouter {
             (span.start === 0 && piece.start === 0));
         const intersects = !empty && span.start < piece.end && span.end > piece.start;
         if (!ownsEmpty && !intersects) continue;
+        this.metadata(
+          paragraph,
+          span.fragment.origin.nodeId.length +
+            (span.fragment.origin.kind === "dynamic-text"
+              ? span.fragment.origin.bindingId.length
+              : 0),
+        );
         sourceUnits += span.fragment.text.length;
         if (sourceUnits > 8_000_000 - this.work.outputTextUnits)
           throw new LayoutError(
@@ -1432,6 +2097,7 @@ class ParagraphLayouter {
     const top = baseline - piece.ascent;
     const bounds = { x, y: top, width, height: piece.ascent + piece.descent };
     const path = (fill: boolean, value: string | undefined, y: number, height: number) => {
+      this.commands(fill ? 5 : 2);
       const id = `page${this.pageIndex}object${objects.length}`;
       objects.push({
         kind: "path",

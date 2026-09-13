@@ -212,6 +212,21 @@ class Binder {
     for (const block of blocks) {
       if (this.exhausted) break;
       switch (block.kind) {
+        case "path":
+          if (this.charge(block))
+            out.push({
+              ...block,
+              ...(instancePath.length ? { instancePath: [...instancePath] } : {}),
+            });
+          break;
+        case "region":
+          if (this.charge(block))
+            out.push({
+              ...block,
+              children: this.expandBlocks(block.children, scope, instancePath),
+              ...(instancePath.length ? { instancePath: [...instancePath] } : {}),
+            });
+          break;
         case "paragraph": {
           const paragraph = this.paragraph(block, scope, instancePath);
           if (paragraph) out.push(paragraph);
@@ -290,6 +305,7 @@ class Binder {
     const base = {
       nodeId: node.nodeId,
       bindingId: node.bindingId,
+      ...(node.placement ? { placement: node.placement } : {}),
       ...(instancePath.length ? { instancePath: [...instancePath] } : {}),
       ...(result.dataPath === undefined ? {} : { dataPath: result.dataPath }),
     };
@@ -427,6 +443,7 @@ class Binder {
     }
     return {
       kind: "table",
+      ...(table.border ? { border: table.border } : {}),
       nodeId: table.nodeId,
       ...(table.styleId === undefined ? {} : { styleId: table.styleId }),
       ...(instancePath.length === 0 ? {} : { instancePath: [...instancePath] }),
@@ -462,6 +479,7 @@ class Binder {
   ): ResolvedTableCell {
     return {
       kind: "table-cell",
+      ...(cell.border ? { border: cell.border } : {}),
       nodeId: cell.nodeId,
       ...(cell.styleId === undefined ? {} : { styleId: cell.styleId }),
       blocks: this.expandBlocks(cell.blocks, scope, instancePath),

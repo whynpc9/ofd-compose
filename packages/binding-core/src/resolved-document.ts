@@ -7,7 +7,11 @@ import {
   InputControlSchema,
   modelVersion,
   ParagraphLayoutSchema,
+  PathNodeSchema,
+  PlacementSchema,
   ProvenanceSchema,
+  RegionLayoutSchema,
+  StrokeSchema,
   TemplateSettingsSchema,
   TextStyleSchema,
 } from "@ofd-compose/document-model";
@@ -103,6 +107,7 @@ export const ResolvedParagraphSchema = Type.Object(
 export const ResolvedImageSchema = Type.Object(
   {
     kind: Type.Literal("image-binding"),
+    placement: Type.Optional(PlacementSchema),
     nodeId: identifier,
     bindingId: identifier,
     instancePath,
@@ -115,6 +120,7 @@ export const ResolvedImageSchema = Type.Object(
 export const ResolvedBarcodeSchema = Type.Object(
   {
     kind: Type.Literal("barcode-binding"),
+    placement: Type.Optional(PlacementSchema),
     nodeId: identifier,
     bindingId: identifier,
     instancePath,
@@ -132,6 +138,7 @@ const resolvedTableCellOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-cell"),
+      border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),
       blocks: Type.Array(block),
@@ -154,6 +161,7 @@ const resolvedTableOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table"),
+      border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),
       instancePath,
@@ -163,10 +171,27 @@ const resolvedTableOf = <T extends TSchema>(block: T) =>
     { additionalProperties: false },
   );
 
+export const ResolvedPathSchema = Type.Object(
+  { ...PathNodeSchema.properties, instancePath },
+  { additionalProperties: false },
+);
+const resolvedRegionOf = <T extends TSchema>(block: T) =>
+  Type.Object(
+    {
+      kind: Type.Literal("region"),
+      nodeId: identifier,
+      instancePath,
+      layout: RegionLayoutSchema,
+      children: Type.Array(block),
+    },
+    { additionalProperties: false },
+  );
 export const ResolvedBlockSchema = Type.Recursive(
   (This) =>
     Type.Union([
       ResolvedParagraphSchema,
+      ResolvedPathSchema,
+      resolvedRegionOf(This),
       ResolvedImageSchema,
       ResolvedBarcodeSchema,
       resolvedTableOf(This),
@@ -279,6 +304,7 @@ export function paragraphText(paragraph: ResolvedParagraph): string {
 
 /** 块的最终文本：段落文本；表格按行 / 单元格以 `\n` / `\t` 连接。 */
 export function blockText(block: ResolvedBlock): string {
+  if (block.kind === "region") return block.children.map(blockText).join("\n");
   if (block.kind === "paragraph") return paragraphText(block);
   if (block.kind !== "table") return "";
   return block.rows.map((row) => row.cells.map(cellText).join("\t")).join("\n");
