@@ -55,3 +55,8 @@
 - Bot reviewed `b9133fc`; its language-syntax P2 is valid. Both TypeBox/exported schemas now use TypographyCore's alphanumeric hyphen-separated syntax; invalid underscores/spaces/empty segments fail. Dual-runtime and independent Ajv tests cover accepted/rejected forms.
 - Supplementary `code-review` of fixed range `6457636...b9133fc` ran Standards and Spec axes in separate read-only agents. Standards: 0 hard violations, 1 nonblocking duplicated-whole-document-traversal heuristic, deferred to WP0 capacity evaluation. Spec: 1 valid P2 (nonempty all-zero dash cycles); fixed in both construction/canonical schemas, including post-quantization failure. No other high-confidence scope/missing-requirement findings. This local review does not replace final-head bot evidence.
 - Verification: Node 82/82, Chromium 74/74, typecheck/build/lint/diff checks passed. Seven valid bot findings plus the supplementary dash finding have implementation fixes; fresh-head review/CI remains on PR #5. No merge performed.
+
+### 2026-09-13 — Decimal page-boundary regression
+
+- Additional executable self-check reproduced a false `IR_PAGE_BOUNDS` for a 0.3 mm page with content x=0.1, width=0.2, caused by binary addition. Containment now compares exact sums of the shortest decimal spellings used by normalization, without epsilon tolerance; a genuine 0.20000000000000004 mm width still fails.
+- Verification: Node 83/83, Chromium 75/75, typecheck/build/lint/diff checks passed. Fresh-head bot and CI remain required; no merge performed.

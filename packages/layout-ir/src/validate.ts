@@ -8,7 +8,7 @@ import {
   type LayoutIR,
   LayoutIRSchema,
 } from "./schema.js";
-import { canonicalSerialize, digestCanonical } from "./serialize.js";
+import { canonicalSerialize, digestCanonical, formatNumber } from "./serialize.js";
 import { clusterOffsetTable, fail, validateUtf16Range } from "./text.js";
 
 export function assertSchema<T extends TSchema>(
@@ -56,6 +56,17 @@ export function validateCanonicalLayoutIR(input: unknown): asserts input is Cano
       "Transport must use canonical ordering, IDs and deduplicated definitions",
     );
   }
+}
+/** Compare finite nonnegative lengths using the same shortest-decimal semantics as
+ * quantization, without an epsilon that could hide a genuine boundary violation. */
+function sumExceeds(left: number, right: number, limit: number): boolean {
+  const parts = [left, right, limit].map((value) => formatNumber(value).split("."));
+  const precision = Math.max(...parts.map(([, fraction = ""]) => fraction.length));
+  const exact = parts.map(([integer, fraction = ""]) =>
+    BigInt(`${integer}${fraction.padEnd(precision, "0")}`),
+  );
+  const [a, b, c] = exact as [bigint, bigint, bigint];
+  return a + b > c;
 }
 export function validateReferences(
   input: Pick<LayoutIR, "resources" | "graphicsStates" | "pages" | "semantics" | "markers">,
@@ -113,8 +124,8 @@ export function validateReferences(
     if (
       box.x < 0 ||
       box.y < 0 ||
-      box.x + box.width > page.width ||
-      box.y + box.height > page.height
+      sumExceeds(box.x, box.width, page.width) ||
+      sumExceeds(box.y, box.height, page.height)
     )
       fail("IR_PAGE_BOUNDS", `pages/${page.id}`, "Content box exceeds paper");
     for (const item of page.objects) {

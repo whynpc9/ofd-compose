@@ -43,7 +43,9 @@ Construction lengths are finite numbers in ±1,000,000 mm. Canonical lengths are
 integers in ±1,000,000,000 µm. Quantization rounds the shortest decimal spelling
 **half away from zero**: `1.2345 → 1235`, `-1.2345 → -1235`,
 `1.0055 → 1006`, `-0.0005 → -1`. Error is at most 0.0005 mm per scalar.
-Negative zero becomes zero. Dimensions that are required positive (paper and font
+Negative zero becomes zero. Page-content containment uses exact sums of the same
+shortest decimal spellings, so `0.1 + 0.2` against `0.3` is accepted without an
+epsilon that would hide a real overrun. Dimensions that are required positive (paper and font
 size) must remain positive after quantization; invalid post-rounding geometry fails.
 This is the issue 08 PoC baseline, pending WP0 error/capacity evaluation and WP0.10
 freeze; it is not a claim about writer or reader geometric accuracy.

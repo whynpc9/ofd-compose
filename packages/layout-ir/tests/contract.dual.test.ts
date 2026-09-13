@@ -508,3 +508,18 @@ it("accepts solid and mixed-zero dashes but rejects zero-length cycles before an
   expect(() => validateLayoutIR(input)).not.toThrow();
   expect(() => canonicalizeLayoutIR(input)).toThrow("IR_SCHEMA");
 });
+it("compares decimal page boundaries without binary-addition false positives or epsilon allowances", () => {
+  const input = textFixture();
+  const page = input.pages[0]!;
+  page.width = 0.3;
+  page.height = 0.3;
+  page.contentBox = { x: 0.1, y: 0.1, width: 0.2, height: 0.2 };
+  expect(() => validateLayoutIR(input)).not.toThrow();
+  const canonical = canonicalizeLayoutIR(input);
+  expect(canonical.pages[0]!.contentBox).toEqual({ x: 100, y: 100, width: 200, height: 200 });
+  page.contentBox.width = 0.20000000000000004;
+  expect(() => validateLayoutIR(input)).toThrow("IR_PAGE_BOUNDS");
+  page.contentBox.width = 0.2;
+  page.contentBox.height = 0.20000000000000004;
+  expect(() => validateLayoutIR(input)).toThrow("IR_PAGE_BOUNDS");
+});
