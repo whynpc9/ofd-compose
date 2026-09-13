@@ -2,7 +2,6 @@ import type { TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
 import {
   type CanonicalLayoutIR,
-  CanonicalLayoutIRSchema,
   canonicalizationVersion,
   type LayoutIdentityInput,
   LayoutIdentityInputSchema,
@@ -11,7 +10,7 @@ import {
 } from "./schema.js";
 import { canonicalSerialize, digestCanonical, quantizeMm } from "./serialize.js";
 import { clusterOffsetTable, fail } from "./text.js";
-import { assertSchema, validateLayoutIR, validateReferences } from "./validate.js";
+import { assertSchema, validateCanonicalLayoutIR, validateLayoutIR } from "./validate.js";
 
 function quantize(schema: TSchema, value: unknown): unknown {
   if (schema["x-unit"] === "mm") return quantizeMm(value as number);
@@ -116,8 +115,7 @@ export function canonicalizeLayoutIR(input: unknown): CanonicalLayoutIR {
   ir.identity.semanticDigest = semanticDigest;
   const { provenance: _provenance, ...semantic } = ir;
   const result = { ...semantic, units: "um" as const, canonicalizationVersion };
-  assertSchema(CanonicalLayoutIRSchema, result);
-  validateReferences(result as unknown as LayoutIR);
+  validateCanonicalLayoutIR(result);
   return result;
 }
 export function serializeLayoutIR(input: unknown): string {

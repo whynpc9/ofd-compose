@@ -12,6 +12,9 @@ The implementation follows [spec §9](../../.scratch/first-release/spec.md) and
   schema, duplicate identity/order, missing or wrong-kind references, page bounds,
   subset maps, UTF-16 ranges or inconsistent clusters. Unknown `irVersion` fails
   with `IR_VERSION_UNSUPPORTED`. Versions are independent of `modelVersion`.
+- `validateCanonicalLayoutIR(unknown)`: validates the integer-um writer transport
+  against its schema, the same relational checks and its semantic digest. It
+  never changes units, order or IDs, and rejects mm construction input.
 - `canonicalizeLayoutIR(unknown)`: validates and returns a new
   `CanonicalLayoutIR` with `units: "um"` and `canonicalizationVersion`.
   `CanonicalLayoutIRSchema` describes that separate writer transport.
@@ -28,7 +31,8 @@ The implementation follows [spec §9](../../.scratch/first-release/spec.md) and
 JSON Schema 2020-12 artifacts live in [`schemas/layout-ir`](../../schemas/layout-ir/).
 They are checked for freshness and independently compiled with Ajv in Node tests.
 Schema validation alone cannot check graph references or cluster relationships;
-transport consumers must perform the same relational validation before writing.
+TypeScript transport consumers use `validateCanonicalLayoutIR` before writing;
+non-TS writers must apply equivalent relational checks after JSON Schema validation.
 
 ## Geometry and order, canonical version 0
 

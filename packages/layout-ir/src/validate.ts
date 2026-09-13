@@ -1,7 +1,13 @@
 import type { Static, TSchema } from "@sinclair/typebox";
 import { Value } from "@sinclair/typebox/value";
-import { irVersion, type LayoutIR, LayoutIRSchema } from "./schema.js";
-import { canonicalSerialize } from "./serialize.js";
+import {
+  type CanonicalLayoutIR,
+  CanonicalLayoutIRSchema,
+  irVersion,
+  type LayoutIR,
+  LayoutIRSchema,
+} from "./schema.js";
+import { canonicalSerialize, digestCanonical } from "./serialize.js";
 import { clusterOffsetTable, fail, validateUtf16Range } from "./text.js";
 
 export function assertSchema<T extends TSchema>(
@@ -31,7 +37,21 @@ export function validateLayoutIR(input: unknown): asserts input is LayoutIR {
   assertSchema(LayoutIRSchema, input);
   validateReferences(input);
 }
-export function validateReferences(input: LayoutIR): void {
+/** Validates the writer transport in place without changing units, order or IDs. */
+export function validateCanonicalLayoutIR(input: unknown): asserts input is CanonicalLayoutIR {
+  assertSchema(CanonicalLayoutIRSchema, input);
+  validateReferences(input);
+  if (input.identity.semanticDigest !== digestCanonical(input.semantics)) {
+    fail(
+      "IR_DIGEST_MISMATCH",
+      "identity/semanticDigest",
+      "Semantic digest does not match transported map",
+    );
+  }
+}
+export function validateReferences(
+  input: Pick<LayoutIR, "resources" | "graphicsStates" | "pages" | "semantics" | "markers">,
+): void {
   const resources = new Map(input.resources.map((r) => [r.id, r]));
   const states = new Set(input.graphicsStates.map((s) => s.id));
   const pages = new Map(input.pages.map((p) => [p.id, p]));

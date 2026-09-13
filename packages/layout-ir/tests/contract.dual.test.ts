@@ -20,6 +20,7 @@ import {
   formatNumber,
   offsetsForCluster,
   quantizeMm,
+  validateCanonicalLayoutIR,
   validateLayoutIR,
   validateUtf16Range,
 } from "../src/index.js";
@@ -326,4 +327,32 @@ it("accepts the uint32 feature boundary and rejects values the shaper cannot con
     font.features.liga = value;
     expect(() => validateLayoutIR(ir)).toThrow("IR_SCHEMA");
   }
+});
+it("public writer validator accepts canonical JSON without re-quantizing or mutating", () => {
+  for (const factory of Object.values(fixtureFactories)) {
+    const canonical = JSON.parse(canonicalSerialize(canonicalizeLayoutIR(factory())));
+    const before = canonicalSerialize(canonical);
+    validateCanonicalLayoutIR(canonical);
+    expect(canonicalSerialize(canonical)).toBe(before);
+  }
+  expect(() => validateCanonicalLayoutIR(textFixture())).toThrow("IR_SCHEMA");
+});
+it.each([
+  "missing-state",
+  "missing-font",
+  "duplicate-id",
+  "invalid-cluster",
+  "semantic-digest",
+  "marker-page",
+])("canonical writer validator rejects %s", (failure) => {
+  const canonical = canonicalizeLayoutIR(repeatedHeaderFixture());
+  const text = canonical.pages[0]!.objects[0]!;
+  if (text.kind !== "text") throw new Error("Missing fixture text");
+  if (failure === "missing-state") text.stateId = "missing";
+  if (failure === "missing-font") text.fontId = "missing";
+  if (failure === "duplicate-id") canonical.resources[0]!.id = canonical.pages[0]!.id;
+  if (failure === "invalid-cluster") text.clusters[0]!.displayRange.end = 2;
+  if (failure === "semantic-digest") canonical.identity.semanticDigest = "0".repeat(64);
+  if (failure === "marker-page") canonical.markers[0]!.pageId = canonical.pages[0]!.id;
+  expect(() => validateCanonicalLayoutIR(canonical)).toThrow(/IR_/);
 });

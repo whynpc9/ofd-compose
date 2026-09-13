@@ -8,4 +8,4 @@ export {
   offsetsForCluster,
   validateUtf16Range,
 } from "./text.js";
-export { validateLayoutIR } from "./validate.js";
+export { validateCanonicalLayoutIR, validateLayoutIR } from "./validate.js";
