@@ -2611,10 +2611,41 @@
                       }
                     ]
                   },
+                  "widthPx": {
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000,
+                    "type": "number"
+                  },
+                  "heightPx": {
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000,
+                    "type": "number"
+                  },
+                  "maxWidthPx": {
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000,
+                    "type": "number"
+                  },
+                  "maxHeightPx": {
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000000,
+                    "type": "number"
+                  },
                   "scale": {
                     "exclusiveMinimum": 0,
                     "maximum": 1000,
                     "type": "number"
+                  },
+                  "scaleRatio": {
+                    "exclusiveMinimum": 0,
+                    "maximum": 1000,
+                    "type": "number"
+                  },
+                  "keepAspectRatio": {
+                    "type": "boolean"
+                  },
+                  "lockAspectRatio": {
+                    "type": "boolean"
                   },
                   "preserveAspectRatio": {
                     "type": "boolean"

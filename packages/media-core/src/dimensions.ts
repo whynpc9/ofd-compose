@@ -40,29 +40,77 @@ export function imageDimensions(
     fail("RESOURCE_LIMIT", "Invalid or excessive intrinsic image dimensions");
   if (options.legacyPixelDpi !== undefined && options.legacyPixelDpi !== 96)
     fail("MODEL_INVALID", "Only legacyPixelDpi=96 is supported");
-  if (options.preserveAspectRatio !== undefined && typeof options.preserveAspectRatio !== "boolean")
-    fail("MODEL_INVALID", "preserveAspectRatio must be boolean");
   const legacy = options.legacyPixelDpi === 96;
+  const pixelMm = 25.4 / 96;
+  const coordinate = (mm: number | undefined): number | undefined => {
+    if (mm === undefined || !legacy) return mm;
+    const pixels = mm / pixelMm;
+    const integer = Math.round(pixels);
+    if (Math.abs(pixels - integer) > 1e-7 || integer < 1)
+      fail("MODEL_INVALID", "Legacy targets and bounds must map to whole 96-dpi pixels");
+    return integer;
+  };
   const dimension = (
     primary: "width" | "height" | "maxWidth" | "maxHeight",
     alias: "w" | "h" | "maxwidth" | "maxheight",
+    pixelAlias: "widthPx" | "heightPx" | "maxWidthPx" | "maxHeightPx",
   ) => {
-    const a = options[primary] === undefined ? undefined : physical(options[primary], legacy);
-    const b = options[alias] === undefined ? undefined : physical(options[alias], legacy);
-    if (a !== undefined && b !== undefined && Math.abs(a - b) > 1e-9)
-      fail("MODEL_INVALID", `Conflicting image dimension aliases: ${primary}/${alias}`);
-    return a ?? b;
+    const values = [
+      options[primary] === undefined ? undefined : physical(options[primary], legacy),
+      options[alias] === undefined ? undefined : physical(options[alias], legacy),
+    ];
+    const px = options[pixelAlias];
+    if (px !== undefined) {
+      if (typeof px !== "number") fail("MODEL_INVALID", "Pixel aliases must be numeric");
+      values.push(physical(px, true));
+    }
+    let value: number | undefined;
+    for (const candidate of values) {
+      if (candidate === undefined) continue;
+      if (value !== undefined && Math.abs(value - candidate) > 1e-9)
+        fail("MODEL_INVALID", `Conflicting image dimension aliases: ${primary}`);
+      value = candidate;
+    }
+    return coordinate(value);
   };
-  const width = dimension("width", "w"),
-    height = dimension("height", "h");
-  const maxWidth = dimension("maxWidth", "maxwidth"),
-    maxHeight = dimension("maxHeight", "maxheight");
-  const scale = options.scale ?? 1;
+  const width = dimension("width", "w", "widthPx"),
+    height = dimension("height", "h", "heightPx");
+  const maxWidth = dimension("maxWidth", "maxwidth", "maxWidthPx"),
+    maxHeight = dimension("maxHeight", "maxheight", "maxHeightPx");
+  if (
+    options.scale !== undefined &&
+    options.scaleRatio !== undefined &&
+    options.scale !== options.scaleRatio
+  )
+    fail("MODEL_INVALID", "Conflicting scale/scaleRatio aliases");
+  const scale = options.scale ?? options.scaleRatio ?? 1;
   if (!Number.isFinite(scale) || scale <= 0 || scale > 1000)
     fail("MODEL_INVALID", "scale must be in (0,1000]");
-  const preserve = options.preserveAspectRatio ?? true;
-  let w = (pixelWidth * 25.4) / 96,
-    h = (pixelHeight * 25.4) / 96;
+  let preserve: boolean | undefined;
+  for (const value of [
+    options.preserveAspectRatio,
+    options.keepAspectRatio,
+    options.lockAspectRatio,
+  ]) {
+    if (value === undefined) continue;
+    if (typeof value !== "boolean") fail("MODEL_INVALID", "Aspect-ratio aliases must be boolean");
+    if (preserve !== undefined && preserve !== value)
+      fail("MODEL_INVALID", "Conflicting aspect-ratio aliases");
+    preserve = value;
+  }
+  preserve ??= legacy
+    ? maxWidth !== undefined ||
+      maxHeight !== undefined ||
+      options.scale !== undefined ||
+      options.scaleRatio !== undefined ||
+      (width !== undefined) !== (height !== undefined)
+    : true;
+  // The legacy engine rounds each fit/scale stage to integer pixels. Native geometry
+  // stays continuous in mm; Layout IR still performs mm -> um canonicalization only once.
+  const rounded = (value: number): number =>
+    legacy ? Math.max(1, Math.floor(value + 0.5)) : value;
+  let w = pixelWidth * (legacy ? 1 : pixelMm),
+    h = pixelHeight * (legacy ? 1 : pixelMm);
   if (preserve) {
     const fit =
       width !== undefined && height !== undefined
@@ -72,21 +120,24 @@ export function imageDimensions(
           : height !== undefined
             ? height / h
             : 1;
-    w *= fit;
-    h *= fit;
+    w = rounded(w * fit);
+    h = rounded(h * fit);
   } else {
     w = width ?? w;
     h = height ?? h;
   }
-  w *= scale;
-  h *= scale;
+  w = rounded(w * scale);
+  h = rounded(h * scale);
   if (preserve) {
     const fit = Math.min(1, (maxWidth ?? w) / w, (maxHeight ?? h) / h);
-    w *= fit;
-    h *= fit;
+    w = rounded(w * fit);
+    h = rounded(h * fit);
   } else {
     w = Math.min(w, maxWidth ?? w);
     h = Math.min(h, maxHeight ?? h);
   }
-  return { width: physical(w), height: physical(h) };
+  return {
+    width: physical(w * (legacy ? pixelMm : 1)),
+    height: physical(h * (legacy ? pixelMm : 1)),
+  };
 }

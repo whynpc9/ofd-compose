@@ -11,6 +11,7 @@ import { compile } from "@ofd-compose/template-compiler";
 import { beforeAll, describe, expect, it } from "vitest";
 import { readBarcodes } from "zxing-wasm/reader";
 import { prepareDecoder } from "#decoder";
+import goldenImages from "../../../tests/golden-corpus/library/examples/11-images-file-and-datauri-scaling/expected/semantics.json";
 import {
   barcode,
   imageDimensions,
@@ -130,6 +131,22 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
       ).toBe(true);
     }
   });
+  it.each([195, 197, 198, 199, 201, 202, 203, 205, 206, 207])(
+    "diagnoses unsupported JPEG SOF process %i explicitly",
+    (marker) => {
+      // Admission is based on the declared frame process, before entropy decoding.
+      const jpeg = Uint8Array.from(atob(fixtures.jpeg), (c) => c.charCodeAt(0));
+      const sof = jpeg.findIndex(
+        (value, i) => value === 255 && [192, 193, 194].includes(jpeg[i + 1] ?? -1),
+      );
+      jpeg[sof + 1] = marker;
+      expect(
+        run({ images: { resourceId: "jpeg" } }, [image()], {
+          resources: [{ id: "jpeg", bytes: jpeg }],
+        }).diagnostics[0]?.code,
+      ).toBe("UNSUPPORTED_FEATURE");
+    },
+  );
   it("uses the declared EXIF IFD offset in either byte order", () => {
     const jpeg = Uint8Array.from(atob(fixtures.jpeg), (c) => c.charCodeAt(0));
     for (const little of [true, false])
@@ -169,6 +186,60 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
         }).diagnostics[0]?.code,
       ).toBe("MODEL_INVALID");
   });
+  it.each([false, true])(
+    "matches the explicitly migrated golden image sizes (aliases=%s)",
+    (aliases) => {
+      // Issue30/host explicitly splits the old {src,width,...} records into safe references
+      // and template ImageOptions. This is not an implicit legacy-record import path.
+      const options: ImageOptions[] = aliases
+        ? [
+            { maxWidthPx: 376, keepAspectRatio: true },
+            { scaleRatio: 0.25, lockAspectRatio: true },
+            { widthPx: 420, heightPx: 260, keepAspectRatio: true },
+          ]
+        : [
+            { maxWidth: 376, preserveAspectRatio: true },
+            { scale: 0.25, preserveAspectRatio: true },
+            { width: 420, height: 260, preserveAspectRatio: true },
+          ];
+      const sourceTemplate = template(
+        options.map((opts, i) => ({
+          kind: "image-binding",
+          nodeId: `img${i}`,
+          bindingId: `ib${i}`,
+          expression: { kind: "legacy", text: `images[${i}]` },
+          options: opts,
+        })),
+      );
+      sourceTemplate.settings.bindingPolicyVersion = "legacy-compat-1";
+      const compiled = compile(sourceTemplate);
+      if (!compiled.ok) throw Error(JSON.stringify(compiled.diagnostics));
+      const bound = bind(compiled.template, {
+        images: [
+          { path: "assets/chart.png" },
+          `data:image/png;base64,${fixtures.png}`,
+          { resourceId: "chart" },
+        ],
+      });
+      expect(bound.ok).toBe(true);
+      const result = prepareMedia(bound.document, {
+        resources: [{ id: "chart", bytes }],
+        root: {
+          id: "golden-example11",
+          entries: [{ path: "assets/chart.png", resourceId: "chart" }],
+        },
+      });
+      expect(result.ok).toBe(true);
+      const actual = result.blocks.flatMap((b) => b.images ?? []);
+      expect(actual).toHaveLength(3);
+      for (const [i, expected] of goldenImages.media.entries()) {
+        expect(actual[i]?.width).toBeCloseTo((expected.widthPx * 25.4) / 96, 10);
+        expect(actual[i]?.height).toBeCloseTo((expected.heightPx * 25.4) / 96, 10);
+        expect(actual[i]?.bytes).toEqual(bytes);
+      }
+      expect(new Set(actual.map((i) => i.resource.digest)).size).toBe(1);
+    },
+  );
   it("keeps repeated media source scope and instance identity", () => {
     const body: BlockNode[] = [
       {
@@ -322,6 +393,34 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
     expect(prepareMedia(bound.document, { resources: [{ id: "x", bytes }] }).ok).toBe(true);
   });
 
+  it.each([
+    ["strict-1", "if"],
+    ["legacy-compat-1", "if"],
+    ["legacy-compat-1", "count"],
+  ] as const)("rejects object %s/%s media operations before enumeration", (policy, operation) => {
+    const source = new Proxy(
+      { field: "value" },
+      {
+        ownKeys() {
+          throw Error("Object-consuming media operation must not enumerate keys");
+        },
+      },
+    );
+    const block = image();
+    if (block.kind !== "image-binding") throw Error("Expected image");
+    block.expression = {
+      kind: "structured",
+      source: "images",
+      steps: [operation === "if" ? { op: "if", whenTrue: "unused" } : { op: "count" }],
+    };
+    const input = template([block]);
+    input.settings.bindingPolicyVersion = policy;
+    const compiled = compile(input);
+    if (!compiled.ok) throw Error(JSON.stringify(compiled.diagnostics));
+    expect(bind(compiled.template, { images: source }).diagnostics.map((d) => d.code)).toEqual([
+      "RESOURCE_LIMIT",
+    ]);
+  });
   it("returns only the original budget diagnostic after failed media evaluation", () => {
     const barcodeBlock: BlockNode = {
       kind: "barcode-binding",
@@ -481,6 +580,69 @@ describe("physical image dimensions", () => {
       expect(size.height).toBeCloseTo(h, 8);
     },
   );
+  it.each([undefined, 96] as const)(
+    "normalizes explicit pixel aliases exactly once (legacy=%s)",
+    (legacyPixelDpi) => {
+      for (const options of [
+        { width: "1in", widthPx: 96 },
+        { w: "2.54cm", widthPx: 96 },
+        { heightPx: 48 },
+        { maxWidthPx: 96, scaleRatio: 2 },
+        { maxHeightPx: 48, scale: 2, scaleRatio: 2 },
+      ]) {
+        const size = imageDimensions(96, 48, { ...options, legacyPixelDpi });
+        expect(size.width).toBeCloseTo(25.4, 10);
+        expect(size.height).toBeCloseTo(12.7, 10);
+      }
+    },
+  );
+  it("preserves native continuous sizing and legacy stage rounding/defaults", () => {
+    const mm = 25.4 / 96;
+    expect(imageDimensions(3, 2, { width: 2, scale: 2, legacyPixelDpi: 96 })).toEqual({
+      width: 4 * mm,
+      height: 2 * mm,
+    });
+    expect(imageDimensions(96, 48, { width: 4, height: 3, legacyPixelDpi: 96 })).toEqual({
+      width: 4 * mm,
+      height: 3 * mm,
+    });
+    const native = imageDimensions(96, 48, { width: 4, height: 3 });
+    expect(native.width).toBeCloseTo(4, 10);
+    expect(native.height).toBeCloseTo(2, 10);
+    expect(
+      imageDimensions(96, 48, {
+        widthPx: 4,
+        heightPx: 3,
+        keepAspectRatio: false,
+        lockAspectRatio: false,
+      }),
+    ).toEqual({ width: 4 * mm, height: 3 * mm });
+    expect(imageDimensions(3, 2, { widthPx: 2, scaleRatio: 2 }).height).toBeCloseTo(
+      (8 * mm) / 3,
+      10,
+    );
+    error(() => imageDimensions(96, 48, { maxWidth: "1mm", legacyPixelDpi: 96 }), "MODEL_INVALID");
+    error(() => imageDimensions(96, 48, { width: 0.5, legacyPixelDpi: 96 }), "MODEL_INVALID");
+    error(() => imageDimensions(100, 1, { maxWidthPx: 0.5, legacyPixelDpi: 96 }), "MODEL_INVALID");
+    expect(imageDimensions(100, 1, { maxWidthPx: 1, maxHeightPx: 1, legacyPixelDpi: 96 })).toEqual({
+      width: mm,
+      height: mm,
+    });
+  });
+  it("rejects conflicting or invalid legacy aliases", () => {
+    for (const options of [
+      { width: "1in", widthPx: 97 },
+      { maxHeight: 10, maxHeightPx: 10 },
+      { scale: 2, scaleRatio: 3 },
+      { preserveAspectRatio: true, keepAspectRatio: false },
+      { keepAspectRatio: false, lockAspectRatio: true },
+      { widthPx: NaN },
+      { heightPx: 0 },
+      { scaleRatio: 0 },
+      { scaleRatio: Infinity },
+    ])
+      error(() => imageDimensions(96, 48, options), "MODEL_INVALID");
+  });
   it("normalizes equal aliases and rejects conflicts and invalid dimensions", () => {
     expect(imageDimensions(96, 48, { width: "1in", w: "25.4mm" }).width).toBeCloseTo(25.4);
     for (const options of [

@@ -384,6 +384,14 @@ class Evaluator {
       return state;
     }
     const value = state.value;
+    if (
+      this.ctx.consumer === "media" &&
+      isJsonObject(value) &&
+      (step.op === "if" || (step.op === "count" && this.ctx.policy === "legacy-compat-1"))
+    )
+      throw new MediaEvaluationLimit(
+        "Object-consuming media operations require host-provided scalar values",
+      );
 
     switch (step.op) {
       case "sort": {

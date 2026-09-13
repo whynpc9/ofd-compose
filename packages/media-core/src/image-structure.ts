@@ -89,6 +89,16 @@ export function jpegHeader(bytes: Uint8Array, budget: MediaBudget): Uint8Array {
       end = offset + 2 + length;
     if (length < 2 || end > bytes.length) fail("MODEL_INVALID", "Truncated JPEG segment");
     if (end > 65536) fail("RESOURCE_LIMIT", "JPEG header budget exceeded");
+    if (
+      marker !== undefined &&
+      marker >= 192 &&
+      marker <= 207 &&
+      ![192, 193, 194, 196, 200, 204].includes(marker)
+    )
+      fail(
+        "UNSUPPORTED_FEATURE",
+        "P0 JPEG supports only SOF0/SOF1/SOF2 Huffman processes; lossless, differential and arithmetic processes require another profile",
+      );
     if (marker === 192 || marker === 193 || marker === 194) {
       if (length < 8 || sofEnd) fail("MODEL_INVALID", "Invalid JPEG frame header");
       sofEnd = end;

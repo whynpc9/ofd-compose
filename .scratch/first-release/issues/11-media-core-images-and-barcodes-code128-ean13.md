@@ -24,3 +24,7 @@
 ### Pre-review closure
 
 Two-axis independent review found and closed: public intrinsic-pixel validation (Standards), nested media array/sort-key work allocation (Spec), and EXIF IFD offset handling (Spec). Shared regression tests cover each. Spec reviewer additionally ran 11 independent Node probes (8 EXIF combinations and 3 sorting getter sentinels), all passing. No remaining high-confidence findings on either axis; external final-head bot review remains a separate gate.
+
+### Legacy dimension evidence
+
+The fixed old engine `9c02f26d` ImageRendering.cs defines the scanner's `*Px`, `scaleRatio`, `keepAspectRatio`, and `lockAspectRatio` aliases, integer per-stage pixel rounding and conditional aspect defaults. These are now tested through compile/bind/media with the committed example11 image and expected 376×339, 376×339, 288×260 pixel geometry, using both canonical and alias fields. Native dimensions remain continuous physical units. Fractional legacy bounds receive an explicit error rather than the old parser's silent omission. Raw `{src,width,...}` decomposition stays with issue30/explicit host migration; this package does not implicitly load legacy sources. See ADR-0003 for exact source lines and policy differences.
