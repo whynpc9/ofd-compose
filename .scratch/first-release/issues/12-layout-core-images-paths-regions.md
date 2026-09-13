@@ -62,3 +62,10 @@ The checklist now separates tested paragraph/path output and shared table-border
 the unimplemented table-layout integration gate. This is a reporting/scope correction, not a
 claim that `layout(table)` can now emit table borders. Runtime code and existing validation
 results are unchanged; issue 13 must supply the actual table-border integration tests.
+
+PR #9 review comment `3999584892` found that overwide center/right-aligned images lost their
+negative offset in truncate regions. The atomic placement calculation now preserves that offset
+when the explicit overflow policy permits overwidth. Two dual-runtime regressions assert both
+the image transform and actual retained source interval (20 mm / 40 mm left crop respectively).
+The fix passed complete Layout Node 87 and Chromium 84 tests, typecheck, package build and
+repository lint; these are targeted package reruns, not another local full-workspace test run.

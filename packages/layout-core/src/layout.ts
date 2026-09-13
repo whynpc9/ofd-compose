@@ -870,7 +870,7 @@ class ParagraphLayouter {
     return {
       x:
         box.x +
-        Math.max(0, box.width - width) *
+        (this.horizontalOverflow ? box.width - width : Math.max(0, box.width - width)) *
           (alignment === "center" ? 0.5 : alignment === "right" ? 1 : 0),
       y: this.y,
       width,

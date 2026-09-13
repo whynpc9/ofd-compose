@@ -448,3 +448,34 @@ it("rejects replacement image elements and containers after preparation", async 
   array[0] = { ...original, bytes: new Uint8Array(1) };
   await expect(layout(doc, [], options, prepared)).rejects.toMatchObject({ code: "MODEL_INVALID" });
 });
+
+it.each([
+  ["center", 10000],
+  ["right", -10000],
+] as const)(
+  "preserves %s alignment when clipping an overwide image",
+  async (alignment, expectedX) => {
+    const result = await render([
+      region(
+        [
+          img("wide-image", {
+            options: { width: 120, height: 10, preserveAspectRatio: false },
+            placement: { alignment },
+          }),
+        ],
+        { kind: "truncate" },
+        20,
+      ),
+    ]);
+    const image = images(result)[0];
+    if (!image) throw Error("image");
+    expect(image.transform.e).toBe(expectedX);
+    expect(image.bounds).toEqual({ x: 30000, y: 40000, width: 80000, height: 10000 });
+    const state = result.ir.graphicsStates.find((s) => s.id === image.stateId);
+    if (!state?.clip) throw Error("clip");
+    expect(state.clip.commands[0]).toEqual({ op: "move", x: 30000, y: 40000 });
+    const sourceStart = (image.bounds.x - image.transform.e) / 1000;
+    expect(sourceStart).toBe(alignment === "center" ? 20 : 40);
+    expect(result.diagnostics[0]?.message).toContain("truncated=true");
+  },
+);
