@@ -259,6 +259,38 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
       }
     },
   );
+  it("preserves legacy integer text dimensions and pixel aliases through compile/bind", () => {
+    for (const options of [
+      {
+        width: " +096 ",
+        height: "48",
+        scale: 2,
+        maxWidth: "96",
+        maxHeight: "48",
+        legacyPixelDpi: 96 as const,
+      },
+      {
+        widthPx: "96",
+        heightPx: "+48",
+        scaleRatio: 2,
+        maxWidthPx: "96",
+        maxHeightPx: "48",
+        legacyPixelDpi: 96 as const,
+      },
+      { widthPx: "96", maxWidthPx: 96 },
+    ]) {
+      const result = run({ images: fixtures.png }, [
+        image({ ...options, preserveAspectRatio: false }),
+      ]);
+      expect(result.ok).toBe(true);
+      expect(result.blocks[0]?.images?.[0]?.width).toBeCloseTo(25.4, 10);
+      if ("height" in options || "heightPx" in options)
+        expect(result.blocks[0]?.images?.[0]?.height).toBeCloseTo(12.7, 10);
+    }
+    expect(run({ images: fixtures.png }, [image({ width: "96" })]).diagnostics[0]?.code).toBe(
+      "MODEL_INVALID",
+    );
+  });
   it("keeps repeated media source scope and instance identity", () => {
     const body: BlockNode[] = [
       {
@@ -710,6 +742,17 @@ describe("physical image dimensions", () => {
       width: mm,
       height: mm,
     });
+  });
+  it("accepts equivalent integer text and rejects invalid/ambiguous legacy text", () => {
+    expect(
+      imageDimensions(96, 48, { width: "96", w: 96, widthPx: "+096", legacyPixelDpi: 96 }).width,
+    ).toBeCloseTo(25.4, 10);
+    for (const value of ["0", "-1", "96.5", "1e2", "1000001", "bad"])
+      error(() => imageDimensions(96, 48, { width: value, legacyPixelDpi: 96 }), "MODEL_INVALID");
+    error(
+      () => imageDimensions(96, 48, { width: "96", widthPx: "97", legacyPixelDpi: 96 }),
+      "MODEL_INVALID",
+    );
   });
   it("rejects conflicting or invalid legacy aliases", () => {
     for (const options of [

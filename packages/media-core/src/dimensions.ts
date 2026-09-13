@@ -2,11 +2,20 @@ import type { ImageOptions } from "@ofd-compose/document-model";
 import { fail, mediaLimits } from "./budget.js";
 
 export const mediaVersion = "ofd-compose/media@1";
+function pixelIntegerText(value: string): number {
+  if (value.length > 64 || !/^[+-]?\d+$/.test(value.trim()))
+    fail("MODEL_INVALID", "Legacy pixel text must be an integer");
+  const number = Number(value.trim());
+  if (!Number.isSafeInteger(number) || number <= 0 || number > 1000000)
+    fail("MODEL_INVALID", "Legacy pixel text is outside its positive integer range");
+  return number;
+}
 /** Reject sub-micrometre dimensions which collapse during IR canonicalization. */
 export function physical(value: unknown, legacy = false): number {
   let result: number;
   if (typeof value === "number") result = value * (legacy ? 25.4 / 96 : 1);
   else if (typeof value === "string" && value.length <= 64) {
+    if (legacy && /^[+-]?\d+$/.test(value.trim())) return physical(pixelIntegerText(value), true);
     const match = /^\s*(\d+(?:\.\d+)?|\.\d+)\s*(mm|cm|in|inch|pt|px)\s*$/i.exec(value);
     if (!match) return fail("MODEL_INVALID", "Length requires a positive value and physical unit");
     const factors: Record<string, number> = {
@@ -61,8 +70,9 @@ export function imageDimensions(
     ];
     const px = options[pixelAlias];
     if (px !== undefined) {
-      if (typeof px !== "number") fail("MODEL_INVALID", "Pixel aliases must be numeric");
-      values.push(physical(px, true));
+      if (typeof px !== "number" && typeof px !== "string")
+        fail("MODEL_INVALID", "Pixel aliases must be numeric or integer text");
+      values.push(physical(typeof px === "string" ? pixelIntegerText(px) : px, true));
     }
     let value: number | undefined;
     for (const candidate of values) {

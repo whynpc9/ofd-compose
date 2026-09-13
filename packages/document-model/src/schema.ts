@@ -265,6 +265,10 @@ export const MediaLengthSchema = Type.Union([
   Type.Number({ exclusiveMinimum: 0, maximum: 1000000 }),
   Type.String({ minLength: 1, maxLength: 64 }),
 ]);
+const PixelLengthSchema = Type.Union([
+  Type.Number({ exclusiveMinimum: 0, maximum: 1000000 }),
+  Type.String({ minLength: 1, maxLength: 64, pattern: "^\\s*[+-]?[0-9]+\\s*$" }),
+]);
 export const ImageOptionsSchema = Type.Object(
   {
     width: Type.Optional(MediaLengthSchema),
@@ -276,10 +280,10 @@ export const ImageOptionsSchema = Type.Object(
     maxwidth: Type.Optional(MediaLengthSchema),
     maxheight: Type.Optional(MediaLengthSchema),
     /** Explicit pixel aliases always use 96 dpi, including native templates. */
-    widthPx: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 1000000 })),
-    heightPx: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 1000000 })),
-    maxWidthPx: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 1000000 })),
-    maxHeightPx: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 1000000 })),
+    widthPx: Type.Optional(PixelLengthSchema),
+    heightPx: Type.Optional(PixelLengthSchema),
+    maxWidthPx: Type.Optional(PixelLengthSchema),
+    maxHeightPx: Type.Optional(PixelLengthSchema),
     scale: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 1000 })),
     scaleRatio: Type.Optional(Type.Number({ exclusiveMinimum: 0, maximum: 1000 })),
     keepAspectRatio: Type.Optional(Type.Boolean()),

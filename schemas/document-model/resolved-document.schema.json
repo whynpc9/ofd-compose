@@ -2135,24 +2135,64 @@
                     ]
                   },
                   "widthPx": {
-                    "exclusiveMinimum": 0,
-                    "maximum": 1000000,
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "exclusiveMinimum": 0,
+                        "maximum": 1000000,
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^\\s*[+-]?[0-9]+\\s*$",
+                        "type": "string"
+                      }
+                    ]
                   },
                   "heightPx": {
-                    "exclusiveMinimum": 0,
-                    "maximum": 1000000,
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "exclusiveMinimum": 0,
+                        "maximum": 1000000,
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^\\s*[+-]?[0-9]+\\s*$",
+                        "type": "string"
+                      }
+                    ]
                   },
                   "maxWidthPx": {
-                    "exclusiveMinimum": 0,
-                    "maximum": 1000000,
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "exclusiveMinimum": 0,
+                        "maximum": 1000000,
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^\\s*[+-]?[0-9]+\\s*$",
+                        "type": "string"
+                      }
+                    ]
                   },
                   "maxHeightPx": {
-                    "exclusiveMinimum": 0,
-                    "maximum": 1000000,
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "exclusiveMinimum": 0,
+                        "maximum": 1000000,
+                        "type": "number"
+                      },
+                      {
+                        "minLength": 1,
+                        "maxLength": 64,
+                        "pattern": "^\\s*[+-]?[0-9]+\\s*$",
+                        "type": "string"
+                      }
+                    ]
                   },
                   "scale": {
                     "exclusiveMinimum": 0,
