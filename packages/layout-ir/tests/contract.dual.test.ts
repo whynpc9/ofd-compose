@@ -534,3 +534,44 @@ it("current static-font profile reserves an empty variations map", () => {
   expect(() => canonicalizeLayoutIR(input)).toThrow("IR_SCHEMA");
   expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_SCHEMA");
 });
+it.each(["glyphId", "original", "subset"] as const)("bounds %s to unsigned 32-bit IDs", (field) => {
+  for (const invalid of [0x100000000, Number.MAX_SAFE_INTEGER, -1, 1.5]) {
+    const input = textFixture();
+    const font = input.resources.find((resource) => resource.kind === "font");
+    const text = input.pages[0]!.objects[0]!;
+    if (font?.kind !== "font" || text.kind !== "text") throw new Error("Missing fixture font/text");
+    font.subsetDigest = "c".repeat(64);
+    font.glyphIdMap = text.glyphs.map((glyph) => ({
+      original: glyph.glyphId,
+      subset: glyph.glyphId,
+    }));
+    const canonical = canonicalizeLayoutIR(input);
+    for (const candidate of [input, canonical]) {
+      const run = candidate.pages[0]!.objects[0]!;
+      const face = candidate.resources.find((resource) => resource.kind === "font");
+      if (run.kind !== "text" || face?.kind !== "font" || !face.glyphIdMap)
+        throw new Error("Missing fixture map");
+      if (field === "glyphId") run.glyphs[0]!.glyphId = invalid;
+      else face.glyphIdMap[0]![field] = invalid;
+    }
+    expect(() => validateLayoutIR(input)).toThrow("IR_SCHEMA");
+    expect(() => validateCanonicalLayoutIR(canonical)).toThrow("IR_SCHEMA");
+  }
+});
+it("preserves the uint32 glyph/map boundary without numeric truncation", () => {
+  const input = textFixture();
+  const font = input.resources.find((resource) => resource.kind === "font");
+  const text = input.pages[0]!.objects[0]!;
+  if (font?.kind !== "font" || text.kind !== "text") throw new Error("Missing fixture font/text");
+  text.glyphs[0]!.glyphId = 0xffffffff;
+  font.subsetDigest = "c".repeat(64);
+  font.glyphIdMap = text.glyphs.map((glyph) => ({
+    original: glyph.glyphId,
+    subset: glyph.glyphId,
+  }));
+  const canonical = canonicalizeLayoutIR(input);
+  validateCanonicalLayoutIR(canonical);
+  const run = canonical.pages[0]!.objects[0]!;
+  if (run.kind !== "text") throw new Error("Missing canonical run");
+  expect(run.glyphs[0]!.glyphId).toBe(0xffffffff);
+});

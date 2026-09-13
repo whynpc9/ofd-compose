@@ -72,3 +72,8 @@
 - The coordinator clarified that the earlier variations-preservation suggestion was overbroad, not a user hard constraint, and selected the current static-profile restriction. This supersedes the preceding boundary disposition and independent generic-contract interpretation.
 - Accepted the bot finding. `variations` remains a field but both current v0 schemas require an empty mapping (`maxProperties: 0`), matching the exact-static-face producer. Nonempty maps, including nominal values, fail TypeBox/Ajv and both public validators. Supporting axes later requires an explicit profile/version change with real shaping/subset/writer evidence; no variation-aware shaping is added here.
 - Current supported face/feature identities remain distinct. Verification: Node 85/85, Chromium 76/76, typecheck/build/lint/diff checks passed. All eight valid bot findings now have implementation fixes; fresh final-head bot completion/CI are still required. No merge performed.
+
+### 2026-09-13 — Seventh bot review disposition
+
+- Bot reviewed `4f90b36`; glyph and subset-map identifiers above uint32 were accepted. Fixed all three fields (`glyphId`, map `original`, map `subset`) to 0..0xffffffff, sharing the same uint32 schema as OpenType feature values.
+- Both public validators and exported schemas reject overflow, negative and fractional IDs; the maximum legal value survives canonicalization without truncation. Verification: Node 90/90, Chromium 80/80, typecheck/build/lint/diff checks passed. All nine valid bot findings have implementation fixes; final-head bot/CI completion still required, no merge performed.

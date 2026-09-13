@@ -160,3 +160,34 @@ it("exported current-profile schemas require empty variation coordinates", () =>
     expect(validate(input)).toBe(false);
   }
 });
+it("exported schemas bound glyph IDs and subset map IDs to uint32", () => {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false });
+  ajv.addKeyword("x-unit");
+  for (const schema of [LayoutIRSchema, CanonicalLayoutIRSchema]) {
+    const validate = ajv.compile(JSON.parse(JSON.stringify(schema)));
+    const input =
+      schema === LayoutIRSchema
+        ? fixtureFactories.text()
+        : canonicalizeLayoutIR(fixtureFactories.text());
+    const text = input.pages[0]?.objects[0];
+    const font = input.resources.find((resource) => resource.kind === "font");
+    if (text?.kind !== "text" || font?.kind !== "font")
+      throw new Error("Missing fixture font/text");
+    const glyph = text.glyphs[0];
+    if (!glyph) throw new Error("Missing fixture glyph");
+    font.subsetDigest = "c".repeat(64);
+    font.glyphIdMap = [{ original: 0xffffffff, subset: 0xffffffff }];
+    glyph.glyphId = 0xffffffff;
+    expect(validate(input)).toBe(true);
+    const map = font.glyphIdMap[0];
+    if (!map) throw new Error("Missing fixture mapping");
+    for (const field of ["glyphId", "original", "subset"] as const) {
+      if (field === "glyphId") glyph.glyphId = 0x100000000;
+      else map[field] = 0x100000000;
+      expect(validate(input)).toBe(false);
+      glyph.glyphId = 0xffffffff;
+      map.original = 0xffffffff;
+      map.subset = 0xffffffff;
+    }
+  }
+});

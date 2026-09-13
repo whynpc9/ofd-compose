@@ -6,6 +6,7 @@ const object = <T extends TProperties>(properties: T) =>
   Type.Object(properties, { additionalProperties: false });
 const id = Type.String({ minLength: 1 });
 const uint = Type.Integer({ minimum: 0, maximum: Number.MAX_SAFE_INTEGER });
+const uint32 = Type.Integer({ minimum: 0, maximum: 0xffffffff });
 const digest = Type.String({ pattern: "^[a-f0-9]{64}$" });
 const finite = Type.Number({ minimum: -Number.MAX_SAFE_INTEGER, maximum: Number.MAX_SAFE_INTEGER });
 const unit = Type.Number({ minimum: 0, maximum: 1 });
@@ -99,7 +100,13 @@ function contract(canonical: boolean) {
       ]),
       baseline: point,
       glyphs: Type.Array(
-        object({ glyphId: uint, position: point, advance: point, offset: point, clusterId: uint }),
+        object({
+          glyphId: uint32,
+          position: point,
+          advance: point,
+          offset: point,
+          clusterId: uint,
+        }),
       ),
       clusters: Type.Array(
         object({
@@ -148,19 +155,15 @@ function contract(canonical: boolean) {
             Type.Literal("italic"),
             Type.Literal("oblique"),
           ]),
-          features: Type.Record(
-            Type.String({ pattern: "^[ -~]{4}$" }),
-            Type.Integer({ minimum: 0, maximum: 0xffffffff }),
-            {
-              additionalProperties: false,
-            },
-          ),
+          features: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), uint32, {
+            additionalProperties: false,
+          }),
           variations: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), finite, {
             maxProperties: 0,
             additionalProperties: false,
           }),
           subsetDigest: Type.Optional(digest),
-          glyphIdMap: Type.Optional(Type.Array(object({ original: uint, subset: uint }))),
+          glyphIdMap: Type.Optional(Type.Array(object({ original: uint32, subset: uint32 }))),
         }),
         object({
           id,

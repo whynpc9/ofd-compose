@@ -164,12 +164,12 @@
                   "properties": {
                     "original": {
                       "minimum": 0,
-                      "maximum": 9007199254740991,
+                      "maximum": 4294967295,
                       "type": "integer"
                     },
                     "subset": {
                       "minimum": 0,
-                      "maximum": 9007199254740991,
+                      "maximum": 4294967295,
                       "type": "integer"
                     }
                   }
@@ -826,7 +826,7 @@
                         "properties": {
                           "glyphId": {
                             "minimum": 0,
-                            "maximum": 9007199254740991,
+                            "maximum": 4294967295,
                             "type": "integer"
                           },
                           "position": {

@@ -70,7 +70,8 @@ listed below. Undefined, sparse arrays, accessors, non-JSON objects and cycles f
   static-font profile requires `variations: {}`.
 - Font subset maps sort by original glyph ID. An absent map with a subset digest
   means retain-GIDs; an explicit map is original → subset and must cover every
-  referenced glyph. Both sides of an explicit map are unique.
+  referenced glyph. Both sides of an explicit map are unique. Glyph IDs and both map columns
+  are unsigned 32-bit integers, matching the shaper transport.
 - Clusters sort by display range and get ordinal IDs; glyph storage order remains
   visual/shaping order. Glyph-index membership lists sort numerically. Markers
   sort by all their content except temporary ID and get `m0`, etc. Profile features
