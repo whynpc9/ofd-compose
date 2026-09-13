@@ -93,6 +93,26 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
     );
     expect(jpg.blocks[0]?.images?.[0]?.resource.mimeType).toBe("image/jpeg");
   });
+  it("accepts legal JPEG marker fill bytes before APP and SOF markers", () => {
+    const jpeg = Uint8Array.from(atob(fixtures.jpeg), (c) => c.charCodeAt(0));
+    const sof = jpeg.findIndex(
+      (value, i) => value === 255 && [192, 193, 194].includes(jpeg[i + 1] ?? -1),
+    );
+    expect(sof).toBeGreaterThan(0);
+    for (const offset of [2, sof]) {
+      const filled = new Uint8Array(jpeg.length + 3);
+      filled.set(jpeg.subarray(0, offset));
+      filled.set([255, 255, 255], offset);
+      filled.set(jpeg.subarray(offset), offset + 3);
+      const result = run({ images: { resourceId: "jpeg" } }, [image()], {
+        resources: [{ id: "jpeg", bytes: filled }],
+      });
+      expect(result.ok).toBe(true);
+      expect(result.blocks[0]?.images?.[0]?.resource.pixelWidth).toBe(
+        run({ images: fixtures.jpeg }).blocks[0]?.images?.[0]?.resource.pixelWidth,
+      );
+    }
+  });
   it("uses the declared EXIF IFD offset in either byte order", () => {
     const jpeg = Uint8Array.from(atob(fixtures.jpeg), (c) => c.charCodeAt(0));
     for (const little of [true, false])
@@ -255,6 +275,39 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
     expect(compile(template([block])).diagnostics[0]?.message).toContain(
       "Media expressions select",
     );
+  });
+  it("returns only the original budget diagnostic after failed media evaluation", () => {
+    const barcodeBlock: BlockNode = {
+      kind: "barcode-binding",
+      nodeId: "b",
+      bindingId: "bb",
+      expression: { kind: "legacy", text: "images" },
+      options: { symbology: "code128", width: 80, height: 20 },
+    };
+    for (const body of [[image()], [barcodeBlock]]) {
+      const result = run({ images: Array(65).fill(null) }, body);
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics.map((d) => d.code)).toEqual(["RESOURCE_LIMIT"]);
+    }
+  });
+  it("bounds source identity metadata before image copies and digest serialization", () => {
+    expect(
+      run({ images: fixtures.png }, [image()], { limits: { metadataCharacters: 1 } }).diagnostics[0]
+        ?.code,
+    ).toBe("RESOURCE_LIMIT");
+    const body: BlockNode[] = [
+      {
+        kind: "repeat-block",
+        nodeId: "r",
+        bindingId: "rb",
+        expression: { kind: "legacy", text: "rows" },
+        repeatKey: { kind: "path", path: "id" },
+        children: [image()],
+      },
+    ];
+    const result = run({ rows: [{ id: "k".repeat(1000001), images: fixtures.png }] }, body);
+    expect(result.diagnostics.map((d) => d.code)).toEqual(["RESOURCE_LIMIT"]);
+    expect(result.blocks).toHaveLength(0);
   });
   it("enforces list, decoded-byte, pixel, and work budgets before output", () => {
     expect(run({ images: Array(65).fill(fixtures.png) }).diagnostics[0]?.code).toBe(

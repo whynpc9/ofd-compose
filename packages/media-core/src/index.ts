@@ -25,6 +25,28 @@ export interface PreparedMediaBlock {
   readonly images?: readonly PreparedImage[];
   readonly barcode?: PreparedBarcode;
 }
+/** Charge source identity strings before media copies and canonical JSON construction. */
+function chargeSource(source: ResolvedMedia, budget: MediaBudget): void {
+  const text = (value: unknown, max: number): void => {
+    if (typeof value !== "string" || value.length > max)
+      fail("RESOURCE_LIMIT", "Media source metadata exceeds its budget");
+    budget.charge("metadataCharacters", value.length);
+    budget.charge("workUnits", value.length);
+  };
+  text(source.nodeId, 256);
+  text(source.bindingId, 256);
+  if (source.dataPath !== undefined) text(source.dataPath, 65536);
+  if (source.instancePath !== undefined) {
+    if (!Array.isArray(source.instancePath) || source.instancePath.length > 32)
+      fail("RESOURCE_LIMIT", "Media instance metadata exceeds its depth budget");
+    for (const instance of source.instancePath) {
+      text(instance.nodeId, 256);
+      text(instance.bindingId, 256);
+      text(instance.key, 1000000);
+      if (instance.dataPath !== undefined) text(instance.dataPath, 65536);
+    }
+  }
+}
 /** compile -> bind -> prepareMedia is the issue11 seam; block placement/pagination is issue12.
  * Errors return no partial output. Resource digests are computed from owned byte snapshots.
  * Persist mediaIdentity with layout options; merge image digests into LayoutIdentity.resources.
@@ -56,6 +78,7 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
         } else if (block.kind === "image-binding" || block.kind === "barcode-binding") {
           current = block;
           budget.charge("bindings", 1);
+          chargeSource(block, budget);
           if (block.kind === "image-binding") {
             if (!Array.isArray(block.sources) || block.sources.length > budget.limits.images)
               fail("RESOURCE_LIMIT", "Image list budget exceeded");

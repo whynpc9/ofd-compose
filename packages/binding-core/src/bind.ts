@@ -287,6 +287,7 @@ class Binder {
     const binding = this.binding(node);
     if (!binding) return undefined;
     const result = this.evaluate(binding, scope, "media");
+    if (hasErrors(result.diagnostics)) return undefined;
     const base = {
       nodeId: node.nodeId,
       bindingId: node.bindingId,

@@ -22,6 +22,7 @@ export const mediaLimits = Object.freeze({
   pixelDimension: 32768,
   pixels: 40_000_000,
   pathCommands: 100_000,
+  metadataCharacters: 1_000_000,
   barcodeCharacters: 256,
   workUnits: 64_000_000,
 });
@@ -34,6 +35,7 @@ export class MediaBudget {
     totalBytes: 0,
     pixels: 0,
     pathCommands: 0,
+    metadataCharacters: 0,
     workUnits: 0,
   };
   constructor(limits: Partial<Record<keyof MediaLimits, number>> = {}) {

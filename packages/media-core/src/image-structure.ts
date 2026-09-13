@@ -74,6 +74,11 @@ export function jpegHeader(bytes: Uint8Array, budget: MediaBudget): Uint8Array {
   while (offset + 4 <= bytes.length) {
     if (++segments > 256 || offset > 65536) fail("RESOURCE_LIMIT", "JPEG header budget exceeded");
     if (bytes[offset] !== 255) fail("MODEL_INVALID", "Malformed JPEG marker");
+    // JPEG permits any number of 0xff fill bytes before the marker code.
+    while (bytes[offset + 1] === 255) {
+      if (++offset > 65536) fail("RESOURCE_LIMIT", "JPEG header budget exceeded");
+    }
+    if (offset + 4 > bytes.length) fail("MODEL_INVALID", "Truncated JPEG marker");
     const marker = bytes[offset + 1],
       length = view.getUint16(offset + 2),
       end = offset + 2 + length;
