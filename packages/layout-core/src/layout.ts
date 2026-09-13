@@ -125,6 +125,24 @@ export function permitsChineseBreak(text: string, position: number): boolean {
   const right = after < text.length ? String.fromCodePoint(text.codePointAt(after) ?? 0) : "";
   return !opening.has(left) && !closing.has(right);
 }
+/** Preclassify once so a whitespace run shared by many candidates is never rescanned. */
+function chineseBreakChecker(text: string): (position: number) => boolean {
+  const before = new Uint8Array(text.length + 1),
+    after = new Uint8Array(text.length + 1);
+  let blocked = false;
+  for (let i = 0; i < text.length; i++) {
+    const character = text[i] ?? "";
+    if (character !== " " && character !== "\t") blocked = opening.has(character);
+    before[i + 1] = Number(blocked);
+  }
+  blocked = false;
+  for (let i = text.length - 1; i >= 0; i--) {
+    const character = text[i] ?? "";
+    if (character !== " " && character !== "\t") blocked = closing.has(character);
+    after[i] = Number(blocked);
+  }
+  return (position) => before[position] === 0 && after[position] === 0;
+}
 /** First ordered range intersecting an offset; avoids rescanning consumed run/source prefixes. */
 function firstEndingAfter(ranges: readonly { end: number }[], offset: number): number {
   let low = 0,
@@ -555,8 +573,9 @@ class ParagraphLayouter {
         safe.add(run.start + glyph.clusterEnd);
       }
     }
+    const chineseBreak = chineseBreakChecker(text);
     const candidates = lineBreakOpportunities(text).filter(
-      (b) => b.required || (safe.has(b.position) && permitsChineseBreak(text, b.position)),
+      (b) => b.required || (safe.has(b.position) && chineseBreak(b.position)),
     );
     const breakPositions = new Set(candidates.map((candidate) => candidate.position));
     this.y += properties.spaceBefore ?? 0;

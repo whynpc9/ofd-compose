@@ -454,20 +454,20 @@ it("aligns tab prefixes while keeping single/multiple stops anchored under inden
     0,
   );
 }, 20000);
-it("bounds optional control-only candidate measurement even when no glyph is shaped", async () => {
-  const content = "\t".repeat(100000);
-  await expect(
-    layout(document([p(content)]), resources, {
-      ...options,
-      page: {
-        width: 1000000,
-        height: 1000000,
-        contentBox: { x: 0, y: 0, width: 1000000, height: 1000000 },
-      },
-    }),
-  ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+it("bounds optional control and whitespace candidate measurement", async () => {
+  for (const content of ["\t".repeat(100000), " \t".repeat(50000)]) {
+    await expect(
+      layout(document([p(content)]), resources, {
+        ...options,
+        page: {
+          width: 1000000,
+          height: 1000000,
+          contentBox: { x: 0, y: 0, width: 1000000, height: 1000000 },
+        },
+      }),
+    ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+  }
 }, 20000);
-
 it("rejects over-limit or malformed fragments before iterating text to construct runs", async () => {
   for (const invalid of ["A\n".repeat(50001), "\ud800"]) {
     const original = String.prototype[Symbol.iterator];
