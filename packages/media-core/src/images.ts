@@ -3,7 +3,13 @@ import { bytesToHex } from "@noble/hashes/utils.js";
 import { type ImageOptions, type ImageSource, imageReference } from "@ofd-compose/document-model";
 import type { LayoutIR } from "@ofd-compose/layout-ir";
 import { imageSize } from "image-size";
-import { fail, type MediaBudget, MediaError } from "./budget.js";
+import {
+  configurationField,
+  configurationRecord,
+  fail,
+  type MediaBudget,
+  MediaError,
+} from "./budget.js";
 import { imageDimensions } from "./dimensions.js";
 import { checkPng, jpegHeader } from "./image-structure.js";
 
@@ -95,44 +101,62 @@ function detectedMime(bytes: Uint8Array): string {
   return fail("MODEL_INVALID", "Unrecognized image signature");
 }
 export class ImageResolver {
-  private readonly resources = new Map<string, AuthorizedImage>();
+  private readonly resources = new Map<
+    string,
+    { id: string; bytes: Uint8Array; mimeType?: string }
+  >();
   private readonly paths = new Map<string, string>();
   constructor(
     private readonly budget: MediaBudget,
-    resources: readonly AuthorizedImage[] = [],
-    root?: AuthorizedRoot,
+    resources: unknown = [],
+    root?: unknown,
   ) {
-    if (!Array.isArray(resources) || resources.length > budget.limits.images)
+    if (!Array.isArray(resources)) fail("MODEL_INVALID", "Authorized resources must be an array");
+    if (resources.length > budget.limits.images)
       fail("RESOURCE_LIMIT", "Too many authorized images");
     let suppliedBytes = 0;
-    for (const entry of resources) {
-      if (
-        typeof entry.id !== "string" ||
-        !entry.id ||
-        entry.id.length > 256 ||
-        this.resources.has(entry.id)
-      )
+    for (let i = 0; i < resources.length; i++) {
+      const entry = configurationField(resources, String(i));
+      configurationRecord(entry);
+      const id = configurationField(entry, "id"),
+        bytes = configurationField(entry, "bytes"),
+        mimeType = configurationField(entry, "mimeType");
+      if (typeof id !== "string" || !id || id.length > 256 || this.resources.has(id))
         fail("MODEL_INVALID", "Invalid or duplicate external image resource ID");
-      if (!(entry.bytes instanceof Uint8Array) || entry.bytes.byteLength > budget.limits.imageBytes)
+      if (!(bytes instanceof Uint8Array))
+        fail("MODEL_INVALID", "Authorized image bytes must be Uint8Array");
+      if (mimeType !== undefined && (typeof mimeType !== "string" || mimeType.length > 64))
+        fail("MODEL_INVALID", "Invalid authorized image MIME hint");
+      if (bytes.byteLength > budget.limits.imageBytes)
         fail("RESOURCE_LIMIT", "Authorized image byte budget exceeded");
-      suppliedBytes += entry.bytes.byteLength;
+      suppliedBytes += bytes.byteLength;
       if (suppliedBytes > budget.limits.totalBytes)
         fail("RESOURCE_LIMIT", "Authorized image total byte budget exceeded");
-      this.resources.set(entry.id, entry);
+      this.resources.set(id, { id, bytes, ...(mimeType === undefined ? {} : { mimeType }) });
     }
-    if (root) {
+    if (root !== undefined) {
+      configurationRecord(root, "RESOURCE_FORBIDDEN");
+      const id = configurationField(root, "id", "RESOURCE_FORBIDDEN"),
+        entries = configurationField(root, "entries", "RESOURCE_FORBIDDEN");
       if (
-        !root.id ||
-        root.id.length > 256 ||
-        !Array.isArray(root.entries) ||
-        root.entries.length > budget.limits.images
+        typeof id !== "string" ||
+        !id ||
+        id.length > 256 ||
+        !Array.isArray(entries) ||
+        entries.length > budget.limits.images
       )
         fail("RESOURCE_FORBIDDEN", "Invalid authorized resource root");
-      for (const entry of root.entries) {
-        const path = relativePath(entry.path);
-        if (this.paths.has(path) || !this.resources.has(entry.resourceId))
+      for (let i = 0; i < entries.length; i++) {
+        const entry = configurationField(entries, String(i), "RESOURCE_FORBIDDEN");
+        configurationRecord(entry, "RESOURCE_FORBIDDEN");
+        const sourcePath = configurationField(entry, "path", "RESOURCE_FORBIDDEN"),
+          resourceId = configurationField(entry, "resourceId", "RESOURCE_FORBIDDEN");
+        if (typeof sourcePath !== "string" || typeof resourceId !== "string")
+          fail("RESOURCE_FORBIDDEN", "Invalid root resource entry");
+        const path = relativePath(sourcePath);
+        if (this.paths.has(path) || !this.resources.has(resourceId))
           fail("RESOURCE_FORBIDDEN", "Ambiguous or missing root resource");
-        this.paths.set(path, entry.resourceId);
+        this.paths.set(path, resourceId);
       }
     }
   }

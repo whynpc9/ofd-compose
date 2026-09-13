@@ -12,6 +12,24 @@ export class MediaError extends Error {
 export function fail(code: DiagnosticCode, message: string): never {
   throw new MediaError(code, message);
 }
+/** Host configuration is data, not accessor callbacks. Fixed field reads avoid enumeration. */
+export function configurationRecord(
+  input: unknown,
+  code: DiagnosticCode = "MODEL_INVALID",
+): asserts input is Record<string, unknown> {
+  if (typeof input !== "object" || input === null || Array.isArray(input))
+    fail(code, "Media configuration entry must be a non-null record");
+}
+export function configurationField(
+  input: object,
+  key: string,
+  code: DiagnosticCode = "MODEL_INVALID",
+): unknown {
+  const descriptor = Object.getOwnPropertyDescriptor(input, key);
+  if (descriptor && !("value" in descriptor))
+    fail(code, "Media configuration must contain data fields, not accessors");
+  return descriptor?.value;
+}
 /** Hard ceilings apply even when callers supply larger per-job limits. */
 export const mediaLimits = Object.freeze({
   images: 64,
@@ -39,10 +57,17 @@ export class MediaBudget {
     workUnits: 0,
   };
   constructor(limits: Partial<Record<keyof MediaLimits, number>> = {}) {
+    configurationRecord(limits);
     const values: { -readonly [K in keyof MediaLimits]: number } = { ...mediaLimits };
     for (const key of Object.keys(mediaLimits) as (keyof MediaLimits)[]) {
-      const value = limits[key] ?? mediaLimits[key];
-      if (!Number.isSafeInteger(value) || value < 1 || value > mediaLimits[key])
+      const supplied = configurationField(limits, key);
+      const value = supplied === undefined ? mediaLimits[key] : supplied;
+      if (
+        typeof value !== "number" ||
+        !Number.isSafeInteger(value) ||
+        value < 1 ||
+        value > mediaLimits[key]
+      )
         fail("RESOURCE_LIMIT", `Invalid media limit: ${key}`);
       values[key] = value;
     }

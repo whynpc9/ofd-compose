@@ -304,6 +304,69 @@ describe("real compile/bind/media inputs in Node and Chromium", () => {
     const result = run({ images: { path } });
     expect(result.diagnostics[0]?.code).toBe("RESOURCE_FORBIDDEN");
   });
+  it("returns diagnostics for malformed host configuration and sparse entries", () => {
+    const invalidResources = [
+      null,
+      {},
+      [null],
+      [undefined],
+      new Array(1),
+      [1],
+      [[]],
+      [{ id: 3, bytes }],
+      [{ id: "x" }],
+      [{ id: "x", bytes: null }],
+    ];
+    for (const resources of invalidResources) {
+      const result = run({ images: fixtures.png }, [image()], {
+        resources,
+      } as unknown as MediaOptions);
+      expect(result.ok).toBe(false);
+      expect(result.diagnostics[0]?.code).toBe("MODEL_INVALID");
+      expect(result.blocks).toHaveLength(0);
+    }
+    for (const root of [
+      null,
+      1,
+      {},
+      { id: 1, entries: [] },
+      { id: "root", entries: null },
+      { id: "root", entries: [null] },
+      { id: "root", entries: new Array(1) },
+      { id: "root", entries: [{ path: 1, resourceId: "x" }] },
+    ]) {
+      expect(
+        run({ images: fixtures.png }, [image()], { root } as unknown as MediaOptions).diagnostics[0]
+          ?.code,
+      ).toBe("RESOURCE_FORBIDDEN");
+    }
+    for (const options of [null, [], { limits: null }, { limits: [] }])
+      expect(
+        run({ images: fixtures.png }, [image()], options as unknown as MediaOptions).diagnostics[0]
+          ?.code,
+      ).toBe("MODEL_INVALID");
+  });
+  it("rejects configuration accessors without invoking them", () => {
+    const trap = () => {
+      throw Error("Configuration accessors must not run");
+    };
+    const entry = Object.defineProperty({ bytes }, "id", { get: trap });
+    const array = Object.defineProperty(new Array(1), "0", { get: trap });
+    for (const resources of [[entry], array])
+      expect(
+        run({ images: fixtures.png }, [image()], { resources } as MediaOptions).diagnostics[0]
+          ?.code,
+      ).toBe("MODEL_INVALID");
+    const options = Object.defineProperty({}, "resources", { get: trap });
+    expect(run({ images: fixtures.png }, [image()], options).diagnostics[0]?.code).toBe(
+      "MODEL_INVALID",
+    );
+    expect(
+      run({ images: fixtures.png }, [image()], {
+        limits: { imageBytes: null },
+      } as unknown as MediaOptions).diagnostics[0]?.code,
+    ).toBe("RESOURCE_LIMIT");
+  });
   it("requires an explicit root and rejects duplicate external IDs", () => {
     expect(run({ images: { path: "chart.png" } }).diagnostics[0]?.code).toBe("RESOURCE_FORBIDDEN");
     expect(

@@ -2,7 +2,14 @@ import type { ResolvedBlock, ResolvedDocument, ResolvedMedia } from "@ofd-compos
 import type { Diagnostic, ImageSource } from "@ofd-compose/document-model";
 import { digestCanonical } from "@ofd-compose/layout-ir";
 import { barcode, type PreparedBarcode } from "./barcodes.js";
-import { fail, MediaBudget, MediaError, type MediaLimits } from "./budget.js";
+import {
+  configurationField,
+  configurationRecord,
+  fail,
+  MediaBudget,
+  MediaError,
+  type MediaLimits,
+} from "./budget.js";
 import { mediaVersion } from "./dimensions.js";
 import {
   type AuthorizedImage,
@@ -48,7 +55,8 @@ function chargeSource(source: ResolvedMedia, budget: MediaBudget): void {
   }
 }
 /** compile -> bind -> prepareMedia is the issue11 seam; block placement/pagination is issue12.
- * Errors return no partial output. Resource digests are computed from owned byte snapshots.
+ * The document must already satisfy ResolvedDocumentSchema (e.g. successful bind output).
+ * Media/configuration validation errors return no partial output. Resource digests use owned byte snapshots.
  * Persist mediaIdentity with layout options; merge image digests into LayoutIdentity.resources.
  */
 export function prepareMedia(document: ResolvedDocument, options: MediaOptions = {}) {
@@ -56,8 +64,15 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
   const blocks: PreparedMediaBlock[] = [];
   let current: ResolvedMedia | undefined;
   try {
-    const budget = new MediaBudget(options.limits);
-    const resolver = new ImageResolver(budget, options.resources, options.root);
+    configurationRecord(options);
+    const limits = configurationField(options, "limits");
+    if (limits !== undefined) configurationRecord(limits);
+    const budget = new MediaBudget(limits as MediaOptions["limits"]);
+    const resolver = new ImageResolver(
+      budget,
+      configurationField(options, "resources"),
+      configurationField(options, "root"),
+    );
     let visited = 0;
     const visit = (body: readonly ResolvedBlock[], depth: number): void => {
       if (!Array.isArray(body) || depth > 32 || body.length > 200000)
