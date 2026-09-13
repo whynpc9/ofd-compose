@@ -8,7 +8,13 @@ import {
 import { TypographyCore } from "@ofd-compose/typography-core";
 import { beforeAll, expect, it, vi } from "vitest";
 import { renderTemplate, TemplateBuilder } from "../../binding-core/tests/helpers.js";
-import { type LayoutFont, layout, paragraphProfile, permitsChineseBreak } from "../src/index.js";
+import {
+  type LayoutFont,
+  layout,
+  layoutResourceLimits,
+  paragraphProfile,
+  permitsChineseBreak,
+} from "../src/index.js";
 import expected from "./expected.json";
 import { document, fonts, narrative, options, p } from "./fixtures.js";
 
@@ -662,4 +668,39 @@ it("prevents exported profile metadata from changing future layout identities", 
   expect(digestCanonical((await layout(narrative(), resources, options)).ir)).toBe(
     digestCanonical(before.ir),
   );
+});
+
+it("bounds empty fragment and paragraph counts before font loading or document copying", async () => {
+  const cases = [document([p("")]), document([])];
+  const paragraph = cases[0]?.body[0];
+  if (paragraph?.kind !== "paragraph") throw new Error("Missing paragraph");
+  paragraph.fragments = Array.from({ length: layoutResourceLimits.fragments + 1 }, (_, i) => ({
+    kind: "text",
+    text: "",
+    origin: {
+      kind: "dynamic-text",
+      nodeId: `n${i}`,
+      bindingId: `b${i}`,
+      expression: "empty",
+      valueState: "value",
+    },
+  }));
+  const many = cases[1];
+  if (!many) throw new Error("Missing document");
+  many.body = Array.from({ length: layoutResourceLimits.paragraphs + 1 }, (_, i) => ({
+    kind: "paragraph",
+    nodeId: `p${i}`,
+    fragments: [],
+  }));
+  const spy = vi.spyOn(TypographyCore.prototype, "loadFont");
+  try {
+    for (const doc of cases)
+      await expect(layout(doc, resources, options)).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+    expect(spy).not.toHaveBeenCalled();
+  } finally {
+    spy.mockRestore();
+  }
+  const valid = await layout(document([p("", "a"), p("", "b")]), resources, options);
+  expect(valid.work.emittedObjects).toBe(2);
+  expect(valid.work.sourceMappings).toBe(2);
 });

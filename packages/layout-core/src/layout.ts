@@ -34,6 +34,46 @@ export const paragraphProfile = Object.freeze({
     "source-ranges",
   ]),
 });
+export const layoutResourceLimits = Object.freeze({
+  paragraphs: 10000,
+  fragments: 100000,
+  sourceMappings: 100000,
+  objects: 100000,
+});
+// Read data descriptors only: preflight must not invoke accessors before canonical validation.
+function ownData(value: unknown, key: string): unknown {
+  return value !== null && typeof value === "object"
+    ? Object.getOwnPropertyDescriptor(value, key)?.value
+    : undefined;
+}
+function preflightDocument(value: unknown): void {
+  const body = ownData(value, "body");
+  if (!Array.isArray(body)) return;
+  const count = ownData(body, "length") as number;
+  if (count > layoutResourceLimits.paragraphs)
+    throw new LayoutError("LAYOUT_LIMIT", "Document exceeds paragraph budget");
+  let fragments = 0;
+  for (let i = 0; i < count; i++) {
+    const block = ownData(body, String(i));
+    const entries = ownData(block, "fragments");
+    if (!Array.isArray(entries)) continue;
+    const size = ownData(entries, "length") as number;
+    fragments += size;
+    if (fragments > layoutResourceLimits.fragments)
+      throw new LayoutError("LAYOUT_LIMIT", "Document exceeds fragment budget");
+    let units = 0;
+    for (let j = 0; j < size; j++) {
+      const text = ownData(ownData(entries, String(j)), "text");
+      if (typeof text !== "string") continue;
+      units += text.length;
+      if (units > 100000 || !text.isWellFormed())
+        throw new LayoutError(
+          "LAYOUT_INPUT",
+          "Paragraph must be well-formed UTF-16 with at most 100000 units",
+        );
+    }
+  }
+}
 const pt = 25.4 / 72;
 export class LayoutError extends Error {
   constructor(
@@ -204,6 +244,7 @@ export async function layout(
   resources: readonly LayoutFont[],
   options: LayoutOptions,
 ) {
+  preflightDocument(document);
   // Own inputs before any await: arrival timing and caller mutation cannot change layout identity.
   const doc = JSON.parse(canonicalSerialize(document)) as ResolvedDocument;
   const opts = JSON.parse(canonicalSerialize(options)) as LayoutOptions;
@@ -257,6 +298,8 @@ class ParagraphLayouter {
   private candidateVisits = 0;
   private runVisits = 0;
   private outputTextUnits = 0;
+  private sourceMappings = 0;
+  private emittedObjects = 0;
   private y: number;
   constructor(
     private readonly doc: ResolvedDocument,
@@ -344,6 +387,8 @@ class ParagraphLayouter {
         candidateVisits: this.candidateVisits,
         runVisits: this.runVisits,
         outputTextUnits: this.outputTextUnits,
+        sourceMappings: this.sourceMappings,
+        emittedObjects: this.emittedObjects,
       },
     };
   }
@@ -799,7 +844,15 @@ class ParagraphLayouter {
     extra: number,
     generated = false,
   ) {
-    // Reserve wire-text expansion before allocating glyphs, paths or sourceText mappings.
+    // Reserve cardinality and wire-text expansion before allocating any IR objects/maps.
+    const style = piece.run.style;
+    const objectCount =
+      1 +
+      Number(!!style.highlight) +
+      Number(!!(style.underline || style.link)) +
+      Number(!!style.strikethrough);
+    if (objectCount > layoutResourceLimits.objects - this.emittedObjects)
+      throw new LayoutError("LAYOUT_LIMIT", "IR object budget exceeded", paragraph.nodeId);
     const selected: Span[] = [];
     let sourceUnits = 0;
     if (!generated)
@@ -822,6 +875,8 @@ class ParagraphLayouter {
             "Output source text exceeds 8000000 UTF-16 units",
             paragraph.nodeId,
           );
+        if (selected.length >= layoutResourceLimits.sourceMappings - this.sourceMappings)
+          throw new LayoutError("LAYOUT_LIMIT", "Source mapping budget exceeded", paragraph.nodeId);
         selected.push(span);
       }
     const outputUnits =
@@ -833,6 +888,8 @@ class ParagraphLayouter {
         paragraph.nodeId,
       );
     this.outputTextUnits += outputUnits;
+    this.sourceMappings += selected.length;
+    this.emittedObjects += objectCount;
     const objects = this.ir.pages[0]?.objects;
     if (!objects) throw new Error("Missing page");
     const ownGaps = gaps.slice(upperBound(gaps, piece.start), upperBound(gaps, piece.end));
@@ -840,7 +897,6 @@ class ParagraphLayouter {
     const width = piece.width + ownGaps.length * extra;
     const top = baseline - piece.ascent;
     const bounds = { x, y: top, width, height: piece.ascent + piece.descent };
-    const style = piece.run.style;
     const path = (fill: boolean, value: string | undefined, y: number, height: number) => {
       const id = `object${objects.length}`;
       objects.push({

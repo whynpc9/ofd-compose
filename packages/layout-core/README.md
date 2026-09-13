@@ -107,7 +107,7 @@ characters inherit the neighboring script. Full Unicode bidi, vertical paragraph
 emergency wrapping, tables, input-control rendering and page breaking are not implemented.
 Unsupported block/control types fail; content, spacing or unbreakable text exceeding the one
 page fails with `LAYOUT_OVERFLOW`. Per paragraph limit is 100000 UTF-16 units, checked fragment-by-fragment before text concatenation or run construction; malformed UTF-16 fragments fail at the same point. Per-job
-reshaping work is bounded at 2000000 units; candidate and run visits each have the same 2000000-operation ceiling (including control-only text). Expanded logical/display/source text is bounded at
+reshaping work is bounded at 2000000 units; candidate and run visits each have the same 2000000-operation ceiling (including control-only text). Input count limits are 10000 paragraphs and 100000 fragments per document; output count limits are 100000 source mappings and 100000 text/path objects. A data-descriptor preflight rejects over-budget input before document copying/font loading, without invoking accessors. Output cardinality is reserved before mapping/object allocation. These independent counts include empty fragments and blank paragraphs. Expanded logical/display/source text is bounded at
 8000000 UTF-16 units, counting repeated source strings in the wire representation; controls
 cannot bypass this output budget. Chinese boundary classes are precomputed in two linear passes so candidates sharing a long whitespace run use constant-time checks. Candidate consumption is monotonic; run/source lookups and
 gap counts use ordered indexes, and glyph-cluster membership uses maps. Full strings are checked

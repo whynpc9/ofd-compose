@@ -6,6 +6,7 @@ export {
   type LayoutOptions,
   layout,
   layoutEngineVersion,
+  layoutResourceLimits,
   paragraphProfile,
   permitsChineseBreak,
 } from "./layout.js";
