@@ -4,7 +4,14 @@ import {
   type ResolvedParagraph,
   type ResolvedTextFragment,
 } from "@ofd-compose/binding-core";
-import { type ParagraphLayout, type TextStyle, TextStyleSchema } from "@ofd-compose/document-model";
+import {
+  type PageBand,
+  type PageSettings,
+  type ParagraphLayout,
+  type TextStyle,
+  TextStyleSchema,
+  type Watermark,
+} from "@ofd-compose/document-model";
 import {
   canonicalizeLayoutIR,
   canonicalSerialize,
@@ -21,8 +28,9 @@ import {
   TypographyCore,
 } from "@ofd-compose/typography-core";
 import { Value } from "@sinclair/typebox/value";
+import { type PageGeometry, pageGeometry } from "./page.js";
 
-export const layoutEngineVersion = "ofd-compose/paragraph-layout@0";
+export const layoutEngineVersion = "ofd-compose/paginated-layout@0";
 export const paragraphProfile = Object.freeze({
   name: "paragraphs-ltr",
   version: "0",
@@ -32,6 +40,9 @@ export const paragraphProfile = Object.freeze({
     "numbering",
     "text-decoration",
     "source-ranges",
+    "pagination",
+    "page-bands",
+    "watermarks",
   ]),
 });
 export const layoutResourceLimits = Object.freeze({
@@ -46,6 +57,11 @@ export const layoutResourceLimits = Object.freeze({
   fragments: 100000,
   sourceMappings: 100000,
   objects: 100000,
+  pages: 1000,
+  paginationPasses: 4,
+  layoutParagraphs: 30000,
+  imageResources: 64,
+  imagePixels: 100000000,
 });
 // Read data descriptors only: preflight must not invoke accessors before canonical validation.
 function ownData(value: unknown, key: string): unknown {
@@ -133,7 +149,8 @@ export class LayoutError extends Error {
       | "LAYOUT_UNSUPPORTED"
       | "LAYOUT_OVERFLOW"
       | "LAYOUT_LIMIT"
-      | "FONT_UNAVAILABLE",
+      | "FONT_UNAVAILABLE"
+      | "PAGINATION_NOT_CONVERGED",
     message: string,
     readonly nodeId?: string,
   ) {
@@ -149,11 +166,14 @@ export interface LayoutFont {
   bytes: Uint8Array | Promise<Uint8Array>;
 }
 export interface LayoutOptions {
-  page: {
+  page?: {
     width: number;
     height: number;
     contentBox: { x: number; y: number; width: number; height: number };
   };
+  /** Fixed, host-authorized image descriptors; bytes are supplied to writers by the host. */
+  images?: Extract<LayoutIR["resources"][number], { kind: "image" }>[];
+  pagination?: { maxPages?: number; maxIterations?: number };
   defaultStyle: TextStyle & { fontFamily: string; fontSize: number };
   /** Matches the formatting policy used to produce this ResolvedDocument. */
   formattingPolicy: {
@@ -197,6 +217,8 @@ interface Piece {
 export interface LayoutLine {
   nodeId: string;
   paragraphIndex: number;
+  pageIndex: number;
+  sectionId: string;
   start: number;
   end: number;
   x: number;
@@ -289,7 +311,7 @@ function alpha(value: number): string {
   return result;
 }
 
-/** One-page layout. Resource I/O belongs to the host; every promise settles before metrics/shaping. */
+/** Multi-page layout. Resource I/O belongs to the host; every promise settles before metrics/shaping. */
 export async function layout(
   document: ResolvedDocument,
   resources: readonly LayoutFont[],
@@ -298,13 +320,42 @@ export async function layout(
   preflightDocument(document);
   preflightJsonTree(document);
   preflightJsonTree(options);
+  const imageInputs = ownData(options, "images");
+  if (
+    Array.isArray(imageInputs) &&
+    (ownData(imageInputs, "length") as number) > layoutResourceLimits.imageResources
+  )
+    throw new LayoutError("LAYOUT_LIMIT", "Image descriptor budget exceeded before ownership copy");
   // Own inputs before any await: arrival timing and caller mutation cannot change layout identity.
   const doc = JSON.parse(canonicalSerialize(document)) as ResolvedDocument;
   const opts = JSON.parse(canonicalSerialize(options)) as LayoutOptions;
+  validatePaginationOptions(opts);
   if (!Value.Check(TextStyleSchema, opts.defaultStyle))
     throw new LayoutError("LAYOUT_INPUT", "Invalid default style");
   if (!Value.Check(ResolvedDocumentSchema, doc))
     throw new LayoutError("LAYOUT_INPUT", "Invalid ResolvedDocument");
+  // Reject a known minimum page count and impossible section geometry before acquiring fonts.
+  let minimumPages = 1;
+  if (doc.settings.page) pageGeometry(doc.settings.page);
+  const sections = new Set<string>();
+  for (const [index, block] of doc.body.entries()) {
+    if (block.kind !== "paragraph") continue;
+    const section = block.layout?.section;
+    if (section) {
+      if (sections.has(section.id))
+        throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
+      sections.add(section.id);
+      pageGeometry(section.page);
+      if (index > 0) minimumPages++;
+    }
+    if (block.layout?.pageBreakBefore) minimumPages++;
+    if (minimumPages > (opts.pagination?.maxPages ?? layoutResourceLimits.pages))
+      throw new LayoutError(
+        "LAYOUT_LIMIT",
+        "Explicit breaks exceed page budget before resource acquisition",
+        block.nodeId,
+      );
+  }
   if (!Array.isArray(resources) || resources.length > layoutResourceLimits.fontResources)
     throw new LayoutError("LAYOUT_LIMIT", "Font resource count budget exceeded");
   const inputs = resources.map((resource) => {
@@ -381,7 +432,68 @@ export async function layout(
       throw new LayoutError("FONT_UNAVAILABLE", "Declared font style differs from static face");
     faces.push({ definition, metrics, id: `font${faces.length}` });
   }
-  return new ParagraphLayouter(doc, faces, core, opts).layout();
+  const work = {
+    shapedUnits: 0,
+    candidateVisits: 0,
+    runVisits: 0,
+    outputTextUnits: 0,
+    sourceMappings: 0,
+    emittedObjects: 0,
+    paragraphs: 0,
+    pages: 0,
+  };
+  const maxIterations = opts.pagination?.maxIterations ?? layoutResourceLimits.paginationPasses;
+  let totalPages = 1;
+  for (let iteration = 1; iteration <= maxIterations; iteration++) {
+    const result = new ParagraphLayouter(doc, faces, core, opts, work, totalPages).layout();
+    if (!hasTotalPages(doc) || result.ir.pages.length === totalPages)
+      return { ...result, paginationPasses: iteration };
+    totalPages = result.ir.pages.length;
+  }
+  throw new LayoutError(
+    "PAGINATION_NOT_CONVERGED",
+    "Total-page field did not converge within the pagination pass budget",
+  );
+}
+
+function hasTotalPages(doc: ResolvedDocument): boolean {
+  const has = (page?: PageSettings) =>
+    [page?.header, page?.footer].some((band) =>
+      band?.parts.some((part) => part.kind === "total-pages"),
+    );
+  return (
+    has(doc.settings.page) ||
+    doc.body.some((block) => block.kind === "paragraph" && has(block.layout?.section?.page))
+  );
+}
+interface LayoutWork {
+  shapedUnits: number;
+  candidateVisits: number;
+  runVisits: number;
+  outputTextUnits: number;
+  sourceMappings: number;
+  emittedObjects: number;
+  paragraphs: number;
+  pages: number;
+}
+function validatePaginationOptions(options: LayoutOptions) {
+  for (const [value, limit] of [
+    [options.pagination?.maxPages, layoutResourceLimits.pages],
+    [options.pagination?.maxIterations, layoutResourceLimits.paginationPasses],
+  ])
+    if (value !== undefined && (!Number.isInteger(value) || value < 1 || value > (limit ?? 0)))
+      throw new LayoutError(
+        "LAYOUT_INPUT",
+        "Pagination limits must be positive integers within engine limits",
+      );
+  if ((options.images?.length ?? 0) > layoutResourceLimits.imageResources)
+    throw new LayoutError("LAYOUT_LIMIT", "Image descriptor budget exceeded");
+  let pixels = 0;
+  for (const image of options.images ?? []) {
+    pixels += image.pixelWidth * image.pixelHeight;
+    if (!Number.isSafeInteger(pixels) || pixels > layoutResourceLimits.imagePixels)
+      throw new LayoutError("LAYOUT_LIMIT", "Image pixel budget exceeded");
+  }
 }
 
 class ParagraphLayouter {
@@ -389,20 +501,36 @@ class ParagraphLayouter {
   private readonly lines: LayoutLine[] = [];
   private readonly counts = new Map<string, number>();
   private readonly initializedRepeatStarts = new Set<string>();
-  private shapedUnits = 0;
-  private candidateVisits = 0;
-  private runVisits = 0;
-  private outputTextUnits = 0;
-  private sourceMappings = 0;
-  private emittedObjects = 0;
   private y: number;
+  private pageIndex = 0;
+  private sectionId: string;
+  private sectionStart = 0;
+  private pageSettings?: PageSettings;
+  private geometry: PageGeometry;
+  private readonly sectionIds = new Set<string>();
+  private decoration = false;
+  private decorationBox?: PageGeometry["contentBox"];
+  private readonly pageSettingsByIndex: (PageSettings | undefined)[] = [];
+  private readonly sectionStarts: number[] = [];
   constructor(
     private readonly doc: ResolvedDocument,
     private readonly faces: Face[],
     private readonly core: TypographyCore,
     private readonly options: LayoutOptions,
+    private readonly work: LayoutWork,
+    private readonly totalPages: number,
   ) {
-    const { page, formattingPolicy, defaultStyle } = options;
+    const { formattingPolicy, defaultStyle } = options;
+    this.pageSettings = doc.settings.page;
+    const first = doc.body[0];
+    if (first?.kind === "paragraph" && first.layout?.section)
+      this.pageSettings = first.layout.section.page;
+    const page = this.pageSettings ? pageGeometry(this.pageSettings) : options.page;
+    this.sectionId =
+      first?.kind === "paragraph" && first.layout?.section
+        ? first.layout.section.id
+        : doc.documentId;
+    this.sectionIds.add(this.sectionId);
     const profile = { ...paragraphProfile, features: [...paragraphProfile.features] };
     if (
       !page ||
@@ -417,6 +545,7 @@ class ParagraphLayouter {
         "LAYOUT_INPUT",
         "Page, default font and matching formatting policy are required",
       );
+    this.geometry = page;
     this.y = page.contentBox.y;
     this.ir = {
       irVersion,
@@ -425,7 +554,10 @@ class ParagraphLayouter {
       identity: {
         inputDigest: digestLayoutIdentity({
           resolvedDocumentDigest: digestSemanticDocument(doc),
-          resources: faces.map((f) => ({ kind: "font", digest: f.definition.sha256 })),
+          resources: [
+            ...faces.map((f) => ({ kind: "font", digest: f.definition.sha256 })),
+            ...(options.images ?? []).map((i) => ({ kind: "image", digest: i.digest })),
+          ],
           layoutEngineVersion,
           shapingVersion: canonicalSerialize(shapingAndLineBreakVersions),
           lineBreakVersion: `${shapingAndLineBreakVersions.linebreak}/chinese-v1`,
@@ -438,30 +570,25 @@ class ParagraphLayouter {
         }),
         layoutProfile: profile,
       },
-      resources: faces.map((f) => ({
-        id: f.id,
-        kind: "font",
-        originalDigest: f.definition.sha256,
-        faceIndex: 0,
-        weight: f.definition.weight,
-        style: f.definition.italic ? "italic" : "normal",
-        features: {},
-        variations: {},
-      })),
-      graphicsStates: [],
-      pages: [
-        {
-          ...page,
-          id: "page",
-          pageIndex: 0,
-          orientation: page.width <= page.height ? "portrait" : "landscape",
-          sectionId: doc.documentId,
-          objects: [],
-        },
+      resources: [
+        ...faces.map((f): LayoutIR["resources"][number] => ({
+          id: f.id,
+          kind: "font",
+          originalDigest: f.definition.sha256,
+          faceIndex: 0,
+          weight: f.definition.weight,
+          style: f.definition.italic ? "italic" : "normal",
+          features: {},
+          variations: {},
+        })),
+        ...(options.images ?? []),
       ],
+      graphicsStates: [],
+      pages: [],
       semantics: [],
       markers: [],
     };
+    this.newPage(true);
     // Validate geometry/identity even for an empty document before doing expensive work.
     canonicalizeLayoutIR(this.ir);
   }
@@ -469,23 +596,240 @@ class ParagraphLayouter {
     this.doc.body.forEach((block, index) => {
       if (block.kind !== "paragraph")
         throw new LayoutError("LAYOUT_UNSUPPORTED", "Tables belong to issue 13", block.nodeId);
+      const section = block.layout?.section;
+      if (section && index > 0) {
+        if (this.sectionIds.has(section.id))
+          throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
+        this.sectionIds.add(section.id);
+        this.pageSettings = section.page;
+        this.geometry = pageGeometry(section.page);
+        this.sectionId = section.id;
+        this.sectionStart = this.ir.pages.length;
+        this.newPage();
+      }
+      if (block.layout?.pageBreakBefore) this.newPage();
       this.paragraph(block, index);
     });
+    // Decorations share this job's shaping/output budgets. They cannot allocate a fresh budget per page.
+    for (let index = 0; index < this.ir.pages.length; index++) {
+      this.pageIndex = index;
+      this.decoratePage();
+    }
     const ir = canonicalizeLayoutIR(this.ir);
     return {
       ir,
       semanticMap: ir.semantics,
       lines: this.lines,
       diagnostics: [],
-      work: {
-        shapedUnits: this.shapedUnits,
-        candidateVisits: this.candidateVisits,
-        runVisits: this.runVisits,
-        outputTextUnits: this.outputTextUnits,
-        sourceMappings: this.sourceMappings,
-        emittedObjects: this.emittedObjects,
-      },
+      work: { ...this.work },
     };
+  }
+  private newPage(initial = false) {
+    if (
+      this.ir.pages.length >= (this.options.pagination?.maxPages ?? layoutResourceLimits.pages) ||
+      this.work.pages >= layoutResourceLimits.pages * layoutResourceLimits.paginationPasses
+    )
+      throw new LayoutError("LAYOUT_LIMIT", "Page budget exceeded before page allocation");
+    this.work.pages++;
+    this.pageIndex = this.ir.pages.length;
+    this.ir.pages.push({
+      ...this.geometry,
+      id: `page${this.pageIndex}`,
+      pageIndex: this.pageIndex,
+      orientation:
+        this.pageSettings?.orientation ??
+        (this.geometry.width <= this.geometry.height ? "portrait" : "landscape"),
+      sectionId: this.sectionId,
+      objects: [],
+    });
+    this.pageSettingsByIndex.push(this.pageSettings);
+    this.sectionStarts.push(this.sectionStart);
+    this.y = this.geometry.contentBox.y;
+    if (!initial && this.geometry.contentBox.height < 0.001)
+      throw new LayoutError("LAYOUT_OVERFLOW", "No content height");
+  }
+  private decoratePage() {
+    const page = this.ir.pages[this.pageIndex];
+    if (!page) throw new Error("Missing page");
+    const settings = this.pageSettingsByIndex[this.pageIndex];
+    if (!settings) return;
+    const bodyObjects = page.objects.length;
+    const behindIds = new Set<string>();
+    this.decoration = true;
+    for (const watermark of settings.watermarks ?? []) {
+      const before = page.objects.length;
+      this.watermark(watermark);
+      if (watermark.layer === "behind")
+        for (const object of page.objects.slice(before)) behindIds.add(object.id);
+    }
+    if (settings.border) {
+      this.reserveObjects(1);
+      const { inset, width, color: value } = settings.border;
+      const x = inset + width / 2,
+        y = x,
+        w = page.width - 2 * x,
+        h = page.height - 2 * y;
+      page.objects.push({
+        id: `page${this.pageIndex}object${page.objects.length}`,
+        kind: "path",
+        drawOrder: page.objects.length,
+        stateId: this.state(value, width),
+        bounds: { x, y, width: w, height: h },
+        coordinateSpace: "page",
+        commands: [
+          { op: "move", x, y },
+          { op: "line", x: x + w, y },
+          { op: "line", x: x + w, y: y + h },
+          { op: "line", x, y: y + h },
+          { op: "close" },
+        ],
+        fillRule: "nonzero",
+        fill: false,
+        stroke: true,
+      });
+    }
+    for (const [kind, band] of [
+      ["header", settings.header],
+      ["footer", settings.footer],
+    ] as const) {
+      if (!band) continue;
+      const sectionPage = this.pageIndex - (this.sectionStarts[this.pageIndex] ?? 0) + 1;
+      if ((band.hideFirstPage && sectionPage === 1) || band.hiddenPages?.includes(sectionPage))
+        continue;
+      const parts: string[] = [];
+      let units = 0;
+      for (const part of band.parts) {
+        const text =
+          part.kind === "text"
+            ? part.text
+            : part.kind === "total-pages"
+              ? String(this.totalPages)
+              : String((settings.startPageNumber ?? 1) + sectionPage - 1);
+        if (text.length > 100000 - units)
+          throw new LayoutError(
+            "LAYOUT_LIMIT",
+            "Page band text budget exceeded before concatenation",
+          );
+        units += text.length;
+        parts.push(text);
+      }
+      const text = parts.join("");
+      this.decorationBox = {
+        x: settings.margins.left,
+        y:
+          kind === "header"
+            ? settings.margins.top
+            : page.height - settings.margins.bottom - band.height,
+        width: page.width - settings.margins.left - settings.margins.right,
+        height: band.height,
+      };
+      this.y = this.decorationBox.y;
+      this.generatedParagraph(text, band.style, band.alignment);
+    }
+    // Paint background watermarks first while preserving body reading order and stable object references.
+    page.objects = [
+      ...page.objects.filter((o) => behindIds.has(o.id)),
+      ...page.objects.slice(0, bodyObjects),
+      ...page.objects.slice(bodyObjects).filter((o) => !behindIds.has(o.id)),
+    ];
+    page.objects.forEach((object, index) => {
+      object.drawOrder = index;
+    });
+    this.decorationBox = undefined;
+    this.decoration = false;
+  }
+  private generatedParagraph(text: string, style?: TextStyle, alignment?: PageBand["alignment"]) {
+    this.paragraph(
+      {
+        kind: "paragraph",
+        nodeId: `generated-page${this.pageIndex}`,
+        layout: { alignment: alignment ?? "left" },
+        fragments: [
+          {
+            kind: "text",
+            text,
+            origin: { kind: "static", nodeId: `generated-page${this.pageIndex}` },
+          },
+        ],
+      },
+      -1,
+      style,
+    );
+  }
+  private watermark(watermark: Watermark) {
+    const page = this.ir.pages[this.pageIndex];
+    if (!page) throw new Error("Missing page");
+    const start = page.objects.length;
+    const firstState = this.ir.graphicsStates.length;
+    if (watermark.kind === "image") {
+      const image = (this.options.images ?? []).find((image) => image.id === watermark.resourceId);
+      if (!image) throw new LayoutError("LAYOUT_INPUT", "Watermark image resource is missing");
+      this.reserveObjects(1);
+      page.objects.push({
+        kind: "image",
+        id: `page${this.pageIndex}object${page.objects.length}`,
+        drawOrder: page.objects.length,
+        stateId: this.state(),
+        bounds: {
+          x: watermark.x,
+          y: watermark.y,
+          width: watermark.width,
+          height: watermark.height,
+        },
+        resourceId: watermark.resourceId,
+        transform: {
+          a: watermark.width / image.pixelWidth,
+          b: 0,
+          c: 0,
+          d: watermark.height / image.pixelHeight,
+          e: watermark.x,
+          f: watermark.y,
+        },
+      });
+    } else {
+      this.decorationBox = {
+        x: watermark.x,
+        y: watermark.y,
+        width: page.width - watermark.x,
+        height: page.height - watermark.y,
+      };
+      this.y = watermark.y;
+      this.generatedParagraph(watermark.text, watermark.style);
+    }
+    for (const object of page.objects.slice(start)) {
+      if (object.kind === "path") object.coordinateSpace = "local";
+      const { x, y, width, height } = object.bounds;
+      const matrix = watermark.transform;
+      const points = [
+        [x, y],
+        [x + width, y],
+        [x, y + height],
+        [x + width, y + height],
+      ].map(([px = 0, py = 0]) => ({
+        x: matrix.a * px + matrix.c * py + matrix.e,
+        y: matrix.b * px + matrix.d * py + matrix.f,
+      }));
+      const left = Math.min(...points.map((p) => p.x)),
+        top = Math.min(...points.map((p) => p.y));
+      object.bounds = {
+        x: left,
+        y: top,
+        width: Math.max(...points.map((p) => p.x)) - left,
+        height: Math.max(...points.map((p) => p.y)) - top,
+      };
+    }
+    // Only visit this watermark's newly allocated states, never scan all preceding pages.
+    for (let index = firstState; index < this.ir.graphicsStates.length; index++) {
+      const state = this.ir.graphicsStates[index];
+      if (!state) throw new Error("Missing watermark state");
+      state.opacity = watermark.opacity;
+      state.transform = { ...watermark.transform };
+    }
+  }
+  private reserveObjects(count: number) {
+    if (count > layoutResourceLimits.objects - this.work.emittedObjects)
+      throw new LayoutError("LAYOUT_LIMIT", "IR object budget exceeded");
+    this.work.emittedObjects += count;
   }
   private style(styleId?: string): TextStyle {
     if (styleId === undefined) return {};
@@ -505,8 +849,8 @@ class ParagraphLayouter {
     return face;
   }
   private shape(text: string, run: Run) {
-    this.shapedUnits += text.length;
-    if (this.shapedUnits > 2_000_000)
+    this.work.shapedUnits += text.length;
+    if (this.work.shapedUnits > 2_000_000)
       throw new LayoutError("LAYOUT_LIMIT", "Shaping work exceeds 2000000 UTF-16 units");
     return this.core.shape({
       text,
@@ -595,8 +939,8 @@ class ParagraphLayouter {
     for (let index = firstEndingAfter(runs, start); index < runs.length; index++) {
       const run = runs[index];
       if (!run || run.start >= end) break;
-      this.runVisits++;
-      if (this.runVisits > 2_000_000)
+      this.work.runVisits++;
+      if (this.work.runVisits > 2_000_000)
         throw new LayoutError("LAYOUT_LIMIT", "Line measurement exceeds 2000000 run visits");
       const a = Math.max(start, run.start),
         b = Math.min(end, run.end);
@@ -628,7 +972,13 @@ class ParagraphLayouter {
     }
     return result;
   }
-  private paragraph(paragraph: ResolvedParagraph, paragraphIndex: number) {
+  private paragraph(
+    paragraph: ResolvedParagraph,
+    paragraphIndex: number,
+    generatedStyle?: TextStyle,
+  ) {
+    if (++this.work.paragraphs > layoutResourceLimits.layoutParagraphs)
+      throw new LayoutError("LAYOUT_LIMIT", "Paragraph layout budget exceeded", paragraph.nodeId);
     const properties = paragraph.layout ?? {};
     if (properties.tabStops?.some((value, i, values) => i > 0 && value <= (values[i - 1] ?? 0)))
       throw new LayoutError("LAYOUT_INPUT", "Tab stops must increase", paragraph.nodeId);
@@ -636,7 +986,12 @@ class ParagraphLayouter {
       properties.role === "heading"
         ? { fontSize: [24, 20, 18, 16, 14, 12][(properties.headingLevel ?? 1) - 1], bold: true }
         : {};
-    const base = { ...this.options.defaultStyle, ...heading, ...this.style(paragraph.styleId) };
+    const base = {
+      ...this.options.defaultStyle,
+      ...heading,
+      ...this.style(paragraph.styleId),
+      ...generatedStyle,
+    };
     let text = "";
     const spans: Span[] = [];
     for (const fragment of paragraph.fragments) {
@@ -720,7 +1075,7 @@ class ParagraphLayouter {
     const left = properties.leftIndent ?? (label ? labelWidth + 2 : 0),
       right = properties.rightIndent ?? 0;
     const firstIndent = properties.firstLineIndent ?? 0;
-    const box = this.options.page.contentBox;
+    const box = this.decorationBox ?? this.geometry.contentBox;
     if (
       left + firstIndent < 0 ||
       box.width - left - right - Math.max(0, firstIndent) <= 0 ||
@@ -750,7 +1105,7 @@ class ParagraphLayouter {
       (b) => b.required || (safe.has(b.position) && chineseBreak(b.position)),
     );
     const breakPositions = new Set(candidates.map((candidate) => candidate.position));
-    this.y += properties.spaceBefore ?? 0;
+    if (this.y > box.y) this.y += properties.spaceBefore ?? 0;
     let start = 0,
       lineIndex = 0;
     let candidateIndex = 0;
@@ -769,8 +1124,8 @@ class ParagraphLayouter {
       for (let index = candidateIndex; index < candidates.length; index++) {
         const candidate = candidates[index];
         if (!candidate) break;
-        this.candidateVisits++;
-        if (this.candidateVisits > 2_000_000)
+        this.work.candidateVisits++;
+        if (this.work.candidateVisits > 2_000_000)
           throw new LayoutError("LAYOUT_LIMIT", "Line selection exceeds 2000000 candidate visits");
         const measured = this.measure(text, runs, start, candidate.position, properties, indent);
         if (measured.reduce((sum, p) => sum + p.width, 0) > available + 1e-9) break;
@@ -805,12 +1160,21 @@ class ParagraphLayouter {
           "Line height is smaller than font metrics",
           paragraph.nodeId,
         );
-      if (this.y + height > box.y + box.height + 1e-9)
+      if (height > box.height + 1e-9 || box.width <= 0)
         throw new LayoutError(
           "LAYOUT_OVERFLOW",
-          "Single-page content height exceeded; pagination belongs to issue 10",
+          "Line cannot fit the reserved page area",
           paragraph.nodeId,
         );
+      if (this.y + height > box.y + box.height + 1e-9) {
+        if (this.decoration)
+          throw new LayoutError(
+            "LAYOUT_OVERFLOW",
+            "Page decoration exceeds its reserved area",
+            paragraph.nodeId,
+          );
+        this.newPage();
+      }
       const baseline = this.y + (height - natural) / 2 + ascent;
       const alignment = properties.alignment ?? "left";
       const firstTab = pieces.findIndex((piece) => piece.text === "\t");
@@ -837,17 +1201,20 @@ class ParagraphLayouter {
               ? (available - width) / 2
               : 0;
       let x = box.x + left + indent + offset;
-      this.lines.push({
-        nodeId: paragraph.nodeId,
-        paragraphIndex,
-        start,
-        end,
-        x,
-        y: this.y,
-        width: gaps.length ? available : width,
-        height,
-        baseline,
-      });
+      if (!this.decoration)
+        this.lines.push({
+          nodeId: paragraph.nodeId,
+          paragraphIndex,
+          pageIndex: this.pageIndex,
+          sectionId: this.sectionId,
+          start,
+          end,
+          x,
+          y: this.y,
+          width: gaps.length ? available : width,
+          height,
+          baseline,
+        });
       if (lineIndex === 0) {
         let labelX = box.x + left + indent - labelWidth;
         for (const labelPiece of labelPieces)
@@ -875,13 +1242,8 @@ class ParagraphLayouter {
         terminalEmptyPending = false;
       }
     } while (start <= text.length);
-    this.y += properties.spaceAfter ?? 0;
-    if (this.y > box.y + box.height + 1e-9)
-      throw new LayoutError(
-        "LAYOUT_OVERFLOW",
-        "Paragraph spacing exceeds single page",
-        paragraph.nodeId,
-      );
+    // Trailing space consumes remaining space only; it never creates a blank page itself.
+    this.y = Math.min(box.y + box.height, this.y + (properties.spaceAfter ?? 0));
   }
   private justificationGaps(
     pieces: Piece[],
@@ -939,6 +1301,7 @@ class ParagraphLayouter {
     extra: number,
     generated = false,
   ) {
+    generated ||= this.decoration;
     // Reserve cardinality and wire-text expansion before allocating any IR objects/maps.
     const style = piece.run.style;
     const objectCount =
@@ -946,7 +1309,7 @@ class ParagraphLayouter {
       Number(!!style.highlight) +
       Number(!!(style.underline || style.link)) +
       Number(!!style.strikethrough);
-    if (objectCount > layoutResourceLimits.objects - this.emittedObjects)
+    if (objectCount > layoutResourceLimits.objects - this.work.emittedObjects)
       throw new LayoutError("LAYOUT_LIMIT", "IR object budget exceeded", paragraph.nodeId);
     const selected: Span[] = [];
     let sourceUnits = 0;
@@ -964,28 +1327,28 @@ class ParagraphLayouter {
         const intersects = !empty && span.start < piece.end && span.end > piece.start;
         if (!ownsEmpty && !intersects) continue;
         sourceUnits += span.fragment.text.length;
-        if (sourceUnits > 8_000_000 - this.outputTextUnits)
+        if (sourceUnits > 8_000_000 - this.work.outputTextUnits)
           throw new LayoutError(
             "LAYOUT_LIMIT",
             "Output source text exceeds 8000000 UTF-16 units",
             paragraph.nodeId,
           );
-        if (selected.length >= layoutResourceLimits.sourceMappings - this.sourceMappings)
+        if (selected.length >= layoutResourceLimits.sourceMappings - this.work.sourceMappings)
           throw new LayoutError("LAYOUT_LIMIT", "Source mapping budget exceeded", paragraph.nodeId);
         selected.push(span);
       }
     const outputUnits =
       piece.text.length * (piece.shaped ? 2 : 1) + sourceUnits * (selected.length === 1 ? 2 : 1);
-    if (outputUnits > 8_000_000 - this.outputTextUnits)
+    if (outputUnits > 8_000_000 - this.work.outputTextUnits)
       throw new LayoutError(
         "LAYOUT_LIMIT",
         "Output logical/display/source text exceeds 8000000 UTF-16 units",
         paragraph.nodeId,
       );
-    this.outputTextUnits += outputUnits;
-    this.sourceMappings += selected.length;
-    this.emittedObjects += objectCount;
-    const objects = this.ir.pages[0]?.objects;
+    this.work.outputTextUnits += outputUnits;
+    this.work.sourceMappings += selected.length;
+    this.work.emittedObjects += objectCount;
+    const objects = this.ir.pages[this.pageIndex]?.objects;
     if (!objects) throw new Error("Missing page");
     const ownGaps = gaps.slice(upperBound(gaps, piece.start), upperBound(gaps, piece.end));
     const gapSet = new Set(ownGaps);
@@ -993,7 +1356,7 @@ class ParagraphLayouter {
     const top = baseline - piece.ascent;
     const bounds = { x, y: top, width, height: piece.ascent + piece.descent };
     const path = (fill: boolean, value: string | undefined, y: number, height: number) => {
-      const id = `object${objects.length}`;
+      const id = `page${this.pageIndex}object${objects.length}`;
       objects.push({
         kind: "path",
         id,
@@ -1019,7 +1382,7 @@ class ParagraphLayouter {
       });
     };
     if (style.highlight) path(true, style.highlight, top, bounds.height);
-    const id = `object${objects.length}`;
+    const id = `page${this.pageIndex}object${objects.length}`;
     const glyphs: TextObject["glyphs"] = [],
       clusters: TextObject["clusters"] = [];
     const scale = piece.size / piece.run.face.metrics.head.unitsPerEm;
@@ -1096,6 +1459,8 @@ class ParagraphLayouter {
         objectId: id,
         nodeId: sources.length === 1 && first ? first.nodeId : paragraph.nodeId,
         readingOrder: this.ir.semantics.length,
+        pageIndex: this.pageIndex,
+        sectionId: this.sectionId,
         ...(sources.length ? { sourceRanges: sources } : {}),
         ...(sources.length === 1 && first
           ? {

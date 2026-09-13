@@ -227,6 +227,8 @@ function contract(canonical: boolean) {
           }),
         ),
         readingOrder: uint,
+        pageIndex: Type.Optional(uint),
+        sectionId: Type.Optional(id),
         link: Type.Optional(id),
         /** Multiple source fragments can contribute to one shaped run/ligature. */
         sourceRanges: Type.Optional(

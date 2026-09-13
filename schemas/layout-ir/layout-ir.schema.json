@@ -1603,6 +1603,15 @@
             "maximum": 9007199254740991,
             "type": "integer"
           },
+          "pageIndex": {
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "type": "integer"
+          },
+          "sectionId": {
+            "minLength": 1,
+            "type": "string"
+          },
           "link": {
             "minLength": 1,
             "type": "string"

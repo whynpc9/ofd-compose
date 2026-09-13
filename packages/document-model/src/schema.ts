@@ -27,22 +27,6 @@ export const BindingPolicyVersionSchema = Type.Union(
   },
 );
 
-/** 模板显式锁定的确定性设置（spec 用户故事 8）。 */
-export const TemplateSettingsSchema = Type.Object(
-  {
-    locale: Type.String({
-      minLength: 2,
-      description: "BCP 47 locale 标签（如 zh-CN）。v0 仅记录；数字/日期格式化为固定不变文化。",
-    }),
-    timeZone: Type.String({
-      minLength: 1,
-      description: "IANA 时区（如 Asia/Shanghai、UTC）。带偏移的日期时间值按此时区取字段。",
-    }),
-    bindingPolicyVersion: BindingPolicyVersionSchema,
-  },
-  { additionalProperties: false },
-);
-
 export const TextStyleSchema = Type.Object(
   {
     fontFamily: Type.Optional(Type.String({ minLength: 1 })),
@@ -63,6 +47,125 @@ export const TextStyleSchema = Type.Object(
     ),
     link: Type.Optional(Type.String({ minLength: 1 })),
     highlight: Type.Optional(Type.String({ pattern: "^#[0-9A-Fa-f]{6}$" })),
+  },
+  { additionalProperties: false },
+);
+
+/** Physical page settings in mm. Header/footer height is reserved even when hidden. */
+const mm = Type.Number({ minimum: 0, maximum: 1000000 });
+const positiveMm = Type.Number({ exclusiveMinimum: 0, maximum: 1000000 });
+const pagePart = Type.Union([
+  Type.Object(
+    { kind: Type.Literal("text"), text: Type.String({ maxLength: 10000 }) },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    { kind: Type.Union([Type.Literal("page-number"), Type.Literal("total-pages")]) },
+    { additionalProperties: false },
+  ),
+]);
+export const PageBandSchema = Type.Object(
+  {
+    height: positiveMm,
+    parts: Type.Array(pagePart, { maxItems: 100 }),
+    style: Type.Optional(TextStyleSchema),
+    alignment: Type.Optional(
+      Type.Union([Type.Literal("left"), Type.Literal("center"), Type.Literal("right")]),
+    ),
+    hideFirstPage: Type.Optional(Type.Boolean()),
+    /** One-based physical page positions within this section, independent of displayed page numbers. */
+    hiddenPages: Type.Optional(
+      Type.Array(Type.Integer({ minimum: 1, maximum: 1000 }), {
+        maxItems: 1000,
+        uniqueItems: true,
+      }),
+    ),
+  },
+  { additionalProperties: false },
+);
+const transform = Type.Object(
+  {
+    a: Type.Number({ minimum: -1000, maximum: 1000 }),
+    b: Type.Number({ minimum: -1000, maximum: 1000 }),
+    c: Type.Number({ minimum: -1000, maximum: 1000 }),
+    d: Type.Number({ minimum: -1000, maximum: 1000 }),
+    e: Type.Number({ minimum: -1000000, maximum: 1000000 }),
+    f: Type.Number({ minimum: -1000000, maximum: 1000000 }),
+  },
+  { additionalProperties: false },
+);
+const watermarkBase = {
+  opacity: Type.Number({ minimum: 0, maximum: 1 }),
+  layer: Type.Union([Type.Literal("behind"), Type.Literal("above")]),
+  transform,
+};
+export const WatermarkSchema = Type.Union([
+  Type.Object(
+    {
+      ...watermarkBase,
+      kind: Type.Literal("text"),
+      text: Type.String({ minLength: 1, maxLength: 10000 }),
+      style: Type.Optional(TextStyleSchema),
+      x: mm,
+      y: mm,
+    },
+    { additionalProperties: false },
+  ),
+  Type.Object(
+    {
+      ...watermarkBase,
+      kind: Type.Literal("image"),
+      resourceId: identifier,
+      x: mm,
+      y: mm,
+      width: positiveMm,
+      height: positiveMm,
+    },
+    { additionalProperties: false },
+  ),
+]);
+export const PageSettingsSchema = Type.Object(
+  {
+    paper: Type.Union([
+      Type.Literal("A4"),
+      Type.Literal("A5"),
+      Type.Object({ width: positiveMm, height: positiveMm }, { additionalProperties: false }),
+    ]),
+    orientation: Type.Union([Type.Literal("portrait"), Type.Literal("landscape")]),
+    margins: Type.Object(
+      { top: mm, right: mm, bottom: mm, left: mm },
+      { additionalProperties: false },
+    ),
+    startPageNumber: Type.Optional(Type.Integer({ minimum: 1, maximum: 1000000 })),
+    header: Type.Optional(PageBandSchema),
+    footer: Type.Optional(PageBandSchema),
+    border: Type.Optional(
+      Type.Object(
+        { inset: mm, width: positiveMm, color: Type.String({ pattern: "^#[0-9A-Fa-f]{6}$" }) },
+        { additionalProperties: false },
+      ),
+    ),
+    watermarks: Type.Optional(Type.Array(WatermarkSchema, { maxItems: 16 })),
+  },
+  { additionalProperties: false },
+);
+export type PageSettings = Static<typeof PageSettingsSchema>;
+export type PageBand = Static<typeof PageBandSchema>;
+export type Watermark = Static<typeof WatermarkSchema>;
+
+/** 模板显式锁定的确定性设置（spec 用户故事 8）。 */
+export const TemplateSettingsSchema = Type.Object(
+  {
+    locale: Type.String({
+      minLength: 2,
+      description: "BCP 47 locale 标签（如 zh-CN）。v0 仅记录；数字/日期格式化为固定不变文化。",
+    }),
+    timeZone: Type.String({
+      minLength: 1,
+      description: "IANA 时区（如 Asia/Shanghai、UTC）。带偏移的日期时间值按此时区取字段。",
+    }),
+    bindingPolicyVersion: BindingPolicyVersionSchema,
+    page: Type.Optional(PageSettingsSchema),
   },
   { additionalProperties: false },
 );
@@ -216,6 +319,12 @@ export const InlineNodeSchema = Type.Union([
 /** Paragraph geometry uses mm; font sizes remain pt. Heading/list are paragraph roles. */
 export const ParagraphLayoutSchema = Type.Object(
   {
+    /** Explicit page break before this paragraph (including an initial blank page). */
+    pageBreakBefore: Type.Optional(Type.Boolean()),
+    /** Starts a new section on a new page; the first paragraph configures the initial page. */
+    section: Type.Optional(
+      Type.Object({ id: identifier, page: PageSettingsSchema }, { additionalProperties: false }),
+    ),
     role: Type.Optional(
       Type.Union([Type.Literal("body"), Type.Literal("heading"), Type.Literal("list-item")]),
     ),

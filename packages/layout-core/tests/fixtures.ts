@@ -5,7 +5,7 @@ import { loadFontFile } from "#font-loader";
 import manifest from "../../typography-core/fonts/manifest.json";
 import type { LayoutFont, LayoutOptions } from "../src/index.js";
 
-export const options: LayoutOptions = {
+export const options: LayoutOptions & { page: NonNullable<LayoutOptions["page"]> } = {
   page: { width: 210, height: 297, contentBox: { x: 20, y: 20, width: 170, height: 257 } },
   defaultStyle: { fontFamily: "Noto", fontSize: 12 },
   formattingPolicy: {
@@ -87,3 +87,20 @@ export function narrative() {
     },
   );
 }
+
+export function fiftyPageDocument() {
+  // Narrative content from the repository's inline-expression corpus domain; real locked font shaping.
+  return document(
+    Array.from({ length: 50 }, (_, index) =>
+      p(
+        Array.from({ length: 25 }, () => "营收最高的是甲公司，收入为 100.00 元。").join("\n"),
+        `report${index}`,
+        { lineHeight: { kind: "fixed", value: 10 } },
+      ),
+    ),
+  );
+}
+export const fiftyPageOptions = {
+  ...options,
+  page: { ...options.page, contentBox: { x: 20, y: 20, width: 170, height: 250 } },
+};

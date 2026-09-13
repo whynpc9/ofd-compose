@@ -86,7 +86,12 @@ an instruction to remeasure text. Font size and all glyph geometry are physical
 lengths. Path `coordinateSpace: local` uses the graphics-state transform; `page`
 means already positioned page coordinates (no second graphics-state transform).
 Image pixels map through the image object's matrix into local physical space,
-then through the graphics-state matrix into page space. Bounds are page-space
+then through the graphics-state matrix into page space. Pixel matrix a/b/c/d retain
+mm-per-pixel numerical coefficients in both wire forms (like other matrix coefficients,
+they are not quantized); e/f use the declared length unit. Thus canonical local x is
+`1000 * (a * pixelX + c * pixelY) + e`, and y follows the same rule. This preserves
+fractional-pixel scaling without accumulating a micrometre-per-pixel rounding error.
+Bounds are page-space
 metadata; they do not imply another translation or scaling. Each clip uses the
 local space of its owning state/image, with an explicit fill rule. Only `normal`
 blend mode and sRGB color are in this provisional profile; unsupported modes fail.
@@ -186,3 +191,7 @@ array order and includes every field in semanticDigest; it does not sort this as
 Optional `link` retains a text run's target as semantic metadata. These additive fields
 leave old fixtures byte-identical but require older strict-schema consumers to update before
 accepting new populated fields. They do not freeze v0 or alter integer-µm transport rules.
+
+Issue 10 adds optional semantic `pageIndex` and `sectionId`. When present, validation
+requires them to match the page owning `objectId`; canonicalization preserves these
+source fields and includes them in the semantic digest. Old fixtures remain valid.

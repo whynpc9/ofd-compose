@@ -152,6 +152,13 @@ export function validateReferences(
     }
   };
   for (const semantic of input.semantics) {
+    const targetPageId = objects.get(semantic.objectId)?.pageId;
+    const targetPage = targetPageId ? pages.get(targetPageId) : undefined;
+    if (
+      (semantic.pageIndex !== undefined && semantic.pageIndex !== targetPage?.pageIndex) ||
+      (semantic.sectionId !== undefined && semantic.sectionId !== targetPage?.sectionId)
+    )
+      fail("IR_REFERENCE", "semantics", "Semantic page/section mismatch");
     for (const source of semantic.sourceRanges ?? []) {
       sourceRange(
         source.sourceText.text,
