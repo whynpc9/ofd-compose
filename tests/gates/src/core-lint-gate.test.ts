@@ -13,6 +13,7 @@ const corePackages = [
   "binding-core",
   "document-model",
   "layout-core",
+  "layout-ir",
   "template-compiler",
   "typography-core",
 ] as const;

@@ -1,0 +1,1797 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "required": [
+    "irVersion",
+    "origin",
+    "identity",
+    "resources",
+    "graphicsStates",
+    "pages",
+    "semantics",
+    "markers",
+    "units"
+  ],
+  "properties": {
+    "irVersion": {
+      "const": "ofd-compose/layout-ir@0",
+      "type": "string"
+    },
+    "origin": {
+      "const": "top-left",
+      "type": "string"
+    },
+    "identity": {
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "inputDigest",
+        "layoutProfile"
+      ],
+      "properties": {
+        "inputDigest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        },
+        "layoutProfile": {
+          "additionalProperties": false,
+          "type": "object",
+          "required": [
+            "name",
+            "version",
+            "features"
+          ],
+          "properties": {
+            "name": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "version": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "features": {
+              "uniqueItems": true,
+              "type": "array",
+              "items": {
+                "minLength": 1,
+                "type": "string"
+              }
+            }
+          }
+        },
+        "semanticDigest": {
+          "pattern": "^[a-f0-9]{64}$",
+          "type": "string"
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "id",
+              "kind",
+              "originalDigest",
+              "faceIndex",
+              "weight",
+              "style",
+              "features",
+              "variations"
+            ],
+            "properties": {
+              "id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "kind": {
+                "const": "font",
+                "type": "string"
+              },
+              "originalDigest": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "faceIndex": {
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "type": "integer"
+              },
+              "weight": {
+                "minimum": 1,
+                "maximum": 1000,
+                "type": "integer"
+              },
+              "style": {
+                "anyOf": [
+                  {
+                    "const": "normal",
+                    "type": "string"
+                  },
+                  {
+                    "const": "italic",
+                    "type": "string"
+                  },
+                  {
+                    "const": "oblique",
+                    "type": "string"
+                  }
+                ]
+              },
+              "features": {
+                "additionalProperties": false,
+                "type": "object",
+                "patternProperties": {
+                  "^[ -~]{4}$": {
+                    "minimum": 0,
+                    "maximum": 4294967295,
+                    "type": "integer"
+                  }
+                }
+              },
+              "variations": {
+                "maxProperties": 0,
+                "additionalProperties": false,
+                "type": "object",
+                "patternProperties": {
+                  "^[ -~]{4}$": {
+                    "minimum": -9007199254740991,
+                    "maximum": 9007199254740991,
+                    "type": "number"
+                  }
+                }
+              },
+              "subsetDigest": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "glyphIdMap": {
+                "type": "array",
+                "items": {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "original",
+                    "subset"
+                  ],
+                  "properties": {
+                    "original": {
+                      "minimum": 0,
+                      "maximum": 4294967295,
+                      "type": "integer"
+                    },
+                    "subset": {
+                      "minimum": 0,
+                      "maximum": 4294967295,
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "id",
+              "kind",
+              "digest",
+              "mimeType",
+              "pixelWidth",
+              "pixelHeight"
+            ],
+            "properties": {
+              "id": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "kind": {
+                "const": "image",
+                "type": "string"
+              },
+              "digest": {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              "mimeType": {
+                "anyOf": [
+                  {
+                    "const": "image/png",
+                    "type": "string"
+                  },
+                  {
+                    "const": "image/jpeg",
+                    "type": "string"
+                  }
+                ]
+              },
+              "pixelWidth": {
+                "minimum": 1,
+                "maximum": 1000000,
+                "type": "integer"
+              },
+              "pixelHeight": {
+                "minimum": 1,
+                "maximum": 1000000,
+                "type": "integer"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "graphicsStates": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "transform",
+          "fillColor",
+          "strokeColor",
+          "opacity",
+          "blendMode",
+          "lineWidth",
+          "dash",
+          "dashOffset",
+          "lineCap",
+          "lineJoin",
+          "miterLimit"
+        ],
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "transform": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "a",
+              "b",
+              "c",
+              "d",
+              "e",
+              "f"
+            ],
+            "properties": {
+              "a": {
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "type": "number"
+              },
+              "b": {
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "type": "number"
+              },
+              "c": {
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "type": "number"
+              },
+              "d": {
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991,
+                "type": "number"
+              },
+              "e": {
+                "minimum": -1000000,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              },
+              "f": {
+                "minimum": -1000000,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              }
+            }
+          },
+          "clip": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "commands",
+              "fillRule",
+              "coordinateSpace"
+            ],
+            "properties": {
+              "commands": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "op",
+                        "x",
+                        "y"
+                      ],
+                      "properties": {
+                        "op": {
+                          "const": "move",
+                          "type": "string"
+                        },
+                        "x": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "op",
+                        "x",
+                        "y"
+                      ],
+                      "properties": {
+                        "op": {
+                          "const": "line",
+                          "type": "string"
+                        },
+                        "x": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "op",
+                        "x1",
+                        "y1",
+                        "x2",
+                        "y2",
+                        "x",
+                        "y"
+                      ],
+                      "properties": {
+                        "op": {
+                          "const": "cubic",
+                          "type": "string"
+                        },
+                        "x1": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y1": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "x2": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y2": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "x": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "op"
+                      ],
+                      "properties": {
+                        "op": {
+                          "const": "close",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "fillRule": {
+                "anyOf": [
+                  {
+                    "const": "nonzero",
+                    "type": "string"
+                  },
+                  {
+                    "const": "evenodd",
+                    "type": "string"
+                  }
+                ]
+              },
+              "coordinateSpace": {
+                "const": "local",
+                "type": "string"
+              }
+            }
+          },
+          "fillColor": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "space",
+              "r",
+              "g",
+              "b"
+            ],
+            "properties": {
+              "space": {
+                "const": "srgb",
+                "type": "string"
+              },
+              "r": {
+                "minimum": 0,
+                "maximum": 1,
+                "type": "number"
+              },
+              "g": {
+                "minimum": 0,
+                "maximum": 1,
+                "type": "number"
+              },
+              "b": {
+                "minimum": 0,
+                "maximum": 1,
+                "type": "number"
+              }
+            }
+          },
+          "strokeColor": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "space",
+              "r",
+              "g",
+              "b"
+            ],
+            "properties": {
+              "space": {
+                "const": "srgb",
+                "type": "string"
+              },
+              "r": {
+                "minimum": 0,
+                "maximum": 1,
+                "type": "number"
+              },
+              "g": {
+                "minimum": 0,
+                "maximum": 1,
+                "type": "number"
+              },
+              "b": {
+                "minimum": 0,
+                "maximum": 1,
+                "type": "number"
+              }
+            }
+          },
+          "opacity": {
+            "minimum": 0,
+            "maximum": 1,
+            "type": "number"
+          },
+          "blendMode": {
+            "const": "normal",
+            "type": "string"
+          },
+          "lineWidth": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "x-unit": "mm",
+            "type": "number"
+          },
+          "dash": {
+            "anyOf": [
+              {
+                "maxItems": 0,
+                "type": "array",
+                "items": {
+                  "minimum": 0,
+                  "maximum": 1000000,
+                  "x-unit": "mm",
+                  "type": "number"
+                }
+              },
+              {
+                "minItems": 1,
+                "contains": {
+                  "minimum": 0,
+                  "maximum": 1000000,
+                  "x-unit": "mm",
+                  "type": "number",
+                  "exclusiveMinimum": 0
+                },
+                "type": "array",
+                "items": {
+                  "minimum": 0,
+                  "maximum": 1000000,
+                  "x-unit": "mm",
+                  "type": "number"
+                }
+              }
+            ]
+          },
+          "dashOffset": {
+            "minimum": -1000000,
+            "maximum": 1000000,
+            "x-unit": "mm",
+            "type": "number"
+          },
+          "lineCap": {
+            "anyOf": [
+              {
+                "const": "butt",
+                "type": "string"
+              },
+              {
+                "const": "round",
+                "type": "string"
+              },
+              {
+                "const": "square",
+                "type": "string"
+              }
+            ]
+          },
+          "lineJoin": {
+            "anyOf": [
+              {
+                "const": "miter",
+                "type": "string"
+              },
+              {
+                "const": "round",
+                "type": "string"
+              },
+              {
+                "const": "bevel",
+                "type": "string"
+              }
+            ]
+          },
+          "miterLimit": {
+            "minimum": 1,
+            "maximum": 1000,
+            "type": "number"
+          }
+        }
+      }
+    },
+    "pages": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pageIndex",
+          "width",
+          "height",
+          "contentBox",
+          "orientation",
+          "sectionId",
+          "objects"
+        ],
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "pageIndex": {
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "type": "integer"
+          },
+          "width": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "x-unit": "mm",
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "height": {
+            "minimum": 0,
+            "maximum": 1000000,
+            "x-unit": "mm",
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "contentBox": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "properties": {
+              "x": {
+                "minimum": -1000000,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              },
+              "y": {
+                "minimum": -1000000,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              },
+              "width": {
+                "minimum": 0,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              },
+              "height": {
+                "minimum": 0,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              }
+            }
+          },
+          "orientation": {
+            "anyOf": [
+              {
+                "const": "portrait",
+                "type": "string"
+              },
+              {
+                "const": "landscape",
+                "type": "string"
+              }
+            ]
+          },
+          "sectionId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "objects": {
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "drawOrder",
+                    "stateId",
+                    "bounds",
+                    "kind",
+                    "logicalText",
+                    "displayText",
+                    "fontId",
+                    "fontSize",
+                    "language",
+                    "direction",
+                    "baseline",
+                    "glyphs",
+                    "clusters"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "drawOrder": {
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "type": "integer"
+                    },
+                    "stateId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "bounds": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height"
+                      ],
+                      "properties": {
+                        "x": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "width": {
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "height": {
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "kind": {
+                      "const": "text",
+                      "type": "string"
+                    },
+                    "logicalText": {
+                      "type": "string"
+                    },
+                    "displayText": {
+                      "type": "string"
+                    },
+                    "fontId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "fontSize": {
+                      "minimum": 0,
+                      "maximum": 1000000,
+                      "x-unit": "mm",
+                      "type": "number",
+                      "exclusiveMinimum": 0
+                    },
+                    "language": {
+                      "pattern": "^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$",
+                      "type": "string"
+                    },
+                    "direction": {
+                      "anyOf": [
+                        {
+                          "const": "ltr",
+                          "type": "string"
+                        },
+                        {
+                          "const": "rtl",
+                          "type": "string"
+                        },
+                        {
+                          "const": "ttb",
+                          "type": "string"
+                        },
+                        {
+                          "const": "btt",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "baseline": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "x",
+                        "y"
+                      ],
+                      "properties": {
+                        "x": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "glyphs": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "glyphId",
+                          "position",
+                          "advance",
+                          "offset",
+                          "clusterId"
+                        ],
+                        "properties": {
+                          "glyphId": {
+                            "minimum": 0,
+                            "maximum": 4294967295,
+                            "type": "integer"
+                          },
+                          "position": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "properties": {
+                              "x": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "advance": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "properties": {
+                              "x": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "offset": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "x",
+                              "y"
+                            ],
+                            "properties": {
+                              "x": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              }
+                            }
+                          },
+                          "clusterId": {
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    },
+                    "clusters": {
+                      "type": "array",
+                      "items": {
+                        "additionalProperties": false,
+                        "type": "object",
+                        "required": [
+                          "clusterId",
+                          "logicalRange",
+                          "displayRange",
+                          "glyphIndices"
+                        ],
+                        "properties": {
+                          "clusterId": {
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "type": "integer"
+                          },
+                          "logicalRange": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "start",
+                              "end"
+                            ],
+                            "properties": {
+                              "start": {
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "type": "integer"
+                              },
+                              "end": {
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "displayRange": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "start",
+                              "end"
+                            ],
+                            "properties": {
+                              "start": {
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "type": "integer"
+                              },
+                              "end": {
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "type": "integer"
+                              }
+                            }
+                          },
+                          "glyphIndices": {
+                            "minItems": 1,
+                            "uniqueItems": true,
+                            "type": "array",
+                            "items": {
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "type": "integer"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "drawOrder",
+                    "stateId",
+                    "bounds",
+                    "kind",
+                    "coordinateSpace",
+                    "commands",
+                    "fillRule",
+                    "fill",
+                    "stroke"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "drawOrder": {
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "type": "integer"
+                    },
+                    "stateId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "bounds": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height"
+                      ],
+                      "properties": {
+                        "x": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "width": {
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "height": {
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "kind": {
+                      "const": "path",
+                      "type": "string"
+                    },
+                    "coordinateSpace": {
+                      "anyOf": [
+                        {
+                          "const": "local",
+                          "type": "string"
+                        },
+                        {
+                          "const": "page",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "commands": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "op",
+                              "x",
+                              "y"
+                            ],
+                            "properties": {
+                              "op": {
+                                "const": "move",
+                                "type": "string"
+                              },
+                              "x": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              }
+                            }
+                          },
+                          {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "op",
+                              "x",
+                              "y"
+                            ],
+                            "properties": {
+                              "op": {
+                                "const": "line",
+                                "type": "string"
+                              },
+                              "x": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              }
+                            }
+                          },
+                          {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "op",
+                              "x1",
+                              "y1",
+                              "x2",
+                              "y2",
+                              "x",
+                              "y"
+                            ],
+                            "properties": {
+                              "op": {
+                                "const": "cubic",
+                                "type": "string"
+                              },
+                              "x1": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y1": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "x2": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y2": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "x": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              },
+                              "y": {
+                                "minimum": -1000000,
+                                "maximum": 1000000,
+                                "x-unit": "mm",
+                                "type": "number"
+                              }
+                            }
+                          },
+                          {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "required": [
+                              "op"
+                            ],
+                            "properties": {
+                              "op": {
+                                "const": "close",
+                                "type": "string"
+                              }
+                            }
+                          }
+                        ]
+                      }
+                    },
+                    "fillRule": {
+                      "anyOf": [
+                        {
+                          "const": "nonzero",
+                          "type": "string"
+                        },
+                        {
+                          "const": "evenodd",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "fill": {
+                      "type": "boolean"
+                    },
+                    "stroke": {
+                      "type": "boolean"
+                    }
+                  }
+                },
+                {
+                  "additionalProperties": false,
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "drawOrder",
+                    "stateId",
+                    "bounds",
+                    "kind",
+                    "resourceId",
+                    "transform"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "drawOrder": {
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "type": "integer"
+                    },
+                    "stateId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "bounds": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "x",
+                        "y",
+                        "width",
+                        "height"
+                      ],
+                      "properties": {
+                        "x": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "y": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "width": {
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "height": {
+                          "minimum": 0,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "kind": {
+                      "const": "image",
+                      "type": "string"
+                    },
+                    "resourceId": {
+                      "minLength": 1,
+                      "type": "string"
+                    },
+                    "transform": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "a",
+                        "b",
+                        "c",
+                        "d",
+                        "e",
+                        "f"
+                      ],
+                      "properties": {
+                        "a": {
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "type": "number"
+                        },
+                        "b": {
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "type": "number"
+                        },
+                        "c": {
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "type": "number"
+                        },
+                        "d": {
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "type": "number"
+                        },
+                        "e": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        },
+                        "f": {
+                          "minimum": -1000000,
+                          "maximum": 1000000,
+                          "x-unit": "mm",
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "clip": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "commands",
+                        "fillRule",
+                        "coordinateSpace"
+                      ],
+                      "properties": {
+                        "commands": {
+                          "minItems": 1,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "additionalProperties": false,
+                                "type": "object",
+                                "required": [
+                                  "op",
+                                  "x",
+                                  "y"
+                                ],
+                                "properties": {
+                                  "op": {
+                                    "const": "move",
+                                    "type": "string"
+                                  },
+                                  "x": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  },
+                                  "y": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  }
+                                }
+                              },
+                              {
+                                "additionalProperties": false,
+                                "type": "object",
+                                "required": [
+                                  "op",
+                                  "x",
+                                  "y"
+                                ],
+                                "properties": {
+                                  "op": {
+                                    "const": "line",
+                                    "type": "string"
+                                  },
+                                  "x": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  },
+                                  "y": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  }
+                                }
+                              },
+                              {
+                                "additionalProperties": false,
+                                "type": "object",
+                                "required": [
+                                  "op",
+                                  "x1",
+                                  "y1",
+                                  "x2",
+                                  "y2",
+                                  "x",
+                                  "y"
+                                ],
+                                "properties": {
+                                  "op": {
+                                    "const": "cubic",
+                                    "type": "string"
+                                  },
+                                  "x1": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  },
+                                  "y1": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  },
+                                  "x2": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  },
+                                  "y2": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  },
+                                  "x": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  },
+                                  "y": {
+                                    "minimum": -1000000,
+                                    "maximum": 1000000,
+                                    "x-unit": "mm",
+                                    "type": "number"
+                                  }
+                                }
+                              },
+                              {
+                                "additionalProperties": false,
+                                "type": "object",
+                                "required": [
+                                  "op"
+                                ],
+                                "properties": {
+                                  "op": {
+                                    "const": "close",
+                                    "type": "string"
+                                  }
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        "fillRule": {
+                          "anyOf": [
+                            {
+                              "const": "nonzero",
+                              "type": "string"
+                            },
+                            {
+                              "const": "evenodd",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "coordinateSpace": {
+                          "const": "local",
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "semantics": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "objectId",
+          "nodeId",
+          "readingOrder"
+        ],
+        "properties": {
+          "objectId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "nodeId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "bindingId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "repeatInstance": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "additionalProperties": false,
+              "type": "object",
+              "required": [
+                "nodeId",
+                "key"
+              ],
+              "properties": {
+                "nodeId": {
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "key": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "controlId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "table": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "tableId",
+              "row",
+              "column",
+              "rowSpan",
+              "columnSpan"
+            ],
+            "properties": {
+              "tableId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "row": {
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "type": "integer"
+              },
+              "column": {
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "type": "integer"
+              },
+              "rowSpan": {
+                "minimum": 1,
+                "type": "integer"
+              },
+              "columnSpan": {
+                "minimum": 1,
+                "type": "integer"
+              }
+            }
+          },
+          "readingOrder": {
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "type": "integer"
+          },
+          "sourceText": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "text",
+              "range"
+            ],
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "range": {
+                "additionalProperties": false,
+                "type": "object",
+                "required": [
+                  "start",
+                  "end"
+                ],
+                "properties": {
+                  "start": {
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "type": "integer"
+                  },
+                  "end": {
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          },
+          "repeatedHeader": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "originalNodeId",
+              "instanceIndex"
+            ],
+            "properties": {
+              "originalNodeId": {
+                "minLength": 1,
+                "type": "string"
+              },
+              "instanceIndex": {
+                "minimum": 0,
+                "maximum": 9007199254740991,
+                "type": "integer"
+              }
+            }
+          }
+        }
+      }
+    },
+    "markers": {
+      "type": "array",
+      "items": {
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "pageId",
+          "kind",
+          "bounds",
+          "nodeId",
+          "signatureCoverage"
+        ],
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "pageId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "anyOf": [
+              {
+                "const": "non-painting",
+                "type": "string"
+              },
+              {
+                "const": "selection-hit",
+                "type": "string"
+              },
+              {
+                "const": "control-geometry",
+                "type": "string"
+              }
+            ]
+          },
+          "bounds": {
+            "additionalProperties": false,
+            "type": "object",
+            "required": [
+              "x",
+              "y",
+              "width",
+              "height"
+            ],
+            "properties": {
+              "x": {
+                "minimum": -1000000,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              },
+              "y": {
+                "minimum": -1000000,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              },
+              "width": {
+                "minimum": 0,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              },
+              "height": {
+                "minimum": 0,
+                "maximum": 1000000,
+                "x-unit": "mm",
+                "type": "number"
+              }
+            }
+          },
+          "nodeId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "objectId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "controlId": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "signatureCoverage": {
+            "const": "none",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "units": {
+      "const": "mm",
+      "type": "string"
+    },
+    "provenance": {
+      "type": "object",
+      "patternProperties": {
+        "^(.*)$": {
+          "$id": "LayoutJsonValue",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991,
+              "type": "number"
+            },
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "LayoutJsonValue"
+              }
+            },
+            {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {
+                  "$ref": "LayoutJsonValue"
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

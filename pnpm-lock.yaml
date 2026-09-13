@@ -70,6 +70,31 @@ importers:
 
   packages/layout-core: {}
 
+  packages/layout-ir:
+    dependencies:
+      '@noble/hashes':
+        specifier: 2.0.1
+        version: 2.0.1
+      '@sinclair/typebox':
+        specifier: 0.34.52
+        version: 0.34.52
+    devDependencies:
+      '@ofd-compose/binding-core':
+        specifier: workspace:*
+        version: link:../binding-core
+      '@ofd-compose/template-compiler':
+        specifier: workspace:*
+        version: link:../template-compiler
+      '@types/node':
+        specifier: 24.13.3
+        version: 24.13.3
+      ajv:
+        specifier: 8.17.1
+        version: 8.17.1
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
+
   packages/template-compiler:
     dependencies:
       '@ofd-compose/document-model':
