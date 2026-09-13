@@ -65,3 +65,13 @@ it("publishes writer fixtures and independent Node SHA-256 baselines", async () 
       .digest("hex"),
   ).toHaveLength(64);
 });
+it("exported schema rejects unrecognized OpenType tags independently of TypeBox", () => {
+  const ajv = new Ajv2020({ strict: true, strictRequired: false });
+  ajv.addKeyword("x-unit");
+  const validate = ajv.compile(JSON.parse(JSON.stringify(LayoutIRSchema)));
+  const input = fixtureFactories.text();
+  const font = input.resources.find((resource) => resource.kind === "font");
+  if (font?.kind !== "font") throw new Error("Missing fixture font");
+  font.features.invalidFeature = 1;
+  expect(validate(input)).toBe(false);
+});

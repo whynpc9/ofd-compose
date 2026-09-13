@@ -285,3 +285,12 @@ it("quantization error stays within half a micrometre across the supported range
     expect(Math.abs(quantizeMm(value) / 1000 - value)).toBeLessThanOrEqual(0.000500001);
   }
 });
+it("rejects unknown font feature and variation tags instead of passing them through", () => {
+  for (const field of ["features", "variations"] as const) {
+    const ir = textFixture();
+    const font = ir.resources.find((resource) => resource.kind === "font");
+    if (font?.kind !== "font") throw new Error("Missing fixture font");
+    font[field].unknownTag = 1;
+    expect(() => validateLayoutIR(ir)).toThrow("IR_SCHEMA");
+  }
+});

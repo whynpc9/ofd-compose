@@ -124,6 +124,7 @@
                 ]
               },
               "features": {
+                "additionalProperties": false,
                 "type": "object",
                 "patternProperties": {
                   "^[ -~]{4}$": {
@@ -134,6 +135,7 @@
                 }
               },
               "variations": {
+                "additionalProperties": false,
                 "type": "object",
                 "patternProperties": {
                   "^[ -~]{4}$": {

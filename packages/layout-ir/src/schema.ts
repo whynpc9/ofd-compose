@@ -143,8 +143,12 @@ function contract(canonical: boolean) {
             Type.Literal("italic"),
             Type.Literal("oblique"),
           ]),
-          features: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), uint),
-          variations: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), finite),
+          features: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), uint, {
+            additionalProperties: false,
+          }),
+          variations: Type.Record(Type.String({ pattern: "^[ -~]{4}$" }), finite, {
+            additionalProperties: false,
+          }),
           subsetDigest: Type.Optional(digest),
           glyphIdMap: Type.Optional(Type.Array(object({ original: uint, subset: uint }))),
         }),
