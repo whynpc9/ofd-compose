@@ -177,7 +177,9 @@ including the different runtime metadata observed by Node and Chromium.
 The provisional v0 semantic entry optionally accepts `sourceRanges`, an **ordered** array
 of `{ nodeId, bindingId?, sourceText: { text, range }, logicalRange }`. Source range offsets
 are relative to the supplied source fragment; logicalRange offsets are relative to the
-referenced text object's logicalText. Both are independently UTF-16 validated; neither may
+referenced text object's logicalText. Both are independently UTF-16 validated. The referenced logical string is fully checked once
+with its clusters, then each source logical range receives only boundary checks; repeated source
+strings share a full-string validation cache during the validation pass. Neither range may
 split a surrogate pair, and the target must be text. Several source ranges can overlap one
 shaped cluster (e.g. a ligature crossing StaticText/DynamicText). Canonicalization preserves
 array order and includes every field in semanticDigest; it does not sort this as a set.

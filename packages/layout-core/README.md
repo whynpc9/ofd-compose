@@ -7,7 +7,7 @@ options. All fonts finish loading and are digest/style checked before shaping or
 No filesystem, network, DOM, Canvas, system-font fallback or `Intl` is used by this package.
 
 The result contains canonical integer-µm `ir`, its `semanticMap`, diagnostic-free success,
-and paragraph-relative UTF-16 `lines` with **mm** geometry for inspection. Failure throws
+and paragraph-relative UTF-16 `lines` with **mm** geometry for inspection. Nonsemantic `work` counters report shaped units, candidate/run visits and expanded output-text units. Failure throws
 `LayoutError` (code/nodeId) or the existing Typography/IR validation error. Never pass the
 returned canonical IR back to `canonicalizeLayoutIR`.
 
@@ -60,7 +60,12 @@ in zero-glyph text objects. A terminal break creates a following empty line.
 
 Left/center/right alignment applies to each line. Justification distributes remaining width
 between shaped space clusters or legal Han/punctuation cluster boundaries on non-final, non-mandatory lines.
-It preserves clusters and never justifies lines containing Tabs. Trailing spaces retain their
+It preserves clusters and never stretches lines containing Tabs. For center/right alignment on a tabbed line, only the unanchored prefix before the first Tab
+is centered/right-aligned within its first tab cell; that Tab's advance shrinks by the same
+offset. Every segment following a Tab remains anchored to its declared paragraph-relative
+stop. Multiple Tabs, first-line/hanging indents and wrapped lines use the same rule. Thus
+`A\tB` with a 20 mm stop keeps B at that stop for all four alignments; center/right moves A
+within the preceding cell. Lines without Tabs use ordinary whole-line alignment. Trailing spaces retain their
 shaped advance in the width calculation; whitespace is not trimmed from source extraction.
 
 Font size, bold, italic, underline, strikeout, color, highlight, links, superscript/subscript
@@ -96,7 +101,11 @@ characters inherit the neighboring script. Full Unicode bidi, vertical paragraph
 emergency wrapping, tables, input-control rendering and page breaking are not implemented.
 Unsupported block/control types fail; content, spacing or unbreakable text exceeding the one
 page fails with `LAYOUT_OVERFLOW`. Per paragraph limit is 100000 UTF-16 units and per-job
-reshaping work is bounded at 2000000 units. Pagination remains issue 10.
+reshaping work is bounded at 2000000 units; candidate and run visits each have the same 2000000-operation ceiling (including control-only text). Expanded logical/display/source text is bounded at
+8000000 UTF-16 units, counting repeated source strings in the wire representation; controls
+cannot bypass this output budget. Candidate consumption is monotonic; run/source lookups and
+gap counts use ordered indexes, and glyph-cluster membership uses maps. Full strings are checked
+once before per-source logical-range boundary checks. Pagination remains issue 10.
 
 `test` includes shared real-font geometry/source/negative cases, the committed corpus 08
 narrative, repeat execution, controlled font readiness, and independent Node `crypto`

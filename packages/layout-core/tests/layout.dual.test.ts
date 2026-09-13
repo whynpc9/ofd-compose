@@ -387,3 +387,82 @@ it("rejects inherited object property names as missing styles in a supplied Reso
   paragraph.styleId = "constructor";
   await expect(layout(doc, resources, options)).rejects.toMatchObject({ code: "LAYOUT_INPUT" });
 });
+it("advances candidate/run cursors on control-only lines and bounds expanded source output", async () => {
+  const content = "\n".repeat(1200);
+  const largePage = {
+    ...options,
+    page: { width: 210, height: 1000000, contentBox: { x: 20, y: 20, width: 170, height: 999960 } },
+  };
+  const result = await layout(document([p(content)]), resources, largePage);
+  expect(result.lines).toHaveLength(1201);
+  expect(result.work.candidateVisits).toBe(1200);
+  expect(result.work.runVisits).toBe(1200);
+  expect(extract(result.ir)).toBe(content);
+  await expect(
+    layout(document([p("\n".repeat(100000))]), resources, largePage),
+  ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+});
+it("checks adjacent Chinese punctuation across long paragraphs without prefix/suffix copying", () => {
+  const text = `${"甲".repeat(50000)}（ 𠮷，${"乙".repeat(49994)}`;
+  expect(permitsChineseBreak(text, 50002)).toBe(false);
+  expect(permitsChineseBreak(text, 50004)).toBe(false);
+  // Every candidate in a long Han paragraph must remain a legal boundary.
+  const han = "甲".repeat(100000);
+  for (let i = 1; i < han.length; i++) expect(permitsChineseBreak(han, i)).toBe(true);
+});
+it("aligns tab prefixes while keeping single/multiple stops anchored under indents and wrapping", async () => {
+  for (const alignment of ["left", "center", "right", "justify"] as const) {
+    for (const firstLineIndent of [4, -4]) {
+      const properties = { alignment, leftIndent: 8, firstLineIndent, tabStops: [20, 40] };
+      const { ir } = await layout(document([p("A\tB\tC", "p", properties)]), resources, options);
+      expect(texts(ir).find((t) => t.logicalText === "B")?.baseline.x).toBe(48000);
+      expect(texts(ir).find((t) => t.logicalText === "C")?.baseline.x).toBe(68000);
+      const wrapped = await layout(
+        document([p(`${"甲".repeat(9)}\tB`, "p", properties)]),
+        resources,
+        {
+          ...options,
+          page: { ...options.page, contentBox: { ...options.page.contentBox, width: 35 } },
+        },
+      );
+      expect(wrapped.lines.length).toBeGreaterThan(1);
+      expect(texts(wrapped.ir).find((t) => t.logicalText === "B")?.baseline.x).toBe(48000);
+    }
+  }
+  const left = await layout(document([p("A\tB", "p", { tabStops: [20] })]), resources, options);
+  const center = await layout(
+    document([p("A\tB", "p", { alignment: "center", tabStops: [20] })]),
+    resources,
+    options,
+  );
+  const right = await layout(
+    document([p("A\tB", "p", { alignment: "right", tabStops: [20] })]),
+    resources,
+    options,
+  );
+  const original = texts(left.ir)[0];
+  const centered = texts(center.ir)[0];
+  const aligned = texts(right.ir)[0];
+  expect(texts(center.ir).find((t) => t.logicalText === "B")?.baseline.x).toBe(40000);
+  expect(texts(right.ir).find((t) => t.logicalText === "B")?.baseline.x).toBe(40000);
+  expect(
+    Math.abs((aligned?.baseline.x ?? 0) + (original?.bounds.width ?? 0) - 40000),
+  ).toBeLessThanOrEqual(1);
+  expect(centered?.baseline.x).toBeCloseTo(
+    ((original?.baseline.x ?? 0) + (aligned?.baseline.x ?? 0)) / 2,
+    0,
+  );
+}, 20000);
+it("bounds optional control-only candidate measurement even when no glyph is shaped", async () => {
+  const content = "\t".repeat(100000);
+  await expect(
+    layout(document([p(content)]), resources, {
+      ...options,
+      page: {
+        width: 1000000,
+        height: 1000000,
+        contentBox: { x: 0, y: 0, width: 1000000, height: 1000000 },
+      },
+    }),
+  ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+}, 20000);

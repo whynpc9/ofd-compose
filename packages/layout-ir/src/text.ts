@@ -26,7 +26,8 @@ function validateText(text: string, path: string): void {
   if (!text.isWellFormed())
     fail("IR_TEXT_INVALID", path, "Text contains an unpaired UTF-16 surrogate");
 }
-function validateRangeBoundaries(
+/** Internal boundary-only check; the caller must first validate the complete string. */
+export function validateRangeBoundaries(
   text: string,
   range: { start: number; end: number },
   path: string,
