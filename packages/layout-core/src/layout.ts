@@ -1,4 +1,5 @@
 import {
+  instanceIdentity,
   type ResolvedDocument,
   ResolvedDocumentSchema,
   type ResolvedParagraph,
@@ -348,9 +349,10 @@ export async function layout(
     if (block.kind !== "paragraph") continue;
     const section = block.layout?.section;
     if (section) {
-      if (sections.has(section.id))
+      const occurrence = sectionOccurrenceId(block);
+      if (sections.has(occurrence))
         throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
-      sections.add(section.id);
+      sections.add(occurrence);
       pageGeometry(section.page);
       if (index > 0) minimumPages++;
     }
@@ -469,6 +471,14 @@ export async function layout(
   );
 }
 
+/** Static source IDs exclude @; the escaped complete instance chain makes occurrence IDs unambiguous. */
+function sectionOccurrenceId(paragraph: ResolvedParagraph): string {
+  const section = paragraph.layout?.section;
+  if (!section) throw new Error("Missing section marker");
+  const instance = instanceIdentity(paragraph.instancePath);
+  return instance ? `${section.id}@${instance}` : section.id;
+}
+
 interface LayoutWork {
   shapedUnits: number;
   candidateVisits: number;
@@ -543,7 +553,7 @@ class ParagraphLayouter {
     const page = this.pageSettings ? pageGeometry(this.pageSettings) : options.page;
     this.sectionId =
       first?.kind === "paragraph" && first.layout?.section
-        ? first.layout.section.id
+        ? sectionOccurrenceId(first)
         : doc.documentId;
     this.sectionIds.add(this.sectionId);
     const profile = { ...paragraphProfile, features: [...paragraphProfile.features] };
@@ -615,12 +625,13 @@ class ParagraphLayouter {
         throw new LayoutError("LAYOUT_UNSUPPORTED", "Tables belong to issue 13", block.nodeId);
       const section = block.layout?.section;
       if (section && index > 0) {
-        if (this.sectionIds.has(section.id))
+        const occurrence = sectionOccurrenceId(block);
+        if (this.sectionIds.has(occurrence))
           throw new LayoutError("LAYOUT_INPUT", "Section IDs must be unique", block.nodeId);
-        this.sectionIds.add(section.id);
+        this.sectionIds.add(occurrence);
         this.pageSettings = section.page;
         this.geometry = pageGeometry(section.page);
-        this.sectionId = section.id;
+        this.sectionId = occurrence;
         this.sectionStart = this.ir.pages.length;
         this.newPage();
       }

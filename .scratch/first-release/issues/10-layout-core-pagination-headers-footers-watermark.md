@@ -34,3 +34,8 @@ Fixed reserved band heights are deliberate (no auto-height page-band profile). I
 ## Bot review round 1
 
 The completed bot review of `7eea848af1fc916053d82de415a80c37d2131b1c` reported two valid P2 findings: inactive root total-page fields causing unnecessary convergence passes, and external image IDs colliding with generated IR IDs. The fix checks only rendered total-page fields, ignores overridden root geometry, validates unique image source IDs and maps them to a collision-free internal namespace. Shared tests cover root overrides, wholly hidden fields, arbitrary generated-looking image IDs, duplicate IDs and malformed descriptors. Final-head review remains required after this fix is pushed.
+
+
+## Bot review round 2
+
+The completed bot review of `45bd0c84d77128079a763c4fe3ffc8855ed13dd5` found that section markers copied by RepeatBlock expansion shared their static section ID. The fix derives each effective occurrence ID from the source section plus the escaped complete repeat-instance chain. A shared nested keyed-repeat test covers eight pages, stable identity after outer-group reordering, per-occurrence page numbering and first-page hiding, body source/repeat mapping, and page-budget rejection. Non-repeated IDs remain unchanged. Final-head review remains required after this fix is pushed.

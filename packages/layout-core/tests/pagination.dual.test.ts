@@ -585,3 +585,83 @@ it("maps arbitrary image source IDs into a collision-free IR namespace and prese
     layout(input, [], { ...options, images: [{ ...firstImage, id: "" }] }),
   ).rejects.toMatchObject({ code: "LAYOUT_INPUT" });
 });
+
+it("lays out nested keyed repeat sections with stable occurrence identity and independent page policies", async () => {
+  const sectionPage: PageSettings = {
+    ...page,
+    paper: { width: 80, height: 80 },
+    margins: { top: 10, right: 10, bottom: 10, left: 10 },
+    startPageNumber: 7,
+    header: { height: 10, hideFirstPage: true, parts: [{ kind: "text", text: "页眉" }] },
+    footer: { height: 10, parts: [{ kind: "page-number" }] },
+  };
+  const source: TemplateSource = {
+    schemaVersion: "ofd-compose/document-model@0",
+    documentId: "repeated-sections",
+    revisionId: "1",
+    settings: { locale: "zh-CN", timeZone: "UTC", bindingPolicyVersion: "strict-1", page },
+    styles: {},
+    body: [
+      {
+        kind: "repeat-block",
+        nodeId: "groups",
+        bindingId: "group-binding",
+        expression: { kind: "legacy", text: "groups" },
+        repeatKey: { kind: "path", path: "id" },
+        children: [
+          {
+            kind: "repeat-block",
+            nodeId: "items",
+            bindingId: "item-binding",
+            expression: { kind: "legacy", text: "items" },
+            repeatKey: { kind: "path", path: "id" },
+            children: [
+              p("甲\n乙\n丙\n丁\n戊", "section-body", {
+                section: { id: "report", page: sectionPage },
+                lineHeight: { kind: "fixed", value: 10 },
+              }),
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  const compiled = compile(source);
+  if (!compiled.ok) throw new Error(JSON.stringify(compiled.diagnostics));
+  const groups = [
+    { id: "a/=@\\", items: [{ id: "same" }, { id: "other" }] },
+    { id: "b", items: [{ id: "same" }, { id: "other" }] },
+  ];
+  const bound = bind(compiled.template, { groups });
+  expect(bound.ok).toBe(true);
+  const result = await layout(bound.document, resources, options);
+  expect(result.ir.pages).toHaveLength(8);
+  const ids = result.ir.pages.filter((p) => p.pageIndex % 2 === 0).map((p) => p.sectionId);
+  expect(new Set(ids).size).toBe(4);
+  for (let index = 0; index < 8; index++) {
+    const current = result.ir.pages[index];
+    if (!current) throw new Error("Missing repeat section page");
+    expect(current.sectionId).toBe(ids[Math.floor(index / 2)]);
+    const text = current.objects
+      .filter((o) => o.kind === "text")
+      .map((o) => o.logicalText)
+      .join("");
+    expect(text).toBe(index % 2 === 0 ? "甲\n乙\n丙\n丁\n7" : "戊页眉8");
+    expect(
+      result.ir.semantics
+        .filter((s) => s.pageIndex === index)
+        .every((s) => s.sectionId === current.sectionId && s.repeatInstance?.length === 2),
+    ).toBe(true);
+  }
+  expect(sourceText(result.ir)).toBe("甲\n乙\n丙\n丁\n戊".repeat(4));
+  const reordered = bind(compiled.template, { groups: [...groups].reverse() });
+  if (!reordered.ok) throw new Error(JSON.stringify(reordered.diagnostics));
+  expect(
+    (await layout(reordered.document, resources, options)).ir.pages
+      .filter((p) => p.pageIndex % 2 === 0)
+      .map((p) => p.sectionId),
+  ).toEqual([...ids.slice(2), ...ids.slice(0, 2)]);
+  await expect(
+    layout(bound.document, resources, { ...options, pagination: { maxPages: 7 } }),
+  ).rejects.toMatchObject({ code: "LAYOUT_LIMIT" });
+});
