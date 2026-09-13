@@ -39,3 +39,8 @@ The completed bot review of `7eea848af1fc916053d82de415a80c37d2131b1c` reported 
 ## Bot review round 2
 
 The completed bot review of `45bd0c84d77128079a763c4fe3ffc8855ed13dd5` found that section markers copied by RepeatBlock expansion shared their static section ID. The fix derives each effective occurrence ID from a canonical tuple of the source section and complete repeat-instance node/key chain, in an internal namespace that also avoids the arbitrary implicit root ID. Optional page/semantic sectionSourceId retains the original source ID. A shared nested keyed-repeat test covers eight pages, stable identity after outer-group reordering, per-occurrence page numbering and first-page hiding, body source/repeat mapping, and page-budget rejection. Additional cases cover delimiter/escape/empty/Unicode keys, same-key different nodes, nested depth and intentional implicit-root collision. Non-repeated IDs remain unchanged. Final-head review remains required after this fix is pushed.
+
+
+## Bot review round 3
+
+The completed bot review of `d1d648438dff708c2d32235f98844f41d4cd00cb` found an implicit-root collision with a later non-repeated section using the document ID, and spurious blank-line layout for empty bands. The root now uses a separate canonical `@root:` identity only when needed, preserving its public source ID. Empty bands reserve their declared height without generating a paragraph, requiring fonts or allocating text objects. Shared tests cover exact page/semantic identities and reservation-only bands below a normal line height with an empty font pack. Final-head review remains required after this fix is pushed.

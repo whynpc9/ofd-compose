@@ -729,3 +729,51 @@ it("keeps section occurrence tuples collision-free for arbitrary keys, node IDs 
   }
   validateCanonicalLayoutIR(laidOut.ir);
 });
+
+it("separates an implicit root from a later explicit section with the same public source ID", async () => {
+  const input = configured([
+    p("根", "root"),
+    p("附录", "appendix", { section: { id: "appendix", page } }),
+  ]);
+  input.documentId = "appendix";
+  const { ir } = await layout(input, resources, options);
+  expect(ir.pages.map((p) => [p.sectionId, p.sectionSourceId])).toEqual([
+    ['@root:"appendix"', "appendix"],
+    ["appendix", undefined],
+  ]);
+  expect(sourceText(ir)).toBe("根附录");
+  expect(ir.semantics[0]).toMatchObject({
+    sectionId: '@root:"appendix"',
+    sectionSourceId: "appendix",
+    pageIndex: 0,
+  });
+  expect(ir.semantics.at(-1)).toMatchObject({ sectionId: "appendix", pageIndex: 1 });
+  validateCanonicalLayoutIR(ir);
+});
+it("reserves empty bands without requiring fonts, allocating empty text, or enforcing a line height", async () => {
+  for (const parts of [
+    [],
+    [{ kind: "text" as const, text: "" }],
+    [
+      { kind: "text" as const, text: "" },
+      { kind: "text" as const, text: "" },
+    ],
+  ]) {
+    const input = configured([], {
+      ...page,
+      header: { height: 0.1, parts },
+      footer: { height: 0.2, parts },
+    });
+    const result = await layout(input, [], options);
+    expect(result.ir.pages[0]?.contentBox).toEqual({
+      x: 20000,
+      y: 20100,
+      width: 170000,
+      height: 256700,
+    });
+    expect(result.ir.pages[0]?.objects).toEqual([]);
+    expect(result.ir.graphicsStates).toEqual([]);
+    expect(result.lines).toEqual([]);
+    expect(result.work.paragraphs).toBe(0);
+  }
+});

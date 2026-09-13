@@ -142,6 +142,8 @@ are unique within the resolved document. A repeated section uses `@section:` plu
 enclosing node/key pairs. This namespace cannot collide with model-valid explicit source
 IDs; the allocator also avoids the arbitrary implicit root document ID. Optional
 `sectionSourceId` retains the original section ID on pages, semantics and inspection lines.
+If a later non-repeated explicit section uses the public document ID, the implicit root
+uses a separate `@root:` canonical identity and retains the document ID in sectionSourceId.
 This keeps keyed occurrences stable under reordering and gives each occurrence its own page
 numbering/hiding scope; non-repeated section IDs remain unchanged. Section start and explicit break both apply when
 both are declared, deliberately producing a blank section page. This small model extension
@@ -168,7 +170,8 @@ artifacts, excluded from body source extraction.
 alignment and ordered `parts`: `{kind:"text",text}`, `{kind:"page-number"}` or
 `{kind:"total-pages"}`. Parts share paragraph shaping/wrapping. Overflow of the declared
 band height is an explicit `LAYOUT_OVERFLOW`; heights never silently expand into body text.
-Band height is reserved even when hidden. `hideFirstPage` and one-based `hiddenPages` refer
+Band height is reserved even when hidden. Empty parts (or parts joining to an empty string)
+reserve space only, without generating a blank paragraph or requiring a font. `hideFirstPage` and one-based `hiddenPages` refer
 to physical page positions within the section; `startPageNumber` affects displayed page
 numbers only. Total pages counts the entire physical document, including explicit blank pages.
 

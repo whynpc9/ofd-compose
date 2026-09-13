@@ -483,6 +483,19 @@ function sectionOccurrenceId(paragraph: ResolvedParagraph, rootSectionId: string
   return generated === rootSectionId ? `@${generated}` : generated;
 }
 
+/** Keep legacy root IDs unless an explicit source section uses that public document ID. */
+function implicitRootSectionId(doc: ResolvedDocument): string {
+  const collides = doc.body.some(
+    (block) =>
+      block.kind === "paragraph" &&
+      !block.instancePath?.length &&
+      block.layout?.section?.id === doc.documentId,
+  );
+  // Explicit IDs exclude @, repeated IDs start @section: (or @@section:), so this
+  // structurally encoded root namespace cannot collide with either category.
+  return collides ? `@root:${canonicalSerialize(doc.documentId)}` : doc.documentId;
+}
+
 interface LayoutWork {
   shapedUnits: number;
   candidateVisits: number;
@@ -559,7 +572,7 @@ class ParagraphLayouter {
     this.sectionId =
       first?.kind === "paragraph" && first.layout?.section
         ? sectionOccurrenceId(first, doc.documentId)
-        : doc.documentId;
+        : implicitRootSectionId(doc);
     this.sectionSourceId =
       first?.kind === "paragraph" ? (first.layout?.section?.id ?? doc.documentId) : doc.documentId;
     this.sectionIds.add(this.sectionId);
@@ -753,6 +766,7 @@ class ParagraphLayouter {
         parts.push(text);
       }
       const text = parts.join("");
+      if (!text.length) continue;
       this.decorationBox = {
         x: settings.margins.left,
         y:
