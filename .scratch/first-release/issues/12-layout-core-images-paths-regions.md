@@ -8,7 +8,9 @@
 
 - [x] 图片：原尺寸、显式尺寸、适配、倍率、最大边界、裁剪；独立段落/居中/列表三种版式；加载时未知尺寸的图片不得进入 IR
 - [x] 条码矩形路径按物理尺寸落位，布局器不非均匀拉伸、不裁掉静区
-- [x] 分隔线、段落/表格边框、基础矢量路径输出为 IR 路径（填充规则、描边、虚线、端点/连接）
+- [x] 分隔线、段落边框、基础矢量路径输出为 IR 路径（填充规则、描边、虚线、端点/连接）
+- [x] 表格/单元格边框的共享 `Stroke` 契约、绑定保留与 `borderPath` 几何能力就位（本票范围）
+- [ ] 表格/单元格边框随实际表格布局进入 IR（集成验收归 [issue 13](13-layout-core-tables.md)，本票不宣称完成）
 - [x] 固定区域与流式区域；固定区域溢出默认 `LAYOUT_OVERFLOW`，显式策略生效时仍产生诊断
 - [x] 图片跨页策略（整体移到下页/超页高报错）有用例
 - [x] Semantic Map 记录图片/条码的 bindingId 与重复实例
@@ -24,9 +26,12 @@ error, true clip, uniform scale and bounded real font reflow; every explicit pol
 result. Model/Binding schemas carry optional placement, paths, regions and shared Stroke borders.
 See `packages/layout-core/README.md` for precise units, bounds, overflow semantics and budgets.
 
-The table-border checkbox covers the shared Stroke contract, retained table/cell border fields,
-and `borderPath` geometry builder. Complete table geometry, shared-edge resolution and pagination
-remain issue 13 and are not claimed here. Nested regions/page breaks inside regions are explicit
+Scope clarification from the worker assignment: “issue13的完整表格分页不属于本票，但共享边框/路径所需能力与契约要就位，界限写清。”
+The original combined paragraph/table checkbox overstated runtime acceptance and is now split.
+Issue 12 delivers the shared Stroke contract, retained table/cell border fields and the
+`borderPath` geometry builder used by paragraph paths. Actual table/cell border emission remains
+an unchecked issue 13 integration gate together with table geometry, shared-edge resolution and
+pagination. A table returning `LAYOUT_UNSUPPORTED` is not counted as a passing table-border test. Nested regions/page breaks inside regions are explicit
 P0 input errors. Writer, reader, printer and Linux x64/arm64 acceptance remain separate gates.
 
 Local checks executed without Turbo cache:
@@ -48,3 +53,12 @@ PR must use `codex/issue-11-media-core` as base (dependency PR #8 at
 `6e09d19ccdb7b994bb67a31a77ec1b916de67196`). Remote bot/CI closure is pending; do not start issue 13
 or merge this branch on the strength of local evidence alone. This local issue has no matching
 GitHub issue number.
+
+
+## Remote review follow-up
+
+PR #9 review comment `3999570501` identified the misleading completed table-border checkbox.
+The checklist now separates tested paragraph/path output and shared table-border primitives from
+the unimplemented table-layout integration gate. This is a reporting/scope correction, not a
+claim that `layout(table)` can now emit table borders. Runtime code and existing validation
+results are unchanged; issue 13 must supply the actual table-border integration tests.
