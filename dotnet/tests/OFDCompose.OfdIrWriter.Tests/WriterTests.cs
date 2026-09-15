@@ -222,6 +222,16 @@ public sealed class WriterTests
         var result=await ChangedImage("jpeg",bytes=>{int at=bytes.AsSpan().IndexOf(new byte[]{255,192});Assert.True(at>=0);bytes[at+1]=195;return bytes;});
         Assert.False(result.Ok);Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
     }
+    [Fact]
+    public async Task Xml_inexpressible_but_well_formed_utf16_is_an_unsupported_feature()
+    {
+        var fixture=await Fixture("cff");string source=Encoding.UTF8.GetString(fixture.Ir);
+        string key="\"logicalText\":\"";int at=source.IndexOf(key,StringComparison.Ordinal)+key.Length;
+        Assert.Equal('o',source[at]);
+        var ir=Encoding.UTF8.GetBytes(source[..at]+"\\u0000"+source[(at+1)..]);
+        var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),fixture.Resources,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Null(result.ObjectMap);Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
+    }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)
     {

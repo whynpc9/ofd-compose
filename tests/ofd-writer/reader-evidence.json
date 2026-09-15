@@ -3,10 +3,10 @@
   "host": "macOS arm64",
   "dotnetSdk": "10.0.302",
   "dotnetTests": {
-    "passed": 82,
+    "passed": 83,
     "failed": 0,
     "skipped": 0,
-    "writerTests": 36
+    "writerTests": 37
   },
   "javaReader": "org.ofdrw:ofdrw-reader:2.3.7",
   "readerImageId": "sha256:733bb143db0f44b4f3d6aaf4526e1debbcf797c527ae92cb95d4cdb553f010c4",

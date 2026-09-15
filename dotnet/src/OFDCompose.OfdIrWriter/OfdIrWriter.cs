@@ -87,7 +87,8 @@ public sealed class OfdIrWriter
     private static OfdElement Text(JsonElement item, JsonElement state, JsonElement page, IReadOnlyDictionary<double,double>? mapping, string fontId, double[] matrix)
     {
         string logical = item.S("logicalText");
-        XmlConvert.VerifyXmlChars(logical);
+        try { XmlConvert.VerifyXmlChars(logical); }
+        catch(XmlException) { throw new WriterFailure("UNSUPPORTED_FEATURE",item.S("id"),"Logical text contains characters XML 1.0 cannot represent"); }
         var glyphs = item.A("glyphs").ToArray();
         Require(logical.Length > 0 || glyphs.Length == 0, "UNSUPPORTED_FEATURE", item.S("id"), "Painted glyphs with empty logical text have no OFD character mapping");
         var xml = Graphic("TextObject", state, page, matrix);
