@@ -85,6 +85,13 @@ export const tableProfile = Object.freeze({
     "widow-orphan",
   ]),
 });
+function hasParagraphPaginationPolicy(layout: ParagraphLayout | undefined): boolean {
+  return Boolean(
+    (layout?.keepWithNext ?? layout?.role === "heading") ||
+      layout?.orphanLines ||
+      layout?.widowLines,
+  );
+}
 function usesTableProfile(blocks: readonly ResolvedBlock[]): boolean {
   return blocks.some(
     (block) =>
@@ -92,9 +99,7 @@ function usesTableProfile(blocks: readonly ResolvedBlock[]): boolean {
       (block.kind === "region" && usesTableProfile(block.children)) ||
       (block.kind === "paragraph" &&
         (block.fragments.some((f) => f.kind === "input-control") ||
-          block.layout?.keepWithNext ||
-          block.layout?.orphanLines ||
-          block.layout?.widowLines)),
+          hasParagraphPaginationPolicy(block.layout))),
   );
 }
 export const layoutResourceLimits = Object.freeze({
@@ -862,18 +867,14 @@ class ParagraphLayouter {
       this.newPage();
     }
     if (block.layout?.pageBreakBefore) this.newPage();
-    if (
-      !this.inRegion &&
-      (block.layout?.keepWithNext ||
-        block.layout?.role === "heading" ||
-        block.layout?.orphanLines ||
-        block.layout?.widowLines)
-    )
+    if (!this.inRegion && hasParagraphPaginationPolicy(block.layout))
       this.paragraphWithPolicy(block, index);
     else this.paragraph(block, index);
   }
-  private firstTableGroupHeight = 0;
   private probeNext(block: ResolvedBlock, index: number): number {
+    // Regions reserve an explicit box: lookahead needs its flow extent, not a nested layout pass.
+    if (block.kind === "region")
+      return block.layout.mode === "flow" ? block.layout.box.height + block.layout.box.y : 0;
     const page = requiredLayoutValue(this.ir.pages[this.pageIndex]);
     const lengths = [
       page.objects.length,
@@ -895,8 +896,8 @@ class ParagraphLayouter {
       this.y = 0;
       this.inRegion = true;
       this.decorationBox = { ...this.geometry.contentBox, y: 0, height: 100000 };
+      if (block.kind === "table") return this.table(block);
       this.block(block, index);
-      if (block.kind === "table") return this.firstTableGroupHeight;
       if (block.kind !== "paragraph") return this.y;
       const captured = this.lines.slice(requiredLayoutValue(lengths[3]));
       const keep = block.layout?.keepWithNext ?? block.layout?.role === "heading";
@@ -1118,12 +1119,13 @@ class ParagraphLayouter {
     this.y = Math.min(box.y + box.height, this.y + (properties.spaceAfter ?? 0));
   }
 
-  private table(table: Extract<ResolvedBlock, { kind: "table" }>) {
+  private table(table: Extract<ResolvedBlock, { kind: "table" }>): number {
     const parent = this.decorationBox ?? this.geometry.contentBox;
     const savedRegion = this.inRegion,
       savedBox = this.decorationBox;
     const rows = table.rows;
-    if (!rows.length) return;
+    if (!rows.length) return 0;
+    let firstGroupHeight = 0;
     // Bound dense grid occupancy before allocation, including spans and empty cells.
     const columns = table.layout?.columns;
     const count =
@@ -1523,7 +1525,7 @@ class ParagraphLayouter {
       let end = ends[start] ?? start + 1;
       if (start === 0 && headers > 0) end = Math.max(end, Math.min(rows.length, headers + 1));
       for (let r = start; r < end; r++) end = Math.max(end, ends[r] ?? r + 1);
-      if (start === 0) this.firstTableGroupHeight = sum(start, end);
+      if (start === 0) firstGroupHeight = sum(start, end);
       const h = sum(start, end),
         head = start > 0 && table.layout?.repeatHeader ? sum(0, headers) : 0;
       if (h + head > parent.height + 1e-9)
@@ -1575,6 +1577,7 @@ class ParagraphLayouter {
         fillRule: "nonzero",
       });
     }
+    return firstGroupHeight;
   }
 
   private commands(count: number) {

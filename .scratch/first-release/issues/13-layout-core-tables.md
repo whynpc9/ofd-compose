@@ -60,3 +60,22 @@ See `packages/layout-core/README.md` for policy, coordinate and allocation limit
 capacity data is not a supplied anonymized business document. Final OFD/PDF extraction,
 reader/printing interoperability and unrun architecture/browser matrices remain separate gates.
 Remote bot review/CI must close on the latest PR head before this worker reports completion.
+
+
+## PR #10 first review follow-up
+
+The bot reviewed `dab4bd29e66938d5a94541fb7f6cc5126c638bf3` and raised four valid findings:
+
+- `4011601519`: implicit heading policies now select the new `tables-ltr@0` profile, so
+  LayoutIdentity cannot match the older paragraph-only behavior for the same heading source.
+- `4011601528`: lookahead uses a region's explicit flow extent (zero for fixed regions), without
+  pretending that a valid top-level region is nested or consuming its media/shaping a second time.
+- `4011601533`: profile selection and paragraph dispatch share the effective nullish-default
+  keep predicate; `keepWithNext:false` opts out unless widow/orphan fields are explicitly set.
+- `4011601536`: the first table group height is a local return value; an empty resolved table
+  returns zero and cannot reuse any earlier table's measurement.
+
+Five additional shared regressions passed. Full post-fix Node **529** (Layout 106) and
+Chromium **322** (Layout 103), all typechecks/builds and lint passed with **0 cached** tasks.
+The earlier .NET 46/schema/golden/license evidence applies to unchanged cross-language
+contracts and dependencies; the next remote CI run will recheck the full PR head.

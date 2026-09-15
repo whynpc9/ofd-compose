@@ -454,3 +454,107 @@ it.each([
     ).rejects.toMatchObject({ code: "LAYOUT_OVERFLOW" });
   },
 );
+
+it("versions implicit heading pagination in LayoutIdentity", async () => {
+  const doc = bound([
+    {
+      kind: "paragraph",
+      nodeId: "heading",
+      layout: { role: "heading", headingLevel: 6 },
+      inlines: [{ kind: "text", nodeId: "title", text: "Title" }],
+    },
+    {
+      kind: "paragraph",
+      nodeId: "body",
+      inlines: [{ kind: "text", nodeId: "body-text", text: "Body" }],
+    },
+  ]);
+  const result = await layout(doc, await fonts(), options);
+  expect(result.ir.identity.layoutProfile.name).toBe("tables-ltr");
+  expect(result.ir.identity.layoutProfile.features).toContain("keep-with-next");
+});
+it("honors explicitly disabled heading pagination without implicit orphan minima", async () => {
+  const doc = bound([
+    {
+      kind: "paragraph",
+      nodeId: "heading",
+      layout: {
+        role: "heading",
+        headingLevel: 6,
+        keepWithNext: false,
+        lineHeight: { kind: "fixed", value: 10 },
+      },
+      inlines: [{ kind: "text", nodeId: "title", text: "A\nB\nC" }],
+    },
+  ]);
+  const result = await layout(doc, await fonts(), {
+    ...options,
+    page: { width: 100, height: 40, contentBox: { x: 10, y: 10, width: 80, height: 20 } },
+  });
+  expect(result.lines.map((l) => l.pageIndex)).toEqual([0, 0, 1]);
+  expect(result.ir.identity.layoutProfile.name).toBe("paragraphs-ltr");
+});
+it.each(["flow", "fixed"] as const)(
+  "keeps headings before valid top-level %s regions",
+  async (mode) => {
+    const doc = bound([
+      {
+        kind: "paragraph",
+        nodeId: "filler",
+        layout: { lineHeight: { kind: "fixed", value: 230 } },
+        inlines: [{ kind: "text", nodeId: "filler-text", text: "Filler" }],
+      },
+      {
+        kind: "paragraph",
+        nodeId: "heading",
+        layout: { role: "heading", headingLevel: 6, lineHeight: { kind: "fixed", value: 8 } },
+        inlines: [{ kind: "text", nodeId: "title", text: "Title" }],
+      },
+      {
+        kind: "region",
+        nodeId: "region",
+        layout: {
+          mode,
+          box: {
+            x: mode === "fixed" ? 20 : 0,
+            y: mode === "fixed" ? 30 : 0,
+            width: 100,
+            height: 24,
+          },
+        },
+        children: [
+          {
+            kind: "paragraph",
+            nodeId: "inside",
+            inlines: [{ kind: "text", nodeId: "inside-text", text: "Inside" }],
+          },
+        ],
+      },
+    ]);
+    const result = await layout(doc, await fonts(), options);
+    expect(result.lines.find((l) => l.nodeId === "heading")?.pageIndex).toBe(
+      mode === "flow" ? 1 : 0,
+    );
+    expect(result.lines.find((l) => l.nodeId === "inside")?.pageIndex).toBe(
+      mode === "flow" ? 1 : 0,
+    );
+  },
+);
+it("measures empty tables locally after an earlier nonempty table", async () => {
+  const doc = document([]),
+    first = table(1);
+  fixtureValue(first.rows[0]).layout = { height: 200, heightMode: "fixed" };
+  doc.body = [
+    first,
+    {
+      kind: "paragraph",
+      nodeId: "heading",
+      layout: { role: "heading", headingLevel: 6, lineHeight: { kind: "fixed", value: 10 } },
+      fragments: [{ kind: "text", text: "Title", origin: { kind: "static", nodeId: "title" } }],
+    },
+    { kind: "table", nodeId: "empty", rows: [] },
+  ];
+  const result = await layout(doc, await fonts(), options);
+  expect(result.ir.pages).toHaveLength(1);
+  expect(result.lines.find((l) => l.nodeId === "heading")?.pageIndex).toBe(0);
+});

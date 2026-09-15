@@ -335,7 +335,9 @@ lines or table header/first merged group; heading role enables it unless explici
 Explicit page/section breaks terminate the keep chain. `orphanLines` and `widowLines` constrain
 lines on each side of a break (1–100); when a pagination policy is selected, their defaults are 2.
 Impossible constraints produce `LAYOUT_OVERFLOW`. Older paragraphs without these fields retain
-their prior line pagination behavior and pinned fixtures.
+their prior line pagination behavior and pinned fixtures. Profile selection uses the same effective
+policy predicate: implicit heading behavior belongs to `tables-ltr@0`, while an explicitly
+disabled heading policy does not silently activate widow/orphan defaults.
 
 Table input is preflighted before copying/font acquisition: at most 10000 rows per table,
 100000 cells and occupied span slots per document. Each table grid is limited to 1024 columns
