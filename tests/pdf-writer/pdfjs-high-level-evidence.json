@@ -1,0 +1,219 @@
+[
+  {
+    "case": "truetype",
+    "page": 0,
+    "classification": "exact",
+    "expected": "office é 中文",
+    "actual": "office é 中文"
+  },
+  {
+    "case": "cff",
+    "page": 0,
+    "classification": "exact",
+    "expected": "office é 中文 𠮷",
+    "actual": "office é 中文 𠮷"
+  },
+  {
+    "case": "combined",
+    "page": 0,
+    "classification": "exact",
+    "expected": "营收最高的是机构0，占比25.00%机构01000机构1999机构2998机构3997机构4996机构5995机构6994机构7993机构8992机构9991机构10990机构11989机构12988机构13987机构14986机构15985机构16984机构17983机构18982机构19981机构20980机构21979机构22978机构23977机构24976机构25975",
+    "actual": "营收最高的是机构0，占比25.00%机构01000机构1999机构2998机构3997机构4996机构5995机构6994机构7993机构8992机构9991机构10990机构11989机构12988机构13987机构14986机构15985机构16984机构17983机构18982机构19981机构20980机构21979机构22978机构23977机构24976机构25975"
+  },
+  {
+    "case": "combined",
+    "page": 1,
+    "classification": "exact",
+    "expected": "机构26974机构27973机构28972机构29971机构30970机构31969机构32968机构33967机构34966机构35965机构36964机构37963机构38962机构39961机构40960机构41959机构42958机构43957机构44956机构45955机构46954机构47953机构48952机构49951机构50950机构51949机构52948",
+    "actual": "机构26974机构27973机构28972机构29971机构30970机构31969机构32968机构33967机构34966机构35965机构36964机构37963机构38962机构39961机构40960机构41959机构42958机构43957机构44956机构45955机构46954机构47953机构48952机构49951机构50950机构51949机构52948"
+  },
+  {
+    "case": "combined",
+    "page": 2,
+    "classification": "exact",
+    "expected": "机构53947机构54946机构55945机构56944机构57943机构58942机构59941机构60940机构61939机构62938机构63937机构64936机构65935机构66934机构67933机构68932机构69931机构70930机构71929机构72928机构73927机构74926机构75925机构76924机构77923机构78922机构79921",
+    "actual": "机构53947机构54946机构55945机构56944机构57943机构58942机构59941机构60940机构61939机构62938机构63937机构64936机构65935机构66934机构67933机构68932机构69931机构70930机构71929机构72928机构73927机构74926机构75925机构76924机构77923机构78922机构79921"
+  },
+  {
+    "case": "combined",
+    "page": 3,
+    "classification": "exact",
+    "expected": "机构80920机构81919机构82918机构83917机构84916机构85915机构86914机构87913机构88912机构89911机构90910机构91909机构92908机构93907机构94906机构95905机构96904机构97903机构98902机构99901",
+    "actual": "机构80920机构81919机构82918机构83917机构84916机构85915机构86914机构87913机构88912机构89911机构90910机构91909机构92908机构93907机构94906机构95905机构96904机构97903机构98902机构99901"
+  },
+  {
+    "case": "geometry",
+    "page": 0,
+    "classification": "exact",
+    "expected": "office é 中文 𠮷",
+    "actual": "office é 中文 𠮷"
+  },
+  {
+    "case": "jpeg",
+    "page": 0,
+    "classification": "exact",
+    "expected": "营收最高的是机构0，占比25.00%机构01000机构1999机构2998机构3997机构4996机构5995机构6994机构7993机构8992机构9991机构10990机构11989机构12988机构13987机构14986机构15985机构16984机构17983机构18982机构19981机构20980机构21979机构22978机构23977机构24976机构25975",
+    "actual": "营收最高的是机构0，占比25.00%机构01000机构1999机构2998机构3997机构4996机构5995机构6994机构7993机构8992机构9991机构10990机构11989机构12988机构13987机构14986机构15985机构16984机构17983机构18982机构19981机构20980机构21979机构22978机构23977机构24976机构25975"
+  },
+  {
+    "case": "jpeg",
+    "page": 1,
+    "classification": "exact",
+    "expected": "机构26974机构27973机构28972机构29971机构30970机构31969机构32968机构33967机构34966机构35965机构36964机构37963机构38962机构39961机构40960机构41959机构42958机构43957机构44956机构45955机构46954机构47953机构48952机构49951机构50950机构51949机构52948",
+    "actual": "机构26974机构27973机构28972机构29971机构30970机构31969机构32968机构33967机构34966机构35965机构36964机构37963机构38962机构39961机构40960机构41959机构42958机构43957机构44956机构45955机构46954机构47953机构48952机构49951机构50950机构51949机构52948"
+  },
+  {
+    "case": "jpeg",
+    "page": 2,
+    "classification": "exact",
+    "expected": "机构53947机构54946机构55945机构56944机构57943机构58942机构59941机构60940机构61939机构62938机构63937机构64936机构65935机构66934机构67933机构68932机构69931机构70930机构71929机构72928机构73927机构74926机构75925机构76924机构77923机构78922机构79921",
+    "actual": "机构53947机构54946机构55945机构56944机构57943机构58942机构59941机构60940机构61939机构62938机构63937机构64936机构65935机构66934机构67933机构68932机构69931机构70930机构71929机构72928机构73927机构74926机构75925机构76924机构77923机构78922机构79921"
+  },
+  {
+    "case": "jpeg",
+    "page": 3,
+    "classification": "exact",
+    "expected": "机构80920机构81919机构82918机构83917机构84916机构85915机构86914机构87913机构88912机构89911机构90910机构91909机构92908机构93907机构94906机构95905机构96904机构97903机构98902机构99901",
+    "actual": "机构80920机构81919机构82918机构83917机构84916机构85915机构86914机构87913机构88912机构89911机构90910机构91909机构92908机构93907机构94906机构95905机构96904机构97903机构98902机构99901"
+  },
+  {
+    "case": "logical-display-printable",
+    "page": 0,
+    "classification": "exact",
+    "expected": "XY<&>\"'abc中文 𠮷",
+    "actual": "XY<&>\"'abc中文 𠮷"
+  },
+  {
+    "case": "multi-glyph",
+    "page": 0,
+    "classification": "exact",
+    "expected": "q́",
+    "actual": "q́"
+  },
+  {
+    "case": "nonidentity-contract",
+    "page": 0,
+    "classification": "exact",
+    "expected": "q́",
+    "actual": "q́"
+  },
+  {
+    "case": "duplicate-markers",
+    "page": 0,
+    "classification": "exact",
+    "expected": "office é 中文 𠮷",
+    "actual": "office é 中文 𠮷"
+  },
+  {
+    "case": "glyphless",
+    "page": 0,
+    "classification": "exact",
+    "expected": "",
+    "actual": ""
+  },
+  {
+    "case": "truetype-mapping",
+    "page": 0,
+    "classification": "exact",
+    "expected": "A😀ffi",
+    "actual": "A😀ffi"
+  },
+  {
+    "case": "cff-mapping",
+    "page": 0,
+    "classification": "exact",
+    "expected": "A😀ffi",
+    "actual": "A😀ffi"
+  },
+  {
+    "case": "nel-control",
+    "page": 0,
+    "classification": "exact",
+    "expected": "A",
+    "actual": "A"
+  },
+  {
+    "case": "visible-image",
+    "page": 0,
+    "classification": "exact",
+    "expected": "office é 中文 𠮷",
+    "actual": "office é 中文 𠮷"
+  },
+  {
+    "case": "rtl-order",
+    "page": 0,
+    "classification": "exact",
+    "expected": "off",
+    "actual": "off"
+  },
+  {
+    "case": "rtl-positions",
+    "page": 0,
+    "classification": "exact",
+    "expected": "off",
+    "actual": "off"
+  },
+  {
+    "case": "rtl-overlap",
+    "page": 0,
+    "classification": "exact",
+    "expected": "off",
+    "actual": "off"
+  },
+  {
+    "case": "spacing-cluster-semantic",
+    "page": 0,
+    "classification": "exact",
+    "expected": "AB",
+    "actual": "AB"
+  },
+  {
+    "case": "spacing-combining-semantic",
+    "page": 0,
+    "classification": "exact",
+    "expected": "q́",
+    "actual": "q́"
+  },
+  {
+    "case": "spacing-cluster",
+    "page": 0,
+    "classification": "exact",
+    "expected": "AB",
+    "actual": "AB"
+  },
+  {
+    "case": "spacing-combining",
+    "page": 0,
+    "classification": "exact",
+    "expected": "q́",
+    "actual": "q́"
+  },
+  {
+    "case": "spacing-semantic-runs",
+    "page": 0,
+    "classification": "exact",
+    "expected": "of",
+    "actual": "of"
+  },
+  {
+    "case": "spacing-columns",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o fo f",
+    "actual": "o fo f"
+  },
+  {
+    "case": "spacing-leading",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o f",
+    "actual": "o f"
+  },
+  {
+    "case": "spacing-trailing",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o f",
+    "actual": "o f"
+  }
+]

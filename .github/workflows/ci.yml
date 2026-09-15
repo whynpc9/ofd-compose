@@ -53,12 +53,38 @@ jobs:
         run: |
           node packages/render-worker/tests/generate-ofd-fixtures.mjs
           node packages/render-worker/tests/generate-ofd-geometry.mjs
-          test -z "$(git status --porcelain -- tests/ofd-writer/fixtures)"
+          node packages/render-worker/tests/generate-pdf-whitespace-probe.mjs
+          test -z "$(git status --porcelain -- tests/ofd-writer/fixtures tests/pdf-writer/fixtures/whitespace-reader/worker-double)"
 
       - name: .NET tests
         env:
           OFD_WRITER_OUTPUT: ${{ runner.temp }}/ofd-reader-input
         run: dotnet test dotnet/OFDCompose.slnx --no-restore
+
+      - name: Independent PDF readers and mutation gates
+        run: |
+          node tests/pdf-writer/reader-gate.mjs
+          docker build -t ofd-compose-qpdf tests/pdf-writer
+          PDF_READER_IMAGE=ofd-compose-qpdf python3 tests/pdf-writer/mutation-gate.py
+          docker run --rm --network none --memory 256m --cpus 2 \
+            -v "$PWD/.scratch/issue16-output:/pdf:ro" --entrypoint sh ofd-compose-qpdf \
+            -c 'for f in /pdf/*.pdf /pdf/rtl/*.pdf /pdf/rtl/reference/*.pdf /pdf/spacing/*.pdf; do qpdf --check "$f" || exit; done'
+
+      - name: Form grouping preserves baseline pixels
+        env:
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+        run: |
+          baseline_dir="$(mktemp -d "${RUNNER_TEMP}/pdf-before-forms.XXXXXX")"
+          git fetch --no-tags --depth=1 origin 7ecf477571045ad5dc9418c9141efc593f5e55b9
+          git archive 7ecf477571045ad5dc9418c9141efc593f5e55b9 | tar -x -C "$baseline_dir"
+          export DOTNET_CLI_HOME="${RUNNER_TEMP}/pdf-baseline-cli"
+          dotnet restore "$baseline_dir/dotnet/tests/OFDCompose.PdfIrWriter.Tests/OFDCompose.PdfIrWriter.Tests.csproj" --locked-mode -m:1 /nodeReuse:false
+          dotnet build "$baseline_dir/dotnet/tests/OFDCompose.PdfIrWriter.Tests/OFDCompose.PdfIrWriter.Tests.csproj" --no-restore -m:1 /nodeReuse:false /p:UseSharedCompilation=false --disable-build-servers
+          dotnet "$baseline_dir/dotnet/tests/OFDCompose.PdfIrWriter.Tests/bin/Debug/net10.0/OFDCompose.PdfIrWriter.Tests.dll"
+          python3 tests/pdf-writer/compare-renderings.py "$baseline_dir/.scratch/issue16-output" "$PWD/.scratch/issue16-output" --image ofd-compose-qpdf --report "${RUNNER_TEMP}/pdf-form-pixels.json"
+          python3 tests/pdf-writer/compare-renderings.py "$PWD/.scratch/issue16-output/rtl/reference" "$PWD/.scratch/issue16-output/rtl" --image ofd-compose-qpdf --baseline-label "IR visual glyph emission order" --max-channel-delta 1 --pixel-allowlist tests/pdf-writer/rtl-raster-tolerance.json --report "${RUNNER_TEMP}/pdf-rtl-pixels.json"
+          python3 tests/pdf-writer/compare-renderings.py tests/pdf-writer/fixtures/spacing-reference "$PWD/.scratch/issue16-output/spacing" --image ofd-compose-qpdf --baseline-label "Pre-fix unsemantic spacing paint" --report "${RUNNER_TEMP}/pdf-spacing-pixels.json"
 
       - name: Independent Java OFD Reader
         run: |

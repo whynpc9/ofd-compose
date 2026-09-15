@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><IsTestProject>true</IsTestProject><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="PdfPig" />
+    <ProjectReference Include="../../src/OFDCompose.PdfIrWriter/OFDCompose.PdfIrWriter.csproj" />
+  </ItemGroup>
+</Project>

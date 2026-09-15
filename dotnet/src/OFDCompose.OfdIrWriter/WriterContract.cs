@@ -1,3 +1,4 @@
+using OFDCompose.FixedWriting;
 using System.Text.Json;
 
 namespace OFDCompose.OfdIrWriter;
