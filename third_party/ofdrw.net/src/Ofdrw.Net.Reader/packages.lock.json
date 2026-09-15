@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "ofdrw.net.core": {
+        "type": "Project"
+      },
+      "ofdrw.net.packaging": {
+        "type": "Project",
+        "dependencies": {
+          "Ofdrw.Net.Core": "[1.0.0, )"
+        }
+      }
+    }
+  }
+}

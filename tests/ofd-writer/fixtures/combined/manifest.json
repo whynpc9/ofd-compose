@@ -1,0 +1,107 @@
+{
+  "identity": {
+    "modelVersion": "0",
+    "compiledTemplateFormat": "ofd-compose/compiled-template@0",
+    "irVersion": "ofd-compose/layout-ir@0",
+    "canonicalizationVersion": "ofd-compose/canonical@0",
+    "renderProfileVersion": "ofd-compose/render@0",
+    "layoutEngineVersion": "ofd-compose/paginated-layout@0",
+    "shapingAndLineBreakVersions": {
+      "harfbuzzjs": "1.6.0",
+      "harfbuzz": "14.3.0",
+      "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+      "unicode": "17.0.0",
+      "linebreak": "@cto.af/linebreak@4.0.3",
+      "fontkit": "2.0.4",
+      "repertoire": {
+        "version": "wp0.4-p0-repertoire-v1",
+        "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+        "codePointCount": 71850
+      }
+    },
+    "lineBreakVersion": "@cto.af/linebreak@4.0.3/chinese-v1",
+    "layoutProfile": {
+      "features": [
+        "frozen-media",
+        "headings",
+        "input-controls",
+        "keep-with-next",
+        "numbering",
+        "page-bands",
+        "pagination",
+        "paragraphs",
+        "regions",
+        "repeat-headers",
+        "source-ranges",
+        "tables",
+        "text-decoration",
+        "vector-paths",
+        "watermarks",
+        "widow-orphan"
+      ],
+      "name": "tables-ltr",
+      "version": "0"
+    },
+    "resourcePackDigest": "4837819c91dbcd37a88ee60c2a1140c581b95f3dace3f05c74ee7cb5758a28a4",
+    "templateVersion": {
+      "schemaVersion": "ofd-compose/document-model@0",
+      "documentId": "render-poc",
+      "revisionId": "1"
+    },
+    "expressionLanguageVersion": "expr-1",
+    "bindingPolicyVersion": "strict-1",
+    "templateDigest": "26e7bc73af2b63b17964af4588a08cb301412091ec209961b7116e9c778e1c84",
+    "dataDigest": "365b84a3220e037de3b46435d9c387df1c652f22db006a24ad049a521d11ecf2",
+    "compiledDigest": "4ff5a88a881a7b6c826f6d04d586b43174dbeb9b694c2629e0154daf02bdad84",
+    "resolvedDocumentDigest": "69c77899599463c00dbe3e85f35f4a2f49b93710ce8fff346f00d67315da7553",
+    "mediaVersion": "ofd-compose/media@1",
+    "barcodeGeneratorVersion": "bwip-js@4.11.4/drawing-context@1",
+    "mediaDigest": "cd9faf3f0d488763b927dff53f36ff92700a9b2f1cd094a7462fc29f70d57b54",
+    "layoutConfiguration": {
+      "version": "ofd-compose/render@0",
+      "layout": {
+        "page": {
+          "width": 210,
+          "height": 297,
+          "contentBox": {
+            "x": 20,
+            "y": 20,
+            "width": 170,
+            "height": 257
+          }
+        },
+        "defaultStyle": {
+          "fontFamily": "Noto",
+          "fontSize": 12
+        },
+        "formattingPolicy": {
+          "version": "binding-1",
+          "locale": "zh-CN",
+          "timeZone": "UTC",
+          "tzdataVersion": "2026a",
+          "rounding": "half-up"
+        }
+      }
+    },
+    "layoutConfigurationDigest": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
+    "layoutInputDigest": "dcd6fbce4da696ff9097f9d9f6291f4c3c7556ce1a262f63f85996946f62f200",
+    "subsetVersion": {
+      "package": "harfbuzzjs@1.6.0",
+      "retainGids": true,
+      "wasmSha256": "e3bf5ad5841bfdcc37878dff5330a13eea071b5860471d9d6515e31506e4ff96"
+    },
+    "irDigest": "82acac02b81956ff7bba2c6ba01f2512780d20d1e22d693922577244b32935dc"
+  },
+  "resources": [
+    {
+      "resourceId": "r1",
+      "file": "r1.bin",
+      "sha256": "7a0d01bfd93d1fd97c17418ae001543e612e55d59b32182f35d56e4f793f84a0"
+    },
+    {
+      "resourceId": "r0",
+      "file": "r0.bin",
+      "sha256": "43739c566e26fd7cb88f69d3864ea34740372f5ee99acac169e090beffbce5c6"
+    }
+  ]
+}

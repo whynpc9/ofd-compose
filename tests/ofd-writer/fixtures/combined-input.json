@@ -1,0 +1,606 @@
+{
+  "source": {
+    "schemaVersion": "ofd-compose/document-model@0",
+    "documentId": "render-poc",
+    "revisionId": "1",
+    "settings": {
+      "locale": "zh-CN",
+      "timeZone": "UTC",
+      "bindingPolicyVersion": "strict-1"
+    },
+    "styles": {},
+    "body": [
+      {
+        "kind": "paragraph",
+        "nodeId": "narrative",
+        "inlines": [
+          {
+            "kind": "text",
+            "nodeId": "prefix",
+            "text": "营收最高的是"
+          },
+          {
+            "kind": "dynamic-text",
+            "nodeId": "winner",
+            "bindingId": "winner-binding",
+            "expression": {
+              "kind": "legacy",
+              "text": "institutions|maxby:revenue|get:name"
+            }
+          },
+          {
+            "kind": "text",
+            "nodeId": "middle",
+            "text": "，占比"
+          },
+          {
+            "kind": "dynamic-text",
+            "nodeId": "rate",
+            "bindingId": "rate-binding",
+            "expression": {
+              "kind": "legacy",
+              "text": "ratio|format:percentage:0.00"
+            }
+          }
+        ]
+      },
+      {
+        "kind": "table",
+        "nodeId": "table",
+        "layout": {
+          "columns": [
+            {
+              "kind": "fixed",
+              "value": 60
+            },
+            {
+              "kind": "fixed",
+              "value": 60
+            }
+          ]
+        },
+        "rows": [
+          {
+            "kind": "repeat-row-group",
+            "nodeId": "repeat",
+            "bindingId": "repeat-binding",
+            "expression": {
+              "kind": "legacy",
+              "text": "institutions"
+            },
+            "repeatKey": {
+              "kind": "ordinal",
+              "orderDependentIdentity": true
+            },
+            "rows": [
+              {
+                "kind": "table-row",
+                "nodeId": "row",
+                "cells": [
+                  {
+                    "kind": "table-cell",
+                    "nodeId": "cell-name",
+                    "blocks": [
+                      {
+                        "kind": "paragraph",
+                        "nodeId": "p-name",
+                        "inlines": [
+                          {
+                            "kind": "dynamic-text",
+                            "nodeId": "d-name",
+                            "bindingId": "b-name",
+                            "expression": {
+                              "kind": "legacy",
+                              "text": "name"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "table-cell",
+                    "nodeId": "cell-revenue",
+                    "blocks": [
+                      {
+                        "kind": "paragraph",
+                        "nodeId": "p-revenue",
+                        "inlines": [
+                          {
+                            "kind": "dynamic-text",
+                            "nodeId": "d-revenue",
+                            "bindingId": "b-revenue",
+                            "expression": {
+                              "kind": "legacy",
+                              "text": "revenue"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "kind": "image-binding",
+        "nodeId": "image",
+        "bindingId": "image-binding",
+        "expression": {
+          "kind": "legacy",
+          "text": "picture"
+        },
+        "options": {
+          "width": "10mm"
+        }
+      },
+      {
+        "kind": "barcode-binding",
+        "nodeId": "code128",
+        "bindingId": "code128-binding",
+        "expression": {
+          "kind": "legacy",
+          "text": "code128"
+        },
+        "options": {
+          "symbology": "code128",
+          "width": 60,
+          "height": 15
+        }
+      },
+      {
+        "kind": "barcode-binding",
+        "nodeId": "ean13",
+        "bindingId": "ean13-binding",
+        "expression": {
+          "kind": "legacy",
+          "text": "ean13"
+        },
+        "options": {
+          "symbology": "ean13",
+          "width": 60,
+          "height": 15
+        }
+      }
+    ]
+  },
+  "data": {
+    "institutions": [
+      {
+        "name": "机构0",
+        "revenue": 1000
+      },
+      {
+        "name": "机构1",
+        "revenue": 999
+      },
+      {
+        "name": "机构2",
+        "revenue": 998
+      },
+      {
+        "name": "机构3",
+        "revenue": 997
+      },
+      {
+        "name": "机构4",
+        "revenue": 996
+      },
+      {
+        "name": "机构5",
+        "revenue": 995
+      },
+      {
+        "name": "机构6",
+        "revenue": 994
+      },
+      {
+        "name": "机构7",
+        "revenue": 993
+      },
+      {
+        "name": "机构8",
+        "revenue": 992
+      },
+      {
+        "name": "机构9",
+        "revenue": 991
+      },
+      {
+        "name": "机构10",
+        "revenue": 990
+      },
+      {
+        "name": "机构11",
+        "revenue": 989
+      },
+      {
+        "name": "机构12",
+        "revenue": 988
+      },
+      {
+        "name": "机构13",
+        "revenue": 987
+      },
+      {
+        "name": "机构14",
+        "revenue": 986
+      },
+      {
+        "name": "机构15",
+        "revenue": 985
+      },
+      {
+        "name": "机构16",
+        "revenue": 984
+      },
+      {
+        "name": "机构17",
+        "revenue": 983
+      },
+      {
+        "name": "机构18",
+        "revenue": 982
+      },
+      {
+        "name": "机构19",
+        "revenue": 981
+      },
+      {
+        "name": "机构20",
+        "revenue": 980
+      },
+      {
+        "name": "机构21",
+        "revenue": 979
+      },
+      {
+        "name": "机构22",
+        "revenue": 978
+      },
+      {
+        "name": "机构23",
+        "revenue": 977
+      },
+      {
+        "name": "机构24",
+        "revenue": 976
+      },
+      {
+        "name": "机构25",
+        "revenue": 975
+      },
+      {
+        "name": "机构26",
+        "revenue": 974
+      },
+      {
+        "name": "机构27",
+        "revenue": 973
+      },
+      {
+        "name": "机构28",
+        "revenue": 972
+      },
+      {
+        "name": "机构29",
+        "revenue": 971
+      },
+      {
+        "name": "机构30",
+        "revenue": 970
+      },
+      {
+        "name": "机构31",
+        "revenue": 969
+      },
+      {
+        "name": "机构32",
+        "revenue": 968
+      },
+      {
+        "name": "机构33",
+        "revenue": 967
+      },
+      {
+        "name": "机构34",
+        "revenue": 966
+      },
+      {
+        "name": "机构35",
+        "revenue": 965
+      },
+      {
+        "name": "机构36",
+        "revenue": 964
+      },
+      {
+        "name": "机构37",
+        "revenue": 963
+      },
+      {
+        "name": "机构38",
+        "revenue": 962
+      },
+      {
+        "name": "机构39",
+        "revenue": 961
+      },
+      {
+        "name": "机构40",
+        "revenue": 960
+      },
+      {
+        "name": "机构41",
+        "revenue": 959
+      },
+      {
+        "name": "机构42",
+        "revenue": 958
+      },
+      {
+        "name": "机构43",
+        "revenue": 957
+      },
+      {
+        "name": "机构44",
+        "revenue": 956
+      },
+      {
+        "name": "机构45",
+        "revenue": 955
+      },
+      {
+        "name": "机构46",
+        "revenue": 954
+      },
+      {
+        "name": "机构47",
+        "revenue": 953
+      },
+      {
+        "name": "机构48",
+        "revenue": 952
+      },
+      {
+        "name": "机构49",
+        "revenue": 951
+      },
+      {
+        "name": "机构50",
+        "revenue": 950
+      },
+      {
+        "name": "机构51",
+        "revenue": 949
+      },
+      {
+        "name": "机构52",
+        "revenue": 948
+      },
+      {
+        "name": "机构53",
+        "revenue": 947
+      },
+      {
+        "name": "机构54",
+        "revenue": 946
+      },
+      {
+        "name": "机构55",
+        "revenue": 945
+      },
+      {
+        "name": "机构56",
+        "revenue": 944
+      },
+      {
+        "name": "机构57",
+        "revenue": 943
+      },
+      {
+        "name": "机构58",
+        "revenue": 942
+      },
+      {
+        "name": "机构59",
+        "revenue": 941
+      },
+      {
+        "name": "机构60",
+        "revenue": 940
+      },
+      {
+        "name": "机构61",
+        "revenue": 939
+      },
+      {
+        "name": "机构62",
+        "revenue": 938
+      },
+      {
+        "name": "机构63",
+        "revenue": 937
+      },
+      {
+        "name": "机构64",
+        "revenue": 936
+      },
+      {
+        "name": "机构65",
+        "revenue": 935
+      },
+      {
+        "name": "机构66",
+        "revenue": 934
+      },
+      {
+        "name": "机构67",
+        "revenue": 933
+      },
+      {
+        "name": "机构68",
+        "revenue": 932
+      },
+      {
+        "name": "机构69",
+        "revenue": 931
+      },
+      {
+        "name": "机构70",
+        "revenue": 930
+      },
+      {
+        "name": "机构71",
+        "revenue": 929
+      },
+      {
+        "name": "机构72",
+        "revenue": 928
+      },
+      {
+        "name": "机构73",
+        "revenue": 927
+      },
+      {
+        "name": "机构74",
+        "revenue": 926
+      },
+      {
+        "name": "机构75",
+        "revenue": 925
+      },
+      {
+        "name": "机构76",
+        "revenue": 924
+      },
+      {
+        "name": "机构77",
+        "revenue": 923
+      },
+      {
+        "name": "机构78",
+        "revenue": 922
+      },
+      {
+        "name": "机构79",
+        "revenue": 921
+      },
+      {
+        "name": "机构80",
+        "revenue": 920
+      },
+      {
+        "name": "机构81",
+        "revenue": 919
+      },
+      {
+        "name": "机构82",
+        "revenue": 918
+      },
+      {
+        "name": "机构83",
+        "revenue": 917
+      },
+      {
+        "name": "机构84",
+        "revenue": 916
+      },
+      {
+        "name": "机构85",
+        "revenue": 915
+      },
+      {
+        "name": "机构86",
+        "revenue": 914
+      },
+      {
+        "name": "机构87",
+        "revenue": 913
+      },
+      {
+        "name": "机构88",
+        "revenue": 912
+      },
+      {
+        "name": "机构89",
+        "revenue": 911
+      },
+      {
+        "name": "机构90",
+        "revenue": 910
+      },
+      {
+        "name": "机构91",
+        "revenue": 909
+      },
+      {
+        "name": "机构92",
+        "revenue": 908
+      },
+      {
+        "name": "机构93",
+        "revenue": 907
+      },
+      {
+        "name": "机构94",
+        "revenue": 906
+      },
+      {
+        "name": "机构95",
+        "revenue": 905
+      },
+      {
+        "name": "机构96",
+        "revenue": 904
+      },
+      {
+        "name": "机构97",
+        "revenue": 903
+      },
+      {
+        "name": "机构98",
+        "revenue": 902
+      },
+      {
+        "name": "机构99",
+        "revenue": 901
+      }
+    ],
+    "ratio": 0.25,
+    "picture": {
+      "resourceId": "picture"
+    },
+    "code128": "OFD-2026",
+    "ean13": "5901234123457"
+  },
+  "profile": {
+    "version": "ofd-compose/render@0",
+    "layout": {
+      "page": {
+        "width": 210,
+        "height": 297,
+        "contentBox": {
+          "x": 20,
+          "y": 20,
+          "width": 170,
+          "height": 257
+        }
+      },
+      "defaultStyle": {
+        "fontFamily": "Noto",
+        "fontSize": 12
+      },
+      "formattingPolicy": {
+        "version": "binding-1",
+        "locale": "zh-CN",
+        "timeZone": "UTC",
+        "tzdataVersion": "2026a",
+        "rounding": "half-up"
+      }
+    }
+  }
+}

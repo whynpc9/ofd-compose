@@ -1,0 +1,6 @@
+<Project>
+  <!-- Compile pinned upstream source against the product runtime; no source edits. -->
+  <PropertyGroup>
+    <TargetFrameworks>net10.0</TargetFrameworks>
+  </PropertyGroup>
+</Project>
