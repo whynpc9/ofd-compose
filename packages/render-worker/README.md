@@ -31,14 +31,19 @@ const result = await render(template, data, {
 
 ## Identity and resource ownership
 
+- Resource arrays use dense own data slots; indexed accessors, sparse entries and custom
+  iterators are rejected without invoking them.
 - Hosts load fixed authorized bytes (or promises for those bytes), declare exact lengths and
   SHA-256 locks, and supply the pinned subset WASM. There are no filesystem, URL or network
   resolver callbacks in Core. A resource ID is scoped to this invocation; jobs never share an
   image authorization cache. All entries, including duplicates, consume the input budget.
+  Root-page and section image watermarks resolve through the same Media budget, PNG/JPEG
+  validation and resource pack; their descriptors and bytes reach layout and writers.
 - Before the first await, the entry point makes bounded descriptor-only JSON snapshots and
   copies direct byte arrays. Promised buffers are copied on arrival and checked against both
   length and digest. All entries finish before media or layout runs. Missing font/image entries
-  fail with `FONT_MISSING`/`RESOURCE_FORBIDDEN`; invalid fonts do not fall back to installed fonts.
+  fail with `FONT_MISSING`/`RESOURCE_FORBIDDEN`; invalid fonts do not fall back to installed fonts. Stage-error location
+  fields (node/binding/data path/page index when present) survive diagnostic conversion.
 - Identity contains template revision/schema, expression and binding-policy versions, template,
   input-data, compiled, resolved, media and layout-configuration digests, layout-input digest,
   subset version and final IR digest. Top-level provenance and BindingRuntime envelopes are

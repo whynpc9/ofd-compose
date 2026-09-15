@@ -407,3 +407,114 @@ it("subsets only used fonts from a complete five-font pack", async () => {
   expect(empty.ir.resources.filter((r) => r.kind === "font")).toEqual([]);
   expect(empty.budget.subsetBytes).toBe(0);
 });
+it("rejects resource-array getters, sparse entries and custom iterators without executing them", async () => {
+  let invoked = 0;
+  const getter = new Array(1);
+  Object.defineProperty(getter, "0", {
+    get() {
+      invoked++;
+      return pack.fonts[0];
+    },
+  });
+  const iterator = [...pack.fonts];
+  Object.defineProperty(iterator, Symbol.iterator, {
+    value() {
+      invoked++;
+      return [][Symbol.iterator]();
+    },
+  });
+  for (const fonts of [getter, iterator, new Array(1)]) {
+    expect(await render(textSource(), {}, { ...pack, fonts }, profile)).toMatchObject({
+      ok: false,
+      diagnostics: [{ code: "MODEL_INVALID" }],
+    });
+  }
+  expect(invoked).toBe(0);
+  const images = new Array(1);
+  Object.defineProperty(images, "0", {
+    get() {
+      invoked++;
+      return {};
+    },
+  });
+  expect(await render(textSource(), {}, { ...pack, images }, profile)).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "MODEL_INVALID" }],
+  });
+  expect(invoked).toBe(0);
+});
+it("routes authorized watermark images through root and section pages to writer resources", async () => {
+  const sample = await combined();
+  const source = textSource("正文");
+  const watermark = {
+    kind: "image" as const,
+    resourceId: "picture",
+    x: 30,
+    y: 40,
+    width: 10,
+    height: 12,
+    opacity: 0.4,
+    layer: "behind" as const,
+    transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+  };
+  const page = {
+    paper: "A4" as const,
+    orientation: "portrait" as const,
+    margins: { top: 20, right: 20, bottom: 20, left: 20 },
+    watermarks: [watermark],
+  };
+  source.settings.page = page;
+  source.body.push({
+    kind: "paragraph",
+    nodeId: "section",
+    layout: {
+      section: { id: "appendix", page: { ...page, watermarks: [{ ...watermark, x: 60 }] } },
+    },
+    inlines: [{ kind: "text", nodeId: "section-text", text: "附录" }],
+  });
+  const result = await render(source, {}, sample.pack, profile);
+  if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+  expect(result.ir.pages).toHaveLength(2);
+  expect(result.images).toHaveLength(1);
+  const images = result.ir.pages.flatMap((p) => p.objects.filter((o) => o.kind === "image"));
+  expect(images.map((o) => o.bounds)).toEqual([
+    { x: 30000, y: 40000, width: 10000, height: 12000 },
+    { x: 60000, y: 40000, width: 10000, height: 12000 },
+  ]);
+  expect(images.every((o) => o.resourceId === result.images[0]!.resourceId)).toBe(true);
+  expect(fontDigest(result.images[0]!.bytes)).toBe(result.images[0]!.digest);
+  const missing = await render(source, {}, { ...sample.pack, images: [] }, profile);
+  expect(missing).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "RESOURCE_FORBIDDEN", phase: "media" }],
+  });
+  const corrupt = new Uint8Array(await sample.pack.images![0]!.bytes);
+  corrupt[corrupt.length - 1] = (corrupt.at(-1) ?? 0) ^ 1;
+  const invalid = await render(
+    source,
+    {},
+    {
+      ...sample.pack,
+      images: [{ ...sample.pack.images![0]!, bytes: corrupt, sha256: fontDigest(corrupt) }],
+    },
+    profile,
+  );
+  expect(invalid).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "MODEL_INVALID", phase: "media" }],
+  });
+});
+it("preserves the offending node identity on layout failures", async () => {
+  const result = await render(textSource(), {}, pack, {
+    ...profile,
+    layout: {
+      ...profile.layout,
+      page: { width: 210, height: 10, contentBox: { x: 0, y: 0, width: 170, height: 1 } },
+    },
+  });
+  expect(result).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "LAYOUT_OVERFLOW", phase: "layout", nodeId: "p" }],
+  });
+  expect(result).not.toHaveProperty("ir");
+});

@@ -49,7 +49,24 @@ function field(input: unknown, key: string): unknown {
 function list(input: unknown, ceiling: number): unknown[] {
   if (!Array.isArray(input) || input.length > ceiling)
     throw new RenderError("RESOURCE_LIMIT", "Resource count exceeds ceiling");
-  return input;
+  if (
+    Object.getPrototypeOf(input) !== Array.prototype ||
+    Object.getOwnPropertyDescriptor(input, Symbol.iterator)
+  )
+    throw new RenderError("MODEL_INVALID", "Resource arrays must have the standard iterator");
+  const entries: unknown[] = [];
+  for (let i = 0; i < input.length; i++) {
+    const descriptor = Object.getOwnPropertyDescriptor(input, String(i));
+    if (!descriptor || !("value" in descriptor))
+      throw new RenderError("MODEL_INVALID", "Resource arrays require dense data entries");
+    entries.push(descriptor.value);
+  }
+  return entries;
+}
+function errorString(error: unknown, key: string, max: number): string | undefined {
+  if (!error || typeof error !== "object") return undefined;
+  const value = Object.getOwnPropertyDescriptor(error, key)?.value;
+  return typeof value === "string" && value.length <= max ? value : undefined;
 }
 /** True shared Node/browser seam. Failure returns diagnostics only, never partial IR/resources. */
 export async function render(
@@ -176,7 +193,13 @@ export async function render(
       .map((item) => ({ ...(item.metadata as Omit<LayoutFont, "bytes">), bytes: item.bytes }));
     phase = "layout";
     budget.check();
-    const laid = await layout(bound.document, fonts, settings.layout, media, budget);
+    const layoutOptions: LayoutOptions = { ...settings.layout };
+    if (media.watermarkImages.length)
+      layoutOptions.images = media.watermarkImages.map(({ sourceId, resource }) => ({
+        ...resource,
+        id: sourceId,
+      }));
+    const laid = await layout(bound.document, fonts, layoutOptions, media, budget);
     diagnostics.push(...laid.diagnostics);
     phase = "subset";
     const wasmBytes = loaded.find((item) => item.kind === "wasm")?.bytes;
@@ -234,6 +257,7 @@ export async function render(
     const imageIndex = new Map<string, Uint8Array>();
     for (const block of media.blocks)
       for (const image of block.images ?? []) imageIndex.set(image.resource.digest, image.bytes);
+    for (const image of media.watermarkImages) imageIndex.set(image.resource.digest, image.bytes);
     const writerFonts = [];
     const writerImages = [];
     for (const resource of ir.resources) {
@@ -260,8 +284,7 @@ export async function render(
       stageWork: { ...budget.stages },
     };
   } catch (error) {
-    const rawCode =
-      error && typeof error === "object" && "code" in error ? String(error.code) : "MODEL_INVALID";
+    const rawCode = errorString(error, "code", 64) ?? "MODEL_INVALID";
     const code: DiagnosticCode = diagnosticCodes.includes(rawCode as DiagnosticCode)
       ? (rawCode as DiagnosticCode)
       : rawCode.includes("LIMIT")
@@ -269,11 +292,24 @@ export async function render(
         : rawCode === "FONT_UNAVAILABLE"
           ? "FONT_MISSING"
           : "MODEL_INVALID";
+    const nodeId = errorString(error, "nodeId", 256);
+    const bindingId = errorString(error, "bindingId", 256);
+    const dataPath = errorString(error, "dataPath", 65536);
+    const pageIndex =
+      error && typeof error === "object"
+        ? Object.getOwnPropertyDescriptor(error, "pageIndex")?.value
+        : undefined;
     diagnostics.push({
+      ...(nodeId === undefined ? {} : { nodeId }),
+      ...(bindingId === undefined ? {} : { bindingId }),
+      ...(dataPath === undefined ? {} : { dataPath }),
+      ...(typeof pageIndex === "number" && Number.isSafeInteger(pageIndex) && pageIndex >= 0
+        ? { pageIndex }
+        : {}),
       code,
       severity: "error",
       phase,
-      message: error instanceof Error ? error.message : "Render failed",
+      message: errorString(error, "message", 65536) ?? "Render failed",
     });
     return { ok: false as const, diagnostics };
   }
