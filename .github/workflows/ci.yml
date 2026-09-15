@@ -68,7 +68,7 @@ jobs:
           PDF_READER_IMAGE=ofd-compose-qpdf python3 tests/pdf-writer/mutation-gate.py
           docker run --rm --network none --memory 256m --cpus 2 \
             -v "$PWD/.scratch/issue16-output:/pdf:ro" --entrypoint sh ofd-compose-qpdf \
-            -c 'for f in /pdf/*.pdf; do qpdf --check "$f" || exit; done'
+            -c 'for f in /pdf/*.pdf /pdf/rtl/*.pdf /pdf/rtl/reference/*.pdf; do qpdf --check "$f" || exit; done'
 
       - name: Form grouping preserves baseline pixels
         env:
@@ -83,6 +83,7 @@ jobs:
           dotnet build "$baseline_dir/dotnet/tests/OFDCompose.PdfIrWriter.Tests/OFDCompose.PdfIrWriter.Tests.csproj" --no-restore -m:1 /nodeReuse:false /p:UseSharedCompilation=false --disable-build-servers
           dotnet "$baseline_dir/dotnet/tests/OFDCompose.PdfIrWriter.Tests/bin/Debug/net10.0/OFDCompose.PdfIrWriter.Tests.dll"
           python3 tests/pdf-writer/compare-renderings.py "$baseline_dir/.scratch/issue16-output" "$PWD/.scratch/issue16-output" --image ofd-compose-qpdf --report "${RUNNER_TEMP}/pdf-form-pixels.json"
+          python3 tests/pdf-writer/compare-renderings.py "$PWD/.scratch/issue16-output/rtl/reference" "$PWD/.scratch/issue16-output/rtl" --image ofd-compose-qpdf --baseline-label "IR visual glyph emission order" --max-channel-delta 1 --pixel-allowlist tests/pdf-writer/rtl-raster-tolerance.json --report "${RUNNER_TEMP}/pdf-rtl-pixels.json"
 
       - name: Independent Java OFD Reader
         run: |

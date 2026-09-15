@@ -23,7 +23,13 @@ public sealed class PdfIrWriter
             long estimate=canonicalIr.Length*12L+resources.Sum(r=>(long)r.Bytes.Length)*3+65536;
             var states=ir.A("graphicsStates").ToDictionary(s=>s.S("id"));
             var semantics=ir.A("semantics").ToDictionary(s=>s.S("objectId"));
-            bool Isolated(JsonElement obj)=>obj.S("kind")=="text"&&!semantics.ContainsKey(obj.S("id"))&&!obj.S("logicalText").Any(PdfJsWhitespace);
+            bool Isolated(JsonElement obj)
+            {
+                if(obj.S("kind")!="text"||semantics.ContainsKey(obj.S("id"))||obj.S("logicalText").Any(PdfJsWhitespace))return false;
+                int previous=-1;
+                foreach(var glyph in obj.A("glyphs")){cancellationToken.ThrowIfCancellationRequested();int cluster=glyph.I("clusterId");if(cluster<previous)return false;previous=cluster;}
+                return true;
+            }
             long expandedClips=ir.A("graphicsStates").Where(state=>state.Has("clip")).Sum(state=>(long)state.P("clip").P("commands").GetArrayLength());
             foreach(var page in ir.A("pages"))foreach(var obj in page.A("objects"))
             {
@@ -127,12 +133,14 @@ public sealed class PdfIrWriter
             }
         }
         Require(end==logical.Length,"UNSUPPORTED_FEATURE",obj.S("id"),"Incomplete logical partition");
-        // Retain supplied paint order. Nonmonotonic cluster order needs a richer extraction profile.
-        Require(string.Concat(texts)==logical,"UNSUPPORTED_FEATURE",obj.S("id"),"Visual glyph order does not preserve logical text order");
+        // Array order may be the shaper's visual order. Keep the original glyph identities
+        // and absolute geometry, while encoding this text primitive in logical cluster order.
+        var order=obj.A("clusters").SelectMany(c=>c.A("glyphIndices").Select(i=>i.GetInt32())).ToArray();
+        Require(string.Concat(order.Select(i=>texts[i]))==logical,"UNSUPPORTED_FEATURE",obj.S("id"),"Clusters do not preserve logical text");
         b.Append("/Span BMC\nBT\n");
-        for(int i=0;i<glyphs.Length;i++)
+        for(int emitted=0;emitted<order.Length;emitted++)
         {
-            if((i&255)==0)cancellationToken.ThrowIfCancellationRequested();
+            int i=order[emitted];if((emitted&255)==0)cancellationToken.ThrowIfCancellationRequested();
             var g=glyphs[i];double size=obj.N("fontSize");var code=font.Code(g.P("glyphId").GetUInt32(),texts[i],g.P("advance").N("x")/size*1000);
             int start=b.Length;
             b.Append($"/{code.Font} {F(size)} Tf\n1 0 0 -1 {F(g.P("position").N("x")+g.P("offset").N("x"))} {F(g.P("position").N("y")+g.P("offset").N("y"))} Tm\n<{code.Code:X4}> Tj\n");

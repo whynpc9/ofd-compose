@@ -119,13 +119,28 @@
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 162,
-    "pdfTests": 40,
+    "dotnetFull": 165,
+    "pdfTests": 43,
     "mutationGates": 9,
-    "freshProcessDeterminism": "14 PDF outputs identical",
+    "freshProcessDeterminism": "17 positive PDF outputs identical across fresh processes",
     "isolatedMappingTestsFreshDirectory": 16,
     "pixelIdenticalPages": 20,
-    "highLevelPositiveCasesLiteralExact": 14
+    "highLevelPositiveCasesLiteralExact": 14,
+    "rtlPositiveCases": 3
   },
-  "openAcceptance": "Real Worker consecutive ASCII spaces normalize in stock getTextContent; user decision pending"
+  "openAcceptance": "Real Worker consecutive ASCII spaces normalize in stock getTextContent; user decision pending",
+  "rtlCases": [
+    {
+      "case": "rtl-order",
+      "sha256": "a9065173a2376e62152bfb5afc3d8ecb18b96f971404dedbc0da7f6024436d89"
+    },
+    {
+      "case": "rtl-overlap",
+      "sha256": "d2c586ae2e5ce9b50dfd73439a2ff31bc26e99cab80aefa77631153f317fd213"
+    },
+    {
+      "case": "rtl-positions",
+      "sha256": "3babc6a37e1f8e0ac12ecda2b44452a13867a526863c294bb759e723c8d301b9"
+    }
+  ]
 }

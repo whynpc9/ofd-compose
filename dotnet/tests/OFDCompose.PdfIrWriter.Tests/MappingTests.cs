@@ -7,9 +7,10 @@ using Xunit;
 namespace OFDCompose.PdfIrWriter.Tests;
 public sealed class MappingTests
 {
-    private static byte[] Canonical(JsonNode node)
+    private static byte[] Canonical(JsonNode node,bool retainSemantics=false)
     {
-        node["semantics"]=new JsonArray();node["identity"]!["semanticDigest"]=WriterTests.Digest("[]"u8.ToArray());
+        if(!retainSemantics)node["semantics"]=new JsonArray();
+        using var semantics=JsonDocument.Parse(node["semantics"]!.ToJsonString());node["identity"]!["semanticDigest"]=WriterTests.Digest(Encoding.UTF8.GetBytes(IrValidation.Canonical(semantics.RootElement)));
         using var doc=JsonDocument.Parse(node.ToJsonString());return Encoding.UTF8.GetBytes(IrValidation.Canonical(doc.RootElement));
     }
     [Theory][InlineData("truetype")][InlineData("cff")]
@@ -85,6 +86,29 @@ public sealed class MappingTests
         byte[] ir=Canonical(n);int budget=checked(ir.Length*12+f.Resources.Sum(r=>r.Bytes.Length)*3+65536+3*2048+4096);
         var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,new WriterLimits{OutputBytes=budget},TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Contains(result.Diagnostics,d=>d.Code=="RESOURCE_LIMIT"&&d.Path=="output");
+    }
+    [Theory][InlineData(false,false)][InlineData(false,true)][InlineData(true,false)]
+    public async Task Rtl_visual_glyph_array_preserves_logical_text_and_positions(bool overlap,bool rightToLeftPositions)
+    {
+        var f=await WriterTests.Fixture("truetype");var n=JsonNode.Parse(f.Ir)!;var obj=n["pages"]![0]!["objects"]![0]!.DeepClone();
+        var glyphs=obj["glyphs"]!.AsArray().Take(3).Select(g=>g!.DeepClone()).ToArray();
+        if(rightToLeftPositions)for(int i=0;i<glyphs.Length;i++)glyphs[i]["position"]!["x"]=60000-i*5000;
+        if(overlap){foreach(var g in glyphs)g["position"]!["x"]=20000;n["graphicsStates"]![0]!["opacity"]=0.5;}
+        obj["logicalText"]="off";obj["displayText"]="off";obj["glyphs"]=new JsonArray(glyphs.Reverse().ToArray());
+        var clusters=obj["clusters"]!.AsArray().Take(3).Select(c=>c!.DeepClone()).ToArray();for(int i=0;i<3;i++)clusters[i]["glyphIndices"]=new JsonArray(2-i);
+        obj["clusters"]=new JsonArray(clusters);obj["direction"]="rtl";n["pages"]![0]!["objects"]=new JsonArray(obj);n["markers"]=new JsonArray();
+        byte[] ir=Canonical(n);var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));using var pdf=PdfDocument.Open(result.Bytes!);Assert.Equal("off",pdf.GetPage(1).Text);
+        Assert.Equal(3,pdf.GetPage(1).Letters.Count);
+        for(int i=0;i<3;i++){var letter=pdf.GetPage(1).Letters[i];Assert.InRange(Math.Abs(letter.StartBaseLine.X-(glyphs[i]["position"]!["x"]!.GetValue<int>()+glyphs[i]["offset"]!["x"]!.GetValue<int>())*72d/25400),0,0.001);
+            Assert.InRange(Math.Abs(letter.StartBaseLine.Y-(n["pages"]![0]!["height"]!.GetValue<int>()-glyphs[i]["position"]!["y"]!.GetValue<int>()-glyphs[i]["offset"]!["y"]!.GetValue<int>())*72d/25400),0,0.001);}
+        string name=overlap?"rtl-overlap":rightToLeftPositions?"rtl-positions":"rtl-order";string output=Directory.CreateDirectory(Path.Combine(WriterTests.Output,"rtl")).FullName;
+        await File.WriteAllBytesAsync(Path.Combine(output,name+".pdf"),result.Bytes!,TestContext.Current.CancellationToken);await File.WriteAllBytesAsync(Path.Combine(output,name+".ir.json"),ir,TestContext.Current.CancellationToken);
+        var reference=n.DeepClone();var referenceObject=reference["pages"]![0]!["objects"]![0]!;referenceObject["logicalText"]="ffo";referenceObject["displayText"]="ffo";referenceObject["direction"]="rtl";
+        for(int i=0;i<3;i++){referenceObject["glyphs"]![i]!["clusterId"]=i;referenceObject["clusters"]![i]!["glyphIndices"]=new JsonArray(i);}
+        reference["semantics"]=new JsonArray(new JsonObject{["objectId"]="p0o0",["nodeId"]="visual-order-reference",["readingOrder"]=0});
+        byte[] referenceIr=Canonical(reference,true);var referencePdf=await new PdfIrWriter().WriteAsync(referenceIr,WriterTests.Digest(referenceIr),f.Resources,cancellationToken:TestContext.Current.CancellationToken);Assert.True(referencePdf.Ok);
+        string referenceDirectory=Directory.CreateDirectory(Path.Combine(output,"reference")).FullName;await File.WriteAllBytesAsync(Path.Combine(referenceDirectory,name+".pdf"),referencePdf.Bytes!,TestContext.Current.CancellationToken);await File.WriteAllBytesAsync(Path.Combine(referenceDirectory,name+".ir.json"),referenceIr,TestContext.Current.CancellationToken);
     }
     [Theory][InlineData(0)][InlineData(1)]
     public async Task Combining_cluster_each_glyph_has_independent_reader_geometry(int index)

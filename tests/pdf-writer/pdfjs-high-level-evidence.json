@@ -138,5 +138,26 @@
     "classification": "exact",
     "expected": "office é 中文 𠮷",
     "actual": "office é 中文 𠮷"
+  },
+  {
+    "case": "rtl-order",
+    "page": 0,
+    "classification": "exact",
+    "expected": "off",
+    "actual": "off"
+  },
+  {
+    "case": "rtl-positions",
+    "page": 0,
+    "classification": "exact",
+    "expected": "off",
+    "actual": "off"
+  },
+  {
+    "case": "rtl-overlap",
+    "page": 0,
+    "classification": "exact",
+    "expected": "off",
+    "actual": "off"
   }
 ]

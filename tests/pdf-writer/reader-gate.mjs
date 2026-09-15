@@ -20,18 +20,23 @@ for (const name of [
   "cff-mapping",
   "nel-control",
   "visible-image",
+  "rtl-order",
+  "rtl-positions",
+  "rtl-overlap",
 ]) {
+  const caseDirectory = name.startsWith("rtl-") ? path.join(output, "rtl") : output;
   const ir = JSON.parse(
     await fs.readFile(
-      name.endsWith("-mapping") ||
+      name.startsWith("rtl-") ||
+        name.endsWith("-mapping") ||
         ["logical-display-printable", "nel-control", "visible-image"].includes(name)
-        ? path.join(output, `${name}.ir.json`)
+        ? path.join(caseDirectory, `${name}.ir.json`)
         : `tests/ofd-writer/fixtures/${name}/ir.json`,
       "utf8",
     ),
   );
   const pdf = await getDocument({
-    data: new Uint8Array(await fs.readFile(path.join(output, `${name}.pdf`))),
+    data: new Uint8Array(await fs.readFile(path.join(caseDirectory, `${name}.pdf`))),
     useSystemFonts: false,
     isEvalSupported: false,
   }).promise;
@@ -68,7 +73,11 @@ for (const name of [
     );
     const expectedWidths = ir.pages[p].objects
       .filter((o) => o.kind === "text")
-      .flatMap((o) => o.glyphs.map((g) => (g.advance.x / o.fontSize) * 1000));
+      .flatMap((o) =>
+        o.clusters.flatMap((c) =>
+          c.glyphIndices.map((i) => (o.glyphs[i].advance.x / o.fontSize) * 1000),
+        ),
+      );
     assert.equal(widths.length, expectedWidths.length);
     widths.forEach((width, i) => {
       assert.ok(Math.abs(width - expectedWidths[i]) < 1e-8, `${name} glyph ${i} W differs`);
