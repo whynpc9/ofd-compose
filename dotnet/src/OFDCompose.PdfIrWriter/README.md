@@ -44,3 +44,7 @@ Encoding policy clarification: within a uniform-state text primitive, Tj travers
 Semantics-free whitespace-bearing objects default to object-specific Forms. Only explicit leading/trailing whitespace glyph mappings connect adjacent text contexts, so a real boundary space is not dropped and unrelated columns do not manufacture a separator. Such connected groups are not split into glyph Forms; geometry never determines whether text is joined.
 
 Page width and height are limited to 5,080,000 µm (14,400 default PDF user units). Larger canonical pages return `UNSUPPORTED_FEATURE` at the page ID; this writer does not apply `/UserUnit` scaling.
+
+当前 untagged PDF profile 只支持实际非空 text 对象的 semantic readingOrder 与固定 page/paint 次序一致的输入；比较相对顺序，不要求 readingOrder 等于 drawOrder，忽略非文本及空 text 的顺序变化。冲突在分配输出前以对象 ID 的 `UNSUPPORTED_FEATURE` 诊断。该输入仍是合法 Layout IR；PDF 格式可表达结构阅读顺序，后续 tagged profile/readout adapter 需要独立实现与验证。原同一 text 内 RTL logical cluster 支持保留。
+
+反序语义 BA / 绘制 AB 的真实 probe 已验证当前输出的 PdfPig 与 stock pdf.js 都提取 AB。固定 pdf.js 的 GetTextContent 调用 extractTextContent、PdfPig ContentStreamProcessor 按内容操作积累 Letter 的源码支持该提取路径判断；本次未构造和执行 tagged StructureTree 变体，不把源码检查冒充 tagged-reader 运行证明。普通双 ASCII 空格的用户验收项保持开放。

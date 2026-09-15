@@ -30,6 +30,15 @@ public sealed class PdfIrWriter
             var states=ir.A("graphicsStates").ToDictionary(s=>s.S("id"));
             var stateSizes=states.ToDictionary(p=>p.Key,p=>p.Value.GetRawText().Length);
             var semantics=ir.A("semantics").ToDictionary(s=>s.S("objectId"));
+            double previousReadingOrder=-1;
+            foreach(var page in ir.A("pages"))foreach(var obj in page.A("objects"))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                if(obj.S("kind")!="text"||obj.S("logicalText").Length==0||!semantics.TryGetValue(obj.S("id"),out var semantic))continue;
+                double readingOrder=semantic.N("readingOrder");
+                Require(readingOrder>previousReadingOrder,"UNSUPPORTED_FEATURE",obj.S("id"),"Text semantic reading order conflicts with page/paint order in the untagged PDF profile");
+                previousReadingOrder=readingOrder;
+            }
             bool Isolated(JsonElement obj)
             {
                 if(obj.S("kind")!="text"||semantics.ContainsKey(obj.S("id"))||obj.S("logicalText").Any(PdfJsWhitespace))return false;

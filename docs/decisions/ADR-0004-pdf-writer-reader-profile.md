@@ -34,3 +34,7 @@ PDF ToUnicode 可表达 NBSP、LF 等 Unicode；限制来自固定 pdf.js 5.4.14
 - [官方 public API 文档](https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib-PDFPageProxy.html)：getTextContent/streamTextContent 的空白说明。当前 6.3.289 源码仍有相同默认值与单空格分支；未以未运行的新 reader 替代固定版本证据。
 
 RTL 编码处置：同一个共享颜色/alpha/clip/state 的 text primitive 内，Tj 的遍历顺序明确从 visual/shaping 数组顺序改为 logical cluster 顺序；不声称逐 glyph paint order 不变。原数组索引、cluster/GID/几何关联与跨 object 顺序保留。固定 Poppler 的透明重叠仅允许 rtl-raster-tolerance.json 所列5个像素/15通道/delta≤1；其他RTL与原20页基线维持零容差。这是受限的同色数学合成/有限精度编码处置，不适用于不同颜色、状态或跨对象交换，扩展模型或出现超界反例时必须重审。
+
+当前 untagged PDF profile 只支持实际非空 text 对象的 semantic readingOrder 与固定 page/paint 次序一致的输入；比较相对顺序，不要求 readingOrder 等于 drawOrder，忽略非文本及空 text 的顺序变化。冲突在分配输出前以对象 ID 的 `UNSUPPORTED_FEATURE` 诊断。该输入仍是合法 Layout IR；PDF 格式可表达结构阅读顺序，后续 tagged profile/readout adapter 需要独立实现与验证。原同一 text 内 RTL logical cluster 支持保留。
+
+反序语义 BA / 绘制 AB 的真实 probe 已验证当前输出的 PdfPig 与 stock pdf.js 都提取 AB。固定 pdf.js 的 GetTextContent 调用 extractTextContent、PdfPig ContentStreamProcessor 按内容操作积累 Letter 的源码支持该提取路径判断；本次未构造和执行 tagged StructureTree 变体，不把源码检查冒充 tagged-reader 运行证明。普通双 ASCII 空格的用户验收项保持开放。
