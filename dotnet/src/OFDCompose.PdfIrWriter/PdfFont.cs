@@ -45,6 +45,10 @@ internal sealed class PdfFont
                 name=ps;break;
             }
         }
+        // Canonical resource ordinals are unique within this PDF: collision-free six-letter subset tags.
+        int ordinal=int.Parse(resource.S("id")[1..],System.Globalization.CultureInfo.InvariantCulture);
+        var tag=new char[6];for(int i=5;i>=0;i--){tag[i]=(char)('A'+ordinal%26);ordinal/=26;}
+        name=new string(tag)+"+"+name;
         int head=tables["head"].Offset, hhea=tables["hhea"].Offset, os2=tables["OS/2"].Offset;
         double scale=1000d/U16(head+18);
         string Metric(int value)=>IrValidation.Number(value*scale);

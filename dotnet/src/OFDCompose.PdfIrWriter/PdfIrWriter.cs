@@ -18,6 +18,7 @@ public sealed class PdfIrWriter
         try
         {
             limits.Validate();cancellationToken.ThrowIfCancellationRequested();
+            Require(resources.Count<=limits.Resources,"RESOURCE_LIMIT","resources","Resource count exceeded");
             using var document=IrValidation.Parse(canonicalIr,irDigest,limits);var ir=document.RootElement;
             long estimate=canonicalIr.Length*12L+resources.Sum(r=>(long)r.Bytes.Length)*3+65536;
             var states=ir.A("graphicsStates").ToDictionary(s=>s.S("id"));
@@ -86,9 +87,18 @@ public sealed class PdfIrWriter
             var range=cluster.P("logicalRange");int start=range.I("start"),stop=range.I("end");
             Require(start==end&&stop>start,"UNSUPPORTED_FEATURE",obj.S("id"),"ToUnicode requires an exact nonoverlapping logical cluster partition");end=stop;
             var indices=cluster.A("glyphIndices").Select(x=>x.GetInt32()).ToArray();
-            string text=logical[start..stop];var scalars=text.EnumerateRunes().Select(x=>x.ToString()).ToArray();
-            Require(indices.Length>0&&indices.Length<=scalars.Length,"UNSUPPORTED_FEATURE",obj.S("id"),"Cluster has more glyphs than Unicode scalars or has no glyph; no lossless per-glyph ToUnicode partition");
-            for(int i=0;i<indices.Length;i++)texts[indices[i]]=i==indices.Length-1?string.Concat(scalars.Skip(i)):scalars[i];
+            Require(indices.Length>0,"UNSUPPORTED_FEATURE",obj.S("id"),"Nonempty cluster has no glyph");
+            int cursor=start;
+            for(int i=0;i<indices.Length;i++)
+            {
+                Require(cursor<stop,"UNSUPPORTED_FEATURE",obj.S("id"),"Cluster has more glyphs than Unicode scalars; no lossless per-glyph ToUnicode partition");
+                int next=i==indices.Length-1?stop:cursor+(char.IsHighSurrogate(logical[cursor])?2:1);
+                Require(next-cursor<=256,"RESOURCE_LIMIT",obj.S("id"),"ToUnicode destination exceeds 512-byte mapping budget");
+                string mapped=logical[cursor..next];
+                Require(!(PdfJsWhitespace(mapped[0])&&mapped.Any(c=>!char.IsControl(c)&&!PdfJsWhitespace(c)&&char.GetUnicodeCategory(c)!=System.Globalization.UnicodeCategory.Format)),
+                    "UNSUPPORTED_FEATURE",obj.S("id"),"Whitespace-prefixed glyph mapping with printable text is not lossless in the pinned pdf.js extraction profile");
+                texts[indices[i]]=mapped;cursor=next;
+            }
         }
         Require(end==logical.Length,"UNSUPPORTED_FEATURE",obj.S("id"),"Incomplete logical partition");
         // Retain supplied paint order. Nonmonotonic cluster order needs a richer extraction profile.
@@ -116,6 +126,10 @@ public sealed class PdfIrWriter
         string mask=transparent?$" /SMask {pdf.Stream(alpha,common+" /ColorSpace /DeviceGray")} 0 R":"";
         return pdf.Stream(rgb,common+" /ColorSpace /DeviceRGB"+mask);
     }
+    // ECMAScript WhiteSpace + LineTerminator set used by pdf.js 5.4.149's /^\s/ category.
+    // U+0085 is deliberately absent; Char.IsWhiteSpace is not an equivalent predicate.
+    private static bool PdfJsWhitespace(char c)=>c is >= '\u0009' and <= '\u000d' or '\u0020' or '\u00a0' or '\u1680'
+        or >= '\u2000' and <= '\u200a' or '\u2028' or '\u2029' or '\u202f' or '\u205f' or '\u3000' or '\ufeff';
     private static void Color(StringBuilder b,JsonElement color,string op)=>b.Append($"{F(color.N("r"))} {F(color.N("g"))} {F(color.N("b"))} {op}\n");
     private static void Commands(StringBuilder b,JsonElement path,JsonElement? transform=null)
     {

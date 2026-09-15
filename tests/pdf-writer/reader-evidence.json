@@ -6,93 +6,104 @@
   "cases": [
     {
       "case": "cff-mapping",
-      "bytes": 122791,
-      "sha256": "48b6fe6c58c3e73d95dc8324488c63c0f434c7b6d559097410975ba8b576f10b"
+      "bytes": 122840,
+      "sha256": "5be02a81b664287be6981fcced87403897d63a450259102b34e51264c3da050d"
     },
     {
       "case": "cff",
-      "bytes": 121594,
-      "sha256": "1edfc1bac19f39324f2623ae79b57770cb63ffd103d9da064ad651378472674f",
+      "bytes": 121615,
+      "sha256": "e8f3bb2080d8be71a37a55e1c33efbaa6346447a8a99698069ee6959776a7def",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
       "MaxReaderExtentErrorPt": 1.4210854715202004e-14
     },
     {
       "case": "combined",
-      "bytes": 160291,
-      "sha256": "a727e8df983c419c11ba032360f0fbcb91b27f8adc1efef020f3fdc57f4be6a8",
+      "bytes": 160312,
+      "sha256": "c5039bc11a321164f15260c24645d6b276083a4d6f020fea2e3cb7c7c4285f34",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.1368683772161603e-13,
       "MaxReaderExtentErrorPt": 1.1368683772161603e-13
     },
     {
       "case": "duplicate-markers",
-      "bytes": 121594,
-      "sha256": "faed0cf215e0094697fc9d3a7b97b084795da8bbb2a0079d64ca7f247e54fc36",
+      "bytes": 121615,
+      "sha256": "f6770e6bf9eb1ce9a65972481959c23c9b7d753273ae0aefbeaa1b95f242f9e1",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
       "MaxReaderExtentErrorPt": 1.4210854715202004e-14
     },
     {
       "case": "geometry",
-      "bytes": 122051,
-      "sha256": "0e68600d215ae8db554ac99edb9f0d674c0fcb831d4151d2524403ef08f56d9b",
+      "bytes": 122072,
+      "sha256": "16134182347b99bf5e605ec77741f079b4569d85dc058a438bc0913294afbdbe",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 2.2737367544323206e-13,
       "MaxReaderExtentErrorPt": 2.2737367544323206e-13
     },
     {
       "case": "glyphless",
-      "bytes": 2272,
-      "sha256": "91452ca34f7cbbae0a2fe9bef00c675ee6d688b2a44ef3e6f6af34f5d9fe2a5f",
+      "bytes": 2279,
+      "sha256": "ef2786a284aca5086478c2425d3543f0fddb7a296db471259066c1d33327ca65",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 0,
       "MaxReaderExtentErrorPt": 0
     },
     {
       "case": "jpeg",
-      "bytes": 237678,
-      "sha256": "68ec41bf5cad00891656a0bc0a5267476a705f287c0039bb02e1144c1593f0e4",
+      "bytes": 237699,
+      "sha256": "2dfcfe6a5a8918694645232a00d56d2eb64e4859bcc48daff80911f15d5c9e1a",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.1368683772161603e-13,
       "MaxReaderExtentErrorPt": 1.1368683772161603e-13
     },
     {
-      "case": "logical-display",
-      "bytes": 123090,
-      "sha256": "88505db4b975025c0867cd98704c7cd154bd3af2b1928c64ea1bef498a87f80b",
-      "Reader": "PdfPig 0.1.11",
-      "MaxBaselineErrorPt": 1.4210854715202004e-14,
-      "MaxReaderExtentErrorPt": 1.4210854715202004e-14
+      "case": "logical-display-printable",
+      "bytes": 123140,
+      "sha256": "57c66e4177de59a872452ae441f84fc6d49bf3ca741a1cf74f878c76db0ca0fa"
     },
     {
       "case": "multi-glyph",
-      "bytes": 3907,
-      "sha256": "71fef0b11f7bb87c67e3a7f9e8891c1134100ab7eafb28ca93f90fdb25dde291",
+      "bytes": 3928,
+      "sha256": "3baa86dcc875d4dbad4c952607e8a496469a26792b318f1922bb391544dec8dd",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 7.105427357601002e-15,
       "MaxReaderExtentErrorPt": 0
     },
     {
+      "case": "nel-control",
+      "bytes": 4111,
+      "sha256": "3ff018796c1ce95bf714a9b126d3908306fb0e7f2877e55b43ffd00dd233f239"
+    },
+    {
       "case": "nonidentity-contract",
-      "bytes": 3907,
-      "sha256": "a95537cb0c49756e84feb012ae2a07c54e7913bae688f15a36bf8ccfd3814a32",
+      "bytes": 3928,
+      "sha256": "2483b3df7a4a893a8e35a74d73ad64bd57b75080d5ac05bf1154ab919ad5e727",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 7.105427357601002e-15,
       "MaxReaderExtentErrorPt": 0
     },
     {
       "case": "truetype-mapping",
-      "bytes": 4164,
-      "sha256": "10d46928691718cb65ebd75187a2a2bc0b6685c80d68f2b66a075d6b0c63de72"
+      "bytes": 4185,
+      "sha256": "b0a8e5119740f1800fbfbb702223c9d93449d3aba5c88671323230960c8cf8fb"
     },
     {
       "case": "truetype",
-      "bytes": 4376,
-      "sha256": "fec4555c1115f2ed5b4f77119ed58c950eb18c32b057de671bdfb8e3de41aec8",
+      "bytes": 4397,
+      "sha256": "0106f99109e4bd10179ad508f870b86d815b2637e6111e4cb1b14a1bc42b0384",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
       "MaxReaderExtentErrorPt": 0.0014456692913427105
     }
-  ]
+  ],
+  "poppler": "22.12.0-2+deb12u3 (fixed Docker image)",
+  "validation": {
+    "nodeFullNoCache": 604,
+    "chromiumFullNoCache": 395,
+    "dotnetFull": 142,
+    "pdfTests": 20,
+    "mutationGates": 5,
+    "freshProcessDeterminism": "13 PDF outputs identical"
+  }
 }

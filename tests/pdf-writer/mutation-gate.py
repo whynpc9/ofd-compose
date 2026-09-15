@@ -1,9 +1,19 @@
 """Mutate real delivered PDFs, rebuild xref, then use Poppler (not writer code)."""
+import os
 import pathlib
 import re
 import subprocess
 import tempfile
 import zlib
+
+def run(command, **kwargs):
+    image = os.environ.get('PDF_READER_IMAGE')
+    if image:
+        command = ['docker', 'run', '--rm', '--network', 'none', '--memory', '256m',
+                   '-v', f'{ROOT}:{ROOT}:ro', '-v', f'{temp}:{temp}',
+                   '--entrypoint', command[0], image, *command[1:]]
+    return subprocess.run(command, **kwargs)
+
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 OUTPUT = ROOT / '.scratch/issue16-output'
@@ -62,7 +72,7 @@ def mutate(data, kind):
 
 
 def raster(pdf, target):
-    subprocess.run(['pdftoppm', '-f', '1', '-singlefile', '-r', '100', '-png', str(pdf), str(target)], check=True, capture_output=True)
+    run(['pdftoppm', '-f', '1', '-singlefile', '-r', '100', '-png', str(pdf), str(target)], check=True, capture_output=True)
     return target.with_suffix('.png').read_bytes()
 
 
@@ -74,8 +84,8 @@ with tempfile.TemporaryDirectory(prefix='ofd-pdf-mutations-') as directory:
         altered = temp / f'{kind}.pdf'
         altered.write_bytes(mutate(original.read_bytes(), kind))
         if kind == 'cmap':
-            before = subprocess.check_output(['pdftotext', '-raw', str(original), '-'])
-            after = subprocess.check_output(['pdftotext', '-raw', str(altered), '-'])
+            before = run(['pdftotext', '-raw', str(original), '-'], check=True, capture_output=True).stdout
+            after = run(['pdftotext', '-raw', str(altered), '-'], check=True, capture_output=True).stdout
             assert before != after, 'ToUnicode corruption was not detected'
         else:
             assert raster(original, temp / 'before') != raster(altered, temp / 'after'), f'{kind}: rendered change was not detected'

@@ -1,4 +1,8 @@
+using System.Globalization;
 using System.Security.Cryptography;
+using System.IO.Compression;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Text.Json;
 using OFDCompose.PdfIrWriter;
 using UglyToad.PdfPig;
@@ -15,11 +19,24 @@ public sealed class WriterTests
         foreach(var r in m.RootElement.GetProperty("resources").EnumerateArray())resources.Add(new(r.GetProperty("resourceId").GetString()!,await File.ReadAllBytesAsync(Path.Combine(path,r.GetProperty("file").GetString()!))));return(ir,resources);
     }
     [Theory]
-    [InlineData("truetype")][InlineData("cff")][InlineData("combined")][InlineData("geometry")][InlineData("jpeg")][InlineData("logical-display")][InlineData("multi-glyph")][InlineData("nonidentity-contract")][InlineData("duplicate-markers")][InlineData("glyphless")]
+    [InlineData("truetype")][InlineData("cff")][InlineData("combined")][InlineData("geometry")][InlineData("jpeg")][InlineData("multi-glyph")][InlineData("nonidentity-contract")][InlineData("duplicate-markers")][InlineData("glyphless")]
     public async Task Independent_reader_text_geometry_and_determinism(string name)
     {
         var f=await Fixture(name);var writer=new PdfIrWriter();var result=await writer.WriteAsync(f.Ir,Digest(f.Ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));
+        Assert.True(result.Bytes!.AsSpan().StartsWith(new byte[]{37,80,68,70,45,49,46,55,10,37,226,227,207,211,10}));
+        string wire=Encoding.Latin1.GetString(result.Bytes!);
+        foreach(Match font in Regex.Matches(wire,@"/BaseFont /([^ ]+)"))Assert.Matches(@"^[A-Z]{6}\+",font.Groups[1].Value);
+        var streams=new List<byte[]>();
+        foreach(Match streamMatch in Regex.Matches(wire,@"<< /Length (\d+)[^\n]* >>\nstream\n"))
+        {
+            byte[] payload=result.Bytes.AsSpan(streamMatch.Index+streamMatch.Length,int.Parse(streamMatch.Groups[1].Value,CultureInfo.InvariantCulture)).ToArray();
+            if(streamMatch.Value.Contains("/FlateDecode",StringComparison.Ordinal))
+            {using var input=new MemoryStream(payload);using var z=new ZLibStream(input,CompressionMode.Decompress);using var decoded=new MemoryStream();z.CopyTo(decoded);payload=decoded.ToArray();}
+            streams.Add(payload);
+        }
+        foreach(var resource in f.Resources.Where(r=>!r.Bytes.Span.StartsWith(new byte[]{137,80,78,71})))
+            Assert.Contains(streams,b=>b.AsSpan().SequenceEqual(resource.Bytes.Span));
         Assert.Equal(result.Bytes,(await new PdfIrWriter().WriteAsync(f.Ir,Digest(f.Ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken)).Bytes);
         string output=Path.Combine(Root,".scratch/issue16-output");Directory.CreateDirectory(output);await File.WriteAllBytesAsync(Path.Combine(output,name+".pdf"),result.Bytes!,TestContext.Current.CancellationToken);
         using var pdf=PdfDocument.Open(result.Bytes!,new ParsingOptions{UseLenientParsing=false});using var ir=JsonDocument.Parse(f.Ir);
@@ -56,6 +73,11 @@ public sealed class WriterTests
         }
         Assert.Equal(count,result.ObjectMap!.Count);
         await File.WriteAllTextAsync(Path.Combine(output,name+"-geometry.json"),JsonSerializer.Serialize(new{Reader="PdfPig 0.1.11",MaxBaselineErrorPt=max,MaxReaderExtentErrorPt=maxEnd}),TestContext.Current.CancellationToken);
+    }
+    [Fact] public async Task Control_whitespace_prefix_mixed_with_printable_mapping_is_rejected()
+    {
+        var f=await Fixture("logical-display");var r=await new PdfIrWriter().WriteAsync(f.Ir,Digest(f.Ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(r.Ok);Assert.Null(r.ObjectMap);Assert.Contains(r.Diagnostics,d=>d.Code=="UNSUPPORTED_FEATURE"&&d.Path=="p0o0");
     }
     [Fact] public async Task Glyphless_logical_text_is_explicitly_rejected()
     {

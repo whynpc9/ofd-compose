@@ -62,11 +62,9 @@ jobs:
 
       - name: Independent PDF readers and mutation gates
         run: |
-          sudo apt-get update
-          sudo apt-get install -y poppler-utils
           node tests/pdf-writer/reader-gate.mjs
-          python3 tests/pdf-writer/mutation-gate.py
           docker build -t ofd-compose-qpdf tests/pdf-writer
+          PDF_READER_IMAGE=ofd-compose-qpdf python3 tests/pdf-writer/mutation-gate.py
           docker run --rm --network none --memory 256m --cpus 2 \
             -v "$PWD/.scratch/issue16-output:/pdf:ro" --entrypoint sh ofd-compose-qpdf \
             -c 'for f in /pdf/*.pdf; do qpdf --check "$f" || exit; done'

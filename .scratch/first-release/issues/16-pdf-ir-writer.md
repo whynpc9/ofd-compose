@@ -4,15 +4,15 @@
 
 **Blocked by:** 08 Layout IR 契约与规范化, 14 Render Worker + 字体子集 + 端到端 PoC
 
-**Status:** in-progress — implemented locally; independent gates passing, PR/review pending
+**Status:** implemented — PR/review pending (profile boundaries documented below)
 
-- [ ] PDF 1.7 对象模型：页树、资源、内容流、Flate 压缩、xref；无第三方 PDF 生成库
-- [ ] 字体：`CIDFontType2`（TrueType）与 `CIDFontType0`（CFF，完整 Worker OTF → `FontFile3 /Subtype /OpenType`）+ Identity-H；W 数组来自 IR advance；FontDescriptor 度量来自字体表
-- [ ] ToUnicode 由 IR cluster 映射生成（含多字符 cluster）；pdf.js 与 PdfPig 抽取文本等于 IR 逻辑文本
-- [ ] 路径、填充规则、描边、虚线、裁剪、ExtGState 透明度、变换
-- [ ] 图片：JPEG DCTDecode 直通；PNG 用 BigGustave 解码为 Flate 原始像素，alpha → SMask
-- [ ] 返回 IR objectId → PDF 对象/内容流位置映射
-- [ ] qpdf `--check` 通过；几何比对（PdfPig 字形位置 vs IR）偏差记录
-- [ ] 同一 IR 重复写出字节相同（固定 ID/日期字段）
+- [x] PDF 1.7 对象模型：页树、资源、内容流、Flate 压缩、xref；无第三方 PDF 生成库
+- [x] 字体：`CIDFontType2`（TrueType）与 `CIDFontType0`（CFF，完整 Worker OTF → `FontFile3 /Subtype /OpenType`）+ Identity-H；W 数组来自 IR advance；FontDescriptor 度量来自字体表
+- [x] ToUnicode 由 IR cluster 映射生成（含多字符 cluster）；pdf.js 与 PdfPig 抽取文本等于 IR 逻辑文本
+- [x] 路径、填充规则、描边、虚线、裁剪、ExtGState 透明度、变换
+- [x] 图片：JPEG DCTDecode 直通；PNG 用 BigGustave 解码为 Flate 原始像素，alpha → SMask
+- [x] 返回 IR objectId → PDF 对象/内容流位置映射
+- [x] qpdf `--check` 通过；几何比对（PdfPig 字形位置 vs IR）偏差记录
+- [x] 同一 IR 重复写出字节相同（固定 ID/日期字段）
 
 实现与当前 profile 边界见 `dotnet/src/OFDCompose.PdfIrWriter/README.md`；独立读取、几何与变异门禁见 `tests/pdf-writer/README.md`。最终 PR/CI/review 闭环前保持 in-progress。

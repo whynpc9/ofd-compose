@@ -37,7 +37,7 @@ internal sealed class PdfObjects(int limit)
         Require(reserved + objects.Count * 32L + 1024 <= limit, "RESOURCE_LIMIT", "pdf", "Final PDF budget exceeded");
         using var stream = new MemoryStream();
         void Write(string s) => stream.Write(Ascii(s));
-        Write("%PDF-1.7\n%\xE2\xE3\xCF\xD3\n");
+        Write("%PDF-1.7\n%");stream.Write(new byte[]{0xE2,0xE3,0xCF,0xD3,10});
         var offsets = new long[objects.Count];
         for(int i=0;i<objects.Count;i++) { offsets[i]=stream.Position; Write($"{i+1} 0 obj\n"); stream.Write(objects[i] ?? throw new InvalidDataException()); Write("\nendobj\n"); }
         long xref=stream.Position; Write($"xref\n0 {objects.Count+1}\n0000000000 65535 f \n");
