@@ -19,9 +19,11 @@ public sealed class PdfIrWriter
         {
             limits.Validate();cancellationToken.ThrowIfCancellationRequested();
             Require(resources.Count<=limits.Resources,"RESOURCE_LIMIT","resources","Resource count exceeded");
-            using var document=IrValidation.Parse(canonicalIr,irDigest,limits);var ir=document.RootElement;
+            using var document=IrValidation.Parse(canonicalIr,irDigest,limits,cancellationToken);var ir=document.RootElement;
             long estimate=canonicalIr.Length*12L+resources.Sum(r=>(long)r.Bytes.Length)*3+65536;
+            cancellationToken.ThrowIfCancellationRequested();Require(estimate<=limits.OutputBytes,"RESOURCE_LIMIT","output","Output allocation reservation exceeded");
             var states=ir.A("graphicsStates").ToDictionary(s=>s.S("id"));
+            var stateSizes=states.ToDictionary(p=>p.Key,p=>p.Value.GetRawText().Length);
             var semantics=ir.A("semantics").ToDictionary(s=>s.S("objectId"));
             bool Isolated(JsonElement obj)
             {
@@ -33,11 +35,12 @@ public sealed class PdfIrWriter
             long expandedClips=ir.A("graphicsStates").Where(state=>state.Has("clip")).Sum(state=>(long)state.P("clip").P("commands").GetArrayLength());
             foreach(var page in ir.A("pages"))foreach(var obj in page.A("objects"))
             {
-                long repetitions=Isolated(obj)?Math.Max(1,obj.P("glyphs").GetArrayLength()):1;
+                cancellationToken.ThrowIfCancellationRequested();long repetitions=Isolated(obj)?Math.Max(1,obj.P("glyphs").GetArrayLength()):1;
                 if(obj.Has("commands"))expandedClips+=obj.P("commands").GetArrayLength();
                 if(obj.Has("clip"))expandedClips+=obj.P("clip").P("commands").GetArrayLength();
                 var state=states[obj.S("stateId")];
-                estimate+=repetitions*(2048L+state.GetRawText().Length*12L);
+                estimate+=repetitions*(2048L+stateSizes[obj.S("stateId")]*12L);
+                Require(estimate<=limits.OutputBytes,"RESOURCE_LIMIT","output","Output allocation reservation exceeded");
                 if(state.Has("clip"))expandedClips+=repetitions*state.P("clip").P("commands").GetArrayLength();
             }
             Require(expandedClips<=limits.Commands,"RESOURCE_LIMIT","clips","Form clip expansion budget exceeded");
@@ -103,9 +106,9 @@ public sealed class PdfIrWriter
             var output=pdf.Finish(catalog,irDigest);cancellationToken.ThrowIfCancellationRequested();
             return Task.FromResult(new PdfWriteResult(output,map,[]));
         }
-        catch(WriterFailure f){return Task.FromResult(new PdfWriteResult(null,null,[f.Diagnostic]));}
+        catch(WriterFailure f){cancellationToken.ThrowIfCancellationRequested();return Task.FromResult(new PdfWriteResult(null,null,[f.Diagnostic]));}
         catch(Exception e)when(e is JsonException or InvalidOperationException or ArgumentException or InvalidDataException or OverflowException or FormatException or EndOfStreamException or IndexOutOfRangeException or NotSupportedException)
-        {return Task.FromResult(new PdfWriteResult(null,null,[new("IR_RESOURCE","input",e.GetType().Name)]));}
+        {cancellationToken.ThrowIfCancellationRequested();return Task.FromResult(new PdfWriteResult(null,null,[new("IR_RESOURCE","input",e.GetType().Name)]));}
     }
     private static void Text(StringBuilder b,JsonElement obj,PdfFont font,CancellationToken cancellationToken,List<PdfGlyphSpan>? glyphSpans=null)
     {

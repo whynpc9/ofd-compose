@@ -119,8 +119,8 @@
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 165,
-    "pdfTests": 43,
+    "dotnetFull": 168,
+    "pdfTests": 46,
     "mutationGates": 9,
     "freshProcessDeterminism": "17 positive PDF outputs identical across fresh processes",
     "isolatedMappingTestsFreshDirectory": 16,

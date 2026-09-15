@@ -32,3 +32,5 @@ PDF ToUnicode 可表达 NBSP、LF 等 Unicode；限制来自固定 pdf.js 5.4.14
 - [PDF Reference 1.7](https://opensource.adobe.com/dc-acrobat-sdk-docs/pdfstandards/pdfreference1.7old.pdf)：§4.9 / Table 4.45（Form、BBox、Matrix、Resources、graphics state）；§5.6、§5.8、§5.9（CID、嵌入字体、ToUnicode）。
 - [固定 pdf.js public API](https://github.com/mozilla/pdf.js/blob/v5.4.149/src/display/api.js) 与 [evaluator](https://github.com/mozilla/pdf.js/blob/v5.4.149/src/core/evaluator.js)：默认 keepWhiteSpace=false，空白 glyph 与 addFakeSpaces 的行为。
 - [官方 public API 文档](https://mozilla.github.io/pdf.js/api/draft/module-pdfjsLib-PDFPageProxy.html)：getTextContent/streamTextContent 的空白说明。当前 6.3.289 源码仍有相同默认值与单空格分支；未以未运行的新 reader 替代固定版本证据。
+
+RTL 编码处置：同一个共享颜色/alpha/clip/state 的 text primitive 内，Tj 的遍历顺序明确从 visual/shaping 数组顺序改为 logical cluster 顺序；不声称逐 glyph paint order 不变。原数组索引、cluster/GID/几何关联与跨 object 顺序保留。固定 Poppler 的透明重叠仅允许 rtl-raster-tolerance.json 所列5个像素/15通道/delta≤1；其他RTL与原20页基线维持零容差。这是受限的同色数学合成/有限精度编码处置，不适用于不同颜色、状态或跨对象交换，扩展模型或出现超界反例时必须重审。
