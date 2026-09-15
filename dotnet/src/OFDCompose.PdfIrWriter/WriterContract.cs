@@ -1,12 +1,12 @@
 using OFDCompose.FixedWriting;
 using System.Text.Json;
 
-namespace OFDCompose.OfdIrWriter;
+namespace OFDCompose.PdfIrWriter;
 
 /// <summary>Owned subset or image bytes supplied by Render Worker, keyed by canonical resource ID.</summary>
 public sealed record WriterResource(string ResourceId, ReadOnlyMemory<byte> Bytes);
 public sealed record WriterDiagnostic(string Code, string Path, string Message);
-public sealed record OfdWriteResult(byte[]? Bytes, IReadOnlyDictionary<string, string[]>? ObjectMap,
+public sealed record PdfWriteResult(byte[]? Bytes, IReadOnlyDictionary<string, string[]>? ObjectMap,
     IReadOnlyList<WriterDiagnostic> Diagnostics)
 {
     public bool Ok => Bytes is not null;
@@ -26,7 +26,6 @@ public sealed record WriterLimits
     public int Resources { get; init; } = 128;
     public long ResourceBytes { get; init; } = 160L * 1024 * 1024;
     public int ResourceEntryBytes { get; init; } = 32 * 1024 * 1024;
-    public int ZipEntries { get; init; } = 4096;
     public int OutputBytes { get; init; } = 256 * 1024 * 1024;
     internal void Validate()
     {
@@ -34,7 +33,7 @@ public sealed record WriterLimits
             (JsonBytes,32*1024*1024),(JsonTokens,2_000_000),(StringBytes,8*1024*1024),
             (Pages,1000),(Objects,200_000),(Glyphs,1_000_000),(Commands,1_000_000),
             (Resources,128),(ResourceBytes,160L*1024*1024),(ResourceEntryBytes,32*1024*1024),
-            (ZipEntries,4096),(OutputBytes,256*1024*1024) })
+            (OutputBytes,256*1024*1024) })
             J.Require(pair.Value>=0 && pair.Value<=pair.Ceiling,"RESOURCE_LIMIT","limits","Limits may only lower the supported ceilings");
     }
 }

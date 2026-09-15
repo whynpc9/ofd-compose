@@ -1,0 +1,98 @@
+{
+  "scope": "local WP0.7 only; generated from owned committed Worker fixtures",
+  "pdfpig": "0.1.11",
+  "pdfjs": "5.4.149",
+  "qpdf": "11.3.0",
+  "cases": [
+    {
+      "case": "cff-mapping",
+      "bytes": 122791,
+      "sha256": "48b6fe6c58c3e73d95dc8324488c63c0f434c7b6d559097410975ba8b576f10b"
+    },
+    {
+      "case": "cff",
+      "bytes": 121594,
+      "sha256": "1edfc1bac19f39324f2623ae79b57770cb63ffd103d9da064ad651378472674f",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.4210854715202004e-14,
+      "MaxReaderExtentErrorPt": 1.4210854715202004e-14
+    },
+    {
+      "case": "combined",
+      "bytes": 160291,
+      "sha256": "a727e8df983c419c11ba032360f0fbcb91b27f8adc1efef020f3fdc57f4be6a8",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.1368683772161603e-13,
+      "MaxReaderExtentErrorPt": 1.1368683772161603e-13
+    },
+    {
+      "case": "duplicate-markers",
+      "bytes": 121594,
+      "sha256": "faed0cf215e0094697fc9d3a7b97b084795da8bbb2a0079d64ca7f247e54fc36",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.4210854715202004e-14,
+      "MaxReaderExtentErrorPt": 1.4210854715202004e-14
+    },
+    {
+      "case": "geometry",
+      "bytes": 122051,
+      "sha256": "0e68600d215ae8db554ac99edb9f0d674c0fcb831d4151d2524403ef08f56d9b",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 2.2737367544323206e-13,
+      "MaxReaderExtentErrorPt": 2.2737367544323206e-13
+    },
+    {
+      "case": "glyphless",
+      "bytes": 2272,
+      "sha256": "91452ca34f7cbbae0a2fe9bef00c675ee6d688b2a44ef3e6f6af34f5d9fe2a5f",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 0,
+      "MaxReaderExtentErrorPt": 0
+    },
+    {
+      "case": "jpeg",
+      "bytes": 237678,
+      "sha256": "68ec41bf5cad00891656a0bc0a5267476a705f287c0039bb02e1144c1593f0e4",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.1368683772161603e-13,
+      "MaxReaderExtentErrorPt": 1.1368683772161603e-13
+    },
+    {
+      "case": "logical-display",
+      "bytes": 123090,
+      "sha256": "88505db4b975025c0867cd98704c7cd154bd3af2b1928c64ea1bef498a87f80b",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.4210854715202004e-14,
+      "MaxReaderExtentErrorPt": 1.4210854715202004e-14
+    },
+    {
+      "case": "multi-glyph",
+      "bytes": 3907,
+      "sha256": "71fef0b11f7bb87c67e3a7f9e8891c1134100ab7eafb28ca93f90fdb25dde291",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 7.105427357601002e-15,
+      "MaxReaderExtentErrorPt": 0
+    },
+    {
+      "case": "nonidentity-contract",
+      "bytes": 3907,
+      "sha256": "a95537cb0c49756e84feb012ae2a07c54e7913bae688f15a36bf8ccfd3814a32",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 7.105427357601002e-15,
+      "MaxReaderExtentErrorPt": 0
+    },
+    {
+      "case": "truetype-mapping",
+      "bytes": 4164,
+      "sha256": "10d46928691718cb65ebd75187a2a2bc0b6685c80d68f2b66a075d6b0c63de72"
+    },
+    {
+      "case": "truetype",
+      "bytes": 4376,
+      "sha256": "fec4555c1115f2ed5b4f77119ed58c950eb18c32b057de671bdfb8e3de41aec8",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.4210854715202004e-14,
+      "MaxReaderExtentErrorPt": 0.0014456692913427105
+    }
+  ]
+}

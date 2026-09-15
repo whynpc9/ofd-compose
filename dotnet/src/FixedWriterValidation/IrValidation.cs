@@ -4,9 +4,15 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Schema;
+#if PDF_WRITER
+using OFDCompose.PdfIrWriter;
+using static OFDCompose.PdfIrWriter.J;
+#else
+using OFDCompose.OfdIrWriter;
 using static OFDCompose.OfdIrWriter.J;
+#endif
 
-namespace OFDCompose.OfdIrWriter;
+namespace OFDCompose.FixedWriting;
 
 internal static class IrValidation
 {

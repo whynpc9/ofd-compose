@@ -1,7 +1,13 @@
 using System.Buffers.Binary;
+#if PDF_WRITER
+using OFDCompose.PdfIrWriter;
+using static OFDCompose.PdfIrWriter.J;
+#else
+using OFDCompose.OfdIrWriter;
 using static OFDCompose.OfdIrWriter.J;
+#endif
 
-namespace OFDCompose.OfdIrWriter;
+namespace OFDCompose.FixedWriting;
 
 /// <summary>ADR-0003 JPEG process and EXIF policy, checked before decoder allocation.</summary>
 internal static class JpegProfile

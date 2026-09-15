@@ -1,0 +1,130 @@
+using OFDCompose.FixedWriting;
+using System.Text;
+using System.Text.Json;
+using BigGustave;
+using JpegLibrary;
+using static OFDCompose.PdfIrWriter.J;
+namespace OFDCompose.PdfIrWriter;
+
+/// <summary>Serializes frozen primitives and owned Worker resources; never shapes or subsets.</summary>
+public sealed class PdfIrWriter
+{
+    private const double Pt = 72d/25400;
+    private static string F(double n)=>IrValidation.Number(n);
+    private static string Matrix(JsonElement m)=>$"{F(m.N("a"))} {F(m.N("b"))} {F(m.N("c"))} {F(m.N("d"))} {F(m.N("e"))} {F(m.N("f"))} cm\n";
+    public Task<PdfWriteResult> WriteAsync(ReadOnlyMemory<byte> canonicalIr,string irDigest,IReadOnlyList<WriterResource> resources,WriterLimits? limits=null,CancellationToken cancellationToken=default)
+    {
+        limits??=new();
+        try
+        {
+            limits.Validate();cancellationToken.ThrowIfCancellationRequested();
+            using var document=IrValidation.Parse(canonicalIr,irDigest,limits);var ir=document.RootElement;
+            long estimate=canonicalIr.Length*12L+resources.Sum(r=>(long)r.Bytes.Length)*3+65536;
+            var states=ir.A("graphicsStates").ToDictionary(s=>s.S("id"));
+            foreach(var page in ir.A("pages"))foreach(var obj in page.A("objects"))
+                estimate+=2048L+(states[obj.S("stateId")].Has("clip")?states[obj.S("stateId")].P("clip").GetRawText().Length*12L:0);
+            foreach(var resource in ir.A("resources"))if(resource.S("kind")=="image")estimate+=(long)resource.I("pixelWidth")*resource.I("pixelHeight")*8;
+            Require(estimate<=limits.OutputBytes,"RESOURCE_LIMIT","output","Output allocation reservation exceeded");
+            var owned=ResourceValidation.Validate(ir,resources,limits);
+            var pdf=new PdfObjects(limits.OutputBytes);int catalog=pdf.Reserve(),tree=pdf.Reserve(),pageResources=pdf.Reserve();
+            var fonts=new Dictionary<string,PdfFont>();var images=new Dictionary<string,int>();
+            var descriptors=ir.A("resources").ToDictionary(r=>r.S("id"));
+            foreach(var r in descriptors.Values)
+                if(r.S("kind")=="font")fonts.Add(r.S("id"),new(pdf,r,owned[r.S("id")]));else images.Add(r.S("id"),Image(pdf,r,owned[r.S("id")]));
+            var alphas=new Dictionary<string,int>();
+            foreach(var s in states.Values)alphas.Add(s.S("id"),pdf.Add($"<< /Type /ExtGState /ca {F(s.N("opacity"))} /CA {F(s.N("opacity"))} >>"));
+            var map=new Dictionary<string,string[]>();var pages=new List<int>();
+            foreach(var page in ir.A("pages"))
+            {
+                cancellationToken.ThrowIfCancellationRequested();int pageId=pdf.Reserve();pages.Add(pageId);
+                var content=new StringBuilder($"q\n{F(Pt)} 0 0 {F(-Pt)} 0 {F(page.N("height")*Pt)} cm\n");
+                var spans=new List<(string Id,int Start,int Length)>();
+                foreach(var obj in page.A("objects"))
+                {
+                    int start=content.Length;var state=states[obj.S("stateId")];content.Append("q\n");
+                    // Install a local clip under its transform, then restore the CTM without restoring the clip.
+                    // A nested q/Q would also restore the clip. Instead emit transformed clip coordinates.
+                    if(state.Has("clip")){Commands(content,state.P("clip"),state.P("transform"));content.Append(state.P("clip").S("fillRule")=="evenodd"?"W* n\n":"W n\n");}
+                    bool pagePath=obj.S("kind")=="path"&&obj.S("coordinateSpace")=="page";
+                    if(!pagePath)content.Append(Matrix(state.P("transform")));
+                    content.Append($"/G{alphas[state.S("id")]} gs\n");
+                    Color(content,state.P("fillColor"),"rg");Color(content,state.P("strokeColor"),"RG");
+                    content.Append($"{F(state.N("lineWidth"))} w\n{(state.S("lineCap")=="round"?1:state.S("lineCap")=="square"?2:0)} J\n{(state.S("lineJoin")=="round"?1:state.S("lineJoin")=="bevel"?2:0)} j\n{F(state.N("miterLimit"))} M\n[{string.Join(" ",state.A("dash").Select(n=>F(n.GetDouble())))}] {F(state.N("dashOffset"))} d\n");
+                    switch(obj.S("kind"))
+                    {
+                        case "text":Text(content,obj,fonts[obj.S("fontId")]);break;
+                        case "path":Commands(content,obj);bool fill=obj.P("fill").GetBoolean(),stroke=obj.P("stroke").GetBoolean();content.Append(fill?(stroke?"B":"f")+(obj.S("fillRule")=="evenodd"?"*":""):stroke?"S":"n").Append('\n');break;
+                        case "image":
+                            content.Append(Matrix(obj.P("transform")));
+                            if(obj.Has("clip")){Commands(content,obj.P("clip"));content.Append(obj.P("clip").S("fillRule")=="evenodd"?"W* n\n":"W n\n");}
+                            var r=descriptors[obj.S("resourceId")];
+                            content.Append($"{r.I("pixelWidth")} 0 0 {-r.I("pixelHeight")} 0 {r.I("pixelHeight")} cm\n/I{images[r.S("id")]} Do\n");break;
+                    }
+                    content.Append("Q\n");spans.Add((obj.S("id"),start,content.Length-start));
+                }
+                content.Append("Q\n");int stream=pdf.Stream(PdfObjects.Ascii(content.ToString()));
+                foreach(var s in spans)map.Add(s.Id,[$"page:{pageId}",$"stream:{stream}:decoded-byte:{s.Start}:length:{s.Length}"]);
+                pdf.Set(pageId,PdfObjects.Ascii($"<< /Type /Page /Parent {tree} 0 R /MediaBox [0 0 {F(page.N("width")*Pt)} {F(page.N("height")*Pt)}] /Resources {pageResources} 0 R /Contents {stream} 0 R >>"));
+            }
+            var fontRefs=fonts.Values.SelectMany(f=>f.Complete()).ToArray();
+            pdf.Set(pageResources,PdfObjects.Ascii($"<< /Font << {string.Join(" ",fontRefs)} >> /XObject << {string.Join(" ",images.Values.Select(id=>$"/I{id} {id} 0 R"))} >> /ExtGState << {string.Join(" ",alphas.Values.Select(id=>$"/G{id} {id} 0 R"))} >> >>"));
+            pdf.Set(tree,PdfObjects.Ascii($"<< /Type /Pages /Count {pages.Count} /Kids [{string.Join(" ",pages.Select(id=>$"{id} 0 R"))}] >>"));
+            pdf.Set(catalog,PdfObjects.Ascii($"<< /Type /Catalog /Pages {tree} 0 R >>"));
+            return Task.FromResult(new PdfWriteResult(pdf.Finish(catalog,irDigest),map,[]));
+        }
+        catch(WriterFailure f){return Task.FromResult(new PdfWriteResult(null,null,[f.Diagnostic]));}
+        catch(Exception e)when(e is JsonException or InvalidOperationException or ArgumentException or InvalidDataException or OverflowException or FormatException or EndOfStreamException or IndexOutOfRangeException or NotSupportedException)
+        {return Task.FromResult(new PdfWriteResult(null,null,[new("IR_RESOURCE","input",e.GetType().Name)]));}
+    }
+    private static void Text(StringBuilder b,JsonElement obj,PdfFont font)
+    {
+        var glyphs=obj.A("glyphs").ToArray();string logical=obj.S("logicalText");int end=0;
+        Require(glyphs.Length>0||logical.Length==0,"UNSUPPORTED_FEATURE",obj.S("id"),"Nonempty logical text without painted glyphs cannot be represented by ToUnicode");
+        var texts=new string[glyphs.Length];
+        foreach(var cluster in obj.A("clusters"))
+        {
+            var range=cluster.P("logicalRange");int start=range.I("start"),stop=range.I("end");
+            Require(start==end&&stop>start,"UNSUPPORTED_FEATURE",obj.S("id"),"ToUnicode requires an exact nonoverlapping logical cluster partition");end=stop;
+            var indices=cluster.A("glyphIndices").Select(x=>x.GetInt32()).ToArray();
+            string text=logical[start..stop];var scalars=text.EnumerateRunes().Select(x=>x.ToString()).ToArray();
+            Require(indices.Length>0&&indices.Length<=scalars.Length,"UNSUPPORTED_FEATURE",obj.S("id"),"Cluster has more glyphs than Unicode scalars or has no glyph; no lossless per-glyph ToUnicode partition");
+            for(int i=0;i<indices.Length;i++)texts[indices[i]]=i==indices.Length-1?string.Concat(scalars.Skip(i)):scalars[i];
+        }
+        Require(end==logical.Length,"UNSUPPORTED_FEATURE",obj.S("id"),"Incomplete logical partition");
+        // Retain supplied paint order. Nonmonotonic cluster order needs a richer extraction profile.
+        Require(string.Concat(texts)==logical,"UNSUPPORTED_FEATURE",obj.S("id"),"Visual glyph order does not preserve logical text order");
+        b.Append("/Span BMC\nBT\n");
+        for(int i=0;i<glyphs.Length;i++)
+        {
+            var g=glyphs[i];double size=obj.N("fontSize");var code=font.Code(g.I("glyphId"),texts[i],g.P("advance").N("x")/size*1000);
+            b.Append($"/{code.Font} {F(size)} Tf\n1 0 0 -1 {F(g.P("position").N("x")+g.P("offset").N("x"))} {F(g.P("position").N("y")+g.P("offset").N("y"))} Tm\n<{code.Code:X4}> Tj\n");
+        }
+        b.Append("ET\nEMC\n");
+    }
+    private static int Image(PdfObjects pdf,JsonElement r,byte[] bytes)
+    {
+        string common=$" /Type /XObject /Subtype /Image /Width {r.I("pixelWidth")} /Height {r.I("pixelHeight")} /BitsPerComponent 8";
+        if(r.S("mimeType")=="image/jpeg")
+        {
+            var jpeg=new JpegDecoder();jpeg.SetInput(bytes);jpeg.Identify();
+            return pdf.Stream(bytes,common+$" /ColorSpace /{(jpeg.NumberOfComponents==1?"DeviceGray":"DeviceRGB")} /Filter /DCTDecode",false);
+        }
+        using var stream=new MemoryStream(bytes,false);var png=Png.Open(stream);
+        byte[] rgb=new byte[png.Width*png.Height*3],alpha=new byte[png.Width*png.Height];bool transparent=false;
+        for(int y=0;y<png.Height;y++)for(int x=0;x<png.Width;x++)
+        {int i=y*png.Width+x;var pixel=png.GetPixel(x,y);rgb[i*3]=pixel.R;rgb[i*3+1]=pixel.G;rgb[i*3+2]=pixel.B;alpha[i]=pixel.A;transparent|=pixel.A!=255;}
+        string mask=transparent?$" /SMask {pdf.Stream(alpha,common+" /ColorSpace /DeviceGray")} 0 R":"";
+        return pdf.Stream(rgb,common+" /ColorSpace /DeviceRGB"+mask);
+    }
+    private static void Color(StringBuilder b,JsonElement color,string op)=>b.Append($"{F(color.N("r"))} {F(color.N("g"))} {F(color.N("b"))} {op}\n");
+    private static void Commands(StringBuilder b,JsonElement path,JsonElement? transform=null)
+    {
+        string Point(JsonElement c,string x,string y)
+        {
+            double px=c.N(x),py=c.N(y);
+            return transform is {} m?$"{F(m.N("a")*px+m.N("c")*py+m.N("e"))} {F(m.N("b")*px+m.N("d")*py+m.N("f"))}":$"{F(px)} {F(py)}";
+        }
+        foreach(var c in path.A("commands"))b.Append(c.S("op") switch
+        {"move"=>Point(c,"x","y")+" m\n","line"=>Point(c,"x","y")+" l\n","cubic"=>Point(c,"x1","y1")+" "+Point(c,"x2","y2")+" "+Point(c,"x","y")+" c\n","close"=>"h\n",_=>throw new InvalidDataException()});
+    }
+}

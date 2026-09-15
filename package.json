@@ -22,6 +22,7 @@
     "@types/node": "24.13.3",
     "@vitest/browser": "5.0.0",
     "@vitest/browser-playwright": "5.0.0",
+    "pdfjs-dist": "5.4.149",
     "playwright": "1.63.0",
     "tsdown": "0.23.0",
     "turbo": "2.10.12",

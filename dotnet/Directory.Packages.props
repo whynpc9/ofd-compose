@@ -3,6 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <PackageVersion Include="PdfPig" Version="0.1.11" />
     <PackageVersion Include="BigGustave" Version="1.0.6" />
     <PackageVersion Include="JpegLibrary" Version="0.4.32" />
     <PackageVersion Include="JsonSchema.Net" Version="7.3.4" />

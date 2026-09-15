@@ -60,6 +60,17 @@ jobs:
           OFD_WRITER_OUTPUT: ${{ runner.temp }}/ofd-reader-input
         run: dotnet test dotnet/OFDCompose.slnx --no-restore
 
+      - name: Independent PDF readers and mutation gates
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y poppler-utils
+          node tests/pdf-writer/reader-gate.mjs
+          python3 tests/pdf-writer/mutation-gate.py
+          docker build -t ofd-compose-qpdf tests/pdf-writer
+          docker run --rm --network none --memory 256m --cpus 2 \
+            -v "$PWD/.scratch/issue16-output:/pdf:ro" --entrypoint sh ofd-compose-qpdf \
+            -c 'for f in /pdf/*.pdf; do qpdf --check "$f" || exit; done'
+
       - name: Independent Java OFD Reader
         run: |
           docker build -t ofd-compose-reader tests/ofd-writer/java

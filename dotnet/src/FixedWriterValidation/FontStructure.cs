@@ -1,7 +1,13 @@
 using System.Buffers.Binary;
+#if PDF_WRITER
+using OFDCompose.PdfIrWriter;
+using static OFDCompose.PdfIrWriter.J;
+#else
+using OFDCompose.OfdIrWriter;
 using static OFDCompose.OfdIrWriter.J;
+#endif
 
-namespace OFDCompose.OfdIrWriter;
+namespace OFDCompose.FixedWriting;
 
 /// <summary>Bounded static SFNT envelope and outline-index validation; no font execution or measurement.</summary>
 internal static class FontStructure
@@ -149,7 +155,7 @@ internal static class FontStructure
             Require(subrs.Length==1&&subrs[0]>=0&&(long)values[1]+subrs[0]<cff.Length,"IR_RESOURCE","font","CFF Subrs bounds");int at=values[1]+subrs[0];Index(cff,ref at);
         }
     }
-    private static Dictionary<int,int[]> Dict(ReadOnlySpan<byte> dict)
+    internal static Dictionary<int,int[]> Dict(ReadOnlySpan<byte> dict)
     {
         var result=new Dictionary<int,int[]>();var operands=new List<int>();
         for(int i=0;i<dict.Length;)
@@ -170,7 +176,7 @@ internal static class FontStructure
         }
         Require(operands.Count==0,"IR_RESOURCE","font","Unterminated CFF DICT");return result;
     }
-    private static List<(int Start,int Length)> Index(ReadOnlySpan<byte> data,ref int at)
+    internal static List<(int Start,int Length)> Index(ReadOnlySpan<byte> data,ref int at)
     {
         Require(at>=0&&at+2<=data.Length,"IR_RESOURCE","font","Truncated CFF INDEX");int count=U16(data,at);at+=2;var result=new List<(int,int)>();if(count==0)return result;
         Require(at<data.Length,"IR_RESOURCE","font","Truncated CFF INDEX");int size=data[at++];Require(size is >=1 and <=4 && (long)at+(count+1)*size<=data.Length,"IR_RESOURCE","font","Invalid CFF INDEX offsets");

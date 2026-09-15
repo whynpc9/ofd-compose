@@ -56,3 +56,6 @@ pnpm-debug.log*
 # Playwright
 .playwright/
 
+
+# Reproducible PDF reader/mutation artifacts
+.scratch/issue16-output/

@@ -2,6 +2,12 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "PdfPig": {
+        "type": "Direct",
+        "requested": "[0.1.11, )",
+        "resolved": "0.1.11",
+        "contentHash": "pGAhccH2pXU5SzNPs94kGD+HnChHWrW/234en2Ky+RSAAui4o7msOiUdePErOmM2FY/wnyfj3MY/WRAhjnlRVw=="
+      },
       "xunit.v3": {
         "type": "Direct",
         "requested": "[4.0.0, )",
@@ -148,30 +154,12 @@
           "xunit.v3.runner.common": "[4.0.0]"
         }
       },
-      "ofdcompose.ofdirwriter": {
-        "type": "Project",
-        "dependencies": {
-          "BigGustave": "[1.0.6, )",
-          "JpegLibrary": "[0.4.32, )",
-          "JsonSchema.Net": "[7.3.4, )",
-          "Ofdrw.Net.Packaging": "[1.0.0, )"
-        }
-      },
       "ofdcompose.pdfirwriter": {
         "type": "Project",
         "dependencies": {
           "BigGustave": "[1.0.6, )",
           "JpegLibrary": "[0.4.32, )",
           "JsonSchema.Net": "[7.3.4, )"
-        }
-      },
-      "ofdrw.net.core": {
-        "type": "Project"
-      },
-      "ofdrw.net.packaging": {
-        "type": "Project",
-        "dependencies": {
-          "Ofdrw.Net.Core": "[1.0.0, )"
         }
       },
       "BigGustave": {

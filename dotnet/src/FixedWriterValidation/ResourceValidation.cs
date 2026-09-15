@@ -4,9 +4,15 @@ using System.Text.Json;
 using System.IO.Compression;
 using BigGustave;
 using JpegLibrary;
+#if PDF_WRITER
+using OFDCompose.PdfIrWriter;
+using static OFDCompose.PdfIrWriter.J;
+#else
+using OFDCompose.OfdIrWriter;
 using static OFDCompose.OfdIrWriter.J;
+#endif
 
-namespace OFDCompose.OfdIrWriter;
+namespace OFDCompose.FixedWriting;
 internal static class ResourceValidation
 {
     internal static Dictionary<string, byte[]> Validate(JsonElement ir, IReadOnlyList<WriterResource> supplied, WriterLimits limits)
