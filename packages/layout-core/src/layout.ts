@@ -44,6 +44,7 @@ import {
   type Matrix,
   rectangle,
   transformedBox,
+  validateBorderFits,
 } from "./graphics.js";
 import { type PageGeometry, pageGeometry } from "./page.js";
 
@@ -72,6 +73,30 @@ export const mediaRegionProfile = Object.freeze({
     "regions",
   ]),
 });
+export const tableProfile = Object.freeze({
+  name: "tables-ltr",
+  version: "0",
+  features: Object.freeze([
+    ...mediaRegionProfile.features,
+    "tables",
+    "repeat-headers",
+    "input-controls",
+    "keep-with-next",
+    "widow-orphan",
+  ]),
+});
+function usesTableProfile(blocks: readonly ResolvedBlock[]): boolean {
+  return blocks.some(
+    (block) =>
+      block.kind === "table" ||
+      (block.kind === "region" && usesTableProfile(block.children)) ||
+      (block.kind === "paragraph" &&
+        (block.fragments.some((f) => f.kind === "input-control") ||
+          block.layout?.keepWithNext ||
+          block.layout?.orphanLines ||
+          block.layout?.widowLines)),
+  );
+}
 export const layoutResourceLimits = Object.freeze({
   inputTextUnits: 1000000,
   inputJsonNodes: 200000,
@@ -146,6 +171,8 @@ function preflightDocument(value: unknown): void {
   let documentUnits = 0;
   const pending: unknown[] = [body];
   let blockCount = 0;
+  let tableCells = 0,
+    tableSlots = 0;
   while (pending.length) {
     const children = pending.pop();
     if (!Array.isArray(children)) continue;
@@ -157,12 +184,28 @@ function preflightDocument(value: unknown): void {
       if (ownData(block, "kind") === "region") pending.push(ownData(block, "children"));
       if (ownData(block, "kind") === "table") {
         const rows = ownData(block, "rows");
-        if (Array.isArray(rows))
-          for (const row of rows) {
-            const cells = ownData(row, "cells");
-            if (Array.isArray(cells))
-              for (const cell of cells) pending.push(ownData(cell, "blocks"));
+        if (Array.isArray(rows)) {
+          if (rows.length > 10000)
+            throw new LayoutError("LAYOUT_LIMIT", "Table row budget exceeded before copying");
+          for (let r = 0; r < rows.length; r++) {
+            const row = ownData(rows, String(r)),
+              cells = ownData(row, "cells");
+            if (!Array.isArray(cells)) continue;
+            tableCells += cells.length;
+            if (tableCells > 100000)
+              throw new LayoutError("LAYOUT_LIMIT", "Table cell budget exceeded before copying");
+            for (let c = 0; c < cells.length; c++) {
+              const cell = ownData(cells, String(c)),
+                spec = ownData(cell, "layout");
+              const rs = ownData(spec, "rowSpan") ?? 1,
+                cs = ownData(spec, "columnSpan") ?? 1;
+              if (typeof rs === "number" && typeof cs === "number") tableSlots += rs * cs;
+              if (tableSlots > 100000)
+                throw new LayoutError("LAYOUT_LIMIT", "Table span budget exceeded before copying");
+              pending.push(ownData(cell, "blocks"));
+            }
           }
+        }
       }
 
       const entries = ownData(block, "fragments");
@@ -173,7 +216,11 @@ function preflightDocument(value: unknown): void {
         throw new LayoutError("LAYOUT_LIMIT", "Document exceeds fragment budget");
       let units = 0;
       for (let j = 0; j < size; j++) {
-        const text = ownData(ownData(entries, String(j)), "text");
+        const entry = ownData(entries, String(j));
+        const text =
+          ownData(entry, "kind") === "input-control"
+            ? (ownData(entry, "defaultValue") ?? ownData(entry, "placeholder") ?? "")
+            : ownData(entry, "text");
         if (typeof text !== "string") continue;
         units += text.length;
         documentUnits += text.length;
@@ -237,6 +284,7 @@ interface Face {
   id: string;
 }
 interface Span {
+  controlId?: string;
   start: number;
   end: number;
   fragment: ResolvedTextFragment;
@@ -679,11 +727,11 @@ class ParagraphLayouter {
     this.sectionSourceId =
       first?.kind === "paragraph" ? (first.layout?.section?.id ?? doc.documentId) : doc.documentId;
     this.sectionIds.add(this.sectionId);
-    const selectedProfile = doc.body.some(
-      (block) => block.kind !== "paragraph" || block.layout?.border,
-    )
-      ? mediaRegionProfile
-      : paragraphProfile;
+    const selectedProfile = usesTableProfile(doc.body)
+      ? tableProfile
+      : doc.body.some((block) => block.kind !== "paragraph" || block.layout?.border)
+        ? mediaRegionProfile
+        : paragraphProfile;
     const profile = { ...selectedProfile, features: [...selectedProfile.features] };
     if (
       !page ||
@@ -790,12 +838,10 @@ class ParagraphLayouter {
       this.region(block, index);
       return;
     }
-    if (block.kind !== "paragraph")
-      throw new LayoutError(
-        "LAYOUT_UNSUPPORTED",
-        "Complete table layout belongs to issue13",
-        block.nodeId,
-      );
+    if (block.kind === "table") {
+      this.table(block);
+      return;
+    }
     if (this.inRegion && (block.layout?.section || block.layout?.pageBreakBefore))
       throw new LayoutError(
         "LAYOUT_INPUT",
@@ -816,8 +862,705 @@ class ParagraphLayouter {
       this.newPage();
     }
     if (block.layout?.pageBreakBefore) this.newPage();
-    this.paragraph(block, index);
+    if (
+      !this.inRegion &&
+      (block.layout?.keepWithNext ||
+        block.layout?.role === "heading" ||
+        block.layout?.orphanLines ||
+        block.layout?.widowLines)
+    )
+      this.paragraphWithPolicy(block, index);
+    else this.paragraph(block, index);
   }
+  private firstTableGroupHeight = 0;
+  private probeNext(block: ResolvedBlock, index: number): number {
+    const page = requiredLayoutValue(this.ir.pages[this.pageIndex]);
+    const lengths = [
+      page.objects.length,
+      this.ir.semantics.length,
+      this.ir.markers.length,
+      this.lines.length,
+      this.ir.graphicsStates.length,
+    ];
+    const savedY = this.y,
+      savedBox = this.decorationBox,
+      savedRegion = this.inRegion,
+      savedMedia = this.mediaIndex;
+    this.work.runVisits += this.counts.size + this.initializedRepeatStarts.size;
+    if (this.work.runVisits > 2000000)
+      throw new LayoutError("LAYOUT_LIMIT", "Pagination lookahead work exceeded", block.nodeId);
+    const counts = new Map(this.counts),
+      starts = new Set(this.initializedRepeatStarts);
+    try {
+      this.y = 0;
+      this.inRegion = true;
+      this.decorationBox = { ...this.geometry.contentBox, y: 0, height: 100000 };
+      this.block(block, index);
+      if (block.kind === "table") return this.firstTableGroupHeight;
+      if (block.kind !== "paragraph") return this.y;
+      const captured = this.lines.slice(requiredLayoutValue(lengths[3]));
+      const keep = block.layout?.keepWithNext ?? block.layout?.role === "heading";
+      const take = keep
+        ? captured.length
+        : (block.layout?.orphanLines ?? (block.layout?.widowLines ? 2 : 1));
+      return (
+        captured.slice(0, take).reduce((n, line) => n + line.height, 0) +
+        (block.layout?.spaceBefore ?? 0) +
+        (keep ? (block.layout?.spaceAfter ?? 0) : 0)
+      );
+    } finally {
+      for (let i = requiredLayoutValue(lengths[0]); i < page.objects.length; i++)
+        this.barcodeObjects.delete(requiredLayoutValue(page.objects[i]).id);
+      page.objects.length = requiredLayoutValue(lengths[0]);
+      this.ir.semantics.length = requiredLayoutValue(lengths[1]);
+      this.ir.markers.length = requiredLayoutValue(lengths[2]);
+      this.lines.length = requiredLayoutValue(lengths[3]);
+      this.ir.graphicsStates.length = requiredLayoutValue(lengths[4]);
+      this.y = savedY;
+      this.decorationBox = savedBox;
+      this.inRegion = savedRegion;
+      this.mediaIndex = savedMedia;
+      this.counts.clear();
+      for (const [k, v] of counts) this.counts.set(k, v);
+      this.initializedRepeatStarts.clear();
+      for (const k of starts) this.initializedRepeatStarts.add(k);
+    }
+  }
+  private paragraphWithPolicy(paragraph: ResolvedParagraph, index: number) {
+    const page = requiredLayoutValue(this.ir.pages[this.pageIndex]);
+    const starts = {
+      objects: page.objects.length,
+      semantics: this.ir.semantics.length,
+      markers: this.ir.markers.length,
+      lines: this.lines.length,
+    };
+    const box = this.geometry.contentBox,
+      savedY = this.y;
+    const properties = paragraph.layout ?? {};
+    this.inRegion = true;
+    this.decorationBox = { ...box, y: 0, height: 100000 };
+    this.y = 0;
+    try {
+      this.paragraph(
+        {
+          ...paragraph,
+          layout: { ...properties, border: undefined, spaceBefore: 0, spaceAfter: 0 },
+        },
+        index,
+      );
+    } finally {
+      this.inRegion = false;
+      this.decorationBox = undefined;
+      this.y = savedY;
+    }
+    const objects = page.objects.splice(starts.objects),
+      semantics = this.ir.semantics.splice(starts.semantics),
+      markers = this.ir.markers.splice(starts.markers),
+      lines = this.lines.splice(starts.lines);
+    const keep = properties.keepWithNext ?? properties.role === "heading";
+    const next = this.doc.body[index + 1];
+    const total = lines.reduce((n, l) => n + l.height, 0);
+    if (
+      keep &&
+      next &&
+      !(next.kind === "paragraph" && (next.layout?.pageBreakBefore || next.layout?.section))
+    ) {
+      let needed = total + (properties.spaceAfter ?? 0);
+      for (let following = index + 1; following < this.doc.body.length; following++) {
+        const candidate = requiredLayoutValue(this.doc.body[following]);
+        if (
+          candidate.kind === "paragraph" &&
+          (candidate.layout?.pageBreakBefore || candidate.layout?.section)
+        )
+          break;
+        needed += this.probeNext(candidate, following);
+        if (
+          candidate.kind !== "paragraph" ||
+          !(candidate.layout?.keepWithNext ?? candidate.layout?.role === "heading")
+        )
+          break;
+      }
+      if (needed > box.height + 1e-9)
+        throw new LayoutError(
+          "LAYOUT_OVERFLOW",
+          "Keep-with-next group exceeds page height",
+          paragraph.nodeId,
+        );
+      if (
+        this.y + (this.y > box.y ? (properties.spaceBefore ?? 0) : 0) + needed >
+        box.y + box.height + 1e-9
+      )
+        this.newPage();
+    }
+    if (this.y > box.y) this.y += properties.spaceBefore ?? 0;
+    const orphan = properties.orphanLines ?? 2,
+      widow = properties.widowLines ?? 2;
+    let objectIndex = 0,
+      semanticIndex = 0,
+      markerIndex = 0;
+    for (let first = 0; first < lines.length; ) {
+      let end = first,
+        height = 0;
+      while (
+        end < lines.length &&
+        this.y + height + requiredLayoutValue(lines[end]).height <= box.y + box.height + 1e-9
+      ) {
+        height += requiredLayoutValue(lines[end]).height;
+        end++;
+      }
+      if (end < lines.length && end - first < orphan && this.y > box.y + 1e-9) {
+        this.newPage();
+        continue;
+      }
+      if (end < lines.length && lines.length - end < widow) {
+        end = Math.max(first, end - (widow - (lines.length - end)));
+        height = lines.slice(first, end).reduce((n, l) => n + l.height, 0);
+      }
+      if (end === first) {
+        if (this.y > box.y + 1e-9) {
+          this.newPage();
+          continue;
+        }
+        throw new LayoutError(
+          "LAYOUT_OVERFLOW",
+          "Widow/orphan policy cannot fit page",
+          paragraph.nodeId,
+        );
+      }
+      const target = requiredLayoutValue(this.ir.pages[this.pageIndex]),
+        dy = this.y - requiredLayoutValue(lines[first]).y;
+      const until = end === lines.length ? Infinity : requiredLayoutValue(lines[end]).y;
+      const ids = new Map<string, string>();
+      // Captured objects retain paint order; line bounds partition that order monotonically.
+      while (
+        objectIndex < objects.length &&
+        requiredLayoutValue(objects[objectIndex]).bounds.y < until - 1e-9
+      ) {
+        const object = requiredLayoutValue(objects[objectIndex++]),
+          oldId = object.id;
+        this.metadata(
+          paragraph,
+          object.kind === "text" ? object.logicalText.length + object.displayText.length : 0,
+        );
+        object.id = `page${this.pageIndex}object${target.objects.length}`;
+        ids.set(oldId, object.id);
+        object.drawOrder = target.objects.length;
+        object.bounds = { ...object.bounds, y: object.bounds.y + dy };
+        const state = requiredLayoutValue(this.ir.graphicsStates[Number(object.stateId.slice(5))]);
+        if (object.kind === "path" && object.coordinateSpace === "page")
+          object.coordinateSpace = "local";
+        state.transform = compose({ ...identity, f: dy }, state.transform);
+        target.objects.push(object);
+      }
+      while (
+        semanticIndex < semantics.length &&
+        ids.has(requiredLayoutValue(semantics[semanticIndex]).objectId)
+      ) {
+        const semantic = requiredLayoutValue(semantics[semanticIndex++]);
+        semantic.objectId = requiredLayoutValue(ids.get(semantic.objectId));
+        semantic.pageIndex = this.pageIndex;
+        semantic.readingOrder = this.ir.semantics.length;
+        this.ir.semantics.push(semantic);
+      }
+      while (
+        markerIndex < markers.length &&
+        ids.has(requiredLayoutValue(markers[markerIndex]).objectId ?? "")
+      ) {
+        const marker = requiredLayoutValue(markers[markerIndex++]);
+        marker.id = `marker${this.ir.markers.length}`;
+        marker.pageId = `page${this.pageIndex}`;
+        marker.objectId = requiredLayoutValue(ids.get(marker.objectId ?? ""));
+        marker.bounds = { ...marker.bounds, y: marker.bounds.y + dy };
+        this.ir.markers.push(marker);
+      }
+      for (let i = first; i < end; i++) {
+        const line = requiredLayoutValue(lines[i]);
+        this.reserveSectionMetadata(paragraph.nodeId);
+        this.lines.push({
+          ...line,
+          y: line.y + dy,
+          baseline: line.baseline + dy,
+          pageIndex: this.pageIndex,
+        });
+      }
+      if (properties.border) {
+        const bounds = { x: box.x, y: this.y, width: box.width, height };
+        this.reserveObjects(1);
+        this.commands(5);
+        target.objects.push({
+          id: `page${this.pageIndex}object${target.objects.length}`,
+          kind: "path",
+          drawOrder: target.objects.length,
+          stateId: this.graphicState(properties.border),
+          bounds,
+          coordinateSpace: "page",
+          commands: borderPath(bounds, properties.border),
+          fill: false,
+          stroke: true,
+          fillRule: "nonzero",
+        });
+      }
+      this.y += height;
+      first = end;
+      if (first < lines.length) this.newPage();
+    }
+    this.y = Math.min(box.y + box.height, this.y + (properties.spaceAfter ?? 0));
+  }
+
+  private table(table: Extract<ResolvedBlock, { kind: "table" }>) {
+    const parent = this.decorationBox ?? this.geometry.contentBox;
+    const savedRegion = this.inRegion,
+      savedBox = this.decorationBox;
+    const rows = table.rows;
+    if (!rows.length) return;
+    // Bound dense grid occupancy before allocation, including spans and empty cells.
+    const columns = table.layout?.columns;
+    const count =
+      columns?.length ??
+      Math.max(...rows.map((r) => r.cells.reduce((n, c) => n + (c.layout?.columnSpan ?? 1), 0)));
+    if (count > 1024 || rows.length > 10000 || rows.length * count > 100000)
+      throw new LayoutError("LAYOUT_LIMIT", "Table grid budget exceeded", table.nodeId);
+    if (!count)
+      throw new LayoutError(
+        "LAYOUT_INPUT",
+        "Table requires a column or covered cells",
+        table.nodeId,
+      );
+    const fixed = columns?.reduce((n, c) => n + (c.kind === "fixed" ? c.value : 0), 0) ?? 0;
+    const weights =
+      columns?.reduce((n, c) => n + (c.kind === "proportional" ? c.value : 0), 0) ?? count;
+    if (fixed > parent.width || (weights > 0 && fixed >= parent.width))
+      throw new LayoutError(
+        "LAYOUT_OVERFLOW",
+        "Table columns exceed available width",
+        table.nodeId,
+      );
+    const widths =
+      columns?.map((c) =>
+        c.kind === "fixed" ? c.value : ((parent.width - fixed) * c.value) / weights,
+      ) ?? (Array(count).fill(parent.width / count) as number[]);
+    const xs = [0];
+    for (const w of widths) xs.push((xs.at(-1) ?? 0) + w);
+    this.work.runVisits += rows.length * count;
+    if (this.work.runVisits > 2000000)
+      throw new LayoutError("LAYOUT_LIMIT", "Shared table grid work exceeded", table.nodeId);
+    const occupied = new Uint8Array(rows.length * count);
+    const heights = rows.map((r) => r.layout?.height ?? 0);
+    type Cell = {
+      row: number;
+      col: number;
+      rs: number;
+      cs: number;
+      height: number;
+      source: (typeof rows)[number]["cells"][number];
+      objects: LayoutIR["pages"][number]["objects"];
+      semantics: LayoutIR["semantics"];
+      lines: LayoutLine[];
+      markers: LayoutIR["markers"];
+      barcodes: Map<string, { height: number; moduleWidth: number }>;
+    };
+    const cells: Cell[] = [];
+    const page = this.ir.pages[this.pageIndex];
+    if (!page) throw new Error("Missing page");
+    const savedY = this.y;
+    try {
+      this.inRegion = true;
+      for (const [row, sourceRow] of rows.entries()) {
+        let col = 0;
+        for (const source of sourceRow.cells) {
+          while (col < count && occupied[row * count + col]) col++;
+          const rs = source.layout?.rowSpan ?? 1,
+            cs = source.layout?.columnSpan ?? 1;
+          if (col + cs > count || row + rs > rows.length)
+            throw new LayoutError("LAYOUT_INPUT", "Table span exceeds grid", source.nodeId);
+          for (let r = row; r < row + rs; r++)
+            for (let c = col; c < col + cs; c++) {
+              if (occupied[r * count + c])
+                throw new LayoutError("LAYOUT_INPUT", "Overlapping table spans", source.nodeId);
+              occupied[r * count + c] = 1;
+            }
+          const padding = source.layout?.padding ?? 1;
+          const width = (xs[col + cs] ?? 0) - (xs[col] ?? 0) - 2 * padding;
+          if (width <= 0)
+            throw new LayoutError(
+              "LAYOUT_OVERFLOW",
+              "Cell padding consumes column width",
+              source.nodeId,
+            );
+          const startObjects = page.objects.length,
+            startSemantics = this.ir.semantics.length,
+            startLines = this.lines.length,
+            startMarkers = this.ir.markers.length;
+          this.y = 0;
+          this.decorationBox = { x: 0, y: 0, width, height: 100000 };
+          source.blocks.forEach((b, i) => {
+            this.block(b, i);
+          });
+          if (page.objects.length === startObjects)
+            this.paragraph({ kind: "paragraph", nodeId: source.nodeId, fragments: [] }, 0);
+          const height = this.y + 2 * padding;
+          const barcodes = new Map<string, { height: number; moduleWidth: number }>();
+          for (let i = startObjects; i < page.objects.length; i++) {
+            const id = requiredLayoutValue(page.objects[i]).id,
+              barcode = this.barcodeObjects.get(id);
+            if (barcode) {
+              barcodes.set(id, barcode);
+              this.barcodeObjects.delete(id);
+            }
+          }
+          cells.push({
+            row,
+            col,
+            rs,
+            cs,
+            height,
+            source,
+            objects: page.objects.splice(startObjects),
+            semantics: this.ir.semantics.splice(startSemantics),
+            lines: this.lines.splice(startLines),
+            markers: this.ir.markers.splice(startMarkers),
+            barcodes,
+          });
+          if (rs === 1) {
+            if (
+              sourceRow.layout?.heightMode === "fixed" &&
+              height > (sourceRow.layout.height ?? 0) + 1e-9
+            )
+              throw new LayoutError(
+                "LAYOUT_OVERFLOW",
+                "Cell exceeds fixed row height",
+                source.nodeId,
+              );
+            heights[row] = Math.max(heights[row] ?? 0, height);
+          }
+          col += cs;
+        }
+      }
+    } finally {
+      this.y = savedY;
+      this.inRegion = savedRegion;
+      this.decorationBox = savedBox;
+    }
+    if (occupied.some((value) => value === 0))
+      throw new LayoutError(
+        "LAYOUT_INPUT",
+        "Every table grid slot must be a cell or covered by a span",
+        table.nodeId,
+      );
+    // Fixed rows never silently expand; spanning cells grow only automatic rows.
+    for (const c of cells) {
+      let total = 0;
+      const auto: number[] = [];
+      for (let r = c.row; r < c.row + c.rs; r++) {
+        total += heights[r] ?? 0;
+        if (rows[r]?.layout?.heightMode !== "fixed") auto.push(r);
+      }
+      if (c.height > total + 1e-9) {
+        if (!auto.length)
+          throw new LayoutError(
+            "LAYOUT_OVERFLOW",
+            "Merged cell exceeds fixed rows",
+            c.source.nodeId,
+          );
+        for (const r of auto) heights[r] = (heights[r] ?? 0) + (c.height - total) / auto.length;
+      }
+    }
+    for (const [r, row] of rows.entries())
+      if (row.layout?.heightMode === "fixed") {
+        if (!row.layout.height || (heights[r] ?? 0) > row.layout.height + 1e-9)
+          throw new LayoutError("LAYOUT_OVERFLOW", "Cell exceeds fixed row height", row.nodeId);
+        heights[r] = row.layout.height;
+      }
+    const headers = table.layout?.headerRows ?? 0;
+    if (headers > rows.length || cells.some((c) => c.row < headers && c.row + c.rs > headers))
+      throw new LayoutError(
+        "LAYOUT_INPUT",
+        "Header boundary intersects a merged cell",
+        table.nodeId,
+      );
+    const byRow = rows.map(() => [] as Cell[]);
+    for (const c of cells) byRow[c.row]?.push(c);
+    const ends = rows.map((_, i) => i + 1);
+    for (const c of cells) ends[c.row] = Math.max(ends[c.row] ?? 0, c.row + c.rs);
+    const edges = new Map<
+      string,
+      {
+        pageIndex: number;
+        x1: number;
+        y1: number;
+        x2: number;
+        y2: number;
+        stroke: Stroke;
+        explicit: boolean;
+      }
+    >();
+    const fragmentBoxes = new Map<
+      number,
+      { x: number; y: number; width: number; height: number }
+    >();
+    let repeat = 0;
+    const paint = (start: number, end: number, repeated: boolean) => {
+      const previousBox = fragmentBoxes.get(this.pageIndex);
+      const top = previousBox?.y ?? this.y;
+      const ys = [this.y];
+      for (let r = start; r < end; r++) ys.push((ys.at(-1) ?? 0) + (heights[r] ?? 0));
+      fragmentBoxes.set(this.pageIndex, {
+        x: parent.x,
+        y: top,
+        width: xs.at(-1) ?? 0,
+        height: (ys.at(-1) ?? top) - top,
+      });
+      for (let r = start; r < end; r++)
+        for (const cell of byRow[r] ?? []) {
+          const x = parent.x + (xs[cell.col] ?? 0),
+            y = ys[r - start] ?? 0;
+          const width = (xs[cell.col + cell.cs] ?? 0) - (xs[cell.col] ?? 0),
+            height = (ys[r - start + cell.rs] ?? 0) - y;
+          const target = this.ir.pages[this.pageIndex];
+          if (!target) throw new Error("Missing page");
+          const addPath = (
+            commands: ReturnType<typeof rectangle>,
+            stroke?: Stroke,
+            fill?: string,
+          ) => {
+            this.commands(commands.length);
+            this.reserveObjects(1);
+            target.objects.push({
+              id: `page${this.pageIndex}object${target.objects.length}`,
+              kind: "path",
+              drawOrder: target.objects.length,
+              stateId: this.graphicState(stroke, fill),
+              bounds: { x, y, width, height },
+              coordinateSpace: "page",
+              commands,
+              fill: !!fill,
+              stroke: !!stroke,
+              fillRule: "nonzero",
+            });
+          };
+          if (cell.source.layout?.background)
+            addPath(rectangle({ x, y, width, height }), undefined, cell.source.layout.background);
+          const stroke = cell.source.border ?? table.border;
+          if (stroke) {
+            validateBorderFits({ x, y, width, height }, stroke, cell.source.nodeId);
+            const addEdge = (x1: number, y1: number, x2: number, y2: number) => {
+              if (x1 === x2 && y1 === y2) return;
+              const key = `${this.pageIndex}:${Math.round(x1 * 1000)},${Math.round(y1 * 1000)},${Math.round(x2 * 1000)},${Math.round(y2 * 1000)}`;
+              const old = edges.get(key),
+                explicit = !!cell.source.border;
+              if (
+                !old ||
+                (explicit && !old.explicit) ||
+                (explicit === old.explicit && stroke.width > old.stroke.width)
+              )
+                edges.set(key, { pageIndex: this.pageIndex, x1, y1, x2, y2, stroke, explicit });
+            };
+            // Split along the grid so a merged side and its individual neighbors share keys.
+            for (let col = cell.col; col < cell.col + cell.cs; col++) {
+              const left = parent.x + (xs[col] ?? 0),
+                right = parent.x + (xs[col + 1] ?? 0);
+              addEdge(left, y, right, y);
+              addEdge(left, y + height, right, y + height);
+            }
+            for (let row = r; row < r + cell.rs; row++) {
+              const top = ys[row - start] ?? 0,
+                bottom = ys[row - start + 1] ?? 0;
+              addEdge(x, top, x, bottom);
+              addEdge(x + width, top, x + width, bottom);
+            }
+          }
+          const pad = cell.source.layout?.padding ?? 1;
+          const dy =
+            y +
+            pad +
+            Math.max(0, height - cell.height) *
+              (cell.source.layout?.verticalAlign === "bottom"
+                ? 1
+                : cell.source.layout?.verticalAlign === "middle"
+                  ? 0.5
+                  : 0);
+          const move = { ...identity, e: x + pad, f: dy };
+          const ids = new Map<string, string>();
+          for (const original of cell.objects) {
+            this.reserveObjects(1);
+            this.metadata(
+              table,
+              original.kind === "text"
+                ? original.logicalText.length + original.displayText.length
+                : 0,
+            );
+            if (original.kind === "path") this.commands(original.commands.length);
+            this.work.runVisits +=
+              original.kind === "text" ? original.glyphs.length + original.clusters.length : 1;
+            if (this.work.runVisits > 2000000)
+              throw new LayoutError(
+                "LAYOUT_LIMIT",
+                "Table output traversal budget exceeded",
+                table.nodeId,
+              );
+            const object = structuredClone(original);
+            const state = this.ir.graphicsStates[Number(original.stateId.slice(5))];
+            if (!state) throw new Error("Missing state");
+            if (state.clip) this.commands(state.clip.commands.length);
+            const cloned = structuredClone(state);
+            cloned.id = `state${this.ir.graphicsStates.length}`;
+            cloned.transform = compose(move, cloned.transform);
+            this.ir.graphicsStates.push(cloned);
+            object.id = `page${this.pageIndex}object${target.objects.length}`;
+            ids.set(original.id, object.id);
+            const barcode = cell.barcodes.get(original.id);
+            if (barcode) this.barcodeObjects.set(object.id, barcode);
+            object.stateId = cloned.id;
+            object.drawOrder = target.objects.length;
+            object.bounds = transformedBox(object.bounds, move);
+            if (object.kind === "path" && object.coordinateSpace === "page")
+              object.coordinateSpace = "local";
+            target.objects.push(object);
+          }
+          for (const original of cell.semantics) {
+            let units =
+              original.nodeId.length +
+              (original.bindingId?.length ?? 0) +
+              (original.controlId?.length ?? 0) +
+              (original.sectionId?.length ?? 0) +
+              (original.sectionSourceId?.length ?? 0) +
+              (original.link?.length ?? 0) +
+              (original.table?.tableId.length ?? 0) +
+              (original.sourceText?.text.length ?? 0);
+            for (const source of original.sourceRanges ?? [])
+              units +=
+                source.nodeId.length +
+                (source.bindingId?.length ?? 0) +
+                source.sourceText.text.length;
+            for (const instance of original.repeatInstance ?? [])
+              units += instance.nodeId.length + instance.key.length;
+            if (!original.repeatInstance)
+              for (const instance of rows[r]?.instancePath ?? [])
+                units += instance.nodeId.length + instance.key.length;
+            if (repeated) units += requiredLayoutValue(rows[r]).nodeId.length;
+            this.metadata(table, units);
+            this.work.sourceMappings += original.sourceRanges?.length ?? 0;
+            if (++this.work.sourceMappings > layoutResourceLimits.sourceMappings)
+              throw new LayoutError(
+                "LAYOUT_LIMIT",
+                "Table source mapping budget exceeded",
+                table.nodeId,
+              );
+            this.ir.semantics.push({
+              ...structuredClone(original),
+              objectId: requiredLayoutValue(ids.get(original.objectId)),
+              readingOrder: this.ir.semantics.length,
+              pageIndex: this.pageIndex,
+              ...(!original.repeatInstance && rows[r]?.instancePath
+                ? {
+                    repeatInstance: requiredLayoutValue(
+                      requiredLayoutValue(rows[r]).instancePath,
+                    ).map((i) => ({
+                      nodeId: i.nodeId,
+                      key: i.key,
+                    })),
+                  }
+                : {}),
+              table: original.table ?? {
+                tableId: table.nodeId,
+                row: r,
+                column: cell.col,
+                rowSpan: cell.rs,
+                columnSpan: cell.cs,
+              },
+              ...(repeated
+                ? {
+                    repeatedHeader: {
+                      originalNodeId: requiredLayoutValue(rows[r]).nodeId,
+                      instanceIndex: repeat,
+                    },
+                  }
+                : {}),
+            });
+          }
+          for (const marker of cell.markers) {
+            this.reserveObjects(1);
+            this.metadata(table, marker.nodeId.length + (marker.controlId?.length ?? 0));
+            this.ir.markers.push({
+              ...marker,
+              id: `marker${this.ir.markers.length}`,
+              pageId: `page${this.pageIndex}`,
+              objectId: ids.get(marker.objectId ?? ""),
+              bounds: transformedBox(marker.bounds, move),
+            });
+          }
+          for (const line of cell.lines) {
+            this.metadata(table, line.nodeId.length);
+            this.lines.push({
+              ...line,
+              x: line.x + x + pad,
+              y: line.y + dy,
+              baseline: line.baseline + dy,
+              pageIndex: this.pageIndex,
+            });
+          }
+        }
+      this.y = ys.at(-1) ?? this.y;
+    };
+    const sum = (a: number, b: number) => heights.slice(a, b).reduce((n, h) => n + h, 0);
+    for (let start = 0; start < rows.length; ) {
+      let end = ends[start] ?? start + 1;
+      if (start === 0 && headers > 0) end = Math.max(end, Math.min(rows.length, headers + 1));
+      for (let r = start; r < end; r++) end = Math.max(end, ends[r] ?? r + 1);
+      if (start === 0) this.firstTableGroupHeight = sum(start, end);
+      const h = sum(start, end),
+        head = start > 0 && table.layout?.repeatHeader ? sum(0, headers) : 0;
+      if (h + head > parent.height + 1e-9)
+        throw new LayoutError(
+          "LAYOUT_OVERFLOW",
+          "Unsplit row or merged row group exceeds page height",
+          table.nodeId,
+        );
+      if (this.y + h > parent.y + parent.height + 1e-9) {
+        if (this.inRegion)
+          throw new LayoutError("LAYOUT_OVERFLOW", "Table exceeds region", table.nodeId);
+        this.newPage();
+        repeat++;
+        if (head > 0) paint(0, headers, true);
+      }
+      paint(start, end, false);
+      start = end;
+    }
+    for (const edge of edges.values()) {
+      const box = requiredLayoutValue(fragmentBoxes.get(edge.pageIndex)),
+        half = edge.stroke.width / 2;
+      const clampX = (x: number) => Math.max(box.x + half, Math.min(box.x + box.width - half, x));
+      const clampY = (y: number) => Math.max(box.y + half, Math.min(box.y + box.height - half, y));
+      const x1 = clampX(edge.x1),
+        x2 = clampX(edge.x2),
+        y1 = clampY(edge.y1),
+        y2 = clampY(edge.y2);
+      const target = requiredLayoutValue(this.ir.pages[edge.pageIndex]);
+      this.reserveObjects(1);
+      this.commands(2);
+      target.objects.push({
+        id: `page${edge.pageIndex}object${target.objects.length}`,
+        kind: "path",
+        drawOrder: target.objects.length,
+        stateId: this.graphicState(edge.stroke),
+        bounds: {
+          x: x1 - half,
+          y: y1 - half,
+          width: x2 - x1 + 2 * half,
+          height: y2 - y1 + 2 * half,
+        },
+        coordinateSpace: "page",
+        commands: [
+          { op: "move", x: x1, y: y1 },
+          { op: "line", x: x2, y: y2 },
+        ],
+        fill: false,
+        stroke: true,
+        fillRule: "nonzero",
+      });
+    }
+  }
+
   private commands(count: number) {
     if (count > 1000000 - this.work.pathCommands)
       throw new LayoutError("LAYOUT_LIMIT", "Shared path/clip command budget exceeded");
@@ -1101,6 +1844,7 @@ class ParagraphLayouter {
       startStates = this.ir.graphicsStates.length,
       startSemantics = this.ir.semantics.length,
       startLines = this.lines.length,
+      startMarkers = this.ir.markers.length,
       startMedia = this.mediaIndex;
     this.work.runVisits += this.counts.size + this.initializedRepeatStarts.size;
     if (this.work.runVisits > 2000000)
@@ -1120,6 +1864,7 @@ class ParagraphLayouter {
       this.ir.graphicsStates.length = startStates;
       this.ir.semantics.length = startSemantics;
       this.lines.length = startLines;
+      this.ir.markers.length = startMarkers;
       this.mediaIndex = startMedia;
       this.counts.clear();
       for (const [k, v] of counts) this.counts.set(k, v);
@@ -1261,6 +2006,12 @@ class ParagraphLayouter {
           Object.assign(line, b);
           line.baseline = line.baseline * appliedScale + scaleMatrix.f;
         }
+      }
+      for (let i = startMarkers; i < this.ir.markers.length; i++) {
+        const marker = this.ir.markers[i];
+        if (!marker) continue;
+        marker.bounds = transformedBox(marker.bounds, scaleMatrix);
+        if (truncated) marker.bounds = intersect(marker.bounds, box);
       }
       if (policy.kind !== "error") {
         this.metadata(block, 128);
@@ -1559,7 +2310,8 @@ class ParagraphLayouter {
         }
         styles.set(key, selected);
       }
-      const { style, face } = selected;
+      const { face } = selected;
+      const style = span.controlId ? { ...selected.style } : selected.style;
       for (let i = span.start; i < span.end; ) {
         const char = String.fromCodePoint(text.codePointAt(i) ?? 0);
         const control = isControl(char);
@@ -1677,20 +2429,34 @@ class ParagraphLayouter {
     };
     let text = "";
     const spans: Span[] = [];
-    for (const fragment of paragraph.fragments) {
-      if (fragment.kind !== "text")
-        throw new LayoutError(
-          "LAYOUT_UNSUPPORTED",
-          "InputControl layout is not implemented",
-          paragraph.nodeId,
-        );
+    for (const input of paragraph.fragments) {
+      const controlId = input.kind === "input-control" ? input.controlId : undefined;
+      const fragment: ResolvedTextFragment =
+        input.kind === "text"
+          ? input
+          : {
+              kind: "text",
+              text:
+                typeof input.defaultValue === "boolean"
+                  ? input.defaultValue
+                    ? "[x]"
+                    : "[ ]"
+                  : (input.defaultValue ?? input.placeholder ?? ""),
+              origin: { kind: "static", nodeId: input.nodeId },
+              ...(input.styleId ? { styleId: input.styleId } : {}),
+            };
       if (fragment.text.length > 100_000 - text.length || !fragment.text.isWellFormed())
         throw new LayoutError(
           "LAYOUT_INPUT",
           "Paragraph must be well-formed UTF-16 with at most 100000 units",
           paragraph.nodeId,
         );
-      spans.push({ start: text.length, end: text.length + fragment.text.length, fragment });
+      spans.push({
+        start: text.length,
+        end: text.length + fragment.text.length,
+        fragment,
+        ...(controlId ? { controlId } : {}),
+      });
       text += fragment.text;
     }
     const runs = this.runs(text, spans, base);
@@ -2218,12 +2984,36 @@ class ParagraphLayouter {
               repeatInstance: paragraph.instancePath.map((p) => ({ nodeId: p.nodeId, key: p.key })),
             }
           : {}),
+        ...(selected.length === 1 && selected[0]?.controlId
+          ? { controlId: selected[0].controlId }
+          : {}),
         ...(style.link ? { link: style.link } : {}),
       });
     }
+    if (!generated)
+      for (const source of selected)
+        if (source.controlId) {
+          this.metadata(paragraph, source.controlId.length);
+          this.reserveObjects(1);
+          this.ir.markers.push({
+            id: `marker${this.ir.markers.length}`,
+            pageId: `page${this.pageIndex}`,
+            kind: "control-geometry",
+            bounds: { ...bounds },
+            nodeId: source.fragment.origin.nodeId,
+            objectId: id,
+            controlId: source.controlId,
+            signatureCoverage: "none",
+          });
+        }
     if (style.underline || style.link)
       path(false, style.color, baseline + piece.shift + piece.size * 0.1, 0);
     if (style.strikethrough) path(false, style.color, baseline + piece.shift - piece.size * 0.3, 0);
     return width;
   }
+}
+
+function requiredLayoutValue<T>(value: T | undefined): T {
+  if (value === undefined) throw new Error("Missing internal layout value");
+  return value;
 }

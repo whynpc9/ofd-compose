@@ -12,4 +12,5 @@ export {
   mediaRegionProfile,
   paragraphProfile,
   permitsChineseBreak,
+  tableProfile,
 } from "./layout.js";

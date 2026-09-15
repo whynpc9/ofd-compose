@@ -425,6 +425,9 @@ export const ParagraphLayoutSchema = Type.Object(
     firstLineIndent: Type.Optional(Type.Number()),
     spaceBefore: Type.Optional(Type.Number({ minimum: 0 })),
     spaceAfter: Type.Optional(Type.Number({ minimum: 0 })),
+    keepWithNext: Type.Optional(Type.Boolean()),
+    orphanLines: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+    widowLines: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
     lineHeight: Type.Optional(
       Type.Union([
         Type.Object(
@@ -494,11 +497,53 @@ export const RepeatKeySchema = Type.Union([
   ),
 ]);
 
+export const TableCellLayoutSchema = Type.Object(
+  {
+    columnSpan: Type.Optional(Type.Integer({ minimum: 1, maximum: 1024 })),
+    rowSpan: Type.Optional(Type.Integer({ minimum: 1, maximum: 10000 })),
+    padding: Type.Optional(Type.Number({ minimum: 0 })),
+    background: Type.Optional(Type.String({ pattern: "^#[0-9a-fA-F]{6}$" })),
+    verticalAlign: Type.Optional(
+      Type.Union([Type.Literal("top"), Type.Literal("middle"), Type.Literal("bottom")]),
+    ),
+  },
+  { additionalProperties: false },
+);
+export const TableRowLayoutSchema = Type.Object(
+  {
+    height: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+    heightMode: Type.Optional(Type.Union([Type.Literal("fixed"), Type.Literal("auto")])),
+  },
+  { additionalProperties: false },
+);
+export const TableLayoutSchema = Type.Object(
+  {
+    columns: Type.Optional(
+      Type.Array(
+        Type.Object(
+          {
+            kind: Type.Union([Type.Literal("fixed"), Type.Literal("proportional")]),
+            value: Type.Number({ exclusiveMinimum: 0 }),
+          },
+          { additionalProperties: false },
+        ),
+        { minItems: 1, maxItems: 1024 },
+      ),
+    ),
+    headerRows: Type.Optional(Type.Integer({ minimum: 0, maximum: 10000 })),
+    repeatHeader: Type.Optional(Type.Boolean()),
+    rowSplit: Type.Optional(Type.Literal("avoid")),
+    mergePagination: Type.Optional(Type.Literal("keep-together")),
+  },
+  { additionalProperties: false },
+);
+
 /** 表格单元格：内容为块序列（段落 / 条件块 / 重复块 / 嵌套表格）。 */
 const tableCellOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-cell"),
+      layout: Type.Optional(TableCellLayoutSchema),
       border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),
@@ -511,8 +556,9 @@ const tableRowOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-row"),
+      layout: Type.Optional(TableRowLayoutSchema),
       nodeId: identifier,
-      cells: Type.Array(tableCellOf(block), { minItems: 1 }),
+      cells: Type.Array(tableCellOf(block)),
     },
     { additionalProperties: false },
   );
@@ -538,6 +584,7 @@ const tableOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table"),
+      layout: Type.Optional(TableLayoutSchema),
       border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),

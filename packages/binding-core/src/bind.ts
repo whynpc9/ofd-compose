@@ -443,6 +443,7 @@ class Binder {
     }
     return {
       kind: "table",
+      ...(table.layout ? { layout: table.layout } : {}),
       ...(table.border ? { border: table.border } : {}),
       nodeId: table.nodeId,
       ...(table.styleId === undefined ? {} : { styleId: table.styleId }),
@@ -462,10 +463,11 @@ class Binder {
       if (!this.charge(cell)) break;
       cells.push(this.cell(cell, scope, instancePath));
     }
-    // 预算耗尽在首个单元格之前：整行丢弃，保持 ResolvedTableRow.cells minItems 1 的契约。
-    if (cells.length === 0) return undefined;
+    // An explicitly empty row can be covered by a preceding row span; budget-truncated rows are discarded.
+    if (cells.length === 0 && row.cells.length > 0) return undefined;
     return {
       kind: "table-row",
+      ...(row.layout ? { layout: row.layout } : {}),
       nodeId: row.nodeId,
       ...(instancePath.length === 0 ? {} : { instancePath: [...instancePath] }),
       cells,
@@ -479,6 +481,7 @@ class Binder {
   ): ResolvedTableCell {
     return {
       kind: "table-cell",
+      ...(cell.layout ? { layout: cell.layout } : {}),
       ...(cell.border ? { border: cell.border } : {}),
       nodeId: cell.nodeId,
       ...(cell.styleId === undefined ? {} : { styleId: cell.styleId }),
