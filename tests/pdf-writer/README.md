@@ -40,4 +40,6 @@ Three RTL cases are stored separately under the generated `rtl/` directory. PdfP
 
 Parsing cancellation also covers token scanning, canonical quoting/recursion and reference iteration. Tests trigger cancellation during the owned input copy (including malformed JSON) and verify cancellation is not replaced by a validation diagnostic.
 
-Five semantics-free spacing cases verify unrelated columns, a leading boundary space, a trailing boundary space, and widely separated printable/combining glyphs within one cluster. Stock high-level text is literal-exact; pre-fix PDFs in `fixtures/spacing-reference` are independent visual references, and CI requires unchanged pixels.
+Eight spacing cases, including semantic and semantics-free inputs, verify unrelated columns, a leading boundary space, a trailing boundary space, and widely separated printable/combining glyphs within one cluster. Stock high-level text is literal-exact; pre-fix PDFs in `fixtures/spacing-reference` are independent visual references, and CI requires unchanged pixels.
+
+Glyph-level Form isolation also applies to semantic text when every text in the connected container is eligible and whitespace-free. A context containing actual whitespace remains grouped, including real spaces across font runs. Semantics presence alone does not disable isolation; multiple whitespace-free runs sharing a container are covered.

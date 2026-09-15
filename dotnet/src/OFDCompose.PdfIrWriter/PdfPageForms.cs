@@ -14,14 +14,14 @@ internal static class PdfPageForms
         var page=new StringBuilder(original[..prefixLength]);var pending=new StringBuilder();
         var members=new List<(string Id,int Start,int Length)>();
         var locations=new Dictionary<string,List<(int Stream,int Start,int Length)>>();int? group=null;
-        var groupIds=new int[primitives.Count];Array.Fill(groupIds,-1);var groupSizes=new Dictionary<int,int>();
+        var groupIds=new int[primitives.Count];Array.Fill(groupIds,-1);var groupIsolation=new Dictionary<int,bool>();
         PdfPrimitiveSpan? previousText=null;int currentGroup=-1;
         for(int i=0;i<primitives.Count;i++)
         {
             pdf.CheckCancellation();var item=primitives[i];if(item.TextGroup is null)continue;
             bool connected=previousText is not null&&(previousText.TextGroup==item.TextGroup||previousText.TrailingSpace||item.LeadingSpace);
             if(!connected)currentGroup++;
-            groupIds[i]=currentGroup;groupSizes[currentGroup]=groupSizes.GetValueOrDefault(currentGroup)+1;previousText=item;
+            groupIds[i]=currentGroup;groupIsolation[currentGroup]=groupIsolation.GetValueOrDefault(currentGroup,true)&&item.IsolatedGlyphs is not null;previousText=item;
         }
         void Add(string id,int stream,int start,int length)
         {
@@ -45,7 +45,7 @@ internal static class PdfPageForms
         {
             var primitive=primitives[primitiveIndex];
             pdf.CheckCancellation();
-            if(primitive.IsolatedGlyphs is {Count:>0} glyphs&&groupSizes[groupIds[primitiveIndex]]==1)
+            if(primitive.IsolatedGlyphs is {Count:>0} glyphs&&groupIsolation[groupIds[primitiveIndex]])
             {
                 Flush();
                 string prefix=original.Substring(primitive.Start,glyphs[0].Start-primitive.Start);

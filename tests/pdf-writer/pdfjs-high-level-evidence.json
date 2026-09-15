@@ -161,6 +161,20 @@
     "actual": "off"
   },
   {
+    "case": "spacing-cluster-semantic",
+    "page": 0,
+    "classification": "exact",
+    "expected": "AB",
+    "actual": "AB"
+  },
+  {
+    "case": "spacing-combining-semantic",
+    "page": 0,
+    "classification": "exact",
+    "expected": "q́",
+    "actual": "q́"
+  },
+  {
     "case": "spacing-cluster",
     "page": 0,
     "classification": "exact",
@@ -173,6 +187,13 @@
     "classification": "exact",
     "expected": "q́",
     "actual": "q́"
+  },
+  {
+    "case": "spacing-semantic-runs",
+    "page": 0,
+    "classification": "exact",
+    "expected": "of",
+    "actual": "of"
   },
   {
     "case": "spacing-columns",

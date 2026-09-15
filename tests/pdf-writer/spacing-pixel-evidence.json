@@ -1,12 +1,15 @@
 {
-  "baseline": "Pre-fix unsemantic spacing paint",
-  "pdfCases": 5,
-  "pixelIdenticalPages": 5,
+  "baseline": "Pre-fix unsemantic and semantic spacing paint",
+  "pdfCases": 8,
+  "pixelIdenticalPages": 8,
   "pages": [
     { "page": "spacing-cluster-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
+    { "page": "spacing-cluster-semantic-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
     { "page": "spacing-columns-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
     { "page": "spacing-combining-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
+    { "page": "spacing-combining-semantic-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
     { "page": "spacing-leading-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
+    { "page": "spacing-semantic-runs-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
     { "page": "spacing-trailing-1.png", "maxChannelDelta": 0, "changedChannels": 0 }
   ]
 }
