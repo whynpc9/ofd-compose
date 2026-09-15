@@ -25,3 +25,5 @@ Image geometry compares all four PdfPig image corners against the IR mm-per-pixe
 Regression boundaries also cover original glyph IDs 2^31 and 2^32−1 with a valid explicit subset map, BMP/supplementary format-suffixed and format-only mappings, and isolated MappingTests execution from an absent output directory. Each artifact writer creates its output directory independently.
 
 Cancellation regression deterministically cancels after path enumeration starts and asserts emission stops before consuming the remaining commands; separate tests cover cancelled compression/finalization and writer reuse. Adding cancellation checkpoints leaves all 14 positive PDF hashes unchanged.
+
+PNG/JPEG determinism is also checked under a custom numeric culture with a Unicode minus sign and comma decimal separator; image matrices use the same invariant formatter as other geometry. Both cases fail before the fix and pass after it.
