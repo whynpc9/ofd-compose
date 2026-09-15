@@ -22,6 +22,11 @@ public sealed class PdfIrWriter
             using var document=IrValidation.Parse(canonicalIr,irDigest,limits,cancellationToken);var ir=document.RootElement;
             long estimate=canonicalIr.Length*12L+resources.Sum(r=>(long)r.Bytes.Length)*3+65536;
             cancellationToken.ThrowIfCancellationRequested();Require(estimate<=limits.OutputBytes,"RESOURCE_LIMIT","output","Output allocation reservation exceeded");
+            foreach(var page in ir.A("pages"))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                Require(page.N("width")<=5080000&&page.N("height")<=5080000,"UNSUPPORTED_FEATURE",page.S("id"),"PDF page dimensions exceed 14400 default user units; UserUnit scaling is not supported");
+            }
             var states=ir.A("graphicsStates").ToDictionary(s=>s.S("id"));
             var stateSizes=states.ToDictionary(p=>p.Key,p=>p.Value.GetRawText().Length);
             var semantics=ir.A("semantics").ToDictionary(s=>s.S("objectId"));
