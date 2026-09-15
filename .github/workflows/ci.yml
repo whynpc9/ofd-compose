@@ -36,13 +36,15 @@ jobs:
       - run: pnpm build
 
       - name: TS tests (node mode)
-        run: pnpm test
+        # Native-font suites have their own Vitest workers; avoid multiplying them
+        # across workspaces on a small runner. Workloads and test deadlines stay unchanged.
+        run: pnpm test --concurrency=1
 
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 
       - name: TS tests (browser mode)
-        run: pnpm test:browser
+        run: pnpm test:browser --concurrency=1
 
       - name: .NET restore (locked)
         run: dotnet restore dotnet/OFDCompose.slnx --locked-mode
