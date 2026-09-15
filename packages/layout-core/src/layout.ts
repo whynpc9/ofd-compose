@@ -288,6 +288,8 @@ export interface LayoutFont {
   bytes: Uint8Array | Promise<Uint8Array>;
 }
 export interface LayoutOptions {
+  /** Optional digest of the complete authorized input pack, including unused resources. */
+  resourcePackDigest?: string;
   page?: {
     width: number;
     height: number;
@@ -682,6 +684,12 @@ interface LayoutWork {
   regionAttempts: number;
 }
 function validatePaginationOptions(options: LayoutOptions) {
+  if (
+    options.resourcePackDigest !== undefined &&
+    (typeof options.resourcePackDigest !== "string" ||
+      !/^[a-f0-9]{64}$/.test(options.resourcePackDigest))
+  )
+    throw new LayoutError("LAYOUT_INPUT", "Invalid complete resource-pack digest");
   for (const [value, limit] of [
     [options.pagination?.maxPages, layoutResourceLimits.pages],
     [options.pagination?.maxIterations, layoutResourceLimits.paginationPasses],

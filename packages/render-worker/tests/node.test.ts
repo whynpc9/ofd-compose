@@ -69,5 +69,9 @@ it("runs the built public render entry in an independent Node process without a 
     child.on("close", (code) => (code === 0 ? resolve(stdout) : reject(new Error(stderr))));
     child.stdin.end(JSON.stringify({ source: sample.source, data: sample.data, profile }));
   });
-  expect(JSON.parse(result)).toEqual(expected);
+  expect(JSON.parse(result)).toEqual(
+    process.env.UPDATE_RENDER_FIXTURES === "1"
+      ? JSON.parse(await readFile(new URL("./expected.json", import.meta.url), "utf8"))
+      : expected,
+  );
 });

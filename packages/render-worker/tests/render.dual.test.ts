@@ -518,3 +518,95 @@ it("preserves the offending node identity on layout failures", async () => {
   });
   expect(result).not.toHaveProperty("ir");
 });
+it("retains a notdef-only subset for fonts referenced by glyphless text objects", async () => {
+  const sources = [textSource(""), textSource(""), textSource("")];
+  sources[1]!.body = [
+    {
+      kind: "paragraph",
+      nodeId: "p",
+      inlines: [
+        {
+          kind: "dynamic-text",
+          nodeId: "empty-value",
+          bindingId: "empty-binding",
+          expression: { kind: "legacy", text: "value" },
+        },
+      ],
+    },
+  ];
+  sources[2]!.body = [
+    {
+      kind: "paragraph",
+      nodeId: "p",
+      inlines: [
+        {
+          kind: "input-control",
+          nodeId: "empty-control",
+          controlId: "empty",
+          controlType: "text",
+          defaultValue: "",
+        },
+      ],
+    },
+  ];
+  for (const source of sources) {
+    const result = await render(source, { value: "" }, pack, profile);
+    if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+    const text = result.ir.pages.flatMap((p) => p.objects.filter((o) => o.kind === "text"));
+    expect(text.length).toBeGreaterThan(0);
+    expect(text.every((o) => o.glyphs.length === 0)).toBe(true);
+    expect(result.fonts).toHaveLength(1);
+    expect(result.fonts[0]!.glyphIdMap).toEqual([{ original: 0, subset: 0 }]);
+    expect(result.fonts[0]!.subsetDigest).toBe(fontDigest(result.fonts[0]!.bytes));
+    expect(text.every((o) => o.fontId === result.fonts[0]!.resourceId)).toBe(true);
+  }
+});
+it("commits every authorized image to the identity, independent of resource arrival/order", async () => {
+  const sample = await combined();
+  const first = await render(textSource(), {}, pack, profile);
+  const unused = { ...sample.pack.images![0]!, id: "unused" };
+  const second = await render(textSource(), {}, { ...pack, images: [unused] }, profile);
+  if (!first.ok || !second.ok) throw new Error("Expected successful renders");
+  expect(second.images).toEqual([]);
+  expect(second.identity.resourcePackDigest).not.toBe(first.identity.resourcePackDigest);
+  expect(second.identity.layoutInputDigest).not.toBe(first.identity.layoutInputDigest);
+  expect(second.identity.irDigest).not.toBe(first.identity.irDigest);
+  const fixtures = (await import("../../media-core/tests/fixtures.json")).default;
+  const bytes = Uint8Array.from(atob(fixtures.png), (c) => c.charCodeAt(0));
+  const replacement = { ...unused, bytes, byteLength: bytes.length, sha256: fontDigest(bytes) };
+  const third = await render(textSource(), {}, { ...pack, images: [replacement] }, profile);
+  if (!third.ok) throw new Error(JSON.stringify(third.diagnostics));
+  expect(third.identity.resourcePackDigest).not.toBe(second.identity.resourcePackDigest);
+  expect(third.identity.irDigest).not.toBe(second.identity.irDigest);
+  const alias = { ...unused, id: "alias" };
+  const ordered = await render(textSource(), {}, { ...pack, images: [unused, alias] }, profile);
+  const reversed = await render(textSource(), {}, { ...pack, images: [alias, unused] }, profile);
+  expect(ordered.ok && ordered.identity).toEqual(reversed.ok && reversed.identity);
+});
+it("uses intrinsic byte lengths before copying typed arrays with shadowed size fields", async () => {
+  let invoked = 0;
+  const bytes = new Uint8Array(await pack.fonts[0]!.bytes);
+  for (const key of ["length", "byteLength"])
+    Object.defineProperty(bytes, key, {
+      get() {
+        invoked++;
+        return 1;
+      },
+    });
+  const invalid = await render(
+    textSource(),
+    {},
+    { ...pack, fonts: [{ ...pack.fonts[0]!, byteLength: 1, bytes }] },
+    profile,
+  );
+  expect(invalid).toMatchObject({ ok: false, diagnostics: [{ code: "RESOURCE_FORBIDDEN" }] });
+  expect(invoked).toBe(0);
+  const valid = await render(
+    textSource(),
+    {},
+    { ...pack, fonts: [{ ...pack.fonts[0]!, bytes }] },
+    profile,
+  );
+  expect(valid.ok).toBe(true);
+  expect(invoked).toBe(0);
+});

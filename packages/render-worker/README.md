@@ -32,7 +32,8 @@ const result = await render(template, data, {
 ## Identity and resource ownership
 
 - Resource arrays use dense own data slots; indexed accessors, sparse entries and custom
-  iterators are rejected without invoking them.
+  iterators are rejected without invoking them. Typed-array sizes use the intrinsic byte-length
+  getter, so shadowed `length`/`byteLength` properties cannot bypass pre-copy reservations.
 - Hosts load fixed authorized bytes (or promises for those bytes), declare exact lengths and
   SHA-256 locks, and supply the pinned subset WASM. There are no filesystem, URL or network
   resolver callbacks in Core. A resource ID is scoped to this invocation; jobs never share an
@@ -44,6 +45,9 @@ const result = await render(template, data, {
   length and digest. All entries finish before media or layout runs. Missing font/image entries
   fail with `FONT_MISSING`/`RESOURCE_FORBIDDEN`; invalid fonts do not fall back to installed fonts. Stage-error location
   fields (node/binding/data path/page index when present) survive diagnostic conversion.
+- Identity includes an order-independent `resourcePackDigest` over every owned font/image/WASM
+  entry (validated metadata, length and byte digest), including unreferenced images. This digest
+  also participates in LayoutIdentity and therefore the final IR hash. The host cannot override it.
 - Identity contains template revision/schema, expression and binding-policy versions, template,
   input-data, compiled, resolved, media and layout-configuration digests, layout-input digest,
   subset version and final IR digest. Top-level provenance and BindingRuntime envelopes are
@@ -80,6 +84,8 @@ This lifecycle is separate from TypographyCore's FinalizationRegistry-managed ob
 
 Only fonts referenced by text objects are subsetted; unused font resources are pruned before
 final canonicalization (input authorization/validation still covers the entire pack).
+Glyphless text objects still reference a font and receive a .notdef-only subset; only fonts
+with no text-object references are skipped.
 The glyph set is the union of actual IR glyph IDs plus .notdef. Flags are
 `HB_SUBSET_FLAGS_RETAIN_GIDS=0x2`; default layout/composite closure stays enabled. The identity
 map covers requested glyph IDs plus .notdef; closure components are internal to the font.

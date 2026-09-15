@@ -1,5 +1,6 @@
 {
   "identity": {
+    "resourcePackDigest": "4837819c91dbcd37a88ee60c2a1140c581b95f3dace3f05c74ee7cb5758a28a4",
     "templateVersion": {
       "schemaVersion": "ofd-compose/document-model@0",
       "documentId": "render-poc",
@@ -14,13 +15,13 @@
     "mediaVersion": "ofd-compose/media@1",
     "mediaDigest": "cd9faf3f0d488763b927dff53f36ff92700a9b2f1cd094a7462fc29f70d57b54",
     "layoutConfigurationDigest": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
-    "layoutInputDigest": "87e3f73b679c99f4d446661887fd06378eec82bb4d0d88ef112018d86afbd2b0",
+    "layoutInputDigest": "dcd6fbce4da696ff9097f9d9f6291f4c3c7556ce1a262f63f85996946f62f200",
     "subsetVersion": {
       "package": "harfbuzzjs@1.6.0",
       "retainGids": true,
       "wasmSha256": "e3bf5ad5841bfdcc37878dff5330a13eea071b5860471d9d6515e31506e4ff96"
     },
-    "irDigest": "0371b050316ae6f6c15127b994dfc7bf78b790285f58fd8ead4b584a10330dfb"
+    "irDigest": "82acac02b81956ff7bba2c6ba01f2512780d20d1e22d693922577244b32935dc"
   },
   "pages": 4,
   "subsets": ["7a0d01bfd93d1fd97c17418ae001543e612e55d59b32182f35d56e4f793f84a0"]

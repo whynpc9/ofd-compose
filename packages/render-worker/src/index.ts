@@ -7,7 +7,12 @@ import {
   type TemplateSource,
 } from "@ofd-compose/document-model";
 import { type LayoutFont, type LayoutOptions, layout } from "@ofd-compose/layout-core";
-import { digestCanonical, digestSemanticDocument, withFontSubsets } from "@ofd-compose/layout-ir";
+import {
+  canonicalSerialize,
+  digestCanonical,
+  digestSemanticDocument,
+  withFontSubsets,
+} from "@ofd-compose/layout-ir";
 import { type AuthorizedImage, mediaVersion, prepareMedia } from "@ofd-compose/media-core";
 import { compile } from "@ofd-compose/template-compiler";
 import { fontDigest } from "@ofd-compose/typography-core";
@@ -36,7 +41,20 @@ export interface ResourcePack {
 }
 export interface RenderProfile {
   version: "ofd-compose/render@0";
-  layout: Omit<LayoutOptions, "images">;
+  layout: Omit<LayoutOptions, "images" | "resourcePackDigest">;
+}
+const byteLengthGetter = Object.getOwnPropertyDescriptor(
+  Object.getPrototypeOf(Uint8Array.prototype),
+  "byteLength",
+)?.get;
+function actualByteLength(bytes: Uint8Array): number {
+  if (!byteLengthGetter)
+    throw new RenderError("MODEL_INVALID", "Typed-array byte length is unavailable");
+  try {
+    return byteLengthGetter.call(bytes) as number;
+  } catch {
+    throw new RenderError("MODEL_INVALID", "Expected genuine typed-array bytes");
+  }
 }
 function field(input: unknown, key: string): unknown {
   if (!input || typeof input !== "object")
@@ -83,7 +101,11 @@ export async function render(
     const template = snapshot(source, budget);
     const input = snapshot(data, budget);
     const settings = snapshot(profile, budget);
-    if (settings.version !== "ofd-compose/render@0" || Object.hasOwn(settings.layout, "images"))
+    if (
+      settings.version !== "ofd-compose/render@0" ||
+      Object.hasOwn(settings.layout, "images") ||
+      Object.hasOwn(settings.layout, "resourcePackDigest")
+    )
       throw new RenderError("MODEL_INVALID", "Unsupported render profile");
     // Capture every descriptor and reserve ALL declared sizes before copying any resource or awaiting.
     const specs: {
@@ -111,6 +133,8 @@ export async function render(
           kind === "font" ? "FONT_MISSING" : "RESOURCE_FORBIDDEN",
           "Resource bytes are unavailable",
         );
+      if (bytes instanceof Uint8Array && actualByteLength(bytes) !== length)
+        throw new RenderError("RESOURCE_FORBIDDEN", "Resource length differs from declaration");
       const keys =
         kind === "font"
           ? ["family", "weight", "italic", "sha256"]
@@ -122,6 +146,33 @@ export async function render(
         const value = field(entry, key);
         if (value !== undefined) metadata[key] = value;
       }
+      if (
+        kind !== "wasm" &&
+        (typeof metadata.sha256 !== "string" || !/^[a-f0-9]{64}$/.test(metadata.sha256))
+      )
+        throw new RenderError("MODEL_INVALID", "Invalid resource digest lock");
+      if (
+        kind === "font" &&
+        (typeof metadata.family !== "string" ||
+          metadata.family.length < 1 ||
+          metadata.family.length > 256 ||
+          typeof metadata.weight !== "number" ||
+          !Number.isInteger(metadata.weight) ||
+          metadata.weight < 1 ||
+          metadata.weight > 1000 ||
+          typeof metadata.italic !== "boolean")
+      )
+        throw new RenderError("MODEL_INVALID", "Invalid font resource metadata");
+      if (
+        kind === "image" &&
+        (typeof metadata.id !== "string" ||
+          metadata.id.length < 1 ||
+          metadata.id.length > 256 ||
+          (metadata.mimeType !== undefined &&
+            metadata.mimeType !== "image/png" &&
+            metadata.mimeType !== "image/jpeg"))
+      )
+        throw new RenderError("MODEL_INVALID", "Invalid image resource metadata");
       specs.push({ kind, metadata: snapshot(metadata, budget), source: bytes, length });
     };
     for (const entry of list(field(pack, "fonts"), 64)) add(entry, "font");
@@ -131,19 +182,20 @@ export async function render(
     const own = (spec: (typeof specs)[number], bytes: Uint8Array) => {
       if (failed) throw new RenderError("RESOURCE_FORBIDDEN", "Resource acquisition stopped");
       budget.check();
-      if (!(bytes instanceof Uint8Array) || bytes.byteLength !== spec.length)
+      if (!(bytes instanceof Uint8Array) || actualByteLength(bytes) !== spec.length)
         throw new RenderError("RESOURCE_FORBIDDEN", "Resource length differs from declaration");
-      budget.charge("render", bytes.length * 2);
+      budget.charge("render", spec.length * 2);
       const copy = new Uint8Array(bytes);
       const metadata = spec.metadata as { sha256?: string };
       const expected = spec.kind === "wasm" ? subsetVersion.wasmSha256 : metadata.sha256;
-      if (fontDigest(copy) !== expected)
+      const digest = fontDigest(copy);
+      if (digest !== expected)
         throw new RenderError(
           spec.kind === "font" ? "FONT_DIGEST_MISMATCH" : "RESOURCE_FORBIDDEN",
           "Resource digest differs from authorization",
         );
       if (spec.kind === "font") inspectFont(copy);
-      return { ...spec, bytes: copy };
+      return { ...spec, bytes: copy, digest };
     };
     // Direct arrays are copied synchronously. Promised arrays are copied in their first continuation.
     const pending = specs.map((spec) => {
@@ -170,6 +222,20 @@ export async function render(
       failed = true;
       throw error;
     });
+    const resourceRecords = loaded.map(({ kind, metadata, length, digest }) => ({
+      kind,
+      metadata,
+      byteLength: length,
+      digest,
+    }));
+    prepayCanonical(resourceRecords, budget, "render", 16);
+    const resourcePackDigest = digestCanonical(
+      resourceRecords.sort((a, b) => {
+        const left = canonicalSerialize(a),
+          right = canonicalSerialize(b);
+        return left < right ? -1 : left > right ? 1 : 0;
+      }),
+    );
     phase = "compile";
     budget.charge(phase, budget.used.jsonNodes);
     const compiled = compile(template, { job: budget });
@@ -193,7 +259,7 @@ export async function render(
       .map((item) => ({ ...(item.metadata as Omit<LayoutFont, "bytes">), bytes: item.bytes }));
     phase = "layout";
     budget.check();
-    const layoutOptions: LayoutOptions = { ...settings.layout };
+    const layoutOptions: LayoutOptions = { ...settings.layout, resourcePackDigest };
     if (media.watermarkImages.length)
       layoutOptions.images = media.watermarkImages.map(({ sourceId, resource }) => ({
         ...resource,
@@ -213,11 +279,14 @@ export async function render(
       );
       if (subsets.some((s) => s.originalDigest === font.sha256)) continue;
       const glyphs = new Set<number>();
+      let referenced = false;
       for (const page of laid.ir.pages)
         for (const object of page.objects)
-          if (object.kind === "text" && resources.has(object.fontId))
+          if (object.kind === "text" && resources.has(object.fontId)) {
+            referenced = true;
             for (const glyph of object.glyphs) glyphs.add(glyph.glyphId);
-      if (glyphs.size === 0) continue;
+          }
+      if (!referenced) continue;
       subsets.push(await subsetFont(font.bytes, font.sha256, [...glyphs], wasmBytes, budget));
     }
     budget.check();
@@ -235,6 +304,7 @@ export async function render(
     prepayCanonical(bound.document, budget, phase);
     const ir = withFontSubsets(laid.ir, subsets);
     const identity = {
+      resourcePackDigest,
       templateVersion: {
         schemaVersion: template.schemaVersion,
         documentId: template.documentId,
