@@ -7,6 +7,16 @@ using Xunit;
 namespace OFDCompose.PdfIrWriter.Tests;
 public sealed class FallbackSpacingTests
 {
+    [Theory][InlineData("AB")][InlineData("q́")]
+    public async Task Multi_glyph_cluster_preserves_text_across_absolute_positions(string logical)
+    {
+        var f=await WriterTests.Fixture("multi-glyph");var n=JsonNode.Parse(f.Ir)!;var obj=n["pages"]![0]!["objects"]![0]!;
+        obj["logicalText"]=logical;obj["displayText"]=logical;obj["glyphs"]![1]!["position"]!["x"]=100000;
+        n["semantics"]=new JsonArray();n["identity"]!["semanticDigest"]=WriterTests.Digest("[]"u8.ToArray());using var parsed=JsonDocument.Parse(n.ToJsonString());byte[] ir=Encoding.UTF8.GetBytes(IrValidation.Canonical(parsed.RootElement,false,TestContext.Current.CancellationToken));
+        var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));using var pdf=PdfDocument.Open(result.Bytes!);Assert.Equal(logical,pdf.GetPage(1).Text);
+        string directory=Directory.CreateDirectory(Path.Combine(WriterTests.Output,"spacing")).FullName;string name=logical=="AB"?"spacing-cluster":"spacing-combining";
+        await File.WriteAllBytesAsync(Path.Combine(directory,name+".pdf"),result.Bytes!,TestContext.Current.CancellationToken);await File.WriteAllBytesAsync(Path.Combine(directory,name+".ir.json"),ir,TestContext.Current.CancellationToken);
+    }
     [Theory][InlineData("columns","o f","o f")][InlineData("leading","o"," f")][InlineData("trailing","o ","f")]
     public async Task Unsemantic_objects_preserve_only_their_explicit_whitespace(string name,string left,string right)
     {

@@ -161,6 +161,20 @@
     "actual": "off"
   },
   {
+    "case": "spacing-cluster",
+    "page": 0,
+    "classification": "exact",
+    "expected": "AB",
+    "actual": "AB"
+  },
+  {
+    "case": "spacing-combining",
+    "page": 0,
+    "classification": "exact",
+    "expected": "q́",
+    "actual": "q́"
+  },
+  {
     "case": "spacing-columns",
     "page": 0,
     "classification": "exact",

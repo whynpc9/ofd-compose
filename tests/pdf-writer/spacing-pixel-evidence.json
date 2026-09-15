@@ -1,22 +1,12 @@
 {
   "baseline": "Pre-fix unsemantic spacing paint",
-  "pdfCases": 3,
-  "pixelIdenticalPages": 3,
+  "pdfCases": 5,
+  "pixelIdenticalPages": 5,
   "pages": [
-    {
-      "page": "spacing-columns-1.png",
-      "maxChannelDelta": 0,
-      "changedChannels": 0
-    },
-    {
-      "page": "spacing-leading-1.png",
-      "maxChannelDelta": 0,
-      "changedChannels": 0
-    },
-    {
-      "page": "spacing-trailing-1.png",
-      "maxChannelDelta": 0,
-      "changedChannels": 0
-    }
+    { "page": "spacing-cluster-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
+    { "page": "spacing-columns-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
+    { "page": "spacing-combining-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
+    { "page": "spacing-leading-1.png", "maxChannelDelta": 0, "changedChannels": 0 },
+    { "page": "spacing-trailing-1.png", "maxChannelDelta": 0, "changedChannels": 0 }
   ]
 }

@@ -23,6 +23,8 @@ for (const name of [
   "rtl-order",
   "rtl-positions",
   "rtl-overlap",
+  "spacing-cluster",
+  "spacing-combining",
   "spacing-columns",
   "spacing-leading",
   "spacing-trailing",

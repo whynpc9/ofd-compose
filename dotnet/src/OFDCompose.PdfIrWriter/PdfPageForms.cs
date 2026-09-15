@@ -1,7 +1,7 @@
 using System.Text;
 namespace OFDCompose.PdfIrWriter;
 
-internal sealed record PdfGlyphSpan(int Start,int Length,int ClusterId);
+internal sealed record PdfGlyphSpan(int Start,int Length);
 internal sealed record PdfPrimitiveSpan(string Id,string? TextGroup,int Start,int Length,List<PdfGlyphSpan>? IsolatedGlyphs,bool LeadingSpace,bool TrailingSpace);
 
 /// <summary>Groups consecutive paint operations without changing their coordinates or order.</summary>
@@ -52,12 +52,10 @@ internal static class PdfPageForms
                 int end=glyphs[^1].Start+glyphs[^1].Length;
                 string suffix=original.Substring(end,primitive.Start+primitive.Length-end);
                 // Preserve original paint order, including noncontiguous cluster memberships.
-                for(int first=0;first<glyphs.Count;)
+                for(int first=0;first<glyphs.Count;first++)
                 {
-                    int last=first;
-                    while(last+1<glyphs.Count&&glyphs[last+1].ClusterId==glyphs[first].ClusterId)last++;
-                    string body=prefix+original.Substring(glyphs[first].Start,glyphs[last].Start+glyphs[last].Length-glyphs[first].Start)+suffix;
-                    Form(body,[(primitive.Id,0,body.Length)]);first=last+1;
+                    string body=prefix+original.Substring(glyphs[first].Start,glyphs[first].Length)+suffix;
+                    Form(body,[(primitive.Id,0,body.Length)]);
                 }
                 continue;
             }

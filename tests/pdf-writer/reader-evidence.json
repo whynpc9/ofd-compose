@@ -119,15 +119,15 @@
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 171,
-    "pdfTests": 49,
+    "dotnetFull": 173,
+    "pdfTests": 51,
     "mutationGates": 9,
-    "freshProcessDeterminism": "20 positive PDF outputs identical across fresh processes",
+    "freshProcessDeterminism": "22 positive PDF outputs identical across fresh processes",
     "isolatedMappingTestsFreshDirectory": 16,
     "pixelIdenticalPages": 20,
     "highLevelPositiveCasesLiteralExact": 14,
     "rtlPositiveCases": 3,
-    "spacingPositiveCases": 3
+    "spacingPositiveCases": 5
   },
   "openAcceptance": "Real Worker consecutive ASCII spaces normalize in stock getTextContent; user decision pending",
   "rtlCases": [
@@ -146,8 +146,16 @@
   ],
   "spacingCases": [
     {
+      "case": "spacing-cluster",
+      "sha256": "3deba32723c17a5b67dbdb98b010eaecdff316e52e15c87c7c1e347de58a8546"
+    },
+    {
       "case": "spacing-columns",
       "sha256": "04d40e7f061de9ddd885923084ecfd2e865c8cc89888615e0249e8e13972a890"
+    },
+    {
+      "case": "spacing-combining",
+      "sha256": "f9f3972bb2b1cfcc6fc86189bbae96451fbcb5775137538c2a492318f0f91dd8"
     },
     {
       "case": "spacing-leading",

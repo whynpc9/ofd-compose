@@ -40,4 +40,4 @@ Three RTL cases are stored separately under the generated `rtl/` directory. PdfP
 
 Parsing cancellation also covers token scanning, canonical quoting/recursion and reference iteration. Tests trigger cancellation during the owned input copy (including malformed JSON) and verify cancellation is not replaced by a validation diagnostic.
 
-Three semantics-free spacing cases verify unrelated columns, a leading boundary space and a trailing boundary space. Stock high-level text is literal-exact; pre-fix PDFs in `fixtures/spacing-reference` are independent visual references, and CI requires unchanged pixels.
+Five semantics-free spacing cases verify unrelated columns, a leading boundary space, a trailing boundary space, and widely separated printable/combining glyphs within one cluster. Stock high-level text is literal-exact; pre-fix PDFs in `fixtures/spacing-reference` are independent visual references, and CI requires unchanged pixels.

@@ -147,7 +147,7 @@ public sealed class PdfIrWriter
             var g=glyphs[i];double size=obj.N("fontSize");var code=font.Code(g.P("glyphId").GetUInt32(),texts[i],g.P("advance").N("x")/size*1000);
             int start=b.Length;
             b.Append($"/{code.Font} {F(size)} Tf\n1 0 0 -1 {F(g.P("position").N("x")+g.P("offset").N("x"))} {F(g.P("position").N("y")+g.P("offset").N("y"))} Tm\n<{code.Code:X4}> Tj\n");
-            glyphSpans?.Add(new(start,b.Length-start,g.I("clusterId")));
+            glyphSpans?.Add(new(start,b.Length-start));
         }
         b.Append("ET\nEMC\n");
         return order.Length==0?(false,false):(texts[order[0]].All(c=>c==' '),texts[order[^1]].All(c=>c==' '));
