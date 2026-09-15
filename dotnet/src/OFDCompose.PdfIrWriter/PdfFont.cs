@@ -23,6 +23,7 @@ internal sealed class PdfFont
     }
     internal PdfFont(PdfObjects pdf, JsonElement resource, byte[] bytes)
     {
+        pdf.CheckCancellation();
         this.pdf=pdf; cff=bytes.AsSpan().StartsWith("OTTO"u8);
         name="OFC"+resource.S("subsetDigest")[..16];
         subsetMap=resource.Has("glyphIdMap")?resource.A("glyphIdMap").ToDictionary(g=>g.P("original").GetUInt32(),g=>g.I("subset")):null;
@@ -76,6 +77,7 @@ internal sealed class PdfFont
                 var seen=new HashSet<int>{0};
                 while(gid<count)
                 {
+                    pdf.CheckCancellation();
                     int first=BinaryPrimitives.ReadUInt16BigEndian(data[cursor..]);cursor+=2;
                     int left=format==0?0:format==1?data[cursor++]:BinaryPrimitives.ReadUInt16BigEndian(data[cursor..]);if(format==2)cursor+=2;
                     for(int j=0;j<=left;j++){Require(seen.Add(first+j),"IR_RESOURCE","font","Duplicate CFF CID");glyphCids.Add(gid++,first+j);}
@@ -97,6 +99,7 @@ internal sealed class PdfFont
     }
     internal (string Font,int Code) Code(uint original, string text, double width)
     {
+        pdf.CheckCancellation();
         Require(text.Length<=256,"RESOURCE_LIMIT","font","ToUnicode destination exceeds 512-byte mapping budget");
         int gid=subsetMap is null?checked((int)original):subsetMap[original];
         foreach(var variant in variants)
@@ -125,10 +128,12 @@ internal sealed class PdfFont
     {
         foreach(var v in variants)
         {
+            pdf.CheckCancellation();
             var sorted=v.Codes.OrderBy(p=>p.Key).ToArray();
             var cmap=new StringBuilder("/CIDInit /ProcSet findresource begin\n12 dict begin\nbegincmap\n/CIDSystemInfo << /Registry (Adobe) /Ordering (UCS) /Supplement 0 >> def\n/CMapName /OFCUnicode def\n/CMapType 2 def\n1 begincodespacerange\n<0000> <FFFF>\nendcodespacerange\n");
             foreach(var batch in sorted.Chunk(100))
             {
+                pdf.CheckCancellation();
                 cmap.Append(batch.Length).Append(" beginbfchar\n");
                 foreach(var p in batch)cmap.Append('<').Append(p.Key.ToString("X4")).Append("> <").Append(Convert.ToHexString(Encoding.BigEndianUnicode.GetBytes(p.Value.Text))).Append(">\n");
                 cmap.Append("endbfchar\n");
@@ -142,7 +147,7 @@ internal sealed class PdfFont
                 foreach(var p in sorted)BinaryPrimitives.WriteUInt16BigEndian(gids.AsSpan(p.Key*2),(ushort)p.Value.Gid);
                 mapping=$" /CIDToGIDMap {pdf.Stream(gids)} 0 R";
             }
-            string widths=string.Join(" ",sorted.Select(p=>$"{p.Key} [{IrValidation.Number(p.Value.Width)}]"));
+            string widths=string.Join(" ",sorted.Select(p=>{pdf.CheckCancellation();return $"{p.Key} [{IrValidation.Number(p.Value.Width)}]";}));
             int descendant=pdf.Add($"<< /Type /Font /Subtype /{(cff?"CIDFontType0":"CIDFontType2")} /BaseFont /{name} /CIDSystemInfo << {cidSystemInfo} >> /FontDescriptor {descriptor} 0 R /DW 0 /W [{widths}]{mapping} >>");
             pdf.Set(v.ObjectId,PdfObjects.Ascii($"<< /Type /Font /Subtype /Type0 /BaseFont /{name} /Encoding /Identity-H /DescendantFonts [{descendant} 0 R] /ToUnicode {unicode} 0 R >>"));
             yield return $"/{v.Name} {v.ObjectId} 0 R";
