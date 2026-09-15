@@ -1,0 +1,12 @@
+{
+  "fixtureDerivation": "nonidentity-contract",
+  "workerBaseIrDigest": "35f5e48294edeeb894774d9ca8ecee4bc8d06ba0b09da82dc9dc9e9f86807ab9",
+  "irDigest": "fbbed2d71c148ce43449a08a43edd689dd84820ca0596777921bf316565be3b3",
+  "resources": [
+    {
+      "resourceId": "r0",
+      "file": "r0.bin",
+      "sha256": "cc7403d09684b2dab9ae37059e0c268335aefdcf8b1b53568553fbab32fb0e63"
+    }
+  ]
+}

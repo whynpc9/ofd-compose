@@ -1,2 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../../../third_party/ofdrw.net/src/Ofdrw.Net.Packaging/Ofdrw.Net.Packaging.csproj" />
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="BigGustave" />
+    <PackageReference Include="JpegLibrary" />
+    <EmbeddedResource Include="../../../schemas/layout-ir/canonical-layout-ir.schema.json" LogicalName="canonical-layout-ir.schema.json" />
+  </ItemGroup>
 </Project>

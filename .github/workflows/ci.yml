@@ -49,8 +49,26 @@ jobs:
       - name: .NET restore (locked)
         run: dotnet restore dotnet/OFDCompose.slnx --locked-mode
 
+      - name: Regenerate real Worker OFD fixtures
+        run: |
+          node packages/render-worker/tests/generate-ofd-fixtures.mjs
+          node packages/render-worker/tests/generate-ofd-geometry.mjs
+          test -z "$(git status --porcelain -- tests/ofd-writer/fixtures)"
+
       - name: .NET tests
+        env:
+          OFD_WRITER_OUTPUT: ${{ runner.temp }}/ofd-reader-input
         run: dotnet test dotnet/OFDCompose.slnx --no-restore
+
+      - name: Independent Java OFD Reader
+        run: |
+          docker build -t ofd-compose-reader tests/ofd-writer/java
+          docker run --rm --network none --memory 512m --cpus 2 \
+            -v "$PWD/tests/ofd-writer/fixtures:/fixtures:ro" \
+            -v "${{ runner.temp }}/ofd-reader-input:/input:ro" \
+            ofd-compose-reader /fixtures /input
+          python3 tests/ofd-writer/mutation-gate.py ofd-compose-reader \
+            "$PWD/tests/ofd-writer/fixtures" "${{ runner.temp }}/ofd-reader-input"
 
       - name: Golden corpus scan reports are reproducible
         # git status (not git diff): a new template whose .scan.json was never

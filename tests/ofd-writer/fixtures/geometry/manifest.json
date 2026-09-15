@@ -1,0 +1,17 @@
+{
+  "fixtureDerivation": "issue15-geometry-v1",
+  "workerBaseIrDigest": "52a2a97e245e9652564ada8d3b21b7d3c842a3806175e231cda0eba5805f6aeb",
+  "irDigest": "c201ea1449a069bc00f74e9939bbbfda43dc0e98b4ebc2974adfc09cceee9c1d",
+  "resources": [
+    {
+      "resourceId": "r0",
+      "file": "r0.bin",
+      "sha256": "43739c566e26fd7cb88f69d3864ea34740372f5ee99acac169e090beffbce5c6"
+    },
+    {
+      "resourceId": "r1",
+      "file": "r1.bin",
+      "sha256": "28d5f343a29a2307d945f268ab503c348b08cdea5e51f091cd918511476571b9"
+    }
+  ]
+}
