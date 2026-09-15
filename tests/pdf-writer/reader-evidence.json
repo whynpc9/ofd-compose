@@ -119,11 +119,11 @@
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 161,
-    "pdfTests": 39,
+    "dotnetFull": 162,
+    "pdfTests": 40,
     "mutationGates": 9,
     "freshProcessDeterminism": "14 PDF outputs identical",
-    "isolatedMappingTestsFreshDirectory": 14,
+    "isolatedMappingTestsFreshDirectory": 16,
     "pixelIdenticalPages": 20,
     "highLevelPositiveCasesLiteralExact": 14
   },

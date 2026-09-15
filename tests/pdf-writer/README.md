@@ -33,3 +33,5 @@ Form grouping adds no visual change: `compare-renderings.py` verifies all 20 pag
 Resource cancellation tests cover cancellation after validation enumeration starts, decoder IO, and token propagation into font/JPEG helpers. All OFD validation regressions remain in the solution gate.
 
 `fixtures/whitespace-reader/` contains immutable owned probes demonstrating the pinned reader's whitespace normalization. NBSP/LF glyph mappings are now explicit negatives; ASCII `A  B` (and real Worker `o  f`) remains a normal-input acceptance question, not a passing literal-exact case. Do not treat a green fixed-corpus gate as resolution of that pending decision.
+
+Fallback Form reservations include the entire repeated graphics state (including dash arrays), not only clips; a low-output-budget regression detects otherwise highly-compressible repeated state expansion before emission.

@@ -76,6 +76,16 @@ public sealed class MappingTests
         byte[] ir=Canonical(n);var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,new WriterLimits{Commands=12},TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Contains(result.Diagnostics,d=>d.Code=="RESOURCE_LIMIT"&&d.Path=="clips");
     }
+    [Fact]
+    public async Task Fallback_form_reservation_includes_repeated_dash_state()
+    {
+        var f=await WriterTests.Fixture("truetype");var n=JsonNode.Parse(f.Ir)!;var obj=n["pages"]![0]!["objects"]![0]!.DeepClone();
+        obj["glyphs"]=new JsonArray(obj["glyphs"]!.AsArray().Take(3).Select(g=>g!.DeepClone()).ToArray());obj["clusters"]=new JsonArray(obj["clusters"]!.AsArray().Take(3).Select(c=>c!.DeepClone()).ToArray());
+        obj["logicalText"]="AAA";obj["displayText"]="AAA";n["pages"]![0]!["objects"]=new JsonArray(obj);n["markers"]=new JsonArray();n["graphicsStates"]![0]!["dash"]=new JsonArray(Enumerable.Range(0,5000).Select(_=>(JsonNode?)JsonValue.Create(1)).ToArray());
+        byte[] ir=Canonical(n);int budget=checked(ir.Length*12+f.Resources.Sum(r=>r.Bytes.Length)*3+65536+3*2048+4096);
+        var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,new WriterLimits{OutputBytes=budget},TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Contains(result.Diagnostics,d=>d.Code=="RESOURCE_LIMIT"&&d.Path=="output");
+    }
     [Theory][InlineData(0)][InlineData(1)]
     public async Task Combining_cluster_each_glyph_has_independent_reader_geometry(int index)
     {

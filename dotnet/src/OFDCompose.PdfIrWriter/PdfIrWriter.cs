@@ -31,7 +31,7 @@ public sealed class PdfIrWriter
                 if(obj.Has("commands"))expandedClips+=obj.P("commands").GetArrayLength();
                 if(obj.Has("clip"))expandedClips+=obj.P("clip").P("commands").GetArrayLength();
                 var state=states[obj.S("stateId")];
-                estimate+=repetitions*(2048L+(state.Has("clip")?state.P("clip").GetRawText().Length*12L:0));
+                estimate+=repetitions*(2048L+state.GetRawText().Length*12L);
                 if(state.Has("clip"))expandedClips+=repetitions*state.P("clip").P("commands").GetArrayLength();
             }
             Require(expandedClips<=limits.Commands,"RESOURCE_LIMIT","clips","Form clip expansion budget exceeded");
