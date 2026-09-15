@@ -1,0 +1,13 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"],
+    "lib": ["ES2024", "DOM"],
+    "resolveJsonModule": true,
+    "paths": {
+      "#decoder": ["../media-core/tests/decoder.node.ts"],
+      "#font-loader": ["./tests/load.node.ts"]
+    }
+  },
+  "include": ["tests", "*.config.ts"]
+}

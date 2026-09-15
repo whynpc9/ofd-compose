@@ -74,3 +74,27 @@ export function digestSemanticDocument(input: Record<string, unknown>): string {
   const { provenance: _provenance, runtime: _runtime, ...semantic } = input;
   return digestCanonical(semantic);
 }
+
+/** Attach writer font identities to already quantized IR, then rebuild canonical resource IDs.
+ * Never feed canonical micrometres back through the millimetre quantizer. */
+export function withFontSubsets(
+  input: CanonicalLayoutIR,
+  subsets: readonly {
+    originalDigest: string;
+    subsetDigest: string;
+    glyphIdMap: { original: number; subset: number }[];
+  }[],
+): CanonicalLayoutIR {
+  validateCanonicalLayoutIR(input);
+  const ir = JSON.parse(canonicalSerialize(input)) as CanonicalLayoutIR;
+  for (const resource of ir.resources) {
+    if (resource.kind !== "font") continue;
+    const subset = subsets.find((item) => item.originalDigest === resource.originalDigest);
+    if (!subset) fail("IR_REFERENCE", "resources", "Font subset missing");
+    resource.subsetDigest = subset.subsetDigest;
+    resource.glyphIdMap = subset.glyphIdMap;
+  }
+  const result = normalizeStructure(ir);
+  validateCanonicalLayoutIR(result);
+  return result;
+}

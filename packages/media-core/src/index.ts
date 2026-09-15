@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import type { ResolvedBlock, ResolvedDocument, ResolvedMedia } from "@ofd-compose/binding-core";
+import type { JobContext } from "@ofd-compose/document-model";
 import { type Diagnostic, type ImageSource, imageReference } from "@ofd-compose/document-model";
 import { canonicalSerialize, digestCanonical } from "@ofd-compose/layout-ir";
 import { barcode, type PreparedBarcode } from "./barcodes.js";
@@ -61,7 +62,11 @@ function chargeSource(source: ResolvedMedia, budget: MediaBudget): void {
  * Media/configuration validation errors return no partial output. Resource digests use owned byte snapshots.
  * Persist mediaIdentity with layout options; merge image digests into LayoutIdentity.resources.
  */
-export function prepareMedia(document: ResolvedDocument, options: MediaOptions = {}) {
+export function prepareMedia(
+  document: ResolvedDocument,
+  options: MediaOptions = {},
+  job?: JobContext,
+) {
   const diagnostics: Diagnostic[] = [];
   const blocks: PreparedMediaBlock[] = [];
   let current: ResolvedMedia | undefined;
@@ -69,7 +74,7 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
     configurationRecord(options);
     const limits = configurationField(options, "limits");
     if (limits !== undefined) configurationRecord(limits);
-    const budget = new MediaBudget(limits as MediaOptions["limits"]);
+    const budget = new MediaBudget(limits as MediaOptions["limits"], job);
     const resolver = new ImageResolver(
       budget,
       configurationField(options, "resources"),

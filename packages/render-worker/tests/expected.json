@@ -1,0 +1,27 @@
+{
+  "identity": {
+    "templateVersion": {
+      "schemaVersion": "ofd-compose/document-model@0",
+      "documentId": "render-poc",
+      "revisionId": "1"
+    },
+    "expressionLanguageVersion": "expr-1",
+    "bindingPolicyVersion": "strict-1",
+    "templateDigest": "26e7bc73af2b63b17964af4588a08cb301412091ec209961b7116e9c778e1c84",
+    "dataDigest": "365b84a3220e037de3b46435d9c387df1c652f22db006a24ad049a521d11ecf2",
+    "compiledDigest": "4ff5a88a881a7b6c826f6d04d586b43174dbeb9b694c2629e0154daf02bdad84",
+    "resolvedDocumentDigest": "69c77899599463c00dbe3e85f35f4a2f49b93710ce8fff346f00d67315da7553",
+    "mediaVersion": "ofd-compose/media@1",
+    "mediaDigest": "cd9faf3f0d488763b927dff53f36ff92700a9b2f1cd094a7462fc29f70d57b54",
+    "layoutConfigurationDigest": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
+    "layoutInputDigest": "87e3f73b679c99f4d446661887fd06378eec82bb4d0d88ef112018d86afbd2b0",
+    "subsetVersion": {
+      "package": "harfbuzzjs@1.6.0",
+      "retainGids": true,
+      "wasmSha256": "e3bf5ad5841bfdcc37878dff5330a13eea071b5860471d9d6515e31506e4ff96"
+    },
+    "irDigest": "0371b050316ae6f6c15127b994dfc7bf78b790285f58fd8ead4b584a10330dfb"
+  },
+  "pages": 4,
+  "subsets": ["7a0d01bfd93d1fd97c17418ae001543e612e55d59b32182f35d56e4f793f84a0"]
+}

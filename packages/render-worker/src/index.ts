@@ -1,0 +1,285 @@
+import { bind, type JsonValue } from "@ofd-compose/binding-core";
+import {
+  type Diagnostic,
+  type DiagnosticCode,
+  type DiagnosticPhase,
+  diagnosticCodes,
+  type TemplateSource,
+} from "@ofd-compose/document-model";
+import { type LayoutFont, type LayoutOptions, layout } from "@ofd-compose/layout-core";
+import { digestCanonical, digestSemanticDocument, withFontSubsets } from "@ofd-compose/layout-ir";
+import { type AuthorizedImage, mediaVersion, prepareMedia } from "@ofd-compose/media-core";
+import { compile } from "@ofd-compose/template-compiler";
+import { fontDigest } from "@ofd-compose/typography-core";
+import {
+  prepayCanonical,
+  RenderBudget,
+  type RenderControl,
+  RenderError,
+  snapshot,
+} from "./budget.js";
+import { inspectFont, subsetFont, subsetVersion } from "./subset.js";
+
+export { type RenderControl, renderLimits } from "./budget.js";
+export { subsetVersion } from "./subset.js";
+
+export interface ResourceBytes {
+  /** Exact authorized length, checked before promise resolution and before copying. */
+  byteLength: number;
+  bytes: Uint8Array | Promise<Uint8Array>;
+}
+export interface ResourcePack {
+  fonts: readonly (Omit<LayoutFont, "bytes"> & ResourceBytes)[];
+  images?: readonly (Omit<AuthorizedImage, "bytes"> & ResourceBytes & { sha256: string })[];
+  /** Host loads the exact pinned harfbuzzjs/dist/harfbuzz-subset.wasm; core does no I/O. */
+  subsetWasm: ResourceBytes;
+}
+export interface RenderProfile {
+  version: "ofd-compose/render@0";
+  layout: Omit<LayoutOptions, "images">;
+}
+function field(input: unknown, key: string): unknown {
+  if (!input || typeof input !== "object")
+    throw new RenderError("MODEL_INVALID", "Expected resource record");
+  const descriptor = Object.getOwnPropertyDescriptor(input, key);
+  if (descriptor && !("value" in descriptor))
+    throw new RenderError("MODEL_INVALID", "Resource accessors are forbidden");
+  return descriptor?.value;
+}
+function list(input: unknown, ceiling: number): unknown[] {
+  if (!Array.isArray(input) || input.length > ceiling)
+    throw new RenderError("RESOURCE_LIMIT", "Resource count exceeds ceiling");
+  return input;
+}
+/** True shared Node/browser seam. Failure returns diagnostics only, never partial IR/resources. */
+export async function render(
+  source: TemplateSource,
+  data: JsonValue,
+  pack: ResourcePack,
+  profile: RenderProfile,
+  control: RenderControl = {},
+) {
+  const diagnostics: Diagnostic[] = [];
+  let phase: DiagnosticPhase = "render";
+  try {
+    const budget = new RenderBudget(control.signal, control.limits);
+    const template = snapshot(source, budget);
+    const input = snapshot(data, budget);
+    const settings = snapshot(profile, budget);
+    if (settings.version !== "ofd-compose/render@0" || Object.hasOwn(settings.layout, "images"))
+      throw new RenderError("MODEL_INVALID", "Unsupported render profile");
+    // Capture every descriptor and reserve ALL declared sizes before copying any resource or awaiting.
+    const specs: {
+      kind: "font" | "image" | "wasm";
+      metadata: unknown;
+      source: Uint8Array | Promise<Uint8Array>;
+      length: number;
+    }[] = [];
+    const add = (entry: unknown, kind: "font" | "image" | "wasm") => {
+      budget.reserve("resources", 1);
+      const length = field(entry, "byteLength");
+      const ceiling =
+        kind === "wasm" ? 2 * 1024 * 1024 : kind === "image" ? 8_000_000 : 32 * 1024 * 1024;
+      if (
+        typeof length !== "number" ||
+        !Number.isSafeInteger(length) ||
+        length < 1 ||
+        length > ceiling
+      )
+        throw new RenderError("RESOURCE_LIMIT", "Invalid resource byte length");
+      budget.reserve("resourceBytes", length);
+      const bytes = field(entry, "bytes");
+      if (!(bytes instanceof Uint8Array) && !(bytes instanceof Promise))
+        throw new RenderError(
+          kind === "font" ? "FONT_MISSING" : "RESOURCE_FORBIDDEN",
+          "Resource bytes are unavailable",
+        );
+      const keys =
+        kind === "font"
+          ? ["family", "weight", "italic", "sha256"]
+          : kind === "image"
+            ? ["id", "sha256", "mimeType"]
+            : [];
+      const metadata: Record<string, unknown> = {};
+      for (const key of keys) {
+        const value = field(entry, key);
+        if (value !== undefined) metadata[key] = value;
+      }
+      specs.push({ kind, metadata: snapshot(metadata, budget), source: bytes, length });
+    };
+    for (const entry of list(field(pack, "fonts"), 64)) add(entry, "font");
+    for (const entry of list(field(pack, "images") ?? [], 64)) add(entry, "image");
+    add(field(pack, "subsetWasm"), "wasm");
+    let failed = false;
+    const own = (spec: (typeof specs)[number], bytes: Uint8Array) => {
+      if (failed) throw new RenderError("RESOURCE_FORBIDDEN", "Resource acquisition stopped");
+      budget.check();
+      if (!(bytes instanceof Uint8Array) || bytes.byteLength !== spec.length)
+        throw new RenderError("RESOURCE_FORBIDDEN", "Resource length differs from declaration");
+      budget.charge("render", bytes.length * 2);
+      const copy = new Uint8Array(bytes);
+      const metadata = spec.metadata as { sha256?: string };
+      const expected = spec.kind === "wasm" ? subsetVersion.wasmSha256 : metadata.sha256;
+      if (fontDigest(copy) !== expected)
+        throw new RenderError(
+          spec.kind === "font" ? "FONT_DIGEST_MISMATCH" : "RESOURCE_FORBIDDEN",
+          "Resource digest differs from authorization",
+        );
+      if (spec.kind === "font") inspectFont(copy);
+      return { ...spec, bytes: copy };
+    };
+    // Direct arrays are copied synchronously. Promised arrays are copied in their first continuation.
+    const pending = specs.map((spec) => {
+      let task: Promise<ReturnType<typeof own>>;
+      try {
+        task =
+          spec.source instanceof Uint8Array
+            ? Promise.resolve(own(spec, spec.source))
+            : spec.source.then((bytes) => own(spec, bytes));
+      } catch (error) {
+        failed = true;
+        task = Promise.reject(error);
+      }
+      return task.catch((error: unknown) => {
+        failed = true;
+        if (error instanceof RenderError) throw error;
+        throw new RenderError(
+          spec.kind === "font" ? "FONT_MISSING" : "RESOURCE_FORBIDDEN",
+          "Authorized resource failed to arrive",
+        );
+      });
+    });
+    const loaded = await budget.wait(Promise.all(pending)).catch((error: unknown) => {
+      failed = true;
+      throw error;
+    });
+    phase = "compile";
+    budget.charge(phase, budget.used.jsonNodes);
+    const compiled = compile(template, { job: budget });
+    diagnostics.push(...compiled.diagnostics);
+    if (!compiled.ok) return { ok: false as const, diagnostics };
+    phase = "bind";
+    const bound = bind(compiled.template, input, { job: budget });
+    diagnostics.push(...bound.diagnostics);
+    if (!bound.ok) return { ok: false as const, diagnostics };
+    // Validate and prepay generated JSON before media/layout canonicalization.
+    snapshot(bound.document, budget, "bind");
+    phase = "media";
+    const images = loaded
+      .filter((item) => item.kind === "image")
+      .map((item) => ({ ...(item.metadata as Omit<AuthorizedImage, "bytes">), bytes: item.bytes }));
+    const media = prepareMedia(bound.document, { resources: images }, budget);
+    diagnostics.push(...media.diagnostics);
+    if (!media.ok) return { ok: false as const, diagnostics };
+    const fonts = loaded
+      .filter((item) => item.kind === "font")
+      .map((item) => ({ ...(item.metadata as Omit<LayoutFont, "bytes">), bytes: item.bytes }));
+    phase = "layout";
+    budget.check();
+    const laid = await layout(bound.document, fonts, settings.layout, media, budget);
+    diagnostics.push(...laid.diagnostics);
+    phase = "subset";
+    const wasmBytes = loaded.find((item) => item.kind === "wasm")?.bytes;
+    if (!wasmBytes) throw new RenderError("RESOURCE_FORBIDDEN", "Subset WASM missing");
+    const subsets: Awaited<ReturnType<typeof subsetFont>>[] = [];
+    for (const font of fonts) {
+      const resources = new Set(
+        laid.ir.resources
+          .filter((r) => r.kind === "font" && r.originalDigest === font.sha256)
+          .map((r) => r.id),
+      );
+      if (subsets.some((s) => s.originalDigest === font.sha256)) continue;
+      const glyphs = new Set<number>();
+      for (const page of laid.ir.pages)
+        for (const object of page.objects)
+          if (object.kind === "text" && resources.has(object.fontId))
+            for (const glyph of object.glyphs) glyphs.add(glyph.glyphId);
+      subsets.push(await subsetFont(font.bytes, font.sha256, [...glyphs], wasmBytes, budget));
+    }
+    budget.check();
+    phase = "render";
+    prepayCanonical(laid.ir, budget, phase, 8);
+    prepayCanonical(
+      subsets.map(({ bytes: _bytes, ...identity }) => identity),
+      budget,
+      phase,
+      8,
+    );
+    prepayCanonical(template, budget, phase);
+    prepayCanonical(input, budget, phase);
+    prepayCanonical(compiled.template, budget, phase);
+    prepayCanonical(bound.document, budget, phase);
+    const ir = withFontSubsets(laid.ir, subsets);
+    const identity = {
+      templateVersion: {
+        schemaVersion: template.schemaVersion,
+        documentId: template.documentId,
+        revisionId: template.revisionId,
+      },
+      expressionLanguageVersion: compiled.template.expressionLanguageVersion,
+      bindingPolicyVersion: bound.document.bindingPolicyVersion,
+      templateDigest: digestSemanticDocument(template),
+      dataDigest: digestCanonical(input),
+      compiledDigest: digestSemanticDocument({ ...compiled.template }),
+      resolvedDocumentDigest: digestSemanticDocument(bound.document),
+      mediaVersion,
+      mediaDigest: media.mediaIdentity,
+      layoutConfigurationDigest: digestCanonical(settings),
+      layoutInputDigest: ir.identity.inputDigest,
+      subsetVersion,
+      irDigest: digestCanonical(ir),
+    };
+    const writerFonts = ir.resources.flatMap((resource) =>
+      resource.kind === "font"
+        ? [
+            {
+              resourceId: resource.id,
+              ...subsets.find((s) => s.originalDigest === resource.originalDigest)!,
+            },
+          ]
+        : [],
+    );
+    const writerImages = ir.resources.flatMap((resource) =>
+      resource.kind === "image"
+        ? [
+            {
+              resourceId: resource.id,
+              digest: resource.digest,
+              bytes: media.blocks
+                .flatMap((b) => b.images ?? [])
+                .find((image) => image.resource.digest === resource.digest)!.bytes,
+            },
+          ]
+        : [],
+    );
+    return {
+      ok: true as const,
+      resolvedDocument: bound.document,
+      ir,
+      semanticMap: ir.semantics,
+      diagnostics,
+      identity,
+      fonts: writerFonts,
+      images: writerImages,
+      budget: { ...budget.used },
+      stageWork: { ...budget.stages },
+    };
+  } catch (error) {
+    const rawCode =
+      error && typeof error === "object" && "code" in error ? String(error.code) : "MODEL_INVALID";
+    const code: DiagnosticCode = diagnosticCodes.includes(rawCode as DiagnosticCode)
+      ? (rawCode as DiagnosticCode)
+      : rawCode.includes("LIMIT")
+        ? "RESOURCE_LIMIT"
+        : rawCode === "FONT_UNAVAILABLE"
+          ? "FONT_MISSING"
+          : "MODEL_INVALID";
+    diagnostics.push({
+      code,
+      severity: "error",
+      phase,
+      message: error instanceof Error ? error.message : "Render failed",
+    });
+    return { ok: false as const, diagnostics };
+  }
+}

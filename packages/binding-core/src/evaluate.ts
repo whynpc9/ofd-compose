@@ -1,4 +1,4 @@
-import type { BindingPolicyVersion, Diagnostic } from "@ofd-compose/document-model";
+import type { BindingPolicyVersion, Diagnostic, JobContext } from "@ofd-compose/document-model";
 import {
   type DatePattern,
   type ExpressionAst,
@@ -42,6 +42,7 @@ export interface Scope {
 
 /** 一次 bind() 内共享的运行期预算（排序次数）。 */
 export interface EvaluationBudget {
+  readonly job?: JobContext;
   readonly maxSortOperations: number;
   readonly counters: { sortOperations: number; mediaWorkUnits?: number };
 }
@@ -345,6 +346,8 @@ class Evaluator {
   private chargeSort(state: State, op: "sort" | "maxby" | "minby"): State | undefined {
     const { budget } = this.ctx;
     if (budget === undefined) return undefined;
+    const size = Array.isArray(state.value) ? state.value.length : 1;
+    budget.job?.charge("bind", size * (op === "sort" ? Math.ceil(Math.log2(size + 1)) : 1));
     budget.counters.sortOperations++;
     if (budget.counters.sortOperations <= budget.maxSortOperations) return undefined;
     this.diag({

@@ -6,6 +6,7 @@ import {
   type ResolvedParagraph,
   type ResolvedTextFragment,
 } from "@ofd-compose/binding-core";
+import type { JobContext } from "@ofd-compose/document-model";
 import {
   type PageBand,
   type PageSettings,
@@ -441,6 +442,7 @@ export async function layout(
   resources: readonly LayoutFont[],
   options: LayoutOptions,
   preparedMedia?: object,
+  job?: JobContext,
 ) {
   preflightJsonTree(document);
   preflightDocument(document);
@@ -607,9 +609,22 @@ export async function layout(
     pathCommands: 0,
     regionAttempts: 0,
   };
+  if (job)
+    for (const key of Object.keys(work) as (keyof typeof work)[]) {
+      let current = work[key];
+      Object.defineProperty(work, key, {
+        enumerable: true,
+        get: () => current,
+        set: (next: number) => {
+          job.charge("layout", Math.max(0, next - current));
+          current = next;
+        },
+      });
+    }
   const maxIterations = opts.pagination?.maxIterations ?? layoutResourceLimits.paginationPasses;
   let totalPages = 1;
   for (let iteration = 1; iteration <= maxIterations; iteration++) {
+    job?.charge("layout", 1);
     const { usesTotalPages, ...result } = new ParagraphLayouter(
       doc,
       faces,
@@ -2138,6 +2153,7 @@ class ParagraphLayouter {
     )
       throw new LayoutError("LAYOUT_LIMIT", "Page budget exceeded before page allocation");
     this.reserveSectionMetadata();
+
     this.work.pages++;
     this.pageIndex = this.ir.pages.length;
     this.ir.pages.push({
@@ -2475,6 +2491,7 @@ class ParagraphLayouter {
     for (let index = firstEndingAfter(runs, start); index < runs.length; index++) {
       const run = runs[index];
       if (!run || run.start >= end) break;
+
       this.work.runVisits++;
       if (this.work.runVisits > 2_000_000)
         throw new LayoutError("LAYOUT_LIMIT", "Line measurement exceeds 2000000 run visits");
@@ -2676,6 +2693,7 @@ class ParagraphLayouter {
       for (let index = candidateIndex; index < candidates.length; index++) {
         const candidate = candidates[index];
         if (!candidate) break;
+
         this.work.candidateVisits++;
         if (this.work.candidateVisits > 2_000_000)
           throw new LayoutError("LAYOUT_LIMIT", "Line selection exceeds 2000000 candidate visits");
