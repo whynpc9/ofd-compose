@@ -47,3 +47,27 @@ it("renders in genuine Node with no DOM or canvas and independently verifies the
     Object.keys(packageJson.dependencies).every((name) => name.startsWith("@ofd-compose/")),
   ).toBe(true);
 });
+it("runs the built public render entry in an independent Node process without a test loader", async () => {
+  const { spawn } = await import("node:child_process");
+  const { fileURLToPath } = await import("node:url");
+  const sample = await combined();
+  const result = await new Promise<string>((resolve, reject) => {
+    const child = spawn(
+      process.execPath,
+      [fileURLToPath(new URL("./render-node.mjs", import.meta.url))],
+      { stdio: ["pipe", "pipe", "pipe"] },
+    );
+    let stdout = "",
+      stderr = "";
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk;
+    });
+    child.stderr.on("data", (chunk) => {
+      stderr += chunk;
+    });
+    child.on("error", reject);
+    child.on("close", (code) => (code === 0 ? resolve(stdout) : reject(new Error(stderr))));
+    child.stdin.end(JSON.stringify({ source: sample.source, data: sample.data, profile }));
+  });
+  expect(JSON.parse(result)).toEqual(expected);
+});

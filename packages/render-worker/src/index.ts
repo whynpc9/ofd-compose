@@ -229,29 +229,23 @@ export async function render(
       subsetVersion,
       irDigest: digestCanonical(ir),
     };
-    const writerFonts = ir.resources.flatMap((resource) =>
-      resource.kind === "font"
-        ? [
-            {
-              resourceId: resource.id,
-              ...subsets.find((s) => s.originalDigest === resource.originalDigest)!,
-            },
-          ]
-        : [],
-    );
-    const writerImages = ir.resources.flatMap((resource) =>
-      resource.kind === "image"
-        ? [
-            {
-              resourceId: resource.id,
-              digest: resource.digest,
-              bytes: media.blocks
-                .flatMap((b) => b.images ?? [])
-                .find((image) => image.resource.digest === resource.digest)!.bytes,
-            },
-          ]
-        : [],
-    );
+    const subsetIndex = new Map(subsets.map((subset) => [subset.originalDigest, subset]));
+    const imageIndex = new Map<string, Uint8Array>();
+    for (const block of media.blocks)
+      for (const image of block.images ?? []) imageIndex.set(image.resource.digest, image.bytes);
+    const writerFonts = [];
+    const writerImages = [];
+    for (const resource of ir.resources) {
+      if (resource.kind === "font") {
+        const subset = subsetIndex.get(resource.originalDigest);
+        if (!subset) throw new RenderError("FONT_MISSING", "Writer font subset missing");
+        writerFonts.push({ resourceId: resource.id, ...subset });
+      } else {
+        const bytes = imageIndex.get(resource.digest);
+        if (!bytes) throw new RenderError("RESOURCE_FORBIDDEN", "Writer image bytes missing");
+        writerImages.push({ resourceId: resource.id, digest: resource.digest, bytes });
+      }
+    }
     return {
       ok: true as const,
       resolvedDocument: bound.document,

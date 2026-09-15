@@ -7,6 +7,9 @@
     },
     "typecheck": {},
     "test": {},
-    "test:browser": {}
+    "test:browser": {},
+    "@ofd-compose/render-worker#test": {
+      "dependsOn": ["build"]
+    }
   }
 }

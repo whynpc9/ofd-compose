@@ -1,7 +1,10 @@
 # Render Worker — Issue 14 / WP0.5a
 
 `render(TemplateSource, Data, ResourcePack, RenderProfile, control?)` is the shared Node/browser
-library seam. It runs compile → bind → prepareMedia → shape/layout → hb-subset → canonical IR.
+library seam. Build with `pnpm build` before importing the public package in plain Node.
+Default exports resolve ESM build artifacts; the `development` condition and TypeScript types
+resolve sources for Vite/editor tooling. These private workspace packages keep source-based
+TypeScript types (`tsdown.dts=false`); full `tsc --noEmit` remains a required gate. It runs compile → bind → prepareMedia → shape/layout → hb-subset → canonical IR.
 Success contains `resolvedDocument`, `ir` (integer micrometres), `semanticMap`, `diagnostics`,
 writer `fonts`/`images`, `identity` and budget observations. Failure contains **only**
 `ok:false` and structured diagnostics. No partial document or writer resources escape.
@@ -83,7 +86,9 @@ The entry preflights JSON depth/count/string units and declared resource count/b
 copies. SFNT directory bounds, static outline signature and `maxp` glyph count are checked
 before native allocation; TypographyCore's original font validation still applies.
 A shared `JobContext` charges compile traversal, binding expansion/sorts, media preparation,
-and every layout work counter across pagination/retry passes. Subsetting and snapshot/hash
+and every layout work counter across pagination/retry passes. Binding also prepays
+  array indices/slices/element paths, object counts, JSON text, each comparison, truthiness and
+  bounded decimal exponent expansion (before `toFixed`). Subsetting and snapshot/hash
 work use the same job meter. Existing module ceilings remain in effect.
 
 Default ceilings: 200k JSON nodes, 8M string units, depth 64, 128 resource entries, 160 MiB
@@ -101,7 +106,8 @@ not a hard native-memory cap. Node process-pool/stdio hosting is a later issue.
 
 ## Verification scope
 
-- Real Node runs without DOM/Canvas mocks; Core tsconfigs use `ES2024` only, Biome applies the
+- A separate plain Node subprocess imports the built public package and runs the full combination
+  without any test/TypeScript loader. Real Node runs without DOM/Canvas mocks; Core tsconfigs use `ES2024` only, Biome applies the
   same forbidden-global rules to render-worker, and runtime dependencies are audited in tests.
 - Identical combination: ranking/rate narrative, 100-row dynamic table (4 pages), image,
   Code128 and EAN13. Logical IR extraction equals an independently constructed expected text.

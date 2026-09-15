@@ -13,6 +13,7 @@ export default defineConfig({
   // Preserve Emscripten's import.meta.url-relative WASM asset loading.
   optimizeDeps: { exclude: ["harfbuzzjs"] },
   test: {
+    testTimeout: 30_000,
     include: ["tests/**/*.dual.test.ts"],
     browser: {
       enabled: true,

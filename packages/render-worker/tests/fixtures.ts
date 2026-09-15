@@ -1,8 +1,10 @@
+// biome-ignore-all lint/style/noNonNullAssertion: Fixed-cardinality corpus fixtures are checked by their explicit inventory tests.
 import type { TemplateSource } from "@ofd-compose/document-model";
 import { fontDigest } from "@ofd-compose/typography-core";
 import { loadFontFile, loadSubsetWasm } from "#font-loader";
 import manifest from "../../typography-core/fonts/manifest.json";
 import type { RenderProfile, ResourcePack } from "../src/index.js";
+import nodeImage from "./node-image.json";
 export const profile: RenderProfile = {
   version: "ofd-compose/render@0",
   layout: {
@@ -45,11 +47,7 @@ export async function resources(index = 0): Promise<ResourcePack> {
     subsetWasm: { byteLength: wasm.length, bytes: wasm },
   };
 }
-const png = new Uint8Array([
-  137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0,
-  0, 31, 21, 196, 137, 0, 0, 0, 11, 73, 68, 65, 84, 120, 156, 99, 96, 0, 2, 0, 0, 5, 0, 1, 122, 94,
-  171, 63, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
-]);
+const png = new Uint8Array(nodeImage);
 export async function combined() {
   const source = textSource();
   source.body = [

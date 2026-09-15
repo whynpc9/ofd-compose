@@ -52,6 +52,7 @@ import {
 import { detectTemporalRuntime, type TemporalRuntime } from "./runtime.js";
 import { evaluateTruthiness } from "./truthiness.js";
 import {
+  chargeBindingValue,
   isJsonArray,
   isJsonObject,
   isMissing,
@@ -507,6 +508,7 @@ class Binder {
     const result = this.evaluate(binding, scope, "condition");
     let visible = false;
     if (result.valueState !== "missing") {
+      chargeBindingValue(this.job, result.value);
       const truth = evaluateTruthiness(result.value, this.policy);
       if (truth.legacyDiverged) {
         this.legacyChange(
@@ -631,6 +633,7 @@ class Binder {
       });
       return [];
     }
+    chargeBindingValue(this.job, value);
     const truth = evaluateTruthiness(value, this.policy);
     if (truth.value) {
       this.legacyChange(

@@ -1,3 +1,4 @@
+import type { JobContext } from "@ofd-compose/document-model";
 import Decimal from "decimal.js";
 import { compareDateTimes, parseIsoDateTime } from "./date.js";
 
@@ -69,4 +70,19 @@ export function compareValues(left: Value, right: Value): number {
   const a = toText(left, "pascal").toUpperCase();
   const b = toText(right, "pascal").toUpperCase();
   return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/** Prepay repeated value serialization/case folding without constructing an intermediate string. */
+export function chargeBindingValue(job: JobContext | undefined, value: Value): void {
+  if (!job) return;
+  const visit = (item: unknown): void => {
+    job.charge("bind", 32 + (typeof item === "string" ? item.length * 6 : 0));
+    if (item && typeof item === "object")
+      for (const key in item)
+        if (Object.hasOwn(item, key)) {
+          job.charge("bind", key.length * 6);
+          visit((item as Record<string, unknown>)[key]);
+        }
+  };
+  visit(value);
 }

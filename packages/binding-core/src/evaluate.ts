@@ -13,10 +13,11 @@ import {
   pathSegmentsToText,
 } from "@ofd-compose/template-compiler";
 import { toDateTimeParts } from "./date.js";
-import { formatDateTime, formatDecimal } from "./format.js";
+import { FormattingLimitError, formatDateTime, formatDecimal } from "./format.js";
 import type { ValueState } from "./resolved-document.js";
 import { evaluateTruthiness } from "./truthiness.js";
 import {
+  chargeBindingValue,
   compareValues,
   isJsonArray,
   isJsonObject,
@@ -108,6 +109,7 @@ class Evaluator {
   }
   private indices(value: Value): number[] | undefined {
     this.checkMediaValue(value);
+    this.ctx.budget?.job?.charge("bind", isJsonArray(value) ? value.length * 8 : 1);
     return identityIndices(value);
   }
   private checkMediaValue(value: Value): void {
@@ -414,7 +416,7 @@ class Evaluator {
         const order = value.map((_, i) => i);
         const sign = step.direction === "desc" ? -1 : 1;
         // 稳定排序：相等键按输入序号 tie-break（spec §6），desc 只取反比较器而不反转序列。
-        order.sort((a, b) => sign * compareValues(keys[a] as Value, keys[b] as Value) || a - b);
+        order.sort((a, b) => sign * this.compare(keys[a] as Value, keys[b] as Value) || a - b);
         return {
           value: order.map((i) => value[i] as JsonValue),
           dataPath: state.dataPath,
@@ -424,6 +426,7 @@ class Evaluator {
       }
       case "take": {
         if (!isJsonArray(value)) return state;
+        this.ctx.budget?.job?.charge("bind", value.length * 16);
         return {
           value: value.slice(0, step.count),
           dataPath: state.dataPath,
@@ -457,7 +460,7 @@ class Evaluator {
         const { keys } = resolved;
         let best = 0;
         for (let i = 1; i < value.length; i++) {
-          const cmp = compareValues(keys[i] as Value, keys[best] as Value);
+          const cmp = this.compare(keys[i] as Value, keys[best] as Value);
           if ((step.op === "maxby" && cmp > 0) || (step.op === "minby" && cmp < 0)) best = i;
         }
         return this.pickIndex(state, best);
@@ -487,6 +490,7 @@ class Evaluator {
           });
           return { value: "", dataPath: state.dataPath, indices: undefined, missingAt: undefined };
         } else {
+          this.chargeValue(value);
           count = isJsonObject(value)
             ? Object.keys(value).length
             : typeof value === "string"
@@ -501,6 +505,7 @@ class Evaluator {
         return { value: count, dataPath: state.dataPath, indices: undefined, missingAt: undefined };
       }
       case "if": {
+        this.chargeValue(value);
         const truth = evaluateTruthiness(value, this.ctx.policy);
         if (truth.legacyDiverged) {
           this.legacyChange(
@@ -522,6 +527,7 @@ class Evaluator {
   }
 
   private format(value: JsonValue, step: Extract<OperationNode, { op: "format" }>): JsonValue {
+    this.chargeValue(value);
     const { format } = step;
     try {
       if (format.kind === "date") {
@@ -531,7 +537,11 @@ class Evaluator {
       } else {
         const decimal = toDecimal(value);
         if (decimal) {
-          return formatDecimal(decimal, this.pattern("number", format.pattern) as NumberPattern);
+          return formatDecimal(
+            decimal,
+            this.pattern("number", format.pattern) as NumberPattern,
+            this.ctx.budget?.job,
+          );
         }
       }
     } catch (error) {
@@ -550,7 +560,17 @@ class Evaluator {
     return this.text(value);
   }
 
+  private chargeValue(value: Value): void {
+    chargeBindingValue(this.ctx.budget?.job, value);
+  }
+  private compare(left: Value, right: Value): number {
+    this.chargeValue(left);
+    this.chargeValue(right);
+    return compareValues(left, right);
+  }
+
   private text(value: Value): string {
+    this.chargeValue(value);
     if (typeof value === "boolean" && this.ctx.policy === "legacy-compat-1") {
       this.legacyChange(
         "boolean-text",
@@ -597,6 +617,11 @@ class Evaluator {
       valueState = "null";
     }
 
+    if (isJsonArray(state.value))
+      this.ctx.budget?.job?.charge(
+        "bind",
+        state.value.length * ((state.dataPath?.length ?? 0) + 16) * 6,
+      );
     const elementDataPaths = isJsonArray(state.value)
       ? state.value.map((_, i) => `${state.dataPath ?? ""}[${state.indices?.[i] ?? i}]`)
       : undefined;
@@ -617,7 +642,8 @@ export function evaluateExpression(ast: ExpressionAst, ctx: EvaluationContext): 
   try {
     return new Evaluator(ctx).evaluate(ast);
   } catch (error) {
-    if (!(error instanceof MediaEvaluationLimit)) throw error;
+    if (!(error instanceof MediaEvaluationLimit) && !(error instanceof FormattingLimitError))
+      throw error;
     return {
       value: MISSING,
       text: "",

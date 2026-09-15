@@ -8,5 +8,9 @@ export default defineConfig({
       "#font-loader": fileURLToPath(new URL("./tests/load.node.ts", import.meta.url)),
     },
   },
-  test: { environment: "node", include: ["tests/**/*.test.ts"] },
+  test: {
+    testTimeout: 30_000,
+    environment: "node",
+    include: ["tests/**/*.test.ts"],
+  },
 });

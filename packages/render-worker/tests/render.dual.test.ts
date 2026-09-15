@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noNonNullAssertion: Fixed-cardinality corpus fixtures are checked by their explicit inventory tests.
 import { digestCanonical, validateCanonicalLayoutIR } from "@ofd-compose/layout-ir";
 import { fontDigest, TypographyCore } from "@ofd-compose/typography-core";
 import * as hb from "harfbuzzjs";
@@ -219,4 +220,162 @@ it("matches the committed independent Node digest in both engines", async () => 
     pages: result.ir.pages.length,
     subsets: result.fonts.map(({ subsetDigest }) => subsetDigest),
   }).toEqual(expected);
+});
+it("charges every large array index allocation before count/first evaluation", async () => {
+  const source = textSource();
+  source.body = [
+    {
+      kind: "paragraph",
+      nodeId: "large",
+      inlines: Array.from({ length: 100 }, (_, i) => ({
+        kind: "dynamic-text",
+        nodeId: `n${i}`,
+        bindingId: `b${i}`,
+        expression: { kind: "legacy", text: `items|${i % 2 ? "count" : "first"}` },
+      })),
+    },
+  ];
+  // Source/resource snapshots consume <40M units; 100 independent 10000-index allocations
+  // must exhaust the remaining job allowance during binding, before tiny outputs hide the work.
+  const result = await render(
+    source,
+    { items: Array.from({ length: 10000 }, () => 1) },
+    pack,
+    profile,
+    { limits: { workUnits: 40_000_000 } },
+  );
+  expect(result).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "RESOURCE_LIMIT", phase: "bind" }],
+  });
+});
+it("checks all declared sizes before awaiting or copying an earlier resource", async () => {
+  const bytes = new Uint8Array(await pack.fonts[0]!.bytes);
+  bytes[0] = 0; // Would be a digest error if copied/hashed before all size reservations.
+  const result = await render(
+    textSource(),
+    {},
+    {
+      ...pack,
+      fonts: [{ ...pack.fonts[0]!, bytes }],
+      images: [
+        {
+          id: "too-large",
+          sha256: "0".repeat(64),
+          byteLength: 8_000_001,
+          bytes: new Promise(() => {}),
+        },
+      ],
+    },
+    profile,
+  );
+  expect(result).toMatchObject({ ok: false, diagnostics: [{ code: "RESOURCE_LIMIT" }] });
+});
+it("never starts shaping while another authorized resource remains pending", async () => {
+  const signal = new AbortController();
+  const task = render(
+    textSource("😀"),
+    {},
+    { ...pack, subsetWasm: { ...pack.subsetWasm, bytes: new Promise(() => {}) } },
+    profile,
+    { signal: signal.signal },
+  );
+  await Promise.resolve();
+  signal.abort();
+  expect(await task).toMatchObject({ ok: false, diagnostics: [{ code: "RENDER_CANCELLED" }] });
+});
+it("rejects accessors without invoking them and preserves original font bytes after a caller edit", async () => {
+  let reads = 0;
+  const data = Object.defineProperty({}, "value", {
+    enumerable: true,
+    get() {
+      reads++;
+      return "secret";
+    },
+  });
+  expect(await render(textSource(), data, pack, profile)).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "MODEL_INVALID" }],
+  });
+  expect(reads).toBe(0);
+  const bytes = new Uint8Array(await pack.fonts[0]!.bytes);
+  const task = render(
+    textSource(),
+    {},
+    { ...pack, fonts: [{ ...pack.fonts[0]!, bytes }] },
+    profile,
+  );
+  bytes.fill(0);
+  expect((await task).ok).toBe(true);
+});
+it("meters repeated legacy object counts and repeated large extrema keys", async () => {
+  const source = textSource();
+  source.settings.bindingPolicyVersion = "legacy-compat-1";
+  source.body = [
+    {
+      kind: "paragraph",
+      nodeId: "counts",
+      inlines: Array.from({ length: 100 }, (_, i) => ({
+        kind: "dynamic-text",
+        nodeId: `n${i}`,
+        bindingId: `b${i}`,
+        expression: { kind: "legacy", text: "object|count" },
+      })),
+    },
+  ];
+  const object = Object.fromEntries(Array.from({ length: 10000 }, (_, i) => [`key${i}`, i]));
+  const counted = await render(source, { object }, pack, profile, {
+    limits: { workUnits: 40_000_000 },
+  });
+  expect(counted.ok).toBe(false);
+  expect(counted.diagnostics.at(-1)).toMatchObject({ code: "RESOURCE_LIMIT", phase: "bind" });
+  const maximum = textSource();
+  maximum.body = [
+    {
+      kind: "paragraph",
+      nodeId: "extrema",
+      inlines: [
+        {
+          kind: "dynamic-text",
+          nodeId: "max",
+          bindingId: "max-binding",
+          expression: { kind: "legacy", text: "items|maxby:key|get:name" },
+        },
+      ],
+    },
+  ];
+  const items = [
+    { key: "Z".repeat(1_000_000), name: "large" },
+    ...Array.from({ length: 1000 }, () => ({ key: "a", name: "small" })),
+  ];
+  const selected = await render(maximum, { items }, pack, profile, {
+    limits: { workUnits: 60_000_000 },
+  });
+  expect(selected).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "RESOURCE_LIMIT", phase: "bind" }],
+  });
+});
+it("rejects exponent expansion before fixed-point formatting allocation", async () => {
+  const source = textSource();
+  source.body = [
+    {
+      kind: "paragraph",
+      nodeId: "number",
+      inlines: [
+        {
+          kind: "dynamic-text",
+          nodeId: "number-text",
+          bindingId: "number-binding",
+          expression: { kind: "legacy", text: "value|format:number:#,##0.00" },
+        },
+      ],
+    },
+  ];
+  const result = await render(source, { value: "1e1000000000" }, pack, profile);
+  expect(result).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "RESOURCE_LIMIT", phase: "bind" }],
+  });
+  expect(result).not.toHaveProperty("resolvedDocument");
 });

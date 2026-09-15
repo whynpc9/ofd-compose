@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noNonNullAssertion: Fixed-cardinality corpus fixtures are checked by their explicit inventory tests.
 import type { JsonValue } from "@ofd-compose/binding-core";
 import type { BindingPolicyVersion } from "@ofd-compose/document-model";
 import { beforeAll, expect, it } from "vitest";
