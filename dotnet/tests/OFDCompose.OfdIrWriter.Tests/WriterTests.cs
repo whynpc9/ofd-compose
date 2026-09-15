@@ -69,7 +69,18 @@ public sealed class WriterTests
                 string xmlText=read switch { OfdTextElement t=>t.SourceXml!, OfdPathElement path=>path.SourceXml!, OfdImageElement image=>image.SourceXml!, _=>throw new InvalidOperationException() };
                 var readXml=XElement.Parse(xmlText);
                 Assert.Equal((int)Math.Round(state.GetProperty("opacity").GetDouble()*255,MidpointRounding.AwayFromZero),(int?)readXml.Attribute("Alpha")??255);
-                if(read is OfdPathElement readPath) CompareCommands(readPath.AbbreviatedData,readXml.Attribute("Rule")?.Value,obj);
+                var stateMatrix=IrMatrix(state.GetProperty("transform"));
+                double[] expectedMatrix=stateMatrix;
+                if(obj.GetProperty("kind").GetString()=="path" && obj.GetProperty("coordinateSpace").GetString()=="page")expectedMatrix=[1,0,0,1,0,0];
+                if(obj.GetProperty("kind").GetString()=="image")
+                {
+                    var resource=ir.RootElement.GetProperty("resources").EnumerateArray().Single(r=>r.GetProperty("id").GetString()==obj.GetProperty("resourceId").GetString());
+                    expectedMatrix=Product(Product(stateMatrix,IrMatrix(obj.GetProperty("transform"))),[resource.GetProperty("pixelWidth").GetDouble(),0,0,resource.GetProperty("pixelHeight").GetDouble(),0,0]);
+                }
+                double[]? actualMatrix=read switch {OfdTextElement t=>t.Transform,OfdPathElement path=>path.Transform,OfdImageElement image=>image.Transform,_=>null};
+                CompareMatrix(expectedMatrix,actualMatrix);
+                Assert.Equal(0,read.XMillimeters);Assert.Equal(0,read.YMillimeters);
+                if(read is OfdPathElement readPath) CompareCommands(readPath.AbbreviatedData,readXml.Attribute("Rule")?.Value,obj,actualMatrix,expectedMatrix);
                 var expectedClips=new List<JsonElement>();
                 if(state.TryGetProperty("clip",out var stateClip))expectedClips.Add(stateClip);
                 if(obj.TryGetProperty("clip",out var imageClip))expectedClips.Add(imageClip);
@@ -77,8 +88,12 @@ public sealed class WriterTests
                 Assert.Equal(expectedClips.Count,readClips.Length);
                 for(int c=0;c<readClips.Length;c++)
                 {
-                    var path=readClips[c].Elements().Single(e=>e.Name.LocalName=="Area").Elements().Single(e=>e.Name.LocalName=="Path");
-                    CompareCommands(path.Elements().Single(e=>e.Name.LocalName=="AbbreviatedData").Value,path.Attribute("Rule")?.Value,expectedClips[c]);
+                    var area=readClips[c].Elements().Single(e=>e.Name.LocalName=="Area");
+                    var path=area.Elements().Single(e=>e.Name.LocalName=="Path");
+                    var clipMatrix=Deltas(area.Attribute("CTM")!.Value);
+                    var expectedClipMatrix=c==0 && state.TryGetProperty("clip",out _)?stateMatrix:Product(stateMatrix,IrMatrix(obj.GetProperty("transform")));
+                    CompareMatrix(expectedClipMatrix,clipMatrix);
+                    CompareCommands(path.Elements().Single(e=>e.Name.LocalName=="AbbreviatedData").Value,path.Attribute("Rule")?.Value,expectedClips[c],clipMatrix,expectedClipMatrix);
                 }
                 if (read is OfdTextElement text)
                 {
@@ -106,6 +121,7 @@ public sealed class WriterTests
                         if (g > 0) { x += dx[g - 1]; y += dy[g - 1]; }
                         double Expected(string axis) => (glyphs[g].GetProperty("position").GetProperty(axis).GetDouble() + glyphs[g].GetProperty("offset").GetProperty(axis).GetDouble()) / 1000;
                         Assert.InRange(Math.Abs(x - Expected("x")), 0, 1e-9); Assert.InRange(Math.Abs(y - Expected("y")), 0, 1e-9);
+                        ComparePoint(actualMatrix!,x,y,expectedMatrix,Expected("x"),Expected("y"));
                     }
                 }
             }
@@ -318,7 +334,7 @@ public sealed class WriterTests
         var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
     }
-    private static void CompareCommands(string data,string? rule,JsonElement expected)
+    private static void CompareCommands(string data,string? rule,JsonElement expected,double[]? actualMatrix=null,double[]? expectedMatrix=null)
     {
         Assert.Equal(expected.GetProperty("fillRule").GetString()=="evenodd"?"Even-Odd":"NonZero",rule??"NonZero");
         var tokens=data.Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries);int at=0;
@@ -327,8 +343,14 @@ public sealed class WriterTests
             string op=command.GetProperty("op").GetString()!;
             Assert.Equal(op switch {"move"=>"M","line"=>"L","cubic"=>"B",_=>"C"},tokens[at++]);
             string[] coordinates=op switch {"move" or "line"=>["x","y"],"cubic"=>["x1","y1","x2","y2","x","y"],_=>[]};
-            foreach(string coordinate in coordinates)
-                Assert.InRange(Math.Abs(double.Parse(tokens[at++],CultureInfo.InvariantCulture)-command.GetProperty(coordinate).GetDouble()/1000),0,1e-9);
+            var actualCoordinates=new double[coordinates.Length];
+            for(int i=0;i<coordinates.Length;i++)
+            {
+                actualCoordinates[i]=double.Parse(tokens[at++],CultureInfo.InvariantCulture);
+                Assert.InRange(Math.Abs(actualCoordinates[i]-command.GetProperty(coordinates[i]).GetDouble()/1000),0,1e-9);
+            }
+            if(actualMatrix is not null && expectedMatrix is not null)for(int i=0;i<coordinates.Length;i+=2)
+                ComparePoint(actualMatrix,actualCoordinates[i],actualCoordinates[i+1],expectedMatrix,command.GetProperty(coordinates[i]).GetDouble()/1000,command.GetProperty(coordinates[i+1]).GetDouble()/1000);
         }
         Assert.Equal(tokens.Length,at);
     }
@@ -417,6 +439,38 @@ public sealed class WriterTests
         var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(bad)));
         var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
         Assert.False(result.Ok);var diagnostic=Assert.Single(result.Diagnostics);Assert.Equal("IR_RESOURCE",diagnostic.Code);Assert.Contains("maxp",diagnostic.Message);
+    }
+    private static double[] IrMatrix(JsonElement m)=>[m.GetProperty("a").GetDouble(),m.GetProperty("b").GetDouble(),m.GetProperty("c").GetDouble(),m.GetProperty("d").GetDouble(),m.GetProperty("e").GetDouble()/1000,m.GetProperty("f").GetDouble()/1000];
+    private static double[] Product(double[] a,double[] b)=>[a[0]*b[0]+a[2]*b[1],a[1]*b[0]+a[3]*b[1],a[0]*b[2]+a[2]*b[3],a[1]*b[2]+a[3]*b[3],a[0]*b[4]+a[2]*b[5]+a[4],a[1]*b[4]+a[3]*b[5]+a[5]];
+    private static void CompareMatrix(double[] expected,double[]? actual)
+    {
+        Assert.NotNull(actual);Assert.Equal(6,actual.Length);
+        for(int i=0;i<6;i++)Assert.InRange(Math.Abs(actual[i]-expected[i]),0,1e-9);
+    }
+    private static void ComparePoint(double[] actual,double x,double y,double[] expected,double ex,double ey)
+    {
+        Assert.InRange(Math.Abs(actual[0]*x+actual[2]*y+actual[4]-(expected[0]*ex+expected[2]*ey+expected[4])),0,1e-9);
+        Assert.InRange(Math.Abs(actual[1]*x+actual[3]*y+actual[5]-(expected[1]*ex+expected[3]*ey+expected[5])),0,1e-9);
+    }
+    [Theory]
+    [InlineData(false)][InlineData(true)]
+    public async Task Net_reader_gate_detects_changed_object_or_clip_ctm(bool clip)
+    {
+        var fixture=await Fixture("geometry");var result=await new OfdIrWriter().WriteAsync(fixture.Ir,Digest(fixture.Ir),fixture.Resources,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok);
+        using var memory=new MemoryStream();memory.Write(result.Bytes!);memory.Position=0;
+        using(var zip=new ZipArchive(memory,ZipArchiveMode.Update,true))
+        {
+            var entry=zip.Entries.Single(e=>e.FullName.EndsWith("/Content.xml",StringComparison.Ordinal));string name=entry.FullName;XDocument xml;
+            using(var input=entry.Open())xml=XDocument.Load(input);
+            var textObject=xml.Descendants().First(e=>e.Name.LocalName=="TextObject");
+            var target=clip?textObject.Descendants().First(e=>e.Name.LocalName=="Area"):textObject;target.SetAttributeValue("CTM","1 0 0 1 999 999");entry.Delete();
+            using var output=zip.CreateEntry(name).Open();xml.Save(output);
+        }
+        memory.Position=0;var read=await new OfdReader().ReadAsync(memory,TestContext.Current.CancellationToken);
+        using var ir=JsonDocument.Parse(fixture.Ir);var expected=IrMatrix(ir.RootElement.GetProperty("graphicsStates")[0].GetProperty("transform"));
+        var text=Assert.IsType<OfdTextElement>(read.Pages[0].Elements[0]);
+        var actual=clip?Deltas(XElement.Parse(text.SourceXml!).Descendants().First(e=>e.Name.LocalName=="Area").Attribute("CTM")!.Value):text.Transform;
+        Assert.Throws<Xunit.Sdk.InRangeException>(()=>CompareMatrix(expected,actual));
     }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)

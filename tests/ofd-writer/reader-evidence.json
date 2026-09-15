@@ -3,10 +3,10 @@
   "host": "macOS arm64",
   "dotnetSdk": "10.0.302",
   "dotnetTests": {
-    "passed": 120,
+    "passed": 122,
     "failed": 0,
     "skipped": 0,
-    "writerTests": 74
+    "writerTests": 76
   },
   "javaReader": "org.ofdrw:ofdrw-reader:2.3.7",
   "readerImageId": "sha256:ee219fd461caa5ec18de8c3418bbcb362b16aa60afdfddf5219f91e6e277b22b",
@@ -116,6 +116,8 @@
   "mutationGate": {
     "pathVertex": "rejected",
     "clipFillRule": "rejected",
-    "clusterCodePosition": "rejected"
+    "clusterCodePosition": "rejected",
+    "netObjectCtm": "rejected",
+    "netClipCtm": "rejected"
   }
 }
