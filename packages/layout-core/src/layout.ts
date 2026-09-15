@@ -48,6 +48,9 @@ import {
 } from "./graphics.js";
 import { type PageGeometry, pageGeometry } from "./page.js";
 
+// Layout IR construction coordinates are bounded to one million millimetres.
+const maxLayoutCoordinate = 1_000_000;
+
 export const layoutEngineVersion = "ofd-compose/paginated-layout@0";
 export const paragraphProfile = Object.freeze({
   name: "paragraphs-ltr",
@@ -896,7 +899,7 @@ class ParagraphLayouter {
     try {
       this.y = 0;
       this.inRegion = true;
-      this.decorationBox = { ...this.geometry.contentBox, y: 0, height: 100000 };
+      this.decorationBox = { ...this.geometry.contentBox, y: 0 };
       if (block.kind === "table") return this.table(block, true);
       if (block.kind === "image-binding" || block.kind === "barcode-binding") {
         this.placeMedia(block, true);
@@ -912,7 +915,7 @@ class ParagraphLayouter {
       const trailing = block.layout?.widowLines ?? 2;
       const maxLines = keep ? undefined : policy ? leading + trailing : 1;
       this.decorationBox.height = Math.min(
-        1000000,
+        maxLayoutCoordinate,
         this.geometry.contentBox.height * (maxLines ?? 1),
       );
       this.paragraph(block, index, undefined, maxLines);
@@ -958,7 +961,7 @@ class ParagraphLayouter {
       ...box,
       y: 0,
       height: Math.min(
-        1000000,
+        maxLayoutCoordinate,
         box.height * (this.options.pagination?.maxPages ?? layoutResourceLimits.pages),
       ),
     };
@@ -1248,7 +1251,7 @@ class ParagraphLayouter {
             startLines = this.lines.length,
             startMarkers = this.ir.markers.length;
           this.y = 0;
-          this.decorationBox = { x: 0, y: 0, width, height: 100000 };
+          this.decorationBox = { x: 0, y: 0, width, height: parent.height };
           source.blocks.forEach((b, i) => {
             this.block(b, i);
           });
@@ -1591,8 +1594,10 @@ class ParagraphLayouter {
         if (this.inRegion)
           throw new LayoutError("LAYOUT_OVERFLOW", "Table exceeds region", table.nodeId);
         this.newPage();
-        repeat++;
-        if (head > 0) paint(0, headers, true);
+        if (head > 0) {
+          repeat++;
+          paint(0, headers, true);
+        }
       }
       paint(start, end, false);
       start = end;
@@ -1954,7 +1959,7 @@ class ParagraphLayouter {
     try {
       this.inRegion = true;
       this.horizontalOverflow = policy.kind === "scale" || policy.kind === "truncate";
-      this.decorationBox = { ...box, height: 100000 };
+      this.decorationBox = { ...box, height: maxLayoutCoordinate - box.y };
       const attempts = policy.kind === "min-font-size" ? 9 : 1;
       for (let attempt = 0; attempt < attempts; attempt++) {
         if (++this.work.regionAttempts > 256)

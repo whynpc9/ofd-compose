@@ -722,3 +722,126 @@ it("bounds paragraph lookahead while preserving a 6000-line policy paragraph", a
     .join("");
   expect(extracted).toBe(`Title${Array(6000).fill("A").join("\n")}`);
 }, 60000);
+
+it.each(["direct", "heading", "region"] as const)(
+  "uses actual tall custom-page height for table cell measurement: %s",
+  async (mode) => {
+    const doc = document([]),
+      t = table(1),
+      cell = fixtureValue(t.rows[0]?.cells[0]);
+    cell.blocks = [
+      {
+        kind: "paragraph",
+        nodeId: "tall",
+        layout: { lineHeight: { kind: "fixed", value: 150000 } },
+        fragments: [{ kind: "text", text: "A", origin: { kind: "static", nodeId: "text" } }],
+      },
+    ];
+    const heading = {
+      kind: "paragraph" as const,
+      nodeId: "heading",
+      layout: { keepWithNext: true },
+      fragments: [
+        {
+          kind: "text" as const,
+          text: "Title",
+          origin: { kind: "static" as const, nodeId: "title" },
+        },
+      ],
+    };
+    doc.body =
+      mode === "direct"
+        ? [t]
+        : mode === "heading"
+          ? [heading, t]
+          : [
+              heading,
+              {
+                kind: "region",
+                nodeId: "region",
+                layout: {
+                  mode: "fixed",
+                  box: { x: 20, y: 30, width: 170, height: 100000 },
+                  overflow: { kind: "scale", minScale: 0.5 },
+                },
+                children: [t],
+              },
+            ];
+    doc.settings.page = {
+      paper: { width: 210, height: 200040 },
+      orientation: "portrait",
+      margins: { top: 20, right: 20, bottom: 20, left: 20 },
+    };
+    const result = await layout(doc, await fonts(), options);
+    expect(result.ir.pages).toHaveLength(1);
+    expect(result.lines.find((l) => l.nodeId === "tall")?.height).toBeCloseTo(
+      mode === "region" ? (150000 * 100000) / 150002 : 150000,
+      6,
+    );
+    if (mode === "region") expect(result.diagnostics[0]?.code).toBe("LAYOUT_OVERFLOW");
+    expect(result.semanticMap.find((s) => s.table)?.pageIndex).toBe(0);
+  },
+);
+it("places frozen media taller than 100000 mm when its custom page fits it", async () => {
+  const doc = bound(
+    [
+      {
+        kind: "table",
+        nodeId: "t",
+        rows: [
+          {
+            kind: "table-row",
+            nodeId: "r",
+            cells: [
+              {
+                kind: "table-cell",
+                nodeId: "c",
+                blocks: [
+                  {
+                    kind: "image-binding",
+                    nodeId: "image",
+                    bindingId: "image-binding",
+                    expression: { kind: "legacy", text: "image" },
+                    options: { width: 20, height: 150000, preserveAspectRatio: false },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    { image: mediaFixture.png },
+  );
+  doc.settings.page = {
+    paper: { width: 210, height: 200040 },
+    orientation: "portrait",
+    margins: { top: 20, right: 20, bottom: 20, left: 20 },
+  };
+  const result = await layout(doc, await fonts(), options, prepareMedia(doc));
+  expect(result.ir.pages).toHaveLength(1);
+  expect(result.ir.pages[0]?.objects.find((o) => o.kind === "image")?.bounds.height).toBe(
+    150000000,
+  );
+});
+it("starts repeated-header indices at one after moving the original table to a fresh page", async () => {
+  const doc = document([]),
+    t = table(80);
+  doc.body = [
+    {
+      kind: "paragraph",
+      nodeId: "filler",
+      layout: { lineHeight: { kind: "fixed", value: 240 } },
+      fragments: [
+        { kind: "text", text: "Filler", origin: { kind: "static", nodeId: "filler-text" } },
+      ],
+    },
+    t,
+  ];
+  const result = await layout(doc, await fonts(), options);
+  expect(result.semanticMap.find((s) => s.table)?.pageIndex).toBe(1);
+  const repeats = result.semanticMap
+    .filter((s) => s.repeatedHeader)
+    .map((s) => s.repeatedHeader?.instanceIndex);
+  expect(repeats).toEqual([1, 2, 3]);
+});

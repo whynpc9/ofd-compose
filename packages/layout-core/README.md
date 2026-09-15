@@ -317,12 +317,14 @@ zero-text objects and Semantic Map control identities in source order, including
 with ordinary text. Their boundary separates shaping runs without adding printable text. This is fixed output geometry, not the
 interactive editing UI. Existing region policies also transform and clip control markers.
 
-Rows never split (`rowSplit:"avoid"`). Connected vertical spans form atomic groups
+Cells measure against the actual parent height, including valid custom pages. Region overflow
+measurement remains within the Layout IR coordinate ceiling. Rows never split (`rowSplit:"avoid"`). Connected vertical spans form atomic groups
 (`mergePagination:"keep-together"`). An oversized cell, fixed row or merged group fails with
 `LAYOUT_OVERFLOW`; no text, image, barcode or business row is silently dropped.
 `headerRows` counts leading resolved rows; a merge cannot cross that boundary. Headers stay
 with the first business row/group. With `repeatHeader:true`, subsequent pages reuse measured
 header geometry and add `repeatedHeader:{originalNodeId,instanceIndex}` to each semantic entry.
+The first actual duplicate has index 1; relocating the original table does not advance it.
 Consumers extracting business text must exclude entries with that flag. `table` coordinates
 remain original zero-based rows/columns; RepeatRowGroup keys remain `repeatInstance` identities.
 

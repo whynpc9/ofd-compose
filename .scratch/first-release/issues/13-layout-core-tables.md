@@ -100,3 +100,21 @@ All **27 new shared tests** passed in Node/Chromium. Full post-fix verification:
 (Layout 114), **Chromium 330** (Layout 111), typecheck/build/lint passed, **0 cached** tasks.
 Independent Standards/Spec follow-up inspection confirmed the fixes without new concrete
 findings. The latest remote head still requires its own bot and CI completion.
+
+
+## PR #10 third review follow-up
+
+The bot reviewed `01eedefb7291b63b56127526fa58a71ad9af51fe` and raised two valid findings:
+
+- `4011757684`: cell measurement now uses its real parent height, and initial atomic lookahead
+  uses the actual page content height. Explicit region overflow measurement is bounded by the
+  Layout IR coordinate ceiling minus its origin, without a lower arbitrary 100000-mm cutoff.
+  Tests cover 150000-mm lines/images on valid custom pages and a legal 100000-mm region that
+  explicitly scales its taller cell content (with a diagnostic).
+- `4011757689`: moving the original table to a new page does not consume a repeated-header
+  identity; the index increments only when a duplicate header is actually painted.
+
+Five additional shared regressions passed. Full local verification: **Node 542** (Layout 119),
+**Chromium 335** (Layout 116), **0 cached**, with typecheck/build/lint passing. All **32 new
+shared tests** run in both environments. Both independent review axes confirmed these fixes
+without a concrete residual finding. Remote current-head closure remains required.
