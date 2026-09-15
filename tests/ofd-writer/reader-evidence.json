@@ -3,13 +3,13 @@
   "host": "macOS arm64",
   "dotnetSdk": "10.0.302",
   "dotnetTests": {
-    "passed": 107,
+    "passed": 113,
     "failed": 0,
     "skipped": 0,
-    "writerTests": 61
+    "writerTests": 67
   },
   "javaReader": "org.ofdrw:ofdrw-reader:2.3.7",
-  "readerImageId": "sha256:3827ac539a3dd69da5e962e6f2f8003ef3641f49c01efcd7a7d485e777ca0276",
+  "readerImageId": "sha256:00b7eaac94844e40c2471a9f016aaddb1c6cd4cf921864bef278054cf1a9157d",
   "geometryUnit": "mm",
   "geometryEvidence": "Reader object coordinates and transforms; not device rasterization",
   "cases": [
@@ -93,6 +93,15 @@
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "4a126ccbb9c9451bbc6a303e30774df2009506450e75f83a3dac2417522bf97e",
       "irSha256": "5a1573fcaa8495f0194cf937fe64b5f80cee6c8f4927c65d33d6888091dc1355"
+    },
+    {
+      "fixture": "multi-glyph",
+      "textObjects": 1,
+      "glyphs": 2,
+      "pathAndClipCommands": 0,
+      "maxGeometryErrorMm": 0.0,
+      "artifactSha256": "dad38ac1e851c46abf288ca096afb6ba6f07f27d6f39719c8bd72fa1dd848748",
+      "irSha256": "35f5e48294edeeb894774d9ca8ecee4bc8d06ba0b09da82dc9dc9e9f86807ab9"
     }
   ],
   "mutationGate": {

@@ -42,7 +42,7 @@ public final class ReaderGate {
     }
     public static void main(String[] args) throws Exception {
         var report = new JsonArray();
-        for (String name : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical", "duplicate-markers")) {
+        for (String name : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical", "duplicate-markers", "multi-glyph")) {
             JsonObject ir = JsonParser.parseString(Files.readString(Path.of(args[0],name,"ir.json"))).getAsJsonObject();
             Map<String,JsonObject> states = new HashMap<>();
             ir.getAsJsonArray("graphicsStates").forEach(e -> states.put(e.getAsJsonObject().get("id").getAsString(),e.getAsJsonObject()));

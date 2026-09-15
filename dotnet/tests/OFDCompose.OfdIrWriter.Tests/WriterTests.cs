@@ -43,6 +43,7 @@ public sealed class WriterTests
     [InlineData("logical-display")]
     [InlineData("glyphless-logical")]
     [InlineData("duplicate-markers")]
+    [InlineData("multi-glyph")]
     public async Task Real_worker_output_roundtrips_through_net_reader(string name)
     {
         var fixture = await Fixture(name);
@@ -143,9 +144,11 @@ public sealed class WriterTests
         for(int i=0;i<count;i++) if(Encoding.ASCII.GetString(corrupt,12+i*16,4)==tag)
         {
             System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(corrupt.AsSpan(12+i*16+12),0);
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(corrupt.AsSpan(12+i*16+4),0);
             found=true; break;
         }
         Assert.True(found);
+        RepairFontAdjustment(corrupt);
         var oldDigest = Digest(resource.Bytes.ToArray()); var newDigest = Digest(corrupt);
         var changedIr = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(oldDigest,newDigest));
         var resources = fixture.Resources.Select(r=>r.ResourceId==resource.ResourceId ? new WriterResource(r.ResourceId,corrupt):r).ToList();
@@ -163,9 +166,10 @@ public sealed class WriterTests
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(corrupt.AsSpan(start+found+1),(uint)(length+100));
         uint checksum=0;for(int i=0;i<length;i+=4){uint word=0;for(int b=0;b<4;b++)word=(word<<8)|(i+b<length?corrupt[start+i+b]:0u);checksum=unchecked(checksum+word);}
         System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(corrupt.AsSpan(directory+4),checksum);
+        RepairFontAdjustment(corrupt);
         var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(corrupt)));
         var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,corrupt)],cancellationToken:TestContext.Current.CancellationToken);
-        Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
+        Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);Assert.Contains("FDSelect",Assert.Single(result.Diagnostics).Message);
     }
     [Fact]
     public async Task Bad_png_crc_with_consistent_transport_digests_is_rejected()
@@ -295,6 +299,7 @@ public sealed class WriterTests
     {
         var fixture=await Fixture(name);var resource=fixture.Resources[0];var bad=resource.Bytes.ToArray();
         byte[] flavor=name=="cff"?[0,1,0,0]:Encoding.ASCII.GetBytes("OTTO");flavor.CopyTo(bad,0);
+        RepairFontAdjustment(bad);
         var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(bad)));
         var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
@@ -312,6 +317,46 @@ public sealed class WriterTests
                 Assert.InRange(Math.Abs(double.Parse(tokens[at++],CultureInfo.InvariantCulture)-command.GetProperty(coordinate).GetDouble()/1000),0,1e-9);
         }
         Assert.Equal(tokens.Length,at);
+    }
+    private static int FontTableOffset(byte[] bytes,string name)
+    {
+        int count=System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(bytes.AsSpan(4));
+        for(int i=0;i<count;i++)if(Encoding.ASCII.GetString(bytes,12+i*16,4)==name)
+            return (int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(12+i*16+8));
+        throw new InvalidOperationException("Fixture table missing");
+    }
+    private static void RepairFontAdjustment(byte[] bytes)
+    {
+        int adjustment=FontTableOffset(bytes,"head")+8;
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(adjustment),0);
+        uint sum=0;for(int i=0;i<bytes.Length;i+=4){uint word=0;for(int b=0;b<4;b++)word=(word<<8)|(i+b<bytes.Length?bytes[i+b]:0u);sum=unchecked(sum+word);}
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(adjustment),unchecked(0xb1b0afbAu-sum));
+    }
+    [Theory]
+    [InlineData("cff")][InlineData("truetype")]
+    public async Task Corrupt_whole_font_adjustment_is_rejected_with_valid_table_checksums(string name)
+    {
+        var fixture=await Fixture(name);var resource=fixture.Resources[0];var bad=resource.Bytes.ToArray();
+        bad[FontTableOffset(bad,"head")+8]^=1;
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(bad)));
+        var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);var diagnostic=Assert.Single(result.Diagnostics);Assert.Equal("IR_RESOURCE",diagnostic.Code);Assert.Contains("whole-font checksum",diagnostic.Message);
+    }
+    [Theory]
+    [InlineData("overlap")][InlineData("reordered")][InlineData("empty-range")]
+    public async Task Unrepresentable_cluster_relations_are_not_coarsened(string kind)
+    {
+        var fixture=await Fixture("cff");using var document=JsonDocument.Parse(fixture.Ir);
+        var obj=document.RootElement.GetProperty("pages")[0].GetProperty("objects")[0];
+        var clusters=obj.GetProperty("clusters");
+        string a=clusters[0].GetRawText(),b=clusters[1].GetRawText(),ra=clusters[0].GetProperty("logicalRange").GetRawText(),rb=clusters[1].GetProperty("logicalRange").GetRawText();
+        string source=obj.GetRawText();
+        source=kind switch {
+            "overlap"=>source.Replace(b,b.Replace("\"logicalRange\":"+rb,"\"logicalRange\":"+ra)),
+            "reordered"=>source.Replace(a,a.Replace("\"logicalRange\":"+ra,"\"logicalRange\":"+rb)).Replace(b,b.Replace("\"logicalRange\":"+rb,"\"logicalRange\":"+ra)),
+            _=>source.Replace(a,a.Replace("\"logicalRange\":"+ra,"\"logicalRange\":{\"end\":0,\"start\":0}")) };
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(obj.GetRawText(),source));var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),fixture.Resources,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Null(result.ObjectMap);Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
     }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)

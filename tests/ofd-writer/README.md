@@ -40,6 +40,8 @@ Cases:
 
 - `combined`: unchanged issue 14 100-row, four-page narrative/table/PNG/barcode result.
 - `cff`, `truetype`, `glyphless`, `jpeg`: actual Worker outputs with real subset bytes.
+- `multi-glyph`: real Worker `q́` shaping; a single cluster contains two glyphs
+  (including the zero-advance mark), asserted during fixture generation.
 - `geometry`: explicitly derived from real CFF/PNG resources and glyphs; vertical
   positions, offsets, deliberately unrelated baseline, local/page paths, state
   clips, image clips, high-precision/small/negative matrix coefficients and alpha.

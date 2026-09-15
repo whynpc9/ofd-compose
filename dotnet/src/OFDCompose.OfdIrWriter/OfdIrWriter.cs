@@ -102,9 +102,7 @@ public sealed class OfdIrWriter
                 return new XElement(Ns + "CGTransform", new XAttribute("CodePosition", start), new XAttribute("CodeCount", count),
                     new XAttribute("GlyphCount", group.Length), new XElement(Ns + "Glyphs", string.Join(" ", group.Select(g => F(mapping is null ? g.N("glyphId") : mapping[g.N("glyphId")])))));
             }
-            // Preserve individual cluster maps when logical and visual partitions agree.
-            // Overlapping/reordered logical ranges use a single n:m run map: drawing order
-            // remains exactly the IR glyph stream; semantic navigation keeps the source IR.
+            // This profile emits exact cluster mappings in the supplied visual glyph order.
             int logicalEnd = 0, glyphEnd = 0;
             bool partition = true;
             foreach(var cluster in item.A("clusters"))
@@ -115,12 +113,12 @@ public sealed class OfdIrWriter
                 foreach(var index in cluster.A("glyphIndices")) partition &= index.GetInt32() == glyphEnd++;
             }
             partition &= logicalEnd == logical.Length && glyphEnd == glyphs.Length;
-            if(partition) foreach(var cluster in item.A("clusters"))
+            Require(partition,"UNSUPPORTED_FEATURE",item.S("id"),"OFD profile requires an ordered, nonoverlapping logical cluster partition");
+            foreach(var cluster in item.A("clusters"))
             {
                 var range = cluster.P("logicalRange");
                 xml.Add(Map(range.I("start"), range.I("end")-range.I("start"), cluster.A("glyphIndices").Select(i => glyphs[i.GetInt32()])));
             }
-            else xml.Add(Map(0,logical.Length,glyphs));
         }
         double X(JsonElement g) => Mm(g.P("position").N("x") + g.P("offset").N("x"));
         double Y(JsonElement g) => Mm(g.P("position").N("y") + g.P("offset").N("y"));

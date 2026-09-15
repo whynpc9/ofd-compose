@@ -48,14 +48,15 @@ UTF-16 character count. Each TextObject has a page-sized, zero-origin Boundary s
 IR bounds metadata does not create another translation or clip. Page clipping
 still applies.
 
-CGTransform explicitly maps logical UTF-16 code ranges to subset glyph IDs. Normal
-ordered cluster partitions keep individual n:m cluster maps (ligatures, combining
-marks, surrogate pairs included). Reordered/overlapping logical cluster ranges use
-one n:m map for the entire run to preserve the visual glyph stream. In that case,
-per-cluster selection/source navigation must use the retained canonical IR, not a
-reader's inferred character positions. This does not claim device-level selection
-behavior. The pinned Java Reader uses UTF-16 code counts; broader reader handling
-of supplementary characters remains a device gate.
+CGTransform explicitly maps logical UTF-16 code ranges to subset glyph IDs.
+This profile preserves individual n:m cluster maps, including ligatures, combining
+marks, multi-glyph clusters and surrogate pairs. Logical cluster ranges must form
+an ordered, nonoverlapping partition matching the supplied visual glyph order.
+Reordered, overlapping, empty or gapped logical cluster ranges return
+`UNSUPPORTED_FEATURE`; the writer does not coarsen their associations. Source
+fragment ranges may still overlap within a shaped cluster and remain in the IR.
+The pinned Java Reader uses UTF-16 code counts; broader device selection and
+supplementary-character handling remain reader/device gates.
 
 LogicalText is the extractable TextCode, while displayText determines the upstream
 shaped glyph stream. Source strings/ranges are separately validated and never
@@ -81,7 +82,7 @@ source ranges/page identities, path/clip subpath sequencing and semantic digest.
 is removed before hashing.
 
 Before resource copies: 128 entries, 32 MiB each, 160 MiB total, exact resource
-closure/digests. SFNT checks cover directory bounds/nonoverlap/checksums, SFNT flavor/outline agreement, header and
+closure/digests. SFNT checks cover directory bounds/nonoverlap/table and whole-font checksums, SFNT flavor/outline agreement, header and
 style/metrics metadata, TrueType loca/contours/composite references/cycles, and CFF
 INDEX/charset/FDSelect/FDArray/Private/Subrs structure. The static flavor rule follows [OpenType sfntVersion](https://learn.microsoft.com/en-us/typography/opentype/spec/otff).
 It does not execute TrueType

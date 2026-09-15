@@ -22,6 +22,7 @@ for (const [name, fontIndex, text] of [
   ["cff", 0, "office é 中文 𠮷"],
   ["truetype", 2, "office é 中文"],
   ["glyphless", 0, ""],
+  ["multi-glyph", 0, "q\u0301"],
   ["jpeg", 0, null],
 ]) {
   const entry = manifest[fontIndex];
@@ -74,6 +75,15 @@ for (const [name, fontIndex, text] of [
     input.profile,
   );
   assert.equal(result.ok, true, JSON.stringify(result.diagnostics));
+  if (name === "multi-glyph")
+    assert.ok(
+      result.ir.pages.some((p) =>
+        p.objects.some(
+          (o) => o.kind === "text" && o.clusters.some((c) => c.glyphIndices.length > 1),
+        ),
+      ),
+      "Must exercise a real multi-glyph cluster",
+    );
   const directory = new URL(`${name}/`, root);
   await mkdir(directory, { recursive: true });
   const canonical = canonicalSerialize(result.ir);

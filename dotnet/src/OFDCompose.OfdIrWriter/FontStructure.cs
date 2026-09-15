@@ -21,18 +21,12 @@ internal static class FontStructure
         // Check table checksums (head.checkSumAdjustment is zero for its table checksum).
         foreach (var t in tables)
         {
-            uint sum=0;
-            for(int i=0;i<t.Value.Length;i+=4)
-            {
-                uint word=0;
-                for(int b=0;b<4;b++) word=(word<<8) | (i+b<t.Value.Length ? bytes[t.Value.Offset+i+b] : 0u);
-                if(t.Key=="head" && i==8) word=0;
-                sum=unchecked(sum+word);
-            }
+            uint sum=Checksum(bytes.AsSpan(t.Value.Offset,t.Value.Length),t.Key=="head");
             int directory=12;
             while(System.Text.Encoding.ASCII.GetString(bytes,directory,4)!=t.Key) directory+=16;
             Require(sum==U32(bytes,directory+4), "IR_RESOURCE", "font", "SFNT checksum mismatch");
         }
+        Require(Checksum(bytes)==0xb1b0afbAu,"IR_RESOURCE","font","SFNT whole-font checksum mismatch");
         if(tables.ContainsKey("CFF ")) { Cff(Table("CFF ",4),glyphs); return; }
         int format=I16(head,50); Require(format is 0 or 1,"IR_RESOURCE","font","Invalid loca format");
         var loca=Table("loca",(glyphs+1)*(format==0?2:4)); var glyf=Table("glyf",0);
@@ -183,6 +177,17 @@ internal static class FontStructure
             if(i>0)result.Add((start+previous-1,(int)offset-previous));previous=(int)offset;
         }
         at=start+previous-1;return result;
+    }
+    private static uint Checksum(ReadOnlySpan<byte> bytes,bool zeroAdjustment=false)
+    {
+        uint sum=0;
+        for(int i=0;i<bytes.Length;i+=4)
+        {
+            uint word=0;for(int b=0;b<4;b++)word=(word<<8)|(i+b<bytes.Length?bytes[i+b]:0u);
+            if(zeroAdjustment&&i==8)word=0;
+            sum=unchecked(sum+word);
+        }
+        return sum;
     }
     private static ushort U16(ReadOnlySpan<byte> b,int at)=>BinaryPrimitives.ReadUInt16BigEndian(b[at..]);
     private static short I16(ReadOnlySpan<byte> b,int at)=>BinaryPrimitives.ReadInt16BigEndian(b[at..]);
