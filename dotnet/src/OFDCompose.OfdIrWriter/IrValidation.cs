@@ -88,14 +88,14 @@ internal static class IrValidation
         var seen = new HashSet<string>(StringComparer.Ordinal);
         foreach (string id in ids) Require(seen.Add(id), "IR_DUPLICATE_ID", path, "Duplicate identity");
     }
-    private static void OrderedDefinitions(JsonElement list, string prefix)
+    private static void OrderedDefinitions(JsonElement list, string prefix, bool allowEqualContent = false)
     {
         string? previous = null;
         int index = 0;
         foreach (var item in list.EnumerateArray())
         {
             string content = Canonical(item, true);
-            Require(item.S("id") == prefix + index++ && (previous is null || string.CompareOrdinal(previous, content) < 0),
+            Require(item.S("id") == prefix + index++ && (previous is null || string.CompareOrdinal(previous, content) < 0 || allowEqualContent && string.CompareOrdinal(previous, content) == 0),
                 "IR_NON_CANONICAL", prefix, "Definitions must be sorted and deduplicated");
             previous = content;
         }
@@ -122,7 +122,7 @@ internal static class IrValidation
             if (clipCounts.TryGetValue(obj.S("stateId"), out int clips)) expandedCommands += clips;
         Require(expandedCommands <= limits.Commands, "RESOURCE_LIMIT", "clips", "Expanded clip command budget exceeded");
         OrderedDefinitions(ir.P("resources"), "r"); OrderedDefinitions(ir.P("graphicsStates"), "s");
-        OrderedDefinitions(ir.P("markers"), "m");
+        OrderedDefinitions(ir.P("markers"), "m", allowEqualContent: true);
         foreach(var state in ir.A("graphicsStates")) if(state.Has("clip")) PathCommands(state.P("clip"),state.S("id")+"/clip");
         var resources = ir.A("resources").ToDictionary(r => r.S("id"));
         var states = ir.A("graphicsStates").Select(s => s.S("id")).ToHashSet();

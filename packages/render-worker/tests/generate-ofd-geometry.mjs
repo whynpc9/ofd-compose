@@ -123,6 +123,23 @@ await writeFile(
 );
 for (const [name, baseName, change] of [
   [
+    "duplicate-markers",
+    "cff",
+    (x) => {
+      const marker = {
+        bounds: { x: 0, y: 0, width: 1000, height: 1000 },
+        kind: "non-painting",
+        nodeId: "duplicate-marker",
+        pageId: "p0",
+        signatureCoverage: "none",
+      };
+      x.markers = [
+        { ...marker, id: "m0" },
+        { ...marker, id: "m1" },
+      ];
+    },
+  ],
+  [
     "logical-display",
     "cff",
     (x) => {

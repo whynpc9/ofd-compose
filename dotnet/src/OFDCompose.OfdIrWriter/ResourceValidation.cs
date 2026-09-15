@@ -60,6 +60,10 @@ internal static class ResourceValidation
             tables.Add(name, ((int)offset, (int)length));
         }
         Require(!tables.ContainsKey("fvar") && tables.TryGetValue("maxp", out var maxp) && maxp.Length >= 6 && (tables.ContainsKey("CFF ") || tables.ContainsKey("glyf") && tables.ContainsKey("loca")), "IR_RESOURCE", "font", "Unsupported or invalid subset outline");
+        // OpenType sfntVersion identifies the outline flavor; this static profile forbids mixing.
+        bool cffFlavor=span[..4].SequenceEqual("OTTO"u8);
+        Require(cffFlavor==tables.ContainsKey("CFF ") && cffFlavor!=tables.ContainsKey("glyf"),
+            "IR_RESOURCE","font","SFNT flavor does not match outline tables");
         int glyphCount = BinaryPrimitives.ReadUInt16BigEndian(span[(tables["maxp"].Offset + 4)..]);
         int tableEnd = 12 + count * 16;
         foreach(var table in tables.Values.OrderBy(t => t.Offset))

@@ -6,10 +6,13 @@ import org.ofdrw.reader.ContentExtractor;
 import org.ofdrw.core.basicStructure.pageObj.layer.block.TextObject;
 import org.ofdrw.core.basicStructure.pageObj.layer.block.PathObject;
 import org.ofdrw.core.basicStructure.pageObj.layer.block.ImageObject;
+import org.ofdrw.core.graph.pathObj.CT_Path;
+import org.ofdrw.core.graph.pathObj.AbbreviatedData;
 
 /** Test-only: uses Java OFDReader and ContentExtractor, not writer XML routines. */
 public final class ReaderGate {
     static double maxError;
+    static int comparedPathCommands;
     static void check(boolean value, String message) { if (!value) throw new AssertionError(message); }
     static double n(JsonObject value, String key) { return value.get(key).getAsDouble(); }
     static void near(double actual, double expected) {
@@ -20,13 +23,30 @@ public final class ReaderGate {
         JsonObject m = state.getAsJsonObject("transform");
         return new double[]{n(m,"a"),n(m,"b"),n(m,"c"),n(m,"d"),n(m,"e")/1000,n(m,"f")/1000};
     }
+    static void pathGeometry(CT_Path path,JsonObject expected) {
+        String rule=expected.get("fillRule").getAsString().equals("evenodd")?"Even-Odd":"NonZero";
+        check(path.getRule().toString().equals(rule),"path/clip fill rule");
+        for(String token:path.getAbbreviatedData().trim().split("\\s+"))
+            if(!Set.of("M","L","B","C").contains(token))check(Double.isFinite(Double.parseDouble(token)),"finite path/clip coordinate");
+        var parsed=AbbreviatedData.parse(path.getAbbreviatedData());
+        var commands=expected.getAsJsonArray("commands");check(parsed.size()==commands.size(),"path/clip command count");
+        for(int i=0;i<parsed.size();i++) {
+            comparedPathCommands++;
+            var want=commands.get(i).getAsJsonObject();String op=want.get("op").getAsString();
+            String token=switch(op){case "move"->"M";case "line"->"L";case "cubic"->"B";case "close"->"C";default->throw new AssertionError(op);};
+            check(parsed.get(i).opt.equals(token),"path/clip operation order");
+            String[] coordinates=switch(op){case "move","line"->new String[]{"x","y"};case "cubic"->new String[]{"x1","y1","x2","y2","x","y"};default->new String[0];};
+            var values=parsed.get(i).values;check(values.length==coordinates.length,"path/clip operand count");
+            for(int n=0;n<coordinates.length;n++)near(values[n],n(want,coordinates[n])/1000);
+        }
+    }
     public static void main(String[] args) throws Exception {
         var report = new JsonArray();
-        for (String name : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical")) {
+        for (String name : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical", "duplicate-markers")) {
             JsonObject ir = JsonParser.parseString(Files.readString(Path.of(args[0],name,"ir.json"))).getAsJsonObject();
             Map<String,JsonObject> states = new HashMap<>();
             ir.getAsJsonArray("graphicsStates").forEach(e -> states.put(e.getAsJsonObject().get("id").getAsString(),e.getAsJsonObject()));
-            int objects = 0, glyphCount = 0; maxError = 0;
+            int objects = 0, glyphCount = 0; maxError = 0; comparedPathCommands = 0;
             try (var reader = new OFDReader(Path.of(args[1],name+".ofd"))) {
                 var extractor = new ContentExtractor(reader);
                 check(reader.getNumberOfPages() == ir.getAsJsonArray("pages").size(), "page count");
@@ -48,20 +68,32 @@ public final class ReaderGate {
                             if(state.has("clip")) {
                                 check(path.getClips().getClips().size()==1,"path clip count");
                                 var clipMatrix=path.getClips().getClips().getFirst().getAreas().getFirst().getCTM().toDouble();
+                                pathGeometry((CT_Path)path.getClips().getClips().getFirst().getAreas().getFirst().getClipObj(),state.getAsJsonObject("clip"));
                                 var wantedClip=matrix(state);for(int k=0;k<6;k++)near(clipMatrix[k],wantedClip[k]);
                             }
+                            near(path.getAlpha(),Math.round(n(state,"opacity")*255));
                             near(path.getLineWidth(),n(state,"lineWidth")/1000);
-                            check(path.getAbbreviatedData()!=null && !path.getAbbreviatedData().isBlank(),"path geometry");
+                            pathGeometry(path,original);
                         } else if(blocks.get(b) instanceof ImageObject image) {
                             check(original.get("kind").getAsString().equals("image"),"image order");
+                            near(image.getAlpha(),Math.round(n(state,"opacity")*255));
                             JsonObject resource=null;
                             for(var r:ir.getAsJsonArray("resources"))if(r.getAsJsonObject().get("id").getAsString().equals(original.get("resourceId").getAsString()))resource=r.getAsJsonObject();
                             var pixel=matrix(original);double w=n(resource,"pixelWidth"),h=n(resource,"pixelHeight");
                             double[] m=expectedMatrix;
                             expectedMatrix=new double[]{(m[0]*pixel[0]+m[2]*pixel[1])*w,(m[1]*pixel[0]+m[3]*pixel[1])*w,(m[0]*pixel[2]+m[2]*pixel[3])*h,(m[1]*pixel[2]+m[3]*pixel[3])*h,m[0]*pixel[4]+m[2]*pixel[5]+m[4],m[1]*pixel[4]+m[3]*pixel[5]+m[5]};
                             var actualMatrix=image.getCTM().toDouble();for(int k=0;k<6;k++)near(actualMatrix[k],expectedMatrix[k]);
+                            int clipCount=(state.has("clip")?1:0)+(original.has("clip")?1:0);
+                            check((image.getClips()==null?0:image.getClips().getClips().size())==clipCount,"image clip count");
+                            if(state.has("clip")) {
+                                var area=image.getClips().getClips().getFirst().getAreas().getFirst();
+                                pathGeometry((CT_Path)area.getClipObj(),state.getAsJsonObject("clip"));
+                                var stateClipMatrix=area.getCTM().toDouble();var wantedState=matrix(state);
+                                for(int k=0;k<6;k++)near(stateClipMatrix[k],wantedState[k]);
+                            }
                             if(original.has("clip")) {
                                 var clips=image.getClips().getClips();check(clips.size()==(state.has("clip")?2:1),"image clip intersection count");
+                                pathGeometry((CT_Path)clips.getLast().getAreas().getFirst().getClipObj(),original.getAsJsonObject("clip"));
                                 var clipMatrix=clips.getLast().getAreas().getFirst().getCTM().toDouble();
                                 double[] wantedClip=expectedMatrix.clone();wantedClip[0]/=w;wantedClip[1]/=w;wantedClip[2]/=h;wantedClip[3]/=h;
                                 for(int k=0;k<6;k++)near(clipMatrix[k],wantedClip[k]);
@@ -77,6 +109,9 @@ public final class ReaderGate {
                     check(actual.equals(wanted), "logical text mismatch " + name + " page " + p);
                     for (int i=0;i<texts.size();i++) {
                         var text=texts.get(i); var obj=expected.get(i); objects++;
+                        var textState=states.get(obj.get("stateId").getAsString());
+                        near(text.getAlpha(),Math.round(n(textState,"opacity")*255));
+                        if(textState.has("clip"))pathGeometry((CT_Path)text.getClips().getClips().getFirst().getAreas().getFirst().getClipObj(),textState.getAsJsonObject("clip"));
                         var codes=text.getTextCodes(); check(codes.size()==1,"one positioned run");
                         var code=codes.getFirst(); var glyphs=obj.getAsJsonArray("glyphs");
                         var m=text.getCTM().toDouble(); var sm=matrix(states.get(obj.get("stateId").getAsString()));
@@ -105,7 +140,7 @@ public final class ReaderGate {
                     p++;
                 }
             }
-            var row=new JsonObject(); row.addProperty("fixture",name);row.addProperty("textObjects",objects);row.addProperty("glyphs",glyphCount);row.addProperty("maxGeometryErrorMm",maxError);report.add(row);
+            var row=new JsonObject(); row.addProperty("fixture",name);row.addProperty("textObjects",objects);row.addProperty("glyphs",glyphCount);row.addProperty("pathAndClipCommands",comparedPathCommands);row.addProperty("maxGeometryErrorMm",maxError);report.add(row);
         }
         System.out.println(new GsonBuilder().setPrettyPrinting().create().toJson(report));
     }

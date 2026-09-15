@@ -26,10 +26,14 @@ fixture; its final IR hash must match that issue's committed `expected.json`.
 ## Evidence boundary
 
 The committed `reader-evidence.json` records the executed local Java Reader result.
-It measures glyph origins and state/image/path matrices read through the actual
+It measures glyph origins and state/image/path matrices, path/clip commands and fill rules read through the actual
 Reader object API; the harness applies those matrices to compare page coordinates.
 .NET compares typed Reader text runs, object maps, all embedded resource bytes,
 unique IDs, standard XML namespaces and deterministic final package entries.
+.NET checks typed path data and the Reader-preserved clip XML; Java checks its
+CT_Path/Clip model and AbbreviatedData parser. `mutation-gate.py` additionally
+corrupts an owned copy of a path vertex or clip fill rule and requires the Java
+gate to reject it for that geometric reason.
 The writer itself validates schema/canonical/reference/font/image/budget constraints.
 
 Cases:
@@ -42,6 +46,8 @@ Cases:
 - `logical-display`: explicit derivation with logical/display differences and CRLF,
   markup and quotation characters; uses the original real glyph stream.
 - `glyphless-logical`: explicit derivation with nonempty logical text and zero glyphs.
+- `duplicate-markers`: shared-contract-validated duplicate marker content with distinct
+  canonical IDs; markers are ordered but not deduplicated.
 
 Derived fixtures get new input/final IR digests and provenance in their separate
 manifest. They are not claimed as unchanged Worker rendering decisions.

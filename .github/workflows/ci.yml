@@ -67,6 +67,8 @@ jobs:
             -v "$PWD/tests/ofd-writer/fixtures:/fixtures:ro" \
             -v "${{ runner.temp }}/ofd-reader-input:/input:ro" \
             ofd-compose-reader /fixtures /input
+          python3 tests/ofd-writer/mutation-gate.py ofd-compose-reader \
+            "$PWD/tests/ofd-writer/fixtures" "${{ runner.temp }}/ofd-reader-input"
 
       - name: Golden corpus scan reports are reproducible
         # git status (not git diff): a new template whose .scan.json was never

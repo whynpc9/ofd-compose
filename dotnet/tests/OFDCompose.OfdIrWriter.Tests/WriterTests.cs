@@ -42,6 +42,7 @@ public sealed class WriterTests
     [InlineData("jpeg")]
     [InlineData("logical-display")]
     [InlineData("glyphless-logical")]
+    [InlineData("duplicate-markers")]
     public async Task Real_worker_output_roundtrips_through_net_reader(string name)
     {
         var fixture = await Fixture(name);
@@ -62,6 +63,21 @@ public sealed class WriterTests
             {
                 var obj = objects[i]; var read = document.Pages[p].Elements[i];
                 Assert.Equal(result.ObjectMap![obj.GetProperty("id").GetString()!][0], read.ObjectId);
+                var state=ir.RootElement.GetProperty("graphicsStates").EnumerateArray().Single(s=>s.GetProperty("id").GetString()==obj.GetProperty("stateId").GetString());
+                string xmlText=read switch { OfdTextElement t=>t.SourceXml!, OfdPathElement path=>path.SourceXml!, OfdImageElement image=>image.SourceXml!, _=>throw new InvalidOperationException() };
+                var readXml=XElement.Parse(xmlText);
+                Assert.Equal((int)Math.Round(state.GetProperty("opacity").GetDouble()*255,MidpointRounding.AwayFromZero),(int?)readXml.Attribute("Alpha")??255);
+                if(read is OfdPathElement readPath) CompareCommands(readPath.AbbreviatedData,readXml.Attribute("Rule")?.Value,obj);
+                var expectedClips=new List<JsonElement>();
+                if(state.TryGetProperty("clip",out var stateClip))expectedClips.Add(stateClip);
+                if(obj.TryGetProperty("clip",out var imageClip))expectedClips.Add(imageClip);
+                var readClips=readXml.Elements().Where(e=>e.Name.LocalName=="Clips").SelectMany(e=>e.Elements()).ToArray();
+                Assert.Equal(expectedClips.Count,readClips.Length);
+                for(int c=0;c<readClips.Length;c++)
+                {
+                    var path=readClips[c].Elements().Single(e=>e.Name.LocalName=="Area").Elements().Single(e=>e.Name.LocalName=="Path");
+                    CompareCommands(path.Elements().Single(e=>e.Name.LocalName=="AbbreviatedData").Value,path.Attribute("Rule")?.Value,expectedClips[c]);
+                }
                 if (read is OfdTextElement text)
                 {
                     Assert.Equal(obj.GetProperty("logicalText").GetString(), text.Text);
@@ -272,6 +288,30 @@ public sealed class WriterTests
     {
         var result=await ChangedCommands(location,"[{\"op\":\"move\",\"x\":0,\"y\":0},{\"op\":\"close\"},{\"op\":\"move\",\"x\":1,\"y\":1},{\"op\":\"line\",\"x\":2,\"y\":2}]");
         Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));
+    }
+    [Theory]
+    [InlineData("cff")][InlineData("truetype")]
+    public async Task Sfnt_flavor_must_match_embedded_outline_tables(string name)
+    {
+        var fixture=await Fixture(name);var resource=fixture.Resources[0];var bad=resource.Bytes.ToArray();
+        byte[] flavor=name=="cff"?[0,1,0,0]:Encoding.ASCII.GetBytes("OTTO");flavor.CopyTo(bad,0);
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(bad)));
+        var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
+    }
+    private static void CompareCommands(string data,string? rule,JsonElement expected)
+    {
+        Assert.Equal(expected.GetProperty("fillRule").GetString()=="evenodd"?"Even-Odd":"NonZero",rule??"NonZero");
+        var tokens=data.Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries);int at=0;
+        foreach(var command in expected.GetProperty("commands").EnumerateArray())
+        {
+            string op=command.GetProperty("op").GetString()!;
+            Assert.Equal(op switch {"move"=>"M","line"=>"L","cubic"=>"B",_=>"C"},tokens[at++]);
+            string[] coordinates=op switch {"move" or "line"=>["x","y"],"cubic"=>["x1","y1","x2","y2","x","y"],_=>[]};
+            foreach(string coordinate in coordinates)
+                Assert.InRange(Math.Abs(double.Parse(tokens[at++],CultureInfo.InvariantCulture)-command.GetProperty(coordinate).GetDouble()/1000),0,1e-9);
+        }
+        Assert.Equal(tokens.Length,at);
     }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)

@@ -3,13 +3,13 @@
   "host": "macOS arm64",
   "dotnetSdk": "10.0.302",
   "dotnetTests": {
-    "passed": 104,
+    "passed": 107,
     "failed": 0,
     "skipped": 0,
-    "writerTests": 58
+    "writerTests": 61
   },
   "javaReader": "org.ofdrw:ofdrw-reader:2.3.7",
-  "readerImageId": "sha256:733bb143db0f44b4f3d6aaf4526e1debbcf797c527ae92cb95d4cdb553f010c4",
+  "readerImageId": "sha256:3827ac539a3dd69da5e962e6f2f8003ef3641f49c01efcd7a7d485e777ca0276",
   "geometryUnit": "mm",
   "geometryEvidence": "Reader object coordinates and transforms; not device rasterization",
   "cases": [
@@ -17,6 +17,7 @@
       "fixture": "combined",
       "textObjects": 201,
       "glyphs": 709,
+      "pathAndClipCommands": 305,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "1d428582b977b4b893afc725279b4be752a8ed89a8851a30079293a24fef0962",
       "irSha256": "82acac02b81956ff7bba2c6ba01f2512780d20d1e22d693922577244b32935dc"
@@ -25,6 +26,7 @@
       "fixture": "cff",
       "textObjects": 2,
       "glyphs": 11,
+      "pathAndClipCommands": 0,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "40d4a1513c94c31894068a3141aeb222465185617a9fbc1adbff58e81649611e",
       "irSha256": "52a2a97e245e9652564ada8d3b21b7d3c842a3806175e231cda0eba5805f6aeb"
@@ -33,6 +35,7 @@
       "fixture": "truetype",
       "textObjects": 2,
       "glyphs": 11,
+      "pathAndClipCommands": 0,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "79e9776a55a237a76fb67ac20402fdf3322af7e331b4d8f6cacb09b6f79aa819",
       "irSha256": "77281092d0fa96dd0ca4740d034bf19589aecb50a4c7ea2b7ac059fa7aa9e40e"
@@ -41,6 +44,7 @@
       "fixture": "glyphless",
       "textObjects": 1,
       "glyphs": 0,
+      "pathAndClipCommands": 0,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "1dd276c59aab17e675cebe1e2344bda3e42742a1430719b99b7409ec44bb1cd3",
       "irSha256": "e43fb06400c1a830b2a1e814d09407be546d0edfab074789def9b11da77938d7"
@@ -49,6 +53,7 @@
       "fixture": "geometry",
       "textObjects": 2,
       "glyphs": 11,
+      "pathAndClipCommands": 32,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "596a78a6acb29a2c347fc90cf0c0efa70fb41e65cbfc09eef6fd3c236f4317a5",
       "irSha256": "c201ea1449a069bc00f74e9939bbbfda43dc0e98b4ebc2974adfc09cceee9c1d"
@@ -57,6 +62,7 @@
       "fixture": "jpeg",
       "textObjects": 201,
       "glyphs": 709,
+      "pathAndClipCommands": 305,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "87ae95789940b80e3d4b654c3a0307d685a2dafcfe41008c0a1c3fab68993127",
       "irSha256": "e2cff9104a8c7731c65ca50df8f2ccd41b9156809f9efc05eea2bf8d99d9fddc"
@@ -65,6 +71,7 @@
       "fixture": "logical-display",
       "textObjects": 2,
       "glyphs": 11,
+      "pathAndClipCommands": 0,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "ab2724b7ca76dcce3d44ca016a2a230aa8ce459a0cf74c8af7b08f2eb0d5c49b",
       "irSha256": "72b082661b2bcdb0ceb2a3c59349d0398223ca6edd05c4c22e6239e6c7d4f7a6"
@@ -73,9 +80,23 @@
       "fixture": "glyphless-logical",
       "textObjects": 1,
       "glyphs": 0,
+      "pathAndClipCommands": 0,
       "maxGeometryErrorMm": 0.0,
       "artifactSha256": "271af4dfd6ac26c1c361474e459f237c6c10abf51d52db7637473a9ff12babb8",
       "irSha256": "578b1752781ea0c19cf32a417093df03406bd7ef76eb7d968381b748c4ef83be"
+    },
+    {
+      "fixture": "duplicate-markers",
+      "textObjects": 2,
+      "glyphs": 11,
+      "pathAndClipCommands": 0,
+      "maxGeometryErrorMm": 0.0,
+      "artifactSha256": "4a126ccbb9c9451bbc6a303e30774df2009506450e75f83a3dac2417522bf97e",
+      "irSha256": "5a1573fcaa8495f0194cf937fe64b5f80cee6c8f4927c65d33d6888091dc1355"
     }
-  ]
+  ],
+  "mutationGate": {
+    "pathVertex": "rejected",
+    "clipFillRule": "rejected"
+  }
 }

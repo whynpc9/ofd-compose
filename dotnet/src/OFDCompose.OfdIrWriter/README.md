@@ -81,9 +81,10 @@ source ranges/page identities, path/clip subpath sequencing and semantic digest.
 is removed before hashing.
 
 Before resource copies: 128 entries, 32 MiB each, 160 MiB total, exact resource
-closure/digests. SFNT checks cover directory bounds/nonoverlap/checksums, header and
+closure/digests. SFNT checks cover directory bounds/nonoverlap/checksums, SFNT flavor/outline agreement, header and
 style/metrics metadata, TrueType loca/contours/composite references/cycles, and CFF
-INDEX/charset/FDSelect/FDArray/Private/Subrs structure. It does not execute TrueType
+INDEX/charset/FDSelect/FDArray/Private/Subrs structure. The static flavor rule follows [OpenType sfntVersion](https://learn.microsoft.com/en-us/typography/opentype/spec/otff).
+It does not execute TrueType
 instructions or CFF charstrings, or certify every future reader's font parser.
 
 Before full image decoding: MIME signatures, PNG CRCs and bounded zlib expansion,

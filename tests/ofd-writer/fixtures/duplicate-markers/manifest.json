@@ -1,0 +1,12 @@
+{
+  "fixtureDerivation": "duplicate-markers",
+  "workerBaseIrDigest": "52a2a97e245e9652564ada8d3b21b7d3c842a3806175e231cda0eba5805f6aeb",
+  "irDigest": "5a1573fcaa8495f0194cf937fe64b5f80cee6c8f4927c65d33d6888091dc1355",
+  "resources": [
+    {
+      "resourceId": "r0",
+      "file": "r0.bin",
+      "sha256": "28d5f343a29a2307d945f268ab503c348b08cdea5e51f091cd918511476571b9"
+    }
+  ]
+}
