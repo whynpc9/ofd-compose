@@ -58,45 +58,8 @@ for (const name of [
       .filter((item) => "str" in item)
       .map((item) => item.str)
       .join("");
-    let classification = "exact";
-    if (highLevel !== expected) {
-      if (["truetype-mapping", "cff-mapping"].includes(name)) {
-        assert.equal(expected, "A😀ffi");
-        assert.equal(
-          highLevel,
-          "A 😀 ffi",
-          "Only the two positioned cluster separators are allowed",
-        );
-        classification = "positioned-cluster-separators:2";
-      } else if (["combined", "jpeg"].includes(name)) {
-        const boundaries = new Set();
-        let offset = 0;
-        for (const object of ir.pages[p].objects.filter((o) => o.kind === "text")) {
-          offset += object.logicalText.length;
-          boundaries.add(offset);
-        }
-        const consumed = new Set();
-        let source = 0;
-        let inserted = 0;
-        for (const character of highLevel) {
-          if (expected.startsWith(character, source)) source += character.length;
-          else {
-            assert.equal(character, " ", "Only an ASCII separator may be synthesized");
-            assert.ok(boundaries.has(source), "Separator must be at an IR object boundary");
-            assert.ok(!consumed.has(source), "At most one separator per boundary");
-            consumed.add(source);
-            assert.ok(source > 0 && source < expected.length);
-            assert.ok(
-              !/\s/u.test(expected[source - 1]) && !/\s/u.test(expected[source]),
-              "Real source whitespace cannot be rewritten",
-            );
-            inserted++;
-          }
-        }
-        assert.equal(source, expected.length, "High-level text dropped source characters");
-        classification = `object-boundary-separators:${inserted}`;
-      } else assert.equal(highLevel, expected, `${name}: continuous text must extract exactly`);
-    }
+    const classification = "exact";
+    assert.equal(highLevel, expected, `${name}: stock high-level text must match literally`);
     highLevelEvidence.push({ case: name, page: p, classification, expected, actual: highLevel });
     const widths = operators.fnArray.flatMap((op, i) =>
       op === OPS.showText

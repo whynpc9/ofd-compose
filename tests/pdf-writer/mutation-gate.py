@@ -28,6 +28,17 @@ def mutate(data, kind):
                for i in range(len(offsets))]
     changed = False
     for i, obj in enumerate(objects):
+        if kind in ['formbbox', 'formresources'] and b'/Subtype /Form ' in obj:
+            if kind == 'formbbox':
+                modified = re.sub(rb'/BBox \[[^\]]+\]', b'/BBox [0 0 1 1]', obj, count=1)
+            else:
+                fonts = sorted(set(re.findall(rb'/(F\d+) \d+ 0 R', data)))
+                invalid = b'/Resources << /Font << ' + b' '.join(b'/' + name + b' << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>' for name in fonts) + b' >> >>'
+                modified = re.sub(rb'/Resources \d+ 0 R', lambda _: invalid, obj, count=1)
+            assert modified != obj
+            objects[i] = modified
+            changed = True
+            break
         match = re.search(rb'/Length (\d+)', obj)
         if not match or b'/FlateDecode' not in obj:
             continue
@@ -82,7 +93,7 @@ def raster(pdf, target):
 
 with tempfile.TemporaryDirectory(prefix='ofd-pdf-mutations-') as directory:
     temp = pathlib.Path(directory)
-    for kind in ['cmap', 'cid', 'ctm', 'clip', 'path', 'imageclip', 'imagescale']:
+    for kind in ['cmap', 'cid', 'ctm', 'clip', 'path', 'imageclip', 'imagescale', 'formbbox', 'formresources']:
         fixture = 'visible-image' if kind in ['imageclip', 'imagescale'] else 'geometry' if kind in ['clip', 'path'] else 'truetype'
         original = OUTPUT / f'{fixture}.pdf'
         altered = temp / f'{kind}.pdf'
@@ -92,5 +103,11 @@ with tempfile.TemporaryDirectory(prefix='ofd-pdf-mutations-') as directory:
             after = run(['pdftotext', '-raw', str(altered), '-'], check=True, capture_output=True).stdout
             assert before != after, 'ToUnicode corruption was not detected'
         else:
-            assert raster(original, temp / 'before') != raster(altered, temp / 'after'), f'{kind}: rendered change was not detected'
+            before = raster(original, temp / 'before')
+            try:
+                after = raster(altered, temp / 'after')
+            except subprocess.CalledProcessError:
+                assert kind == 'formresources', 'Unexpected renderer failure'
+            else:
+                assert before != after, f'{kind}: rendered change was not detected'
         print(f'{kind}: independent reader/render mutation detected')

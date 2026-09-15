@@ -66,6 +66,16 @@ public sealed class MappingTests
         byte[] ir=Canonical(n);var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));using var pdf=PdfDocument.Open(result.Bytes!);Assert.Equal("q́",pdf.GetPage(1).Text);
     }
+    [Fact]
+    public async Task Fallback_form_clip_expansion_shares_the_command_budget()
+    {
+        var f=await WriterTests.Fixture("truetype");var n=JsonNode.Parse(f.Ir)!;var obj=n["pages"]![0]!["objects"]![0]!.DeepClone();
+        obj["glyphs"]=new JsonArray(obj["glyphs"]!.AsArray().Take(3).Select(g=>g!.DeepClone()).ToArray());
+        obj["clusters"]=new JsonArray(obj["clusters"]!.AsArray().Take(3).Select(c=>c!.DeepClone()).ToArray());obj["logicalText"]="AAA";obj["displayText"]="AAA";n["pages"]![0]!["objects"]=new JsonArray(obj);n["markers"]=new JsonArray();
+        n["graphicsStates"]![0]!["clip"]=JsonNode.Parse("{\"coordinateSpace\":\"local\",\"fillRule\":\"nonzero\",\"commands\":[{\"op\":\"move\",\"x\":0,\"y\":0},{\"op\":\"line\",\"x\":100000,\"y\":0},{\"op\":\"line\",\"x\":100000,\"y\":100000},{\"op\":\"close\"}]}");
+        byte[] ir=Canonical(n);var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,new WriterLimits{Commands=12},TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Contains(result.Diagnostics,d=>d.Code=="RESOURCE_LIMIT"&&d.Path=="clips");
+    }
     [Theory][InlineData(0)][InlineData(1)]
     public async Task Combining_cluster_each_glyph_has_independent_reader_geometry(int index)
     {

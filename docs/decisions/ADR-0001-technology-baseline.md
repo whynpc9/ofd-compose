@@ -74,7 +74,7 @@
 | Worker 进程模型 | .NET Job Host 拉起 Node Worker 子进程池；控制通道 JSON-RPC 2.0 over stdio（NDJSON）；字体/图片/IR 等大对象经内容寻址的作业 spool 目录传递；超时直接 kill 子进程 | — | 隔离与强制取消最直接；无网络端口 | Node sidecar HTTP 服务（取消/隔离弱，P1 可选） |
 | OFD 写入 | ofdrw.net：`Ofdrw.Net.Core`、`Ofdrw.Net.Packaging`、`Ofdrw.Net.Layout` 低层 builder、`Ofdrw.Net.Reader`（用于自检） | 0.1.0-preview.x，锁提交；netstandard2.0/2.1 | 计划优先后端；需补齐字形映射/子集嵌入/对象映射 | Java ofdrw（休眠 profile） |
 | ofdrw.net 许可 | MIT（已拍板）；需在 ofdrw.net 仓库落实 LICENSE 并发布带许可元数据的 NuGet 包后，本项目才引用公开包；此前以锁定提交引用 | MIT | feature-parity 原注明"许可证决定前禁止公开发布"，本决定解除该阻塞 | — |
-| PDF 写入 | 自研 `PdfIrWriter`（已拍板）（PDF 1.7 对象模型：页树、内容流、`CIDFontType2`/`CIDFontType0C` + Identity-H、嵌入 Worker 提供的子集字体、由 IR cluster 映射生成 ToUnicode CMap、W 数组来自 IR advance、ExtGState 透明度、裁剪、Flate 压缩） | — | IR 已完全定位，写入器只需忠实落盘；对文本映射与确定性有完全控制；无库的字符串排版 API 干扰 | PDFsharp 6.2（MIT，但 API 以字符串绘制为中心，无逐字形定位）；SkiaSharp PDF（MIT，逐字形可定位，但官方构建关闭字体子集且 ToUnicode 不可控，另需原生库）；PdfPig builder（Apache-2.0，无子集、字符串 API → 仅作读取器）；iText/QuestPDF（许可排除） |
+| PDF 写入 | 自研 `PdfIrWriter`（已拍板）（PDF 1.7 对象模型：页树、内容流、`CIDFontType2`/`CIDFontType0` + Identity-H、嵌入 Worker 提供的子集字体、由 IR cluster 映射生成 ToUnicode CMap、W 数组来自 IR advance、ExtGState 透明度、裁剪、Flate 压缩） | — | IR 已完全定位，写入器只需忠实落盘；对文本映射与确定性有完全控制；无库的字符串排版 API 干扰 | PDFsharp 6.2（MIT，但 API 以字符串绘制为中心，无逐字形定位）；SkiaSharp PDF（MIT，逐字形可定位，但官方构建关闭字体子集且 ToUnicode 不可控，另需原生库）；PdfPig builder（Apache-2.0，无子集、字符串 API → 仅作读取器）；iText/QuestPDF（许可排除） |
 | PDF 图片编码 | JPEG 直通 DCTDecode；PNG 用 BigGustave 解码为原始像素 + FlateDecode（alpha → SMask） | BigGustave 1.0.x，Unlicense | 纯托管、无原生依赖 | ImageSharp（Split 许可，排除）、SkiaSharp（原生依赖，非必要） |
 | PDF 验证（测试） | PdfPig（.NET）+ pdf.js（Node）文本/几何抽取；qpdf `--check` 结构检查 | Apache-2.0 ×3 | 独立于写入器；两条阅读实现 | veraPDF 留给 PDF/A（P1+） |
 | OFD 验证（测试） | ofdrw.net Reader + Java ofdrw Reader（仅测试容器）+ 目标阅读器矩阵（数科 / 福昕 / WPS，人工，记录版本） | Apache-2.0 | 至少一个非本仓库引擎 | — |
@@ -112,7 +112,7 @@
 
 - TS 侧承担全部"语义"复杂度（整形、断行、子集、格式化、条码几何），.NET 侧代码量小但需要精确实现 PDF 与 OFD 的固定写出协议。
 - 自研 PDF 写入器意味着首版不追求 PDF/A 或标签 PDF；这些能力如需，在 P1 以独立 profile 加入。
-- 字体若最终选 CFF 轮廓，PDF 用 `CIDFontType0C`，OFD 侧需在 WP0.9 确认阅读器支持；若切 TrueType 轮廓则两端都是最常见路径。
+- 字体若最终选 CFF 轮廓，PDF 字体字典用 `CIDFontType0`，完整 Worker OTF 嵌入流用 `FontFile3 /Subtype /OpenType`，OFD 侧需在 WP0.9 确认阅读器支持；若切 TrueType 轮廓则两端都是最常见路径。
 - Node 24 → 26 升级需重新跑确定性矩阵（V8/ICU 变化），以 ADR 记录。
 
 ## 已拍板项（2026-09-10）
@@ -146,3 +146,5 @@
 - .NET 10 LTS 支持至 2028-11-14：https://dotnet.microsoft.com/en-us/platform/support/policy
 - Node.js 发布计划（24 Active LTS，26 于 2026-10 进入 LTS）：https://github.com/nodejs/release
 - Noto CJK 许可与静态/可变说明：https://notofonts.github.io/noto-docs/website/use/
+
+2026-09-16 术语勘误：PDF 1.7 区分 CIDFont 字典 subtype 与 FontFile3 流 subtype；此处按规范更正，不改变自研后端选型。WP0.7 实证和仍待确认的 reader 空白验收边界见 ADR-0004。

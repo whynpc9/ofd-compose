@@ -37,16 +37,9 @@ public sealed class WriterTests
         Assert.True(result.Bytes!.AsSpan().StartsWith(new byte[]{37,80,68,70,45,49,46,55,10,37,226,227,207,211,10}));
         string wire=Encoding.Latin1.GetString(result.Bytes!);
         foreach(Match font in Regex.Matches(wire,@"/BaseFont /([^ ]+)"))Assert.Matches(@"^[A-Z]{6}\+",font.Groups[1].Value);
-        var streams=new List<byte[]>();
-        foreach(Match streamMatch in Regex.Matches(wire,@"<< /Length (\d+)[^\n]* >>\nstream\n"))
-        {
-            byte[] payload=result.Bytes.AsSpan(streamMatch.Index+streamMatch.Length,int.Parse(streamMatch.Groups[1].Value,CultureInfo.InvariantCulture)).ToArray();
-            if(streamMatch.Value.Contains("/FlateDecode",StringComparison.Ordinal))
-            {using var input=new MemoryStream(payload);using var z=new ZLibStream(input,CompressionMode.Decompress);using var decoded=new MemoryStream();z.CopyTo(decoded);payload=decoded.ToArray();}
-            streams.Add(payload);
-        }
+        var streams=DecodedStreams(result.Bytes!);
         foreach(var resource in f.Resources.Where(r=>!r.Bytes.Span.StartsWith(new byte[]{137,80,78,71})))
-            Assert.Contains(streams,b=>b.AsSpan().SequenceEqual(resource.Bytes.Span));
+            Assert.Contains(streams.Values,b=>b.AsSpan().SequenceEqual(resource.Bytes.Span));
         Assert.Equal(result.Bytes,(await new PdfIrWriter().WriteAsync(f.Ir,Digest(f.Ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken)).Bytes);
         string output=Output;await File.WriteAllBytesAsync(Path.Combine(output,name+".pdf"),result.Bytes!,TestContext.Current.CancellationToken);
         if(name=="visible-image")await File.WriteAllBytesAsync(Path.Combine(output,name+".ir.json"),f.Ir,TestContext.Current.CancellationToken);
@@ -61,7 +54,16 @@ public sealed class WriterTests
             Assert.Equal(string.Concat(objects.Where(o=>o.GetProperty("kind").GetString()=="text").Select(o=>o.GetProperty("logicalText").GetString())),actual.Text);
             foreach(var obj in objects)
             {
-                Assert.Contains(obj.GetProperty("id").GetString()!,result.ObjectMap!.Keys);count++;
+                string objectId=obj.GetProperty("id").GetString()!;Assert.Contains(objectId,result.ObjectMap!.Keys);count++;
+                int mappedGlyphs=0,mappedImages=0;
+                foreach(string location in result.ObjectMap[objectId].Where(s=>s.StartsWith("stream:",StringComparison.Ordinal)))
+                {
+                    string[] parts=location.Split(':');int streamId=int.Parse(parts[1],CultureInfo.InvariantCulture),start=int.Parse(parts[3],CultureInfo.InvariantCulture),length=int.Parse(parts[5],CultureInfo.InvariantCulture);
+                    Assert.True(streams.TryGetValue(streamId,out var decoded));Assert.InRange(start,0,decoded!.Length);Assert.InRange(length,1,decoded.Length-start);
+                    string region=Encoding.ASCII.GetString(decoded,start,length);mappedGlyphs+=Regex.Count(region,@" Tj\n");mappedImages+=Regex.Count(region,@"/I\d+ Do\n");
+                }
+                Assert.Equal(obj.GetProperty("kind").GetString()=="text"?obj.GetProperty("glyphs").GetArrayLength():0,mappedGlyphs);
+                Assert.Equal(obj.GetProperty("kind").GetString()=="image"?1:0,mappedImages);
                 if(obj.GetProperty("kind").GetString()=="image")
                 {
                     var image=images[imageIndex++];var resource=ir.RootElement.GetProperty("resources").EnumerateArray().Single(r=>r.GetProperty("id").GetString()==obj.GetProperty("resourceId").GetString());
@@ -107,6 +109,21 @@ public sealed class WriterTests
         }
         Assert.Equal(count,result.ObjectMap!.Count);
         await File.WriteAllTextAsync(Path.Combine(output,name+"-geometry.json"),JsonSerializer.Serialize(new{Reader="PdfPig 0.1.11",MaxBaselineErrorPt=max,MaxReaderExtentErrorPt=maxEnd,MaxImageCornerErrorPt=maxImage}),TestContext.Current.CancellationToken);
+    }
+    private static Dictionary<int,byte[]> DecodedStreams(byte[] bytes)
+    {
+        string wire=Encoding.Latin1.GetString(bytes);var end=Regex.Match(wire,@"startxref\n(\d+)\n%%EOF\n$");Assert.True(end.Success);
+        int xref=int.Parse(end.Groups[1].Value,CultureInfo.InvariantCulture);string[] lines=wire[xref..].Split('\n');int count=int.Parse(lines[1].Split(' ')[1],CultureInfo.InvariantCulture);
+        var offsets=Enumerable.Range(1,count-1).Select(i=>int.Parse(lines[i+2][..10],CultureInfo.InvariantCulture)).ToArray();var streams=new Dictionary<int,byte[]>();
+        for(int i=0;i<offsets.Length;i++)
+        {
+            int bodyStart=wire.IndexOf('\n',offsets[i])+1,bodyEnd=i+1<offsets.Length?offsets[i+1]:xref;
+            var match=Regex.Match(wire[bodyStart..bodyEnd],@"^<< /Length (\d+)[^\n]* >>\nstream\n");if(!match.Success)continue;
+            byte[] payload=bytes.AsSpan(bodyStart+match.Length,int.Parse(match.Groups[1].Value,CultureInfo.InvariantCulture)).ToArray();
+            if(match.Value.Contains("/FlateDecode",StringComparison.Ordinal)){using var input=new MemoryStream(payload);using var z=new ZLibStream(input,CompressionMode.Decompress);using var output=new MemoryStream();z.CopyTo(output);payload=output.ToArray();}
+            streams.Add(i+1,payload);
+        }
+        return streams;
     }
     [Fact] public async Task Control_whitespace_prefix_mixed_with_printable_mapping_is_rejected()
     {

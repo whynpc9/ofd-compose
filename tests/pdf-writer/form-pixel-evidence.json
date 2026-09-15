@@ -1,0 +1,107 @@
+{
+  "renderer": "Poppler 22.12.0-2+deb12u3",
+  "scaleTo": 1000,
+  "baseline": "7ecf477571045ad5dc9418c9141efc593f5e55b9 (before Form grouping)",
+  "pages": [
+    {
+      "page": "cff-1.png",
+      "samePixels": true,
+      "sha256": "ae66d8b1fb03e1704b59b8cff15fd011b5ac156856ac00eb067e2eeb21fa1adb"
+    },
+    {
+      "page": "cff-mapping-1.png",
+      "samePixels": true,
+      "sha256": "6cd927cad24fdbd4dc61e6d29cf47abecb3d068ad45ab9d08d8fcfd854a398ef"
+    },
+    {
+      "page": "combined-1.png",
+      "samePixels": true,
+      "sha256": "c39dad9a3b98b686a53c2409d50574176d69b5a676bd648b2bb02f4ebc4e0344"
+    },
+    {
+      "page": "combined-2.png",
+      "samePixels": true,
+      "sha256": "6553f3afebfbad563c8a5600ab6983f02b2c44f4f2ac6e110b03c79d116fd53f"
+    },
+    {
+      "page": "combined-3.png",
+      "samePixels": true,
+      "sha256": "a07852d9db80712bd4d75bc3318cc85bb5296e98c8d65b27778f9338254a30d5"
+    },
+    {
+      "page": "combined-4.png",
+      "samePixels": true,
+      "sha256": "f5809953f8796eb20d9707f3f4185bcab8cd0124822981c0972d21d9a94b0392"
+    },
+    {
+      "page": "duplicate-markers-1.png",
+      "samePixels": true,
+      "sha256": "ae66d8b1fb03e1704b59b8cff15fd011b5ac156856ac00eb067e2eeb21fa1adb"
+    },
+    {
+      "page": "geometry-1.png",
+      "samePixels": true,
+      "sha256": "4c7c102e8fb46af2aeb9659ce333f81361fea7c6064e7c95d57538fe8f083812"
+    },
+    {
+      "page": "glyphless-1.png",
+      "samePixels": true,
+      "sha256": "f4838edef36d79cb8c8903253756c9eb87280d379ada7a040b95733cd846830f"
+    },
+    {
+      "page": "jpeg-1.png",
+      "samePixels": true,
+      "sha256": "c39dad9a3b98b686a53c2409d50574176d69b5a676bd648b2bb02f4ebc4e0344"
+    },
+    {
+      "page": "jpeg-2.png",
+      "samePixels": true,
+      "sha256": "6553f3afebfbad563c8a5600ab6983f02b2c44f4f2ac6e110b03c79d116fd53f"
+    },
+    {
+      "page": "jpeg-3.png",
+      "samePixels": true,
+      "sha256": "a07852d9db80712bd4d75bc3318cc85bb5296e98c8d65b27778f9338254a30d5"
+    },
+    {
+      "page": "jpeg-4.png",
+      "samePixels": true,
+      "sha256": "12efad651c59e276f6656cc1cd93d7974fb0bfe67fea6526735b74e2571e54b0"
+    },
+    {
+      "page": "logical-display-printable-1.png",
+      "samePixels": true,
+      "sha256": "ae66d8b1fb03e1704b59b8cff15fd011b5ac156856ac00eb067e2eeb21fa1adb"
+    },
+    {
+      "page": "multi-glyph-1.png",
+      "samePixels": true,
+      "sha256": "c21406fd392fbc9a4f00ad1d4f4a99173eb28bec778adb1506791ab3d86ae2f3"
+    },
+    {
+      "page": "nel-control-1.png",
+      "samePixels": true,
+      "sha256": "5e048ba47b16639fb4d348a2cea87cbda5d7affece3496f9face3abb6a056d7f"
+    },
+    {
+      "page": "nonidentity-contract-1.png",
+      "samePixels": true,
+      "sha256": "c21406fd392fbc9a4f00ad1d4f4a99173eb28bec778adb1506791ab3d86ae2f3"
+    },
+    {
+      "page": "truetype-1.png",
+      "samePixels": true,
+      "sha256": "682d60805d673b8ba7e206de3f54eb153c8dd9a451b789147a974f184675beae"
+    },
+    {
+      "page": "truetype-mapping-1.png",
+      "samePixels": true,
+      "sha256": "beab84b30780868d7743951397906aa5519e28cec71ecca3b337c181609e9038"
+    },
+    {
+      "page": "visible-image-1.png",
+      "samePixels": true,
+      "sha256": "9a60da21798524e855605201cf86c6b5c7ef25b1771cd8982c77b35fd9232e78"
+    }
+  ]
+}

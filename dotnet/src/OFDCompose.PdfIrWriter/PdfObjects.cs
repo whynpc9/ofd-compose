@@ -8,6 +8,7 @@ internal sealed class PdfObjects(int limit, CancellationToken cancellationToken 
 {
     private readonly List<byte[]?> objects = [];
     private long reserved;
+    internal CancellationToken Token => cancellationToken;
     internal void CheckCancellation() => cancellationToken.ThrowIfCancellationRequested();
     internal static byte[] Ascii(string text) => Encoding.ASCII.GetBytes(text);
     internal int Reserve() { CheckCancellation(); Require(objects.Count < 100_000, "RESOURCE_LIMIT", "pdf", "PDF object budget exceeded"); objects.Add(null); return objects.Count; }

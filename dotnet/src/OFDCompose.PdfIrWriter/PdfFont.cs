@@ -57,9 +57,9 @@ internal sealed class PdfFont
         if(cff)
         {
             var data=bytes.AsSpan(tables["CFF "].Offset,tables["CFF "].Length);
-            int at=data[2];FontStructure.Index(data,ref at);var top=FontStructure.Index(data,ref at);
-            var strings=FontStructure.Index(data,ref at);
-            var dict=FontStructure.Dict(data.Slice(top[0].Start,top[0].Length));
+            int at=data[2];FontStructure.Index(data,ref at,pdf.Token);var top=FontStructure.Index(data,ref at,pdf.Token);
+            var strings=FontStructure.Index(data,ref at,pdf.Token);
+            var dict=FontStructure.Dict(data.Slice(top[0].Start,top[0].Length),pdf.Token);
             if(dict.ContainsKey(1230))
             {
                 var ros=dict[1230];
