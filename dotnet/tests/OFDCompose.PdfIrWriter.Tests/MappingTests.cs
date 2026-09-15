@@ -38,7 +38,7 @@ public sealed class MappingTests
         await File.WriteAllBytesAsync(Path.Combine(output,"logical-display-printable.pdf"),result.Bytes!,TestContext.Current.CancellationToken);
         await File.WriteAllBytesAsync(Path.Combine(output,"logical-display-printable.ir.json"),ir,TestContext.Current.CancellationToken);
     }
-    [Theory][InlineData(" A",false)][InlineData("\u00a0A",false)][InlineData("\u0085A",true)][InlineData("A\u200b",false)][InlineData("A\U000e0001",false)]
+    [Theory][InlineData(" A",false)][InlineData("\u00a0A",false)][InlineData("\u0085A",true)][InlineData("A\u200b",false)][InlineData("A\U000e0001",false)][InlineData("\u200b",false)][InlineData("\U000e0001",false)]
     public async Task PdfJs_category_loss_is_diagnosed_precisely(string logical,bool expectedOk)
     {
         var f=await WriterTests.Fixture("truetype");var n=JsonNode.Parse(f.Ir)!;var page=n["pages"]![0]!;var obj=page["objects"]![0]!.DeepClone();

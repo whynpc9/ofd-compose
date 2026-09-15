@@ -97,8 +97,8 @@ public sealed class PdfIrWriter
                 int next=i==indices.Length-1?stop:cursor+(char.IsHighSurrogate(logical[cursor])?2:1);
                 Require(next-cursor<=256,"RESOURCE_LIMIT",obj.S("id"),"ToUnicode destination exceeds 512-byte mapping budget");
                 string mapped=logical[cursor..next];
-                Require(!PdfJsDropsPrintableMapping(mapped),"UNSUPPORTED_FEATURE",obj.S("id"),
-                    "Glyph mapping loses printable text in the pinned pdf.js extraction profile");
+                Require(!PdfJsDropsMapping(mapped),"UNSUPPORTED_FEATURE",obj.S("id"),
+                    "Glyph mapping is omitted or loses printable text in the pinned pdf.js extraction profile");
                 texts[indices[i]]=mapped;cursor=next;
             }
         }
@@ -128,7 +128,7 @@ public sealed class PdfIrWriter
         string mask=transparent?$" /SMask {pdf.Stream(alpha,common+" /ColorSpace /DeviceGray")} 0 R":"";
         return pdf.Stream(rgb,common+" /ColorSpace /DeviceRGB"+mask);
     }
-    private static bool PdfJsDropsPrintableMapping(string text)
+    private static bool PdfJsDropsMapping(string text)
     {
         bool printable=false,nonspacingMark=false;System.Globalization.UnicodeCategory last=default;
         foreach(var rune in text.EnumerateRunes())
@@ -139,7 +139,8 @@ public sealed class PdfIrWriter
                 or System.Globalization.UnicodeCategory.SpaceSeparator or System.Globalization.UnicodeCategory.LineSeparator or System.Globalization.UnicodeCategory.ParagraphSeparator);
         }
         // Match the categorizer's alternative precedence: a preceding Mn match wins over final Cf.
-        return printable&&(PdfJsWhitespace(text[0])||!nonspacingMark&&last==System.Globalization.UnicodeCategory.Format);
+        if(PdfJsWhitespace(text[0]))return printable;
+        return !nonspacingMark&&last==System.Globalization.UnicodeCategory.Format;
     }
     // ECMAScript WhiteSpace + LineTerminator set used by pdf.js 5.4.149's /^\s/ category.
     // U+0085 is deliberately absent; Char.IsWhiteSpace is not an equivalent predicate.
