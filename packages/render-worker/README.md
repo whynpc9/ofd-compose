@@ -43,13 +43,15 @@ const result = await render(template, data, {
 - Before the first await, the entry point makes bounded descriptor-only JSON snapshots and
   copies direct byte arrays. Promised buffers are copied on arrival and checked against both
   length and digest. All entries finish before media or layout runs. Missing font/image entries
-  fail with `FONT_MISSING`/`RESOURCE_FORBIDDEN`; invalid fonts do not fall back to installed fonts. Stage-error location
+  fail with `FONT_MISSING`/`RESOURCE_FORBIDDEN`; invalid fonts do not fall back to installed fonts. Metadata/style disagreement is `FONT_STYLE_UNAVAILABLE`; an absent exact
+  family/style remains `FONT_MISSING`. Stage-error location
   fields (node/binding/data path/page index when present) survive diagnostic conversion.
 - Identity includes an order-independent `resourcePackDigest` over every owned font/image/WASM
   entry (validated metadata, length and byte digest), including unreferenced images. This digest
   also participates in LayoutIdentity and therefore the final IR hash. The host cannot override it.
 - Identity contains template revision/schema, expression and binding-policy versions, template,
-  input-data, compiled, resolved, media and layout-configuration digests, layout-input digest,
+  input-data, compiled, resolved, media and layout-configuration digests, explicit barcode generator version, the consumed
+  RenderProfile snapshot, layout-input digest,
   subset version and final IR digest. Top-level provenance and BindingRuntime envelopes are
   excluded from semantic digests; source mappings, version/profile and media identities remain.
 - `withFontSubsets` attaches subset identities and rewrites canonical resource references

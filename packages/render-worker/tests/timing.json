@@ -1,12 +1,12 @@
 {
-  "measuredAt": "2026-09-15T05:37:18.441Z",
+  "measuredAt": "2026-09-15T05:58:38.742Z",
   "node": "v24.14.1",
   "os": "darwin 25.6.0",
   "arch": "arm64",
   "cpu": "Apple M4 Max",
-  "resourceAcquisitionMs": 5.21383400000002,
-  "firstRenderMs": 413.999333,
-  "hotRenderMs": 350.06054100000006,
+  "resourceAcquisitionMs": 5.86262499999998,
+  "firstRenderMs": 407.661209,
+  "hotRenderMs": 346.219834,
   "notes": "Single-process preliminary WP0.9 observation. Modules already imported; first render has cold face cache in this test process. Resource disk loading reported separately. Both renders include owned resource copies, compile/bind/media/layout, subset WASM instantiation and canonical hashing. No writers/readers/production acceptance. Not p50/p95.",
   "pages": 4
 }

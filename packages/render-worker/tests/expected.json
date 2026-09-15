@@ -13,7 +13,34 @@
     "compiledDigest": "4ff5a88a881a7b6c826f6d04d586b43174dbeb9b694c2629e0154daf02bdad84",
     "resolvedDocumentDigest": "69c77899599463c00dbe3e85f35f4a2f49b93710ce8fff346f00d67315da7553",
     "mediaVersion": "ofd-compose/media@1",
+    "barcodeGeneratorVersion": "bwip-js@4.11.4/drawing-context@1",
     "mediaDigest": "cd9faf3f0d488763b927dff53f36ff92700a9b2f1cd094a7462fc29f70d57b54",
+    "layoutConfiguration": {
+      "version": "ofd-compose/render@0",
+      "layout": {
+        "page": {
+          "width": 210,
+          "height": 297,
+          "contentBox": {
+            "x": 20,
+            "y": 20,
+            "width": 170,
+            "height": 257
+          }
+        },
+        "defaultStyle": {
+          "fontFamily": "Noto",
+          "fontSize": 12
+        },
+        "formattingPolicy": {
+          "version": "binding-1",
+          "locale": "zh-CN",
+          "timeZone": "UTC",
+          "tzdataVersion": "2026a",
+          "rounding": "half-up"
+        }
+      }
+    },
     "layoutConfigurationDigest": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
     "layoutInputDigest": "dcd6fbce4da696ff9097f9d9f6291f4c3c7556ce1a262f63f85996946f62f200",
     "subsetVersion": {

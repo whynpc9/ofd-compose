@@ -13,7 +13,12 @@ import {
   digestSemanticDocument,
   withFontSubsets,
 } from "@ofd-compose/layout-ir";
-import { type AuthorizedImage, mediaVersion, prepareMedia } from "@ofd-compose/media-core";
+import {
+  type AuthorizedImage,
+  barcodeGeneratorVersion,
+  mediaVersion,
+  prepareMedia,
+} from "@ofd-compose/media-core";
 import { compile } from "@ofd-compose/template-compiler";
 import { fontDigest } from "@ofd-compose/typography-core";
 import {
@@ -317,7 +322,9 @@ export async function render(
       compiledDigest: digestSemanticDocument({ ...compiled.template }),
       resolvedDocumentDigest: digestSemanticDocument(bound.document),
       mediaVersion,
+      barcodeGeneratorVersion,
       mediaDigest: media.mediaIdentity,
+      layoutConfiguration: settings,
       layoutConfigurationDigest: digestCanonical(settings),
       layoutInputDigest: ir.identity.inputDigest,
       subsetVersion,

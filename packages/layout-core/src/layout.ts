@@ -272,6 +272,7 @@ export class LayoutError extends Error {
       | "LAYOUT_OVERFLOW"
       | "LAYOUT_LIMIT"
       | "FONT_UNAVAILABLE"
+      | "FONT_STYLE_UNAVAILABLE"
       | "PAGINATION_NOT_CONVERGED",
     message: string,
     readonly nodeId?: string,
@@ -596,7 +597,10 @@ export async function layout(
       throw new LayoutError("LAYOUT_INPUT", "Ambiguous font family/style mapping");
     const metrics = core.loadFont(bytes, definition.sha256);
     if (metrics.os2.weight !== definition.weight || metrics.os2.italic !== definition.italic)
-      throw new LayoutError("FONT_UNAVAILABLE", "Declared font style differs from static face");
+      throw new LayoutError(
+        "FONT_STYLE_UNAVAILABLE",
+        "Declared font style differs from static face",
+      );
     faces.push({ definition, metrics, id: `font${faces.length}` });
   }
   const work = {

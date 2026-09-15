@@ -610,3 +610,38 @@ it("uses intrinsic byte lengths before copying typed arrays with shadowed size f
   expect(valid.ok).toBe(true);
   expect(invoked).toBe(0);
 });
+it("returns the independently versioned barcode generator and the consumed profile snapshot", async () => {
+  const sample = await combined();
+  const result = await render(sample.source, sample.data, sample.pack, profile);
+  if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+  expect(result.identity.barcodeGeneratorVersion).toBe("bwip-js@4.11.4/drawing-context@1");
+  expect(result.identity.layoutConfiguration).toEqual(profile);
+  expect(digestCanonical(result.identity.layoutConfiguration)).toBe(
+    result.identity.layoutConfigurationDigest,
+  );
+});
+it("distinguishes declared font style mismatch from an absent exact font face", async () => {
+  for (const metadata of [{ weight: 700 }, { italic: true }]) {
+    const result = await render(
+      textSource(),
+      {},
+      { ...pack, fonts: [{ ...pack.fonts[0]!, ...metadata }] },
+      profile,
+    );
+    expect(result).toMatchObject({
+      ok: false,
+      diagnostics: [{ code: "FONT_STYLE_UNAVAILABLE", phase: "layout" }],
+    });
+  }
+  const missing = await render(textSource(), {}, pack, {
+    ...profile,
+    layout: {
+      ...profile.layout,
+      defaultStyle: { ...profile.layout.defaultStyle, bold: true },
+    },
+  });
+  expect(missing).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "FONT_MISSING", phase: "layout" }],
+  });
+});
