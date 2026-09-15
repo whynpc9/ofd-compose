@@ -7,6 +7,12 @@
     },
     "typecheck": {},
     "test": {},
-    "test:browser": {}
+    "test:browser": {},
+    "@ofd-compose/render-worker#test": {
+      "dependsOn": ["build", "^test"]
+    },
+    "@ofd-compose/render-worker#test:browser": {
+      "dependsOn": ["^test:browser"]
+    }
   }
 }

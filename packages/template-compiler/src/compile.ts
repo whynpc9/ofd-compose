@@ -1,3 +1,4 @@
+import type { JobContext } from "@ofd-compose/document-model";
 import {
   type BarcodeBinding,
   type BlockNode,
@@ -105,6 +106,7 @@ export type CompileResult =
 /** `maxStructureDepth` 统一由 `limits.maxStructureDepth` 给出，并同时用于模型校验前的嵌套深度预检。 */
 export interface CompileOptions extends Omit<ValidateTemplateSourceOptions, "maxStructureDepth"> {
   readonly limits?: Partial<CompileLimits>;
+  readonly job?: JobContext;
 }
 
 function resolveLimits(limits: Partial<CompileLimits> | undefined): CompileLimits {
@@ -144,7 +146,7 @@ class TemplateCompiler {
 
   constructor(
     private readonly template: TemplateSource,
-    options: CompileOptions,
+    private readonly options: CompileOptions,
     validationDiagnostics: readonly Diagnostic[],
   ) {
     this.diagnostics = [...validationDiagnostics];
@@ -243,6 +245,7 @@ class TemplateCompiler {
   run(): void {
     const { maxStructureDepth } = this.limits;
     for (const { node, structureDepth } of walkTemplateNodes(this.template.body)) {
+      this.options.job?.charge("compile", 1);
       // 第 maxStructureDepth+1 层结构容器越界：在该容器上报告一次，其子树（更深）静默跳过。
       if (structureDepth > maxStructureDepth) continue;
       if (structureDepth === maxStructureDepth && isStructureContainer(node)) {

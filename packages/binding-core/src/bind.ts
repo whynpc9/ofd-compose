@@ -1,3 +1,4 @@
+import type { JobContext } from "@ofd-compose/document-model";
 import {
   type BarcodeBinding,
   type BindingPolicyVersion,
@@ -51,6 +52,7 @@ import {
 import { detectTemporalRuntime, type TemporalRuntime } from "./runtime.js";
 import { evaluateTruthiness } from "./truthiness.js";
 import {
+  chargeBindingValue,
   isJsonArray,
   isJsonObject,
   isMissing,
@@ -77,6 +79,7 @@ export const defaultBindBudgets: BindBudgets = {
 };
 
 export interface BindingPolicy {
+  readonly job?: JobContext;
   /** 覆盖模板 settings.bindingPolicyVersion（如迁移差分时同一模板双跑）。 */
   readonly bindingPolicyVersion?: BindingPolicyVersion;
   readonly budgets?: Partial<BindBudgets>;
@@ -120,9 +123,11 @@ class Binder {
     /** 经校验的时区；模板时区非法时回退 UTC（已记 error 诊断，文档仍产出供预览）。 */
     private readonly timeZone: string,
     private readonly budgets: BindBudgets,
+    private readonly job?: JobContext,
   ) {
     this.budget = {
       maxSortOperations: budgets.maxSortOperations,
+      job,
       counters: { sortOperations: 0 },
     };
   }
@@ -157,6 +162,7 @@ class Binder {
 
   /** 计一个展开节点；超出 `maxExpandedNodes` 时报 REPEAT_LIMIT（一次）并进入耗尽状态。 */
   private charge(node: { nodeId: string; bindingId?: string }): boolean {
+    this.job?.charge("bind", 1);
     if (this.exhausted) return false;
     this.expandedNodes++;
     if (this.expandedNodes <= this.budgets.maxExpandedNodes) return true;
@@ -502,6 +508,7 @@ class Binder {
     const result = this.evaluate(binding, scope, "condition");
     let visible = false;
     if (result.valueState !== "missing") {
+      chargeBindingValue(this.job, result.value);
       const truth = evaluateTruthiness(result.value, this.policy);
       if (truth.legacyDiverged) {
         this.legacyChange(
@@ -609,6 +616,7 @@ class Binder {
     const { value } = result;
     if (isMissing(value) || value === null) return [];
     if (isJsonArray(value)) {
+      this.job?.charge("bind", value.length);
       return value.map((item, i) => ({
         value: item,
         dataPath: result.elementDataPaths?.[i] ?? `${result.dataPath ?? ""}[${i}]`,
@@ -625,6 +633,7 @@ class Binder {
       });
       return [];
     }
+    chargeBindingValue(this.job, value);
     const truth = evaluateTruthiness(value, this.policy);
     if (truth.value) {
       this.legacyChange(
@@ -756,6 +765,7 @@ export function bind(
       maxExpandedNodes: policy.budgets?.maxExpandedNodes ?? defaultBindBudgets.maxExpandedNodes,
       maxSortOperations: policy.budgets?.maxSortOperations ?? defaultBindBudgets.maxSortOperations,
     },
+    policy.job,
   );
   if (!timeZoneValid) {
     // document-model 只能校验非空字符串；时区表的归属方是 binding-core（temporal-polyfill），

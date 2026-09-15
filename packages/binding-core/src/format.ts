@@ -1,3 +1,4 @@
+import type { JobContext } from "@ofd-compose/document-model";
 import type { DatePattern, NumberPattern } from "@ofd-compose/template-compiler";
 import Decimal from "decimal.js";
 import type { DateTimeParts } from "./date.js";
@@ -6,7 +7,27 @@ import type { DateTimeParts } from "./date.js";
  * .NET 自定义数值格式子集的自实现（ADR-0001：不用 Intl.NumberFormat；金额走 decimal.js）。
  * 舍入：四舍五入、远离零（MidpointRounding.AwayFromZero，与 decimal.ToString(pattern) 一致）。
  */
-export function formatDecimal(value: Decimal, pattern: NumberPattern): string {
+export class FormattingLimitError extends Error {}
+export function formatDecimal(value: Decimal, pattern: NumberPattern, job?: JobContext): string {
+  // Exponent text is compact input but toFixed expands it. Reserve the worst-case result,
+  // including rounding carry, grouping and affixes, before any fixed-point allocation.
+  const integerDigits = Math.max(1, value.e + pattern.scaleExponent + 2, pattern.integerMinDigits);
+  const outputUnits =
+    integerDigits +
+    Math.ceil(integerDigits / 3) +
+    pattern.fractionMaxDigits +
+    pattern.prefix.length +
+    pattern.suffix.length +
+    2;
+  if (
+    !value.isFinite() ||
+    !Number.isSafeInteger(outputUnits) ||
+    outputUnits > 1_000_000 ||
+    outputUnits < 0
+  )
+    throw new FormattingLimitError("Formatted number exceeds the output character budget");
+  job?.charge("bind", outputUnits * 12 + pattern.fractionMaxDigits ** 2);
+
   let scaled = value;
   if (pattern.scaleExponent !== 0) {
     scaled = scaled.mul(Decimal.pow(10, pattern.scaleExponent));
@@ -30,9 +51,9 @@ export function formatDecimal(value: Decimal, pattern: NumberPattern): string {
   if (pattern.grouping && integerPart.length > 3) {
     const groups: string[] = [];
     for (let end = integerPart.length; end > 0; end -= 3) {
-      groups.unshift(integerPart.slice(Math.max(0, end - 3), end));
+      groups.push(integerPart.slice(Math.max(0, end - 3), end));
     }
-    integerPart = groups.join(",");
+    integerPart = groups.reverse().join(",");
   }
 
   const digits = fractionPart.length > 0 ? `${integerPart}.${fractionPart}` : integerPart;

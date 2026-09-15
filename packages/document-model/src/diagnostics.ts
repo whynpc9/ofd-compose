@@ -9,6 +9,12 @@
  * - `REPEAT_KEY_INVALID`：重复键重复 / 为 null / 非标量（issue 05；spec §4「键重复报错」，§12 未列独立码位）。
  */
 export const diagnosticCodes = [
+  "RENDER_CANCELLED",
+  "FONT_INVALID",
+  "FONT_DIGEST_MISMATCH",
+  "FONT_STYLE_UNAVAILABLE",
+  "CHARACTER_OUT_OF_PROFILE",
+  "TEXT_INVALID",
   "FONT_MISSING",
   "GLYPH_MISSING",
   "BINDING_MISSING",
@@ -35,7 +41,14 @@ export type DiagnosticCode = (typeof diagnosticCodes)[number];
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
 /** 产生诊断的阶段。排版/写出阶段由后续票追加。 */
-export type DiagnosticPhase = "model" | "compile" | "bind" | "media";
+export type DiagnosticPhase =
+  | "model"
+  | "compile"
+  | "bind"
+  | "media"
+  | "layout"
+  | "subset"
+  | "render";
 
 export interface Diagnostic {
   readonly code: DiagnosticCode;

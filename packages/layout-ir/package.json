@@ -4,7 +4,11 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    },
     "./fixtures": "./fixtures/index.ts"
   },
   "scripts": {
@@ -23,5 +27,8 @@
     "vitest": "5.0.0",
     "@ofd-compose/binding-core": "workspace:*",
     "@ofd-compose/template-compiler": "workspace:*"
+  },
+  "tsdown": {
+    "dts": false
   }
 }

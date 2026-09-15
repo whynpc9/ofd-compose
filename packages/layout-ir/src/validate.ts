@@ -99,8 +99,10 @@ export function validateReferences(
     input.semantics.map((s) => s.readingOrder),
     "semantics/readingOrder",
   );
+  const subsetGlyphs = new Map<string, Set<number>>();
   for (const resource of input.resources) {
     if (resource.kind === "font" && resource.glyphIdMap) {
+      subsetGlyphs.set(resource.id, new Set(resource.glyphIdMap.map((g) => g.original)));
       if (!resource.subsetDigest)
         fail("IR_RESOURCE", "resources", "Glyph map requires subset digest");
       unique(
@@ -134,10 +136,7 @@ export function validateReferences(
         const font = resources.get(item.fontId);
         if (font?.kind !== "font") fail("IR_REFERENCE", item.id, "Missing font instance");
         clusterOffsetTable(item);
-        if (
-          font.glyphIdMap &&
-          item.glyphs.some((g) => !font.glyphIdMap?.some((m) => m.original === g.glyphId))
-        )
+        if (font.glyphIdMap && item.glyphs.some((g) => !subsetGlyphs.get(font.id)?.has(g.glyphId)))
           fail("IR_RESOURCE", item.id, "Glyph missing from subset map");
       } else if (item.kind === "image" && resources.get(item.resourceId)?.kind !== "image")
         fail("IR_REFERENCE", item.id, "Missing image resource");

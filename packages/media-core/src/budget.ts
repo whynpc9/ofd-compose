@@ -1,4 +1,4 @@
-import type { DiagnosticCode } from "@ofd-compose/document-model";
+import type { DiagnosticCode, JobContext } from "@ofd-compose/document-model";
 
 export class MediaError extends Error {
   constructor(
@@ -56,7 +56,10 @@ export class MediaBudget {
     metadataCharacters: 0,
     workUnits: 0,
   };
-  constructor(limits: Partial<Record<keyof MediaLimits, number>> = {}) {
+  constructor(
+    limits: Partial<Record<keyof MediaLimits, number>> = {},
+    private readonly job?: JobContext,
+  ) {
     configurationRecord(limits);
     const values: { -readonly [K in keyof MediaLimits]: number } = { ...mediaLimits };
     for (const key of Object.keys(mediaLimits) as (keyof MediaLimits)[]) {
@@ -76,6 +79,7 @@ export class MediaBudget {
   charge(key: keyof MediaBudget["used"], amount: number): void {
     if (!Number.isSafeInteger(amount) || amount < 0 || amount > this.limits[key] - this.used[key])
       fail("RESOURCE_LIMIT", `Media budget exceeded: ${key}`);
+    this.job?.charge("media", amount);
     this.used[key] += amount;
   }
 }

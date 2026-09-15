@@ -50,7 +50,7 @@ CI（`.github/workflows/ci.yml`，Linux）依次执行：锁文件存在性检�
 
 - Node 版本：`.nvmrc` + 根 `package.json` 的 `engines`；pnpm 版本：`packageManager`。
 - .NET SDK：`global.json`；包版本：`dotnet/Directory.Packages.props`（CPM）；NuGet 锁文件 `packages.lock.json` 入库。
-- `document-model` / `template-compiler` / `binding-core` / `layout-core` / `typography-core` 禁止引用 DOM 全局对象与 `Intl`（Biome `noRestrictedGlobals`，见 `biome.json` overrides；门禁测试在 `tests/gates/`）。
+- `document-model` / `template-compiler` / `binding-core` / `layout-core` / `typography-core` / `render-worker` 禁止引用 DOM 全局对象与 `Intl`（Biome `noRestrictedGlobals`，见 `biome.json` overrides；门禁测试在 `tests/gates/`）。
 - 契约 schema：`schemas/document-model/*.schema.json` 由 TypeBox 定义生成，`tests/gates` 保证入库文件与定义一致（变更后 `pnpm --filter @ofd-compose/gate-tests test -- -u`）。
 
 ## 已落地的内核链路（issue 04 起）
@@ -62,3 +62,9 @@ CI（`.github/workflows/ci.yml`，Linux）依次执行：锁文件存在性检�
 - `@ofd-compose/binding-core`：strict-1 / legacy-compat-1 两种绑定策略（Missing/Null 分离、作用域、truthiness、`LEGACY_SEMANTIC_CHANGE`）；decimal.js 数字格式化、temporal-polyfill 日期字段；节点级诊断。
 - 验收：`tests/golden-corpus/tests/narrative-corpus.dual.test.ts` 在 Node 与浏览器双模式下把叙述类 corpus 用例绑定到 ResolvedDocument 并与预期文本比较。
 - TS 包 ESM only、strict（`tsconfig.base.json`）；锁文件 `pnpm-lock.yaml` 入库。
+
+## Render Worker 主接缝（issue 14）
+
+`@ofd-compose/render-worker` 的 `render(template, data, resourcePack, profile)` 编排编译、绑定、媒体、排版和真实字体子集，返回完整身份摘要、最终 canonical IR、Semantic Map 与 writer 字节资源。
+构建后包的默认入口为 ESM `dist/index.mjs`，可直接由 Node 24 导入；开发工具通过 `development` condition 使用源码。
+接入、预算/取消、CFF/TrueType 子集 ABI 与 corpus 验证边界见 [Render Worker README](packages/render-worker/README.md)。

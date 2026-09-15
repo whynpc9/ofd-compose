@@ -6,6 +6,7 @@ import {
   type ResolvedParagraph,
   type ResolvedTextFragment,
 } from "@ofd-compose/binding-core";
+import type { JobContext } from "@ofd-compose/document-model";
 import {
   type PageBand,
   type PageSettings,
@@ -52,6 +53,7 @@ import { type PageGeometry, pageGeometry } from "./page.js";
 const maxLayoutCoordinate = 1_000_000;
 
 export const layoutEngineVersion = "ofd-compose/paginated-layout@0";
+export const lineBreakVersion = `${shapingAndLineBreakVersions.linebreak}/chinese-v1`;
 export const paragraphProfile = Object.freeze({
   name: "paragraphs-ltr",
   version: "0",
@@ -271,6 +273,7 @@ export class LayoutError extends Error {
       | "LAYOUT_OVERFLOW"
       | "LAYOUT_LIMIT"
       | "FONT_UNAVAILABLE"
+      | "FONT_STYLE_UNAVAILABLE"
       | "PAGINATION_NOT_CONVERGED",
     message: string,
     readonly nodeId?: string,
@@ -287,6 +290,8 @@ export interface LayoutFont {
   bytes: Uint8Array | Promise<Uint8Array>;
 }
 export interface LayoutOptions {
+  /** Optional digest of the complete authorized input pack, including unused resources. */
+  resourcePackDigest?: string;
   page?: {
     width: number;
     height: number;
@@ -441,6 +446,7 @@ export async function layout(
   resources: readonly LayoutFont[],
   options: LayoutOptions,
   preparedMedia?: object,
+  job?: JobContext,
 ) {
   preflightJsonTree(document);
   preflightDocument(document);
@@ -592,7 +598,10 @@ export async function layout(
       throw new LayoutError("LAYOUT_INPUT", "Ambiguous font family/style mapping");
     const metrics = core.loadFont(bytes, definition.sha256);
     if (metrics.os2.weight !== definition.weight || metrics.os2.italic !== definition.italic)
-      throw new LayoutError("FONT_UNAVAILABLE", "Declared font style differs from static face");
+      throw new LayoutError(
+        "FONT_STYLE_UNAVAILABLE",
+        "Declared font style differs from static face",
+      );
     faces.push({ definition, metrics, id: `font${faces.length}` });
   }
   const work = {
@@ -607,9 +616,22 @@ export async function layout(
     pathCommands: 0,
     regionAttempts: 0,
   };
+  if (job)
+    for (const key of Object.keys(work) as (keyof typeof work)[]) {
+      let current = work[key];
+      Object.defineProperty(work, key, {
+        enumerable: true,
+        get: () => current,
+        set: (next: number) => {
+          job.charge("layout", Math.max(0, next - current));
+          current = next;
+        },
+      });
+    }
   const maxIterations = opts.pagination?.maxIterations ?? layoutResourceLimits.paginationPasses;
   let totalPages = 1;
   for (let iteration = 1; iteration <= maxIterations; iteration++) {
+    job?.charge("layout", 1);
     const { usesTotalPages, ...result } = new ParagraphLayouter(
       doc,
       faces,
@@ -667,6 +689,12 @@ interface LayoutWork {
   regionAttempts: number;
 }
 function validatePaginationOptions(options: LayoutOptions) {
+  if (
+    options.resourcePackDigest !== undefined &&
+    (typeof options.resourcePackDigest !== "string" ||
+      !/^[a-f0-9]{64}$/.test(options.resourcePackDigest))
+  )
+    throw new LayoutError("LAYOUT_INPUT", "Invalid complete resource-pack digest");
   for (const [value, limit] of [
     [options.pagination?.maxPages, layoutResourceLimits.pages],
     [options.pagination?.maxIterations, layoutResourceLimits.paginationPasses],
@@ -800,7 +828,7 @@ class ParagraphLayouter {
           ],
           layoutEngineVersion,
           shapingVersion: canonicalSerialize(shapingAndLineBreakVersions),
-          lineBreakVersion: `${shapingAndLineBreakVersions.linebreak}/chinese-v1`,
+          lineBreakVersion,
           formattingPolicy,
           profile,
           layoutOptions: {
@@ -2138,6 +2166,7 @@ class ParagraphLayouter {
     )
       throw new LayoutError("LAYOUT_LIMIT", "Page budget exceeded before page allocation");
     this.reserveSectionMetadata();
+
     this.work.pages++;
     this.pageIndex = this.ir.pages.length;
     this.ir.pages.push({
@@ -2475,6 +2504,7 @@ class ParagraphLayouter {
     for (let index = firstEndingAfter(runs, start); index < runs.length; index++) {
       const run = runs[index];
       if (!run || run.start >= end) break;
+
       this.work.runVisits++;
       if (this.work.runVisits > 2_000_000)
         throw new LayoutError("LAYOUT_LIMIT", "Line measurement exceeds 2000000 run visits");
@@ -2676,6 +2706,7 @@ class ParagraphLayouter {
       for (let index = candidateIndex; index < candidates.length; index++) {
         const candidate = candidates[index];
         if (!candidate) break;
+
         this.work.candidateVisits++;
         if (this.work.candidateVisits > 2_000_000)
           throw new LayoutError("LAYOUT_LIMIT", "Line selection exceeds 2000000 candidate visits");

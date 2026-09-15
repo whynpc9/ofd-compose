@@ -70,9 +70,6 @@ importers:
 
   packages/layout-core:
     dependencies:
-      '@ofd-compose/media-core':
-        specifier: workspace:*
-        version: link:../media-core
       '@ofd-compose/binding-core':
         specifier: workspace:*
         version: link:../binding-core
@@ -82,6 +79,9 @@ importers:
       '@ofd-compose/layout-ir':
         specifier: workspace:*
         version: link:../layout-ir
+      '@ofd-compose/media-core':
+        specifier: workspace:*
+        version: link:../media-core
       '@ofd-compose/typography-core':
         specifier: workspace:*
         version: link:../typography-core
@@ -89,9 +89,6 @@ importers:
         specifier: 0.34.52
         version: 0.34.52
     devDependencies:
-      zxing-wasm:
-        specifier: 3.1.3
-        version: 3.1.3(@types/emscripten@1.41.6)
       '@ofd-compose/template-compiler':
         specifier: workspace:*
         version: link:../template-compiler
@@ -101,6 +98,9 @@ importers:
       vitest:
         specifier: 5.0.0
         version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
+      zxing-wasm:
+        specifier: 3.1.3
+        version: 3.1.3(@types/emscripten@1.41.6)
 
   packages/layout-ir:
     dependencies:
@@ -160,6 +160,40 @@ importers:
       zxing-wasm:
         specifier: 3.1.3
         version: 3.1.3(@types/emscripten@1.41.6)
+
+  packages/render-worker:
+    dependencies:
+      '@ofd-compose/binding-core':
+        specifier: workspace:*
+        version: link:../binding-core
+      '@ofd-compose/document-model':
+        specifier: workspace:*
+        version: link:../document-model
+      '@ofd-compose/layout-core':
+        specifier: workspace:*
+        version: link:../layout-core
+      '@ofd-compose/layout-ir':
+        specifier: workspace:*
+        version: link:../layout-ir
+      '@ofd-compose/media-core':
+        specifier: workspace:*
+        version: link:../media-core
+      '@ofd-compose/template-compiler':
+        specifier: workspace:*
+        version: link:../template-compiler
+      '@ofd-compose/typography-core':
+        specifier: workspace:*
+        version: link:../typography-core
+    devDependencies:
+      harfbuzzjs:
+        specifier: 1.6.0
+        version: 1.6.0
+      vite:
+        specifier: 8.2.2
+        version: 8.2.2(@types/node@24.13.3)
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
 
   packages/template-compiler:
     dependencies:

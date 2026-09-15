@@ -1,6 +1,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex } from "@noble/hashes/utils.js";
 import type { ResolvedBlock, ResolvedDocument, ResolvedMedia } from "@ofd-compose/binding-core";
+import type { JobContext, PageSettings } from "@ofd-compose/document-model";
 import { type Diagnostic, type ImageSource, imageReference } from "@ofd-compose/document-model";
 import { canonicalSerialize, digestCanonical } from "@ofd-compose/layout-ir";
 import { barcode, type PreparedBarcode } from "./barcodes.js";
@@ -61,34 +62,59 @@ function chargeSource(source: ResolvedMedia, budget: MediaBudget): void {
  * Media/configuration validation errors return no partial output. Resource digests use owned byte snapshots.
  * Persist mediaIdentity with layout options; merge image digests into LayoutIdentity.resources.
  */
-export function prepareMedia(document: ResolvedDocument, options: MediaOptions = {}) {
+export function prepareMedia(
+  document: ResolvedDocument,
+  options: MediaOptions = {},
+  job?: JobContext,
+) {
   const diagnostics: Diagnostic[] = [];
   const blocks: PreparedMediaBlock[] = [];
-  let current: ResolvedMedia | undefined;
+  let current: { nodeId: string; bindingId?: string; dataPath?: string } | undefined;
   try {
     configurationRecord(options);
     const limits = configurationField(options, "limits");
     if (limits !== undefined) configurationRecord(limits);
-    const budget = new MediaBudget(limits as MediaOptions["limits"]);
+    const budget = new MediaBudget(limits as MediaOptions["limits"], job);
     const resolver = new ImageResolver(
       budget,
       configurationField(options, "resources"),
       configurationField(options, "root"),
     );
+    const watermarkImages: (PreparedImage & { sourceId: string })[] = [];
+    const watermarkIds = new Set<string>();
+    const prepareWatermarks = (
+      page: PageSettings | undefined,
+      owner?: { nodeId: string },
+    ): void => {
+      current = owner;
+      for (const mark of page?.watermarks ?? [])
+        if (mark.kind === "image" && !watermarkIds.has(mark.resourceId)) {
+          watermarkIds.add(mark.resourceId);
+          watermarkImages.push({
+            sourceId: mark.resourceId,
+            ...resolver.resolve({ resourceId: mark.resourceId }),
+          });
+        }
+    };
+    prepareWatermarks(document.settings.page);
     let visited = 0;
     const visit = (body: readonly ResolvedBlock[], depth: number): void => {
       if (!Array.isArray(body) || depth > 32 || body.length > 200000)
         fail("RESOURCE_LIMIT", "Media document traversal budget exceeded");
       for (const block of body) {
+        current = block;
         if (++visited > 200000) fail("RESOURCE_LIMIT", "Media document traversal budget exceeded");
+        if (block.kind === "paragraph") prepareWatermarks(block.layout?.section?.page, block);
         if (block.kind === "region") visit(block.children, depth + 1);
         else if (block.kind === "table") {
           if (block.rows.length > 10000)
             fail("RESOURCE_LIMIT", "Media table traversal budget exceeded");
           for (const row of block.rows) {
+            current = row;
             if (++visited > 200000 || row.cells.length > 10000)
               fail("RESOURCE_LIMIT", "Media table traversal budget exceeded");
             for (const cell of row.cells) {
+              current = cell;
               if (++visited > 200000) fail("RESOURCE_LIMIT", "Media traversal budget exceeded");
               visit(cell.blocks, depth + 1);
             }
@@ -111,6 +137,9 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
     };
     visit(document.body, 0);
     const mediaIdentity = digestCanonical({
+      ...(watermarkImages.length
+        ? { watermarks: watermarkImages.map(({ sourceId, resource }) => ({ sourceId, resource })) }
+        : {}),
       mediaVersion,
       blocks: blocks.map((block) => ({
         nodeId: block.source.nodeId,
@@ -128,7 +157,7 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
         ...(block.barcode ? { barcode: block.barcode.geometryDigest } : {}),
       })),
     });
-    const result = { ok: true as const, blocks, mediaIdentity, diagnostics };
+    const result = { ok: true as const, blocks, watermarkImages, mediaIdentity, diagnostics };
     const identitySources = blocks.map(({ source }) =>
       source.kind === "image-binding"
         ? {
@@ -194,7 +223,7 @@ export function prepareMedia(document: ResolvedDocument, options: MediaOptions =
       ...(current
         ? {
             nodeId: current.nodeId,
-            bindingId: current.bindingId,
+            ...(current.bindingId === undefined ? {} : { bindingId: current.bindingId }),
             ...(current.dataPath === undefined ? {} : { dataPath: current.dataPath }),
           }
         : {}),
