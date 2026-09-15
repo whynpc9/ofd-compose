@@ -9,7 +9,10 @@
     "test": {},
     "test:browser": {},
     "@ofd-compose/render-worker#test": {
-      "dependsOn": ["build"]
+      "dependsOn": ["build", "^test"]
+    },
+    "@ofd-compose/render-worker#test:browser": {
+      "dependsOn": ["^test:browser"]
     }
   }
 }

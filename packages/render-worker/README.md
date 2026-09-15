@@ -73,6 +73,8 @@ input and allocation exactly once. Glyph/unicode sets are borrowed from the inpu
 not separately freed. No plan API is exported/used; `hb_subset_or_fail` owns its internal plan.
 This lifecycle is separate from TypographyCore's FinalizationRegistry-managed objects.
 
+Only fonts referenced by text objects are subsetted; unused font resources are pruned before
+final canonicalization (input authorization/validation still covers the entire pack).
 The glyph set is the union of actual IR glyph IDs plus .notdef. Flags are
 `HB_SUBSET_FLAGS_RETAIN_GIDS=0x2`; default layout/composite closure stays enabled. The identity
 map covers requested glyph IDs plus .notdef; closure components are internal to the font.
@@ -93,7 +95,7 @@ work use the same job meter. Existing module ceilings remain in effect.
 
 Default ceilings: 200k JSON nodes, 8M string units, depth 64, 128 resource entries, 160 MiB
 input resources and 512M work units. Subset output reserves its entire 32 MiB accepted ceiling
-**before** native execution, cumulatively 128 MiB (at most four distinct subset fonts per job).
+**before** native execution, cumulatively 128 MiB (at most four distinct used subset fonts per job).
 This conservative reservation can reject a job even if its eventual small subsets would fit.
 Limits can only be lowered. `subsetBytes` reports reserved capacity, not actual output size.
 

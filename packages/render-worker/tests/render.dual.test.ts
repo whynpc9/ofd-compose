@@ -379,3 +379,31 @@ it("rejects exponent expansion before fixed-point formatting allocation", async 
   });
   expect(result).not.toHaveProperty("resolvedDocument");
 });
+it("subsets only used fonts from a complete five-font pack", async () => {
+  const { loadFontFile } = await import("#font-loader");
+  const { default: manifest } = await import("../../typography-core/fonts/manifest.json");
+  const fonts = await Promise.all(
+    manifest.map(async (entry, i) => {
+      const bytes = await loadFontFile(entry.file);
+      return {
+        family: i === 0 ? "Noto" : `unused${i}`,
+        weight: i === 1 || i === 4 ? 700 : 400,
+        italic: i >= 3,
+        sha256: entry.sha256,
+        bytes,
+        byteLength: bytes.length,
+      };
+    }),
+  );
+  expect(fonts).toHaveLength(5);
+  const result = await render(textSource(), {}, { ...pack, fonts }, profile);
+  if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+  expect(result.fonts).toHaveLength(1);
+  expect(result.ir.resources.filter((r) => r.kind === "font")).toHaveLength(1);
+  expect(result.budget.subsetBytes).toBe(32 * 1024 * 1024);
+  const empty = await render({ ...textSource(), body: [] }, {}, { ...pack, fonts }, profile);
+  if (!empty.ok) throw new Error(JSON.stringify(empty.diagnostics));
+  expect(empty.fonts).toEqual([]);
+  expect(empty.ir.resources.filter((r) => r.kind === "font")).toEqual([]);
+  expect(empty.budget.subsetBytes).toBe(0);
+});

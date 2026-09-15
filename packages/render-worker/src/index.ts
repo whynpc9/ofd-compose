@@ -194,6 +194,7 @@ export async function render(
         for (const object of page.objects)
           if (object.kind === "text" && resources.has(object.fontId))
             for (const glyph of object.glyphs) glyphs.add(glyph.glyphId);
+      if (glyphs.size === 0) continue;
       subsets.push(await subsetFont(font.bytes, font.sha256, [...glyphs], wasmBytes, budget));
     }
     budget.check();

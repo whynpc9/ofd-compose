@@ -87,6 +87,14 @@ export function withFontSubsets(
 ): CanonicalLayoutIR {
   validateCanonicalLayoutIR(input);
   const ir = JSON.parse(canonicalSerialize(input)) as CanonicalLayoutIR;
+  const usedFonts = new Set(
+    ir.pages.flatMap((page) =>
+      page.objects.flatMap((item) => (item.kind === "text" ? [item.fontId] : [])),
+    ),
+  );
+  ir.resources = ir.resources.filter(
+    (resource) => resource.kind !== "font" || usedFonts.has(resource.id),
+  );
   for (const resource of ir.resources) {
     if (resource.kind !== "font") continue;
     const subset = subsets.find((item) => item.originalDigest === resource.originalDigest);
