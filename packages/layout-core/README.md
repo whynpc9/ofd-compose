@@ -312,7 +312,9 @@ A row entirely covered by an earlier row span has `cells:[]`.
 Cells use the same real Typography and prepared Media paths as ordinary flow. Nested tables
 retain their nearest table coordinates. Input controls render their default value or placeholder
 through Typography, with control identity and `control-geometry` markers; empty text controls
-retain an empty source and a zero-width caret anchor. This is fixed output geometry, not the
+retain an empty source and a zero-width caret anchor. Adjacent empty controls get distinct
+zero-text objects and Semantic Map control identities in source order, including when mixed
+with ordinary text. Their boundary separates shaping runs without adding printable text. This is fixed output geometry, not the
 interactive editing UI. Existing region policies also transform and clip control markers.
 
 Rows never split (`rowSplit:"avoid"`). Connected vertical spans form atomic groups
@@ -334,7 +336,9 @@ still receive a source anchor. Stroke dash/cap/join/color use the shared graphic
 lines or table header/first merged group; heading role enables it unless explicitly false.
 Explicit page/section breaks terminate the keep chain. `orphanLines` and `widowLines` constrain
 lines on each side of a break (1–100); when a pagination policy is selected, their defaults are 2.
-Impossible constraints produce `LAYOUT_OVERFLOW`. Older paragraphs without these fields retain
+Lookahead measures the first independent media item, a table header/first connected span group,
+or the next paragraph's minimum legal initial line group. It does not lay out an entire image
+list or table a second time. Impossible constraints produce `LAYOUT_OVERFLOW`. Older paragraphs without these fields retain
 their prior line pagination behavior and pinned fixtures. Profile selection uses the same effective
 policy predicate: implicit heading behavior belongs to `tables-ltr@0`, while an explicitly
 disabled heading policy does not silently activate widow/orphan defaults.

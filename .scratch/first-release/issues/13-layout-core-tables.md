@@ -79,3 +79,24 @@ Five additional shared regressions passed. Full post-fix Node **529** (Layout 10
 Chromium **322** (Layout 103), all typechecks/builds and lint passed with **0 cached** tasks.
 The earlier .NET 46/schema/golden/license evidence applies to unchanged cross-language
 contracts and dependencies; the next remote CI run will recheck the full PR head.
+
+
+## PR #10 second review follow-up
+
+The bot reviewed `2e179f042c0ba874c1e94de17bcce671539b3689` and raised two valid findings:
+
+- `4011655359`: lookahead now stops after the first independent media item, the table header
+  and first connected row-span group, or the next paragraph's minimum legal initial lines.
+  Table column inference still considers the full input under the shared work budget. A short
+  paragraph unable to satisfy both split minima is kept whole. Policy paragraph measurement
+  uses the page-count budget and IR coordinate ceiling rather than a fixed 100000-mm cutoff.
+- `4011655362`: empty controls adjacent to text/other controls get distinct zero-text object
+  anchors with their own Semantic Map `controlId`, source ranges, repeat identity and markers.
+  Run boundaries preserve their source order without introducing printable text.
+
+Eight additional shared regressions passed, including two independent 6000-row/line, 500-page
+fixtures, a two-image list, four empty-control positions and an unsplittable short paragraph.
+All **27 new shared tests** passed in Node/Chromium. Full post-fix verification: **Node 537**
+(Layout 114), **Chromium 330** (Layout 111), typecheck/build/lint passed, **0 cached** tasks.
+Independent Standards/Spec follow-up inspection confirmed the fixes without new concrete
+findings. The latest remote head still requires its own bot and CI completion.

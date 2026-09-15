@@ -558,3 +558,167 @@ it("measures empty tables locally after an earlier nonempty table", async () => 
   expect(result.ir.pages).toHaveLength(1);
   expect(result.lines.find((l) => l.nodeId === "heading")?.pageIndex).toBe(0);
 });
+it("keeps a heading with only the first independently pageable image", async () => {
+  const doc = bound(
+    [
+      {
+        kind: "paragraph",
+        nodeId: "heading",
+        layout: { keepWithNext: true, lineHeight: { kind: "fixed", value: 10 } },
+        inlines: [{ kind: "text", nodeId: "title", text: "Title" }],
+      },
+      {
+        kind: "image-binding",
+        nodeId: "images",
+        bindingId: "images-binding",
+        expression: { kind: "legacy", text: "images" },
+        options: { width: 40, height: 140, preserveAspectRatio: false },
+      },
+    ],
+    { images: [mediaFixture.png, mediaFixture.png] },
+  );
+  const result = await layout(doc, await fonts(), options, prepareMedia(doc));
+  const images = result.ir.pages.flatMap((p) => p.objects).filter((o) => o.kind === "image");
+  expect(images).toHaveLength(2);
+  expect(result.ir.pages).toHaveLength(2);
+  expect(result.lines[0]?.pageIndex).toBe(0);
+  expect(
+    result.semanticMap.filter((s) => s.bindingId === "images-binding").map((s) => s.pageIndex),
+  ).toEqual([0, 1]);
+});
+it("probes only the first group of a valid 6000-row table", async () => {
+  const doc = document([]),
+    t = table(6000);
+  t.layout = { headerRows: 0 };
+  for (const row of t.rows) row.layout = { height: 20, heightMode: "fixed" };
+  doc.body = [
+    {
+      kind: "paragraph",
+      nodeId: "heading",
+      layout: { keepWithNext: true, lineHeight: { kind: "fixed", value: 10 } },
+      fragments: [{ kind: "text", text: "Title", origin: { kind: "static", nodeId: "title" } }],
+    },
+    t,
+  ];
+  const result = await layout(doc, await fonts(), options);
+  expect(result.ir.pages).toHaveLength(500);
+  expect(result.semanticMap.filter((s) => s.table)).toHaveLength(6000);
+  expect(result.semanticMap.filter((s) => s.table).map((s) => s.table?.row)).toEqual(
+    Array.from({ length: 6000 }, (_, i) => i),
+  );
+  expect(result.lines[0]?.pageIndex).toBe(0);
+}, 60000);
+it.each(["start", "middle", "end", "only"] as const)(
+  "retains distinct semantic IDs for adjacent empty controls at %s",
+  async (position) => {
+    const controls: Extract<BlockNode, { kind: "paragraph" }>["inlines"] = [
+      { kind: "input-control", nodeId: "one", controlId: "one-control", controlType: "text" },
+      { kind: "input-control", nodeId: "two", controlId: "two-control", controlType: "text" },
+    ];
+    const a = { kind: "text" as const, nodeId: "a", text: "A" },
+      b = { kind: "text" as const, nodeId: "b", text: "B" };
+    const inlines =
+      position === "start"
+        ? [...controls, a, b]
+        : position === "middle"
+          ? [a, ...controls, b]
+          : position === "end"
+            ? [a, b, ...controls]
+            : controls;
+    const doc = bound([
+      {
+        kind: "table",
+        nodeId: "t",
+        rows: [
+          {
+            kind: "table-row",
+            nodeId: "row",
+            cells: [
+              {
+                kind: "table-cell",
+                nodeId: "cell",
+                blocks: [{ kind: "paragraph", nodeId: "p", inlines }],
+              },
+            ],
+          },
+        ],
+      },
+    ]);
+    const result = await layout(doc, await fonts(), options);
+    const controlEntries = result.semanticMap.filter((s) => s.controlId);
+    expect(controlEntries.map((s) => s.controlId)).toEqual(["one-control", "two-control"]);
+    expect(
+      controlEntries.every(
+        (s) => s.sourceText?.text === "" && s.table?.row === 0 && s.table.column === 0,
+      ),
+    ).toBe(true);
+    expect(result.ir.markers.map((m) => m.objectId)).toEqual(controlEntries.map((s) => s.objectId));
+    const texts = result.semanticMap
+      .flatMap((s) => s.sourceRanges ?? [])
+      .map((s) => s.sourceText.text.slice(s.sourceText.range.start, s.sourceText.range.end));
+    expect(texts.join("")).toBe(position === "only" ? "" : "AB");
+    if (position === "middle")
+      expect(result.semanticMap.map((s) => s.controlId ?? s.sourceText?.text)).toEqual([
+        "A",
+        "one-control",
+        "two-control",
+        "B",
+      ]);
+  },
+);
+
+it("keeps a heading with a short paragraph that cannot satisfy a split policy", async () => {
+  const doc = bound([
+    {
+      kind: "paragraph",
+      nodeId: "filler",
+      layout: { lineHeight: { kind: "fixed", value: 220 } },
+      inlines: [{ kind: "text", nodeId: "filler-text", text: "Filler" }],
+    },
+    {
+      kind: "paragraph",
+      nodeId: "heading",
+      layout: { keepWithNext: true, lineHeight: { kind: "fixed", value: 10 } },
+      inlines: [{ kind: "text", nodeId: "title", text: "Title" }],
+    },
+    {
+      kind: "paragraph",
+      nodeId: "body",
+      layout: { orphanLines: 2, widowLines: 2, lineHeight: { kind: "fixed", value: 10 } },
+      inlines: [{ kind: "text", nodeId: "text", text: "A\nB\nC" }],
+    },
+  ]);
+  const result = await layout(doc, await fonts(), options);
+  expect(result.lines.filter((l) => l.nodeId !== "filler").map((l) => l.pageIndex)).toEqual([
+    1, 1, 1, 1,
+  ]);
+});
+it("bounds paragraph lookahead while preserving a 6000-line policy paragraph", async () => {
+  const doc = document([]);
+  doc.body = [
+    {
+      kind: "paragraph",
+      nodeId: "heading",
+      layout: { keepWithNext: true, lineHeight: { kind: "fixed", value: 10 } },
+      fragments: [{ kind: "text", text: "Title", origin: { kind: "static", nodeId: "title" } }],
+    },
+    {
+      kind: "paragraph",
+      nodeId: "body",
+      layout: { orphanLines: 2, widowLines: 2, lineHeight: { kind: "fixed", value: 20 } },
+      fragments: Array.from({ length: 6000 }, (_, i) => ({
+        kind: "text" as const,
+        text: i === 5999 ? "A" : "A\n",
+        origin: { kind: "static" as const, nodeId: `text${i}` },
+      })),
+    },
+  ];
+  const result = await layout(doc, await fonts(), options);
+  expect(result.ir.pages).toHaveLength(500);
+  expect(result.lines.filter((l) => l.nodeId === "body")).toHaveLength(6000);
+  const extracted = result.semanticMap
+    .flatMap((s) => s.sourceRanges ?? [])
+    .map((s) => s.sourceText.text.slice(s.sourceText.range.start, s.sourceText.range.end))
+    .join("");
+  expect(extracted).toBe(`Title${Array(6000).fill("A").join("\n")}`);
+}, 60000);

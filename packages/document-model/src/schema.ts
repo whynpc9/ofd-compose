@@ -5,7 +5,7 @@ import { PathNodeSchema, PlacementSchema, RegionLayoutSchema, StrokeSchema } fro
  * Document Model v0（issue 04 + issue 05）。
  *
  * 覆盖：段落 + 行内序列（静态文本、DynamicText、InputControl）；结构节点 ConditionalBlock / RepeatBlock /
- * RepeatRowGroup；表格 v0（行/单元格结构，版式属性待 issue 13/23）。媒体绑定等随后续票加入；
+ * RepeatRowGroup；表格 v0（列宽、行高、合并、边框与重复表头版式）。媒体绑定保留冻结尺寸与放置政策；
  * v0 冻结前的新增字段均为向后兼容扩展（旧实例仍合法），冻结后 `modelVersion` 递增并提供迁移。
  *
  * 身份约定（spec §4）：
@@ -578,7 +578,7 @@ const repeatRowGroupOf = <T extends TSchema>(block: T) =>
   );
 
 /**
- * 表格 v0：只承载绑定语义所需的行/单元格结构；列宽、边框、合并、跨页表头等版式属性随 issue 13/23 加入。
+ * 表格 v0：承载绑定行/单元格结构与 issue 13 的确定性布局属性。
  */
 const tableOf = <T extends TSchema>(block: T) =>
   Type.Object(

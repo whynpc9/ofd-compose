@@ -295,6 +295,7 @@ interface Span {
   fragment: ResolvedTextFragment;
 }
 interface Run {
+  separateAfter?: boolean;
   start: number;
   end: number;
   style: TextStyle;
@@ -896,14 +897,28 @@ class ParagraphLayouter {
       this.y = 0;
       this.inRegion = true;
       this.decorationBox = { ...this.geometry.contentBox, y: 0, height: 100000 };
-      if (block.kind === "table") return this.table(block);
-      this.block(block, index);
-      if (block.kind !== "paragraph") return this.y;
-      const captured = this.lines.slice(requiredLayoutValue(lengths[3]));
+      if (block.kind === "table") return this.table(block, true);
+      if (block.kind === "image-binding" || block.kind === "barcode-binding") {
+        this.placeMedia(block, true);
+        return this.y;
+      }
+      if (block.kind !== "paragraph") {
+        this.block(block, index);
+        return this.y;
+      }
       const keep = block.layout?.keepWithNext ?? block.layout?.role === "heading";
-      const take = keep
-        ? captured.length
-        : (block.layout?.orphanLines ?? (block.layout?.widowLines ? 2 : 1));
+      const policy = hasParagraphPaginationPolicy(block.layout);
+      const leading = block.layout?.orphanLines ?? (policy ? 2 : 1);
+      const trailing = block.layout?.widowLines ?? 2;
+      const maxLines = keep ? undefined : policy ? leading + trailing : 1;
+      this.decorationBox.height = Math.min(
+        1000000,
+        this.geometry.contentBox.height * (maxLines ?? 1),
+      );
+      this.paragraph(block, index, undefined, maxLines);
+      const captured = this.lines.slice(requiredLayoutValue(lengths[3]));
+      const take =
+        keep || (policy && captured.length < leading + trailing) ? captured.length : leading;
       return (
         captured.slice(0, take).reduce((n, line) => n + line.height, 0) +
         (block.layout?.spaceBefore ?? 0) +
@@ -939,7 +954,14 @@ class ParagraphLayouter {
       savedY = this.y;
     const properties = paragraph.layout ?? {};
     this.inRegion = true;
-    this.decorationBox = { ...box, y: 0, height: 100000 };
+    this.decorationBox = {
+      ...box,
+      y: 0,
+      height: Math.min(
+        1000000,
+        box.height * (this.options.pagination?.maxPages ?? layoutResourceLimits.pages),
+      ),
+    };
     this.y = 0;
     try {
       this.paragraph(
@@ -1119,20 +1141,41 @@ class ParagraphLayouter {
     this.y = Math.min(box.y + box.height, this.y + (properties.spaceAfter ?? 0));
   }
 
-  private table(table: Extract<ResolvedBlock, { kind: "table" }>): number {
+  private table(table: Extract<ResolvedBlock, { kind: "table" }>, initialOnly = false): number {
     const parent = this.decorationBox ?? this.geometry.contentBox;
     const savedRegion = this.inRegion,
       savedBox = this.decorationBox;
-    const rows = table.rows;
+    let rows = table.rows;
     if (!rows.length) return 0;
     let firstGroupHeight = 0;
     // Bound dense grid occupancy before allocation, including spans and empty cells.
     const columns = table.layout?.columns;
-    const count =
-      columns?.length ??
-      Math.max(...rows.map((r) => r.cells.reduce((n, c) => n + (c.layout?.columnSpan ?? 1), 0)));
+    let inferredCount = 0;
+    for (const row of rows) {
+      this.work.runVisits += 1 + row.cells.length;
+      if (this.work.runVisits > 2000000)
+        throw new LayoutError("LAYOUT_LIMIT", "Table planning budget exceeded", table.nodeId);
+      if (!columns)
+        inferredCount = Math.max(
+          inferredCount,
+          row.cells.reduce((n, c) => n + (c.layout?.columnSpan ?? 1), 0),
+        );
+    }
+    const count = columns?.length ?? inferredCount;
     if (count > 1024 || rows.length > 10000 || rows.length * count > 100000)
       throw new LayoutError("LAYOUT_LIMIT", "Table grid budget exceeded", table.nodeId);
+    if (initialOnly) {
+      let end = Math.min(rows.length, Math.max(1, (table.layout?.headerRows ?? 0) + 1));
+      for (let row = 0; row < end; row++) {
+        const source = rows[row];
+        if (!source) throw new LayoutError("LAYOUT_INPUT", "Table span exceeds rows", table.nodeId);
+        this.work.runVisits += 1 + source.cells.length;
+        if (this.work.runVisits > 2000000)
+          throw new LayoutError("LAYOUT_LIMIT", "Table lookahead budget exceeded", table.nodeId);
+        for (const cell of source.cells) end = Math.max(end, row + (cell.layout?.rowSpan ?? 1));
+      }
+      rows = rows.slice(0, end);
+    }
     if (!count)
       throw new LayoutError(
         "LAYOUT_INPUT",
@@ -1291,6 +1334,16 @@ class ParagraphLayouter {
         "Header boundary intersects a merged cell",
         table.nodeId,
       );
+    if (initialOnly) {
+      this.work.runVisits += heights.length;
+      if (this.work.runVisits > 2000000)
+        throw new LayoutError(
+          "LAYOUT_LIMIT",
+          "Table lookahead height budget exceeded",
+          table.nodeId,
+        );
+      return heights.reduce((n, height) => n + height, 0);
+    }
     const byRow = rows.map(() => [] as Cell[]);
     for (const c of cells) byRow[c.row]?.push(c);
     const ends = rows.map((_, i) => i + 1);
@@ -1656,7 +1709,7 @@ class ParagraphLayouter {
     state.transform = transform;
     return id;
   }
-  private placeMedia(block: ResolvedMedia) {
+  private placeMedia(block: ResolvedMedia, initialOnly = false) {
     const prepared = this.media?.blocks[this.mediaIndex++];
     if (!prepared) throw new LayoutError("LAYOUT_INPUT", "Media is not ready", block.nodeId);
     const objects = this.ir.pages[this.pageIndex]?.objects;
@@ -1667,6 +1720,7 @@ class ParagraphLayouter {
       throw new LayoutError("LAYOUT_INPUT", "Barcode quiet zones cannot be cropped", block.nodeId);
     const entries = prepared.images ?? (prepared.barcode ? [prepared.barcode] : []);
     for (const [index, entry] of entries.entries()) {
+      if (initialOnly && index > 0) break;
       const crop = block.kind === "image-binding" ? block.placement?.crop : undefined;
       if (
         crop &&
@@ -2312,7 +2366,11 @@ class ParagraphLayouter {
     const definitions = new Map<string, { style: TextStyle; face: Face }>();
     let script = Array.from(text).map(scriptOf).find(Boolean) ?? "Latn";
     for (const span of spans) {
-      if (span.start === span.end) continue;
+      if (span.start === span.end) {
+        const previous = runs.at(-1);
+        if (span.controlId && previous) previous.separateAfter = true;
+        continue;
+      }
       const key = `${span.fragment.styleInheritance === "explicit" ? "e" : "p"}:${span.fragment.styleId ?? ""}`;
       let selected = styles.get(key);
       if (!selected) {
@@ -2339,6 +2397,7 @@ class ParagraphLayouter {
         if (
           previous &&
           previous.end === i &&
+          !previous.separateAfter &&
           !control &&
           !previous.control &&
           previous.script === script &&
@@ -2429,6 +2488,7 @@ class ParagraphLayouter {
     paragraph: ResolvedParagraph,
     paragraphIndex: number,
     generatedStyle?: TextStyle,
+    maxLines?: number,
   ) {
     if (++this.work.paragraphs > layoutResourceLimits.layoutParagraphs)
       throw new LayoutError("LAYOUT_LIMIT", "Paragraph layout budget exceeded", paragraph.nodeId);
@@ -2718,6 +2778,7 @@ class ParagraphLayouter {
       this.y += height;
       start = end;
       lineIndex++;
+      if (maxLines !== undefined && lineIndex >= maxLines) break;
       if (start === text.length) {
         if (!terminalEmptyPending) break;
         terminalEmptyPending = false;
@@ -2805,6 +2866,65 @@ class ParagraphLayouter {
       miterLimit: 10,
     });
     return id;
+  }
+  private emptyControlAnchor(
+    source: Span,
+    paragraph: ResolvedParagraph,
+    piece: Piece,
+    x: number,
+    baseline: number,
+  ) {
+    if (!source.controlId) throw new Error("Missing control identity");
+    this.reserveObjects(2);
+    this.metadata(
+      paragraph,
+      source.fragment.origin.nodeId.length * 2 + source.controlId.length * 2,
+    );
+    const objects = requiredLayoutValue(this.ir.pages[this.pageIndex]).objects;
+    const id = `page${this.pageIndex}object${objects.length}`;
+    const bounds = {
+      x,
+      y: baseline - piece.ascent,
+      width: 0,
+      height: piece.ascent + piece.descent,
+    };
+    objects.push({
+      id,
+      kind: "text",
+      drawOrder: objects.length,
+      stateId: this.state(piece.run.style.color),
+      bounds,
+      logicalText: "",
+      displayText: "",
+      fontId: piece.run.face.id,
+      fontSize: piece.size,
+      language: this.doc.settings.locale,
+      direction: "ltr",
+      baseline: { x, y: baseline + piece.shift },
+      glyphs: [],
+      clusters: [],
+    });
+    this.semantic({ ...paragraph, nodeId: source.fragment.origin.nodeId }, id);
+    const semantic = requiredLayoutValue(this.ir.semantics.at(-1));
+    semantic.controlId = source.controlId;
+    semantic.sourceText = { text: "", range: { start: 0, end: 0 } };
+    semantic.sourceRanges = [
+      {
+        nodeId: source.fragment.origin.nodeId,
+        sourceText: { text: "", range: { start: 0, end: 0 } },
+        logicalRange: { start: 0, end: 0 },
+      },
+    ];
+    this.ir.markers.push({
+      id: `marker${this.ir.markers.length}`,
+      pageId: `page${this.pageIndex}`,
+      kind: "control-geometry",
+      bounds: { ...bounds },
+      nodeId: source.fragment.origin.nodeId,
+      objectId: id,
+      controlId: source.controlId,
+      signatureCoverage: "none",
+    });
   }
   private emit(
     piece: Piece,
@@ -2908,6 +3028,15 @@ class ParagraphLayouter {
         stroke: !fill,
       });
     };
+    const detachedControls = new Set(
+      selected.length > 1
+        ? selected.filter((source) => source.controlId && source.start === source.end)
+        : [],
+    );
+    const textSelected = selected.filter((source) => !detachedControls.has(source));
+    for (const source of detachedControls)
+      if (source.start === piece.start)
+        this.emptyControlAnchor(source, paragraph, piece, x, baseline);
     if (style.highlight) path(true, style.highlight, top, bounds.height);
     const id = `page${this.pageIndex}object${objects.length}`;
     const glyphs: TextObject["glyphs"] = [],
@@ -2964,7 +3093,7 @@ class ParagraphLayouter {
       clusters,
     });
     if (!generated) {
-      const sources = selected.map((s) => ({
+      const sources = textSelected.map((s) => ({
         nodeId: s.fragment.origin.nodeId,
         ...(s.fragment.origin.kind === "dynamic-text"
           ? { bindingId: s.fragment.origin.bindingId }
@@ -3003,15 +3132,18 @@ class ParagraphLayouter {
               repeatInstance: paragraph.instancePath.map((p) => ({ nodeId: p.nodeId, key: p.key })),
             }
           : {}),
-        ...(selected.length === 1 && selected[0]?.controlId
-          ? { controlId: selected[0].controlId }
+        ...(textSelected.length === 1 && textSelected[0]?.controlId
+          ? { controlId: textSelected[0].controlId }
           : {}),
         ...(style.link ? { link: style.link } : {}),
       });
     }
+    for (const source of detachedControls)
+      if (source.start !== piece.start)
+        this.emptyControlAnchor(source, paragraph, piece, x + width, baseline);
     if (!generated)
       for (const source of selected)
-        if (source.controlId) {
+        if (source.controlId && !detachedControls.has(source)) {
           this.metadata(paragraph, source.controlId.length);
           this.reserveObjects(1);
           this.ir.markers.push({
