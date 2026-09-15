@@ -59,7 +59,9 @@ public sealed class PdfIrWriter
                             content.Append(Matrix(obj.P("transform")));
                             if(obj.Has("clip")){Commands(content,obj.P("clip"));content.Append(obj.P("clip").S("fillRule")=="evenodd"?"W* n\n":"W n\n");}
                             var r=descriptors[obj.S("resourceId")];
-                            content.Append($"{r.I("pixelWidth")} 0 0 {-r.I("pixelHeight")} 0 {r.I("pixelHeight")} cm\n/I{images[r.S("id")]} Do\n");break;
+                            // Linear image coefficients stay mm/pixel in canonical IR, while translations
+                            // and local clip coordinates are canonical um. Scale the unit-image extents only.
+                            content.Append($"{1000L*r.I("pixelWidth")} 0 0 {-1000L*r.I("pixelHeight")} 0 {1000L*r.I("pixelHeight")} cm\n/I{images[r.S("id")]} Do\n");break;
                     }
                     content.Append("Q\n");spans.Add((obj.S("id"),start,content.Length-start));
                 }

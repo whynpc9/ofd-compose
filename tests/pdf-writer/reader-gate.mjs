@@ -19,10 +19,12 @@ for (const name of [
   "truetype-mapping",
   "cff-mapping",
   "nel-control",
+  "visible-image",
 ]) {
   const ir = JSON.parse(
     await fs.readFile(
-      name.endsWith("-mapping") || ["logical-display-printable", "nel-control"].includes(name)
+      name.endsWith("-mapping") ||
+        ["logical-display-printable", "nel-control", "visible-image"].includes(name)
         ? path.join(output, `${name}.ir.json`)
         : `tests/ofd-writer/fixtures/${name}/ir.json`,
       "utf8",

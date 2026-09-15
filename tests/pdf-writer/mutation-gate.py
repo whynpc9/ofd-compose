@@ -47,6 +47,10 @@ def mutate(data, kind):
             modified = re.sub(rb'1 0 0 -1 ([\d.]+) ', lambda m: b'1 0 0 -1 ' + str(float(m[1]) + 5000).encode() + b' ', raw, count=1)
         elif kind == 'clip' and b'W* n\n' in raw:
             modified = raw.replace(b'W* n\n', b'n\n', 1)
+        elif kind == 'imageclip' and b'W n\n' in raw:
+            modified = raw.replace(b'W n\n', b'n\n', 1)
+        elif kind == 'imagescale' and b'2000 0 0 -2000 0 2000 cm\n' in raw:
+            modified = raw.replace(b'2000 0 0 -2000 0 2000 cm\n', b'1 0 0 -1 0 1 cm\n')
         elif kind == 'path' and b' c\n' in raw:
             modified = raw.replace(b'20000 5000 25000 30000 40000 30000 c', b'20000 5000 25000 30000 140000 130000 c')
         if modified == raw:
@@ -78,8 +82,8 @@ def raster(pdf, target):
 
 with tempfile.TemporaryDirectory(prefix='ofd-pdf-mutations-') as directory:
     temp = pathlib.Path(directory)
-    for kind in ['cmap', 'cid', 'ctm', 'clip', 'path']:
-        fixture = 'geometry' if kind in ['clip', 'path'] else 'truetype'
+    for kind in ['cmap', 'cid', 'ctm', 'clip', 'path', 'imageclip', 'imagescale']:
+        fixture = 'visible-image' if kind in ['imageclip', 'imagescale'] else 'geometry' if kind in ['clip', 'path'] else 'truetype'
         original = OUTPUT / f'{fixture}.pdf'
         altered = temp / f'{kind}.pdf'
         altered.write_bytes(mutate(original.read_bytes(), kind))

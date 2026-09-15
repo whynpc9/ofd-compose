@@ -15,15 +15,17 @@
       "sha256": "e8f3bb2080d8be71a37a55e1c33efbaa6346447a8a99698069ee6959776a7def",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
-      "MaxReaderExtentErrorPt": 1.4210854715202004e-14
+      "MaxReaderExtentErrorPt": 1.4210854715202004e-14,
+      "MaxImageCornerErrorPt": 0
     },
     {
       "case": "combined",
-      "bytes": 160312,
-      "sha256": "c5039bc11a321164f15260c24645d6b276083a4d6f020fea2e3cb7c7c4285f34",
+      "bytes": 160316,
+      "sha256": "1d3591d7f04dfbbce84be6f028d78d707fa8f73d19abf79be3cce8cd0b77f543",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.1368683772161603e-13,
-      "MaxReaderExtentErrorPt": 1.1368683772161603e-13
+      "MaxReaderExtentErrorPt": 1.1368683772161603e-13,
+      "MaxImageCornerErrorPt": 2.842170943040401e-14
     },
     {
       "case": "duplicate-markers",
@@ -31,15 +33,17 @@
       "sha256": "f6770e6bf9eb1ce9a65972481959c23c9b7d753273ae0aefbeaa1b95f242f9e1",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
-      "MaxReaderExtentErrorPt": 1.4210854715202004e-14
+      "MaxReaderExtentErrorPt": 1.4210854715202004e-14,
+      "MaxImageCornerErrorPt": 0
     },
     {
       "case": "geometry",
-      "bytes": 122072,
-      "sha256": "16134182347b99bf5e605ec77741f079b4569d85dc058a438bc0913294afbdbe",
+      "bytes": 122074,
+      "sha256": "6f3952ab1c502e85a88777525f3077da67b035085d1f22f4dc3abae82586c52a",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 2.2737367544323206e-13,
-      "MaxReaderExtentErrorPt": 2.2737367544323206e-13
+      "MaxReaderExtentErrorPt": 2.2737367544323206e-13,
+      "MaxImageCornerErrorPt": 2.2737367544323206e-13
     },
     {
       "case": "glyphless",
@@ -47,15 +51,17 @@
       "sha256": "ef2786a284aca5086478c2425d3543f0fddb7a296db471259066c1d33327ca65",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 0,
-      "MaxReaderExtentErrorPt": 0
+      "MaxReaderExtentErrorPt": 0,
+      "MaxImageCornerErrorPt": 0
     },
     {
       "case": "jpeg",
-      "bytes": 237699,
-      "sha256": "2dfcfe6a5a8918694645232a00d56d2eb64e4859bcc48daff80911f15d5c9e1a",
+      "bytes": 237702,
+      "sha256": "048fd91bee61a8a8ca7cf61dc7eb7f337b1b6100de6ae874ca04aadb1959a85a",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.1368683772161603e-13,
-      "MaxReaderExtentErrorPt": 1.1368683772161603e-13
+      "MaxReaderExtentErrorPt": 1.1368683772161603e-13,
+      "MaxImageCornerErrorPt": 2.842170943040401e-14
     },
     {
       "case": "logical-display-printable",
@@ -68,7 +74,8 @@
       "sha256": "3baa86dcc875d4dbad4c952607e8a496469a26792b318f1922bb391544dec8dd",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 7.105427357601002e-15,
-      "MaxReaderExtentErrorPt": 0
+      "MaxReaderExtentErrorPt": 0,
+      "MaxImageCornerErrorPt": 0
     },
     {
       "case": "nel-control",
@@ -81,7 +88,8 @@
       "sha256": "2483b3df7a4a893a8e35a74d73ad64bd57b75080d5ac05bf1154ab919ad5e727",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 7.105427357601002e-15,
-      "MaxReaderExtentErrorPt": 0
+      "MaxReaderExtentErrorPt": 0,
+      "MaxImageCornerErrorPt": 0
     },
     {
       "case": "truetype-mapping",
@@ -94,16 +102,26 @@
       "sha256": "0106f99109e4bd10179ad508f870b86d815b2637e6111e4cb1b14a1bc42b0384",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
-      "MaxReaderExtentErrorPt": 0.0014456692913427105
+      "MaxReaderExtentErrorPt": 0.0014456692913427105,
+      "MaxImageCornerErrorPt": 0
+    },
+    {
+      "case": "visible-image",
+      "bytes": 122085,
+      "sha256": "f9c7ea00d298453ae4602ecd3b4a3f01077778ee63f8b1e1b3c0ea9173d7ab63",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 2.2737367544323206e-13,
+      "MaxReaderExtentErrorPt": 2.2737367544323206e-13,
+      "MaxImageCornerErrorPt": 1.1368683772161603e-13
     }
   ],
   "poppler": "22.12.0-2+deb12u3 (fixed Docker image)",
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 142,
-    "pdfTests": 20,
-    "mutationGates": 5,
-    "freshProcessDeterminism": "13 PDF outputs identical"
+    "dotnetFull": 143,
+    "pdfTests": 21,
+    "mutationGates": 7,
+    "freshProcessDeterminism": "14 PDF outputs identical"
   }
 }

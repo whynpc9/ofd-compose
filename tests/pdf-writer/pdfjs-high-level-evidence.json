@@ -131,5 +131,12 @@
     "classification": "exact",
     "expected": "A",
     "actual": "A"
+  },
+  {
+    "case": "visible-image",
+    "page": 0,
+    "classification": "exact",
+    "expected": "office é 中文 𠮷",
+    "actual": "office é 中文 𠮷"
   }
 ]
