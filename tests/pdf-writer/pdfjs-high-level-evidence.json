@@ -159,5 +159,26 @@
     "classification": "exact",
     "expected": "off",
     "actual": "off"
+  },
+  {
+    "case": "spacing-columns",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o fo f",
+    "actual": "o fo f"
+  },
+  {
+    "case": "spacing-leading",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o f",
+    "actual": "o f"
+  },
+  {
+    "case": "spacing-trailing",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o f",
+    "actual": "o f"
   }
 ]

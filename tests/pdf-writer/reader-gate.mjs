@@ -23,11 +23,19 @@ for (const name of [
   "rtl-order",
   "rtl-positions",
   "rtl-overlap",
+  "spacing-columns",
+  "spacing-leading",
+  "spacing-trailing",
 ]) {
-  const caseDirectory = name.startsWith("rtl-") ? path.join(output, "rtl") : output;
+  const caseDirectory = name.startsWith("rtl-")
+    ? path.join(output, "rtl")
+    : name.startsWith("spacing-")
+      ? path.join(output, "spacing")
+      : output;
   const ir = JSON.parse(
     await fs.readFile(
-      name.startsWith("rtl-") ||
+      name.startsWith("spacing-") ||
+        name.startsWith("rtl-") ||
         name.endsWith("-mapping") ||
         ["logical-display-printable", "nel-control", "visible-image"].includes(name)
         ? path.join(caseDirectory, `${name}.ir.json`)

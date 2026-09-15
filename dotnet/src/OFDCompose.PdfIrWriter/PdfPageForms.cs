@@ -2,7 +2,7 @@ using System.Text;
 namespace OFDCompose.PdfIrWriter;
 
 internal sealed record PdfGlyphSpan(int Start,int Length,int ClusterId);
-internal sealed record PdfPrimitiveSpan(string Id,string? TextGroup,int Start,int Length,List<PdfGlyphSpan>? IsolatedGlyphs);
+internal sealed record PdfPrimitiveSpan(string Id,string? TextGroup,int Start,int Length,List<PdfGlyphSpan>? IsolatedGlyphs,bool LeadingSpace,bool TrailingSpace);
 
 /// <summary>Groups consecutive paint operations without changing their coordinates or order.</summary>
 internal static class PdfPageForms
@@ -13,7 +13,16 @@ internal static class PdfPageForms
     {
         var page=new StringBuilder(original[..prefixLength]);var pending=new StringBuilder();
         var members=new List<(string Id,int Start,int Length)>();
-        var locations=new Dictionary<string,List<(int Stream,int Start,int Length)>>();string? group=null;
+        var locations=new Dictionary<string,List<(int Stream,int Start,int Length)>>();int? group=null;
+        var groupIds=new int[primitives.Count];Array.Fill(groupIds,-1);var groupSizes=new Dictionary<int,int>();
+        PdfPrimitiveSpan? previousText=null;int currentGroup=-1;
+        for(int i=0;i<primitives.Count;i++)
+        {
+            pdf.CheckCancellation();var item=primitives[i];if(item.TextGroup is null)continue;
+            bool connected=previousText is not null&&(previousText.TextGroup==item.TextGroup||previousText.TrailingSpace||item.LeadingSpace);
+            if(!connected)currentGroup++;
+            groupIds[i]=currentGroup;groupSizes[currentGroup]=groupSizes.GetValueOrDefault(currentGroup)+1;previousText=item;
+        }
         void Add(string id,int stream,int start,int length)
         {
             pdf.CheckCancellation();
@@ -32,10 +41,11 @@ internal static class PdfPageForms
             if(pending.Length==0)return;
             Form(pending.ToString(),members);pending.Clear();members.Clear();group=null;
         }
-        foreach(var primitive in primitives)
+        for(int primitiveIndex=0;primitiveIndex<primitives.Count;primitiveIndex++)
         {
+            var primitive=primitives[primitiveIndex];
             pdf.CheckCancellation();
-            if(primitive.IsolatedGlyphs is {Count:>0} glyphs)
+            if(primitive.IsolatedGlyphs is {Count:>0} glyphs&&groupSizes[groupIds[primitiveIndex]]==1)
             {
                 Flush();
                 string prefix=original.Substring(primitive.Start,glyphs[0].Start-primitive.Start);
@@ -51,8 +61,9 @@ internal static class PdfPageForms
                 }
                 continue;
             }
-            if(primitive.TextGroup is {} next)
+            if(primitive.TextGroup is not null)
             {
+                int next=groupIds[primitiveIndex];
                 if(group is not null&&group!=next)Flush();
                 group=next;
             }

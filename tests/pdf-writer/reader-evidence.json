@@ -119,14 +119,15 @@
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 168,
-    "pdfTests": 46,
+    "dotnetFull": 171,
+    "pdfTests": 49,
     "mutationGates": 9,
-    "freshProcessDeterminism": "17 positive PDF outputs identical across fresh processes",
+    "freshProcessDeterminism": "20 positive PDF outputs identical across fresh processes",
     "isolatedMappingTestsFreshDirectory": 16,
     "pixelIdenticalPages": 20,
     "highLevelPositiveCasesLiteralExact": 14,
-    "rtlPositiveCases": 3
+    "rtlPositiveCases": 3,
+    "spacingPositiveCases": 3
   },
   "openAcceptance": "Real Worker consecutive ASCII spaces normalize in stock getTextContent; user decision pending",
   "rtlCases": [
@@ -141,6 +142,20 @@
     {
       "case": "rtl-positions",
       "sha256": "3babc6a37e1f8e0ac12ecda2b44452a13867a526863c294bb759e723c8d301b9"
+    }
+  ],
+  "spacingCases": [
+    {
+      "case": "spacing-columns",
+      "sha256": "04d40e7f061de9ddd885923084ecfd2e865c8cc89888615e0249e8e13972a890"
+    },
+    {
+      "case": "spacing-leading",
+      "sha256": "e701a7723d28a076e32dee86344db3b6b92d666c686ae352b089e9e786518863"
+    },
+    {
+      "case": "spacing-trailing",
+      "sha256": "bec928decb83a60c887ada96ce831a47d6ec28353f69aea380a076f59055e99f"
     }
   ]
 }

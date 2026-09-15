@@ -1,0 +1,22 @@
+{
+  "baseline": "Pre-fix unsemantic spacing paint",
+  "pdfCases": 3,
+  "pixelIdenticalPages": 3,
+  "pages": [
+    {
+      "page": "spacing-columns-1.png",
+      "maxChannelDelta": 0,
+      "changedChannels": 0
+    },
+    {
+      "page": "spacing-leading-1.png",
+      "maxChannelDelta": 0,
+      "changedChannels": 0
+    },
+    {
+      "page": "spacing-trailing-1.png",
+      "maxChannelDelta": 0,
+      "changedChannels": 0
+    }
+  ]
+}

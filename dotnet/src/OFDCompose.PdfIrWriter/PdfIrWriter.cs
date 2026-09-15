@@ -64,7 +64,7 @@ public sealed class PdfIrWriter
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     int start=content.Length;var state=states[obj.S("stateId")];content.Append("q\n");
-                    List<PdfGlyphSpan>? glyphSpans=Isolated(obj)?[]:null;
+                    List<PdfGlyphSpan>? glyphSpans=Isolated(obj)?[]:null;var boundary=(LeadingSpace:false,TrailingSpace:false);
                     // Install a local clip under its transform, then restore the CTM without restoring the clip.
                     // A nested q/Q would also restore the clip. Instead emit transformed clip coordinates.
                     if(state.Has("clip")){Commands(content,state.P("clip").A("commands"),cancellationToken,state.P("transform"));content.Append(state.P("clip").S("fillRule")=="evenodd"?"W* n\n":"W n\n");}
@@ -75,7 +75,7 @@ public sealed class PdfIrWriter
                     content.Append($"{F(state.N("lineWidth"))} w\n{(state.S("lineCap")=="round"?1:state.S("lineCap")=="square"?2:0)} J\n{(state.S("lineJoin")=="round"?1:state.S("lineJoin")=="bevel"?2:0)} j\n{F(state.N("miterLimit"))} M\n[{string.Join(" ",state.A("dash").Select(n=>F(n.GetDouble())))}] {F(state.N("dashOffset"))} d\n");
                     switch(obj.S("kind"))
                     {
-                        case "text":Text(content,obj,fonts[obj.S("fontId")],cancellationToken,glyphSpans);break;
+                        case "text":boundary=Text(content,obj,fonts[obj.S("fontId")],cancellationToken,glyphSpans);break;
                         case "path":Commands(content,obj.A("commands"),cancellationToken);bool fill=obj.P("fill").GetBoolean(),stroke=obj.P("stroke").GetBoolean();content.Append(fill?(stroke?"B":"f")+(obj.S("fillRule")=="evenodd"?"*":""):stroke?"S":"n").Append('\n');break;
                         case "image":
                             content.Append(Matrix(obj.P("transform")));
@@ -88,8 +88,8 @@ public sealed class PdfIrWriter
                     content.Append("Q\n");
                     string? group=null;
                     if(obj.S("kind")=="text")group=semantics.TryGetValue(obj.S("id"),out var semantic)
-                        ?string.Join("|",new[]{"nodeId","repeatInstance","table","sectionId"}.Select(k=>semantic.Has(k)?semantic.P(k).GetRawText():"null")):"fallback";
-                    spans.Add(new(obj.S("id"),group,start,content.Length-start,glyphSpans));
+                        ?"semantic:"+string.Join("|",new[]{"nodeId","repeatInstance","table","sectionId"}.Select(k=>semantic.Has(k)?semantic.P(k).GetRawText():"null")):"fallback:"+obj.S("id");
+                    spans.Add(new(obj.S("id"),group,start,content.Length-start,glyphSpans,boundary.LeadingSpace,boundary.TrailingSpace));
                 }
                 int stream=PdfPageForms.Emit(pdf,pageId,content.ToString(),prefixLength,spans,
                     $"[0 0 {F(page.N("width"))} {F(page.N("height"))}]",formResources,forms,map);
@@ -110,7 +110,7 @@ public sealed class PdfIrWriter
         catch(Exception e)when(e is JsonException or InvalidOperationException or ArgumentException or InvalidDataException or OverflowException or FormatException or EndOfStreamException or IndexOutOfRangeException or NotSupportedException)
         {cancellationToken.ThrowIfCancellationRequested();return Task.FromResult(new PdfWriteResult(null,null,[new("IR_RESOURCE","input",e.GetType().Name)]));}
     }
-    private static void Text(StringBuilder b,JsonElement obj,PdfFont font,CancellationToken cancellationToken,List<PdfGlyphSpan>? glyphSpans=null)
+    private static (bool LeadingSpace,bool TrailingSpace) Text(StringBuilder b,JsonElement obj,PdfFont font,CancellationToken cancellationToken,List<PdfGlyphSpan>? glyphSpans=null)
     {
         var glyphs=obj.A("glyphs").ToArray();string logical=obj.S("logicalText");int end=0;
         Require(glyphs.Length>0||logical.Length==0,"UNSUPPORTED_FEATURE",obj.S("id"),"Nonempty logical text without painted glyphs cannot be represented by ToUnicode");
@@ -150,6 +150,7 @@ public sealed class PdfIrWriter
             glyphSpans?.Add(new(start,b.Length-start,g.I("clusterId")));
         }
         b.Append("ET\nEMC\n");
+        return order.Length==0?(false,false):(texts[order[0]].All(c=>c==' '),texts[order[^1]].All(c=>c==' '));
     }
     private static int Image(PdfObjects pdf,JsonElement r,byte[] bytes,CancellationToken cancellationToken)
     {
