@@ -1016,6 +1016,17 @@ class ParagraphLayouter {
         end = Math.max(first, end - (widow - (lines.length - end)));
         height = lines.slice(first, end).reduce((n, l) => n + l.height, 0);
       }
+      if (end < lines.length && end - first < orphan) {
+        if (this.y > box.y + 1e-9) {
+          this.newPage();
+          continue;
+        }
+        throw new LayoutError(
+          "LAYOUT_OVERFLOW",
+          "Orphan minimum cannot fit page",
+          paragraph.nodeId,
+        );
+      }
       if (end === first) {
         if (this.y > box.y + 1e-9) {
           this.newPage();
@@ -1502,7 +1513,12 @@ class ParagraphLayouter {
         }
       this.y = ys.at(-1) ?? this.y;
     };
-    const sum = (a: number, b: number) => heights.slice(a, b).reduce((n, h) => n + h, 0);
+    this.work.runVisits += heights.length;
+    if (this.work.runVisits > 2000000)
+      throw new LayoutError("LAYOUT_LIMIT", "Table height scan budget exceeded", table.nodeId);
+    const heightPrefix = [0];
+    for (const height of heights) heightPrefix.push((heightPrefix.at(-1) ?? 0) + height);
+    const sum = (a: number, b: number) => (heightPrefix[b] ?? 0) - (heightPrefix[a] ?? 0);
     for (let start = 0; start < rows.length; ) {
       let end = ends[start] ?? start + 1;
       if (start === 0 && headers > 0) end = Math.max(end, Math.min(rows.length, headers + 1));

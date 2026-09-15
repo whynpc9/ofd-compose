@@ -420,3 +420,37 @@ function fixtureValue<T>(value: T | undefined): T {
   if (value === undefined) throw new Error("Missing test fixture value");
   return value;
 }
+
+it.each([
+  { count: 3, orphan: 2, widow: 2 },
+  { count: 5, orphan: 3, widow: 1 },
+])(
+  "rejects impossible orphan constraints after widow adjustment: %j",
+  async ({ count, orphan, widow }) => {
+    const doc = document([]);
+    doc.body = [
+      {
+        kind: "paragraph",
+        nodeId: "p",
+        layout: {
+          lineHeight: { kind: "fixed", value: 10 },
+          orphanLines: orphan,
+          widowLines: widow,
+        },
+        fragments: [
+          {
+            kind: "text",
+            text: Array(count).fill("A").join("\n"),
+            origin: { kind: "static", nodeId: "text" },
+          },
+        ],
+      },
+    ];
+    await expect(
+      layout(doc, await fonts(), {
+        ...options,
+        page: { width: 100, height: 40, contentBox: { x: 10, y: 10, width: 80, height: 20 } },
+      }),
+    ).rejects.toMatchObject({ code: "LAYOUT_OVERFLOW" });
+  },
+);
