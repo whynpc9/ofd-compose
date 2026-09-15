@@ -232,6 +232,47 @@ public sealed class WriterTests
         var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),fixture.Resources,cancellationToken:TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Null(result.ObjectMap);Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
     }
+    public static TheoryData<string,string,bool> InvalidPathCases
+    {
+        get
+        {
+            var cases=new TheoryData<string,string,bool>();
+            foreach(string location in new[]{"path","state-clip","image-clip"})
+                foreach(string op in new[]{"line","cubic","close"})
+                    foreach(bool afterClose in new[]{false,true})cases.Add(location,op,afterClose);
+            return cases;
+        }
+    }
+    private static async Task<OfdWriteResult> ChangedCommands(string location,string commands)
+    {
+        var fixture=await Fixture("geometry");using var document=JsonDocument.Parse(fixture.Ir);var root=document.RootElement;
+        var objects=root.GetProperty("pages")[0].GetProperty("objects").EnumerateArray().ToArray();
+        var target=location switch {
+            "path"=>objects.First(o=>o.GetProperty("kind").GetString()=="path"),
+            "state-clip"=>root.GetProperty("graphicsStates")[0].GetProperty("clip"),
+            _=>objects.First(o=>o.GetProperty("kind").GetString()=="image").GetProperty("clip") };
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(target.GetProperty("commands").GetRawText(),commands));
+        return await new OfdIrWriter().WriteAsync(ir,Digest(ir),fixture.Resources,cancellationToken:TestContext.Current.CancellationToken);
+    }
+    [Theory]
+    [MemberData(nameof(InvalidPathCases))]
+    public async Task Paths_and_clips_reject_commands_without_an_open_subpath(string location,string op,bool afterClose)
+    {
+        string command=op switch {
+            "line"=>"{\"op\":\"line\",\"x\":0,\"y\":0}",
+            "cubic"=>"{\"op\":\"cubic\",\"x\":0,\"x1\":0,\"x2\":0,\"y\":0,\"y1\":0,\"y2\":0}",
+            _=>"{\"op\":\"close\"}" };
+        string prefix=afterClose?"{\"op\":\"move\",\"x\":0,\"y\":0},{\"op\":\"close\"},":"";
+        var result=await ChangedCommands(location,"["+prefix+command+"]");
+        Assert.False(result.Ok);Assert.Null(result.ObjectMap);Assert.Equal("IR_PATH_INVALID",Assert.Single(result.Diagnostics).Code);
+    }
+    [Theory]
+    [InlineData("path")][InlineData("state-clip")][InlineData("image-clip")]
+    public async Task Move_reopens_a_closed_path_or_clip(string location)
+    {
+        var result=await ChangedCommands(location,"[{\"op\":\"move\",\"x\":0,\"y\":0},{\"op\":\"close\"},{\"op\":\"move\",\"x\":1,\"y\":1},{\"op\":\"line\",\"x\":2,\"y\":2}]");
+        Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));
+    }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)
     {

@@ -77,7 +77,7 @@ Before JSON DOM allocation: 32 MiB wire size, 2M tokens, 8 MiB aggregate encoded
 strings, depth 64; exact wire hash and canonical spelling/order. Shared schema plus
 relational validation covers resource/state/object IDs, page containment, canonical
 definitions, subset maps, cluster membership/coverage, UTF-16 boundaries, semantic
-source ranges/page identities and semantic digest. No transported semantic field
+source ranges/page identities, path/clip subpath sequencing and semantic digest. No transported semantic field
 is removed before hashing.
 
 Before resource copies: 128 entries, 32 MiB each, 160 MiB total, exact resource

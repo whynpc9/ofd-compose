@@ -123,6 +123,7 @@ internal static class IrValidation
         Require(expandedCommands <= limits.Commands, "RESOURCE_LIMIT", "clips", "Expanded clip command budget exceeded");
         OrderedDefinitions(ir.P("resources"), "r"); OrderedDefinitions(ir.P("graphicsStates"), "s");
         OrderedDefinitions(ir.P("markers"), "m");
+        foreach(var state in ir.A("graphicsStates")) if(state.Has("clip")) PathCommands(state.P("clip"),state.S("id")+"/clip");
         var resources = ir.A("resources").ToDictionary(r => r.S("id"));
         var states = ir.A("graphicsStates").Select(s => s.S("id")).ToHashSet();
         var fontGlyphSets=resources.Values.Where(r=>r.S("kind")=="font"&&r.Has("glyphIdMap"))
@@ -142,6 +143,8 @@ internal static class IrValidation
                 Require(obj.S("id") == page.S("id") + "o" + objectIndex++ && obj.N("drawOrder") > order, "IR_NON_CANONICAL", page.S("id"), "Invalid object order/ID");
                 order = obj.N("drawOrder"); objects.Add(obj.S("id"), (obj, page));
                 Require(states.Contains(obj.S("stateId")), "IR_REFERENCE", obj.S("id"), "Missing state");
+                if(obj.S("kind")=="path")PathCommands(obj,obj.S("id"));
+                if(obj.Has("clip"))PathCommands(obj.P("clip"),obj.S("id")+"/clip");
                 if (obj.S("kind") == "text")
                 {
                     Require(resources.TryGetValue(obj.S("fontId"), out var font) && font.S("kind") == "font", "IR_REFERENCE", obj.S("id"), "Missing font");
@@ -185,6 +188,17 @@ internal static class IrValidation
         var features = ir.P("identity").P("layoutProfile").A("features").Select(f => f.GetString()!).ToArray();
         Require(features.SequenceEqual(features.Order(StringComparer.Ordinal)), "IR_NON_CANONICAL", "features", "Features must be sorted");
         Require(Digest(Encoding.UTF8.GetBytes(ir.P("semantics").GetRawText())) == ir.P("identity").S("semanticDigest"), "IR_DIGEST_MISMATCH", "semantics", "Semantic digest mismatch");
+    }
+    private static void PathCommands(JsonElement path,string location)
+    {
+        bool open=false;
+        foreach(var command in path.A("commands"))
+        {
+            string operation=command.S("op");
+            if(operation=="move")open=true;
+            else Require(open,"IR_PATH_INVALID",location,"Path command requires an open subpath");
+            if(operation=="close")open=false;
+        }
     }
     private static void Source(JsonElement source) => Range(source.S("text"), source.P("range"));
     private static void Range(string text, JsonElement range)
