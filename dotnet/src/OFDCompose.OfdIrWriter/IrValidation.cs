@@ -20,6 +20,7 @@ internal static class IrValidation
     internal static JsonDocument Parse(ReadOnlyMemory<byte> bytes, string digest, WriterLimits limits)
     {
         Require(bytes.Length <= limits.JsonBytes, "RESOURCE_LIMIT", "ir", "IR byte budget exceeded");
+        bytes = bytes.ToArray();
         var scan = new Utf8JsonReader(bytes.Span, new JsonReaderOptions { MaxDepth = 64 });
         int tokens = 0, strings = 0;
         while (scan.Read())
@@ -115,6 +116,11 @@ internal static class IrValidation
         foreach (var state in ir.A("graphicsStates")) if (state.Has("clip")) commands += state.P("clip").P("commands").GetArrayLength();
         Require(objectsCount <= limits.Objects && glyphCount <= limits.Glyphs && commands <= limits.Commands,
             "RESOURCE_LIMIT", "ir", "Object/glyph/path budget exceeded");
+        var clipCounts = ir.A("graphicsStates").ToDictionary(s => s.S("id"), s => s.Has("clip") ? s.P("clip").P("commands").GetArrayLength() : 0);
+        long expandedCommands = commands;
+        foreach (var page in ir.A("pages")) foreach (var obj in page.A("objects"))
+            if (clipCounts.TryGetValue(obj.S("stateId"), out int clips)) expandedCommands += clips;
+        Require(expandedCommands <= limits.Commands, "RESOURCE_LIMIT", "clips", "Expanded clip command budget exceeded");
         OrderedDefinitions(ir.P("resources"), "r"); OrderedDefinitions(ir.P("graphicsStates"), "s");
         OrderedDefinitions(ir.P("markers"), "m");
         var resources = ir.A("resources").ToDictionary(r => r.S("id"));

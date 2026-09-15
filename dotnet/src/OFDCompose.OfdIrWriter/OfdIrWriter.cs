@@ -18,13 +18,18 @@ public sealed class OfdIrWriter
         try
         {
             cancellationToken.ThrowIfCancellationRequested();
+            limits.Validate();
             using var document = IrValidation.Parse(canonicalIr, irDigest, limits);
             var ir = document.RootElement;
             var bytes = ResourceValidation.Validate(ir, resources, limits);
             // Reserve conservative XML/object expansion and package copies before allocating output models.
             long estimate = canonicalIr.Length * 8L + bytes.Values.Sum(b => (long)b.Length) * 2 + 65536;
+            var clipSizes = ir.A("graphicsStates").ToDictionary(s => s.S("id"), s => s.Has("clip") ? s.P("clip").GetRawText().Length : 0);
+            foreach (var page in ir.A("pages")) foreach (var obj in page.A("objects")) estimate += 2048L + clipSizes[obj.S("stateId")] * 8L;
             Require(estimate <= limits.OutputBytes, "RESOURCE_LIMIT", "output", "Output reservation exceeded");
             var package = new OfdDocumentPackage();
+            package.Options.Namespace = Ns.NamespaceName;
+            package.Options.DocType = "OFD";
             package.Options.Metadata.Creator = "OFDCompose.OfdIrWriter/0";
             var states = ir.A("graphicsStates").ToDictionary(s => s.S("id"));
             var descriptors = ir.A("resources").ToDictionary(r => r.S("id"));
@@ -39,6 +44,8 @@ public sealed class OfdIrWriter
                     Data = bytes[resource.S("id")]
                 });
             var map = new Dictionary<string, string[]>();
+            var preciseMatrices = new Dictionary<string, string>();
+            var logicalTexts = new Dictionary<string, string>();
             foreach (var page in ir.A("pages"))
             {
                 cancellationToken.ThrowIfCancellationRequested();
@@ -57,16 +64,20 @@ public sealed class OfdIrWriter
                         "image" => Image(item, state, page, descriptors[item.S("resourceId")], resourceIds[item.S("resourceId")], bytes[item.S("resourceId")], matrix),
                         _ => throw new WriterFailure("UNSUPPORTED_FEATURE", item.S("id"), "Unsupported primitive")
                     };
+                    var exactMatrix = element switch { OfdImageElement image => image.Transform, OfdPathElement path => path.Transform, _ => null };
+                    if(exactMatrix is not null) preciseMatrices.Add(objectId, string.Join(" ", exactMatrix.Select(F)));
+                    if(element is OfdTextElement text) logicalTexts.Add(objectId, text.Text);
                     element.ObjectId = objectId; element.LayerId = layerId;
                     output.Elements.Add(element); map.Add(item.S("id"), [objectId]);
                 }
             }
             using var destination = new LimitedStream(limits.OutputBytes);
             await new OfdPackageWriter().WriteAsync(package, destination, cancellationToken);
-            return new(destination.ToArray(), map, []);
+            return new(PackageFinalizer.Complete(destination.ToArray(), irDigest, map, preciseMatrices, logicalTexts, limits), map, []);
         }
         catch (WriterFailure failure) { return new(null, null, [failure.Diagnostic]); }
-        catch (Exception error) when (error is JsonException or InvalidOperationException or ArgumentException or XmlException or InvalidDataException or OverflowException)
+        catch (NotSupportedException) { return new(null, null, [new("UNSUPPORTED_FEATURE", "resource", "Resource decoder does not support this variant")]); }
+        catch (Exception error) when (error is JsonException or InvalidOperationException or ArgumentException or XmlException or InvalidDataException or OverflowException or FormatException or EndOfStreamException or IndexOutOfRangeException)
         { return new(null, null, [new("IR_RESOURCE", "input", "Invalid IR or resource: " + error.GetType().Name)]); }
     }
     private static OfdElement Text(JsonElement item, JsonElement state, JsonElement page, JsonElement font, string fontId, double[] matrix)
@@ -81,10 +92,31 @@ public sealed class OfdIrWriter
         var mapping = font.Has("glyphIdMap") ? font.A("glyphIdMap").ToDictionary(g => g.N("original"), g => g.N("subset")) : null;
         if (glyphs.Length > 0)
         {
-            // A single n:m run map preserves visual glyph order even for RTL and overlapping
-            // logical cluster ranges. Never infer glyphs from UTF-16 characters or font cmap.
-            xml.Add(new XElement(Ns + "CGTransform", new XAttribute("CodePosition", 0), new XAttribute("CodeCount", logical.Length),
-                new XAttribute("GlyphCount", glyphs.Length), new XElement(Ns + "Glyphs", string.Join(" ", glyphs.Select(g => F(mapping is null ? g.N("glyphId") : mapping[g.N("glyphId")]))))));
+            XElement Map(int start, int count, IEnumerable<JsonElement> mappedGlyphs)
+            {
+                var group = mappedGlyphs.ToArray();
+                return new XElement(Ns + "CGTransform", new XAttribute("CodePosition", start), new XAttribute("CodeCount", count),
+                    new XAttribute("GlyphCount", group.Length), new XElement(Ns + "Glyphs", string.Join(" ", group.Select(g => F(mapping is null ? g.N("glyphId") : mapping[g.N("glyphId")])))));
+            }
+            // Preserve individual cluster maps when logical and visual partitions agree.
+            // Overlapping/reordered logical ranges use a single n:m run map: drawing order
+            // remains exactly the IR glyph stream; semantic navigation keeps the source IR.
+            int logicalEnd = 0, glyphEnd = 0;
+            bool partition = true;
+            foreach(var cluster in item.A("clusters"))
+            {
+                var range = cluster.P("logicalRange");
+                partition &= range.I("start") == logicalEnd && range.I("end") > logicalEnd;
+                logicalEnd = range.I("end");
+                foreach(var index in cluster.A("glyphIndices")) partition &= index.GetInt32() == glyphEnd++;
+            }
+            partition &= logicalEnd == logical.Length && glyphEnd == glyphs.Length;
+            if(partition) foreach(var cluster in item.A("clusters"))
+            {
+                var range = cluster.P("logicalRange");
+                xml.Add(Map(range.I("start"), range.I("end")-range.I("start"), cluster.A("glyphIndices").Select(i => glyphs[i.GetInt32()])));
+            }
+            else xml.Add(Map(0,logical.Length,glyphs));
         }
         double X(JsonElement g) => Mm(g.P("position").N("x") + g.P("offset").N("x"));
         double Y(JsonElement g) => Mm(g.P("position").N("y") + g.P("offset").N("y"));

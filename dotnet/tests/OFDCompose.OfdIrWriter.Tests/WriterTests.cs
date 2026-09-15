@@ -38,6 +38,10 @@ public sealed class WriterTests
     [InlineData("cff")]
     [InlineData("truetype")]
     [InlineData("glyphless")]
+    [InlineData("geometry")]
+    [InlineData("jpeg")]
+    [InlineData("logical-display")]
+    [InlineData("glyphless-logical")]
     public async Task Real_worker_output_roundtrips_through_net_reader(string name)
     {
         var fixture = await Fixture(name);
@@ -79,12 +83,83 @@ public sealed class WriterTests
         using var zip = new ZipArchive(new MemoryStream(result.Bytes!), ZipArchiveMode.Read);
         var payloads = zip.Entries.Select(e => { using var input = e.Open(); using var output = new MemoryStream(); input.CopyTo(output); return output.ToArray(); }).ToArray();
         foreach (var resource in fixture.Resources) Assert.Contains(payloads, bytes => bytes.AsSpan().SequenceEqual(resource.Bytes.Span));
+        foreach(var xmlBytes in payloads.Where(b => b.Length > 0 && b[0] == '<'))
+            Assert.All(XDocument.Parse(Encoding.UTF8.GetString(xmlBytes)).Descendants(), e => Assert.Equal("http://www.ofdspec.org/2016", e.Name.NamespaceName));
+        Assert.Equal(Digest(result.Bytes!), result.Sha256);
         var ids = payloads.Where(b => b.Length > 0 && b[0] == '<').SelectMany(b => XDocument.Parse(Encoding.UTF8.GetString(b)).Descendants().Attributes("ID")).Select(a => a.Value).ToArray();
         Assert.Equal(ids.Length, ids.Distinct().Count());
         var again = await new OfdIrWriter().WriteAsync(fixture.Ir, Digest(fixture.Ir), fixture.Resources, cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(again.Ok); Assert.Equal(Normalized(result.Bytes!), Normalized(again.Bytes!));
         string? outputPath = Environment.GetEnvironmentVariable("OFD_WRITER_OUTPUT");
         if (outputPath is not null) { Directory.CreateDirectory(outputPath); await File.WriteAllBytesAsync(Path.Combine(outputPath, name + ".ofd"), result.Bytes!, TestContext.Current.CancellationToken); }
+    }
+    [Theory]
+    [InlineData("fontId", "r999", "IR_REFERENCE")]
+    [InlineData("stateId", "s999", "IR_REFERENCE")]
+    public async Task Missing_references_fail_before_output(string field, string value, string code)
+    {
+        var fixture = await Fixture("cff");
+        string text = Encoding.UTF8.GetString(fixture.Ir);
+        using var parsed = JsonDocument.Parse(fixture.Ir);
+        string old = parsed.RootElement.GetProperty("pages")[0].GetProperty("objects")[0].GetProperty(field).GetString()!;
+        var ir = Encoding.UTF8.GetBytes(text.Replace("\"" + field + "\":\"" + old + "\"", "\"" + field + "\":\"" + value + "\""));
+        var result = await new OfdIrWriter().WriteAsync(ir, Digest(ir), fixture.Resources, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.False(result.Ok); Assert.Equal(code, Assert.Single(result.Diagnostics).Code);
+    }
+    [Fact]
+    public async Task Shared_clip_expansion_is_charged_before_object_construction()
+    {
+        var fixture = await Fixture("geometry");
+        // 4 state clip + 4 image clip + 8 path commands fit 16; shared state copies do not.
+        var result = await new OfdIrWriter().WriteAsync(fixture.Ir, Digest(fixture.Ir), fixture.Resources,
+            new WriterLimits { Commands = 16 }, TestContext.Current.CancellationToken);
+        Assert.False(result.Ok); Assert.Equal("RESOURCE_LIMIT", Assert.Single(result.Diagnostics).Code);
+    }
+    [Theory]
+    [InlineData("cff", "CFF ")]
+    [InlineData("truetype", "loca")]
+    public async Task Invalid_font_structure_is_rejected_even_with_consistent_digests(string name, string tag)
+    {
+        var fixture = await Fixture(name);
+        var resource = fixture.Resources[0]; var corrupt = resource.Bytes.ToArray();
+        int count = System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(corrupt.AsSpan(4));
+        bool found=false;
+        for(int i=0;i<count;i++) if(Encoding.ASCII.GetString(corrupt,12+i*16,4)==tag)
+        {
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(corrupt.AsSpan(12+i*16+12),0);
+            found=true; break;
+        }
+        Assert.True(found);
+        var oldDigest = Digest(resource.Bytes.ToArray()); var newDigest = Digest(corrupt);
+        var changedIr = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(oldDigest,newDigest));
+        var resources = fixture.Resources.Select(r=>r.ResourceId==resource.ResourceId ? new WriterResource(r.ResourceId,corrupt):r).ToList();
+        var result=await new OfdIrWriter().WriteAsync(changedIr,Digest(changedIr),resources,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
+    }
+    [Fact]
+    public async Task Cid_font_out_of_bounds_fdselect_is_rejected_after_rehash()
+    {
+        var fixture=await Fixture("cff");var resource=fixture.Resources[0];var corrupt=resource.Bytes.ToArray();
+        int directory=28;Assert.Equal("CFF ",Encoding.ASCII.GetString(corrupt,directory,4));
+        int start=(int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(corrupt.AsSpan(directory+8));
+        int length=(int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(corrupt.AsSpan(directory+12));
+        byte[] needle=[29,0,0,2,226,12,37];int found=corrupt.AsSpan(start,200).IndexOf(needle);Assert.True(found>=0);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(corrupt.AsSpan(start+found+1),(uint)(length+100));
+        uint checksum=0;for(int i=0;i<length;i+=4){uint word=0;for(int b=0;b<4;b++)word=(word<<8)|(i+b<length?corrupt[start+i+b]:0u);checksum=unchecked(checksum+word);}
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(corrupt.AsSpan(directory+4),checksum);
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(corrupt)));
+        var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,corrupt)],cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
+    }
+    [Fact]
+    public async Task Bad_png_crc_with_consistent_transport_digests_is_rejected()
+    {
+        var fixture=await Fixture("combined");var image=fixture.Resources.Single(r=>r.Bytes.Span.StartsWith(new byte[]{137,80,78,71}));
+        var bad=image.Bytes.ToArray();bad[^1]^=1;
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(image.Bytes.ToArray()),Digest(bad)));
+        var resources=fixture.Resources.Select(r=>r.ResourceId==image.ResourceId?new WriterResource(r.ResourceId,bad):r).ToList();
+        var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),resources,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
     }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)

@@ -2,6 +2,18 @@
   "version": 2,
   "dependencies": {
     "net10.0": {
+      "BigGustave": {
+        "type": "Direct",
+        "requested": "[1.0.6, )",
+        "resolved": "1.0.6",
+        "contentHash": "/ytynq7BNctafL1XeMIKBbNWapuR0m8ULvCeRzCDGtM/VewZwni3RhlOiCLSa0CqWXFV1qNpUdVcI8B46QPtrg=="
+      },
+      "JpegLibrary": {
+        "type": "Direct",
+        "requested": "[0.4.32, )",
+        "resolved": "0.4.32",
+        "contentHash": "Lv11HXsyGZxuRUG/0sw+3itw930/c08VkEVXDPin819yheN3Y3YpWQYccs1dW+sBlsGs9S4Y4q6DzyBCctsEeQ=="
+      },
       "JsonSchema.Net": {
         "type": "Direct",
         "requested": "[7.3.4, )",
@@ -10,12 +22,6 @@
         "dependencies": {
           "JsonPointer.Net": "5.3.1"
         }
-      },
-      "StbImageSharp": {
-        "type": "Direct",
-        "requested": "[2.30.15, )",
-        "resolved": "2.30.15",
-        "contentHash": "7QqbupVhz2kcFUPTgMw4iHR9rYDHGundzzee19Mwmd1typ2Lnv8EVJcLJxlkeBM2+4ex0NwsMtdbGSJctp1XCQ=="
       },
       "Humanizer.Core": {
         "type": "Transitive",

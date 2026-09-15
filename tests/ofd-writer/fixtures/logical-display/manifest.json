@@ -1,0 +1,12 @@
+{
+  "fixtureDerivation": "logical-display",
+  "workerBaseIrDigest": "52a2a97e245e9652564ada8d3b21b7d3c842a3806175e231cda0eba5805f6aeb",
+  "irDigest": "72b082661b2bcdb0ceb2a3c59349d0398223ca6edd05c4c22e6239e6c7d4f7a6",
+  "resources": [
+    {
+      "resourceId": "r0",
+      "file": "r0.bin",
+      "sha256": "28d5f343a29a2307d945f268ab503c348b08cdea5e51f091cd918511476571b9"
+    }
+  ]
+}

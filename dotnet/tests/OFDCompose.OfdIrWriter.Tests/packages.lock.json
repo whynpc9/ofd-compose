@@ -151,9 +151,10 @@
       "ofdcompose.ofdirwriter": {
         "type": "Project",
         "dependencies": {
+          "BigGustave": "[1.0.6, )",
+          "JpegLibrary": "[0.4.32, )",
           "JsonSchema.Net": "[7.3.4, )",
-          "Ofdrw.Net.Packaging": "[1.0.0, )",
-          "StbImageSharp": "[2.30.15, )"
+          "Ofdrw.Net.Packaging": "[1.0.0, )"
         }
       },
       "ofdrw.net.core": {
@@ -172,6 +173,18 @@
           "Ofdrw.Net.Packaging": "[1.0.0, )"
         }
       },
+      "BigGustave": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.6, )",
+        "resolved": "1.0.6",
+        "contentHash": "/ytynq7BNctafL1XeMIKBbNWapuR0m8ULvCeRzCDGtM/VewZwni3RhlOiCLSa0CqWXFV1qNpUdVcI8B46QPtrg=="
+      },
+      "JpegLibrary": {
+        "type": "CentralTransitive",
+        "requested": "[0.4.32, )",
+        "resolved": "0.4.32",
+        "contentHash": "Lv11HXsyGZxuRUG/0sw+3itw930/c08VkEVXDPin819yheN3Y3YpWQYccs1dW+sBlsGs9S4Y4q6DzyBCctsEeQ=="
+      },
       "JsonSchema.Net": {
         "type": "CentralTransitive",
         "requested": "[7.3.4, )",
@@ -180,12 +193,6 @@
         "dependencies": {
           "JsonPointer.Net": "5.3.1"
         }
-      },
-      "StbImageSharp": {
-        "type": "CentralTransitive",
-        "requested": "[2.30.15, )",
-        "resolved": "2.30.15",
-        "contentHash": "7QqbupVhz2kcFUPTgMw4iHR9rYDHGundzzee19Mwmd1typ2Lnv8EVJcLJxlkeBM2+4ex0NwsMtdbGSJctp1XCQ=="
       }
     }
   }

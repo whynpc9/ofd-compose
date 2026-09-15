@@ -11,6 +11,25 @@
           "xunit.v3.mtp-v2": "[4.0.0]"
         }
       },
+      "Humanizer.Core": {
+        "type": "Transitive",
+        "resolved": "2.14.1",
+        "contentHash": "lQKvtaTDOXnoVJ20ibTuSIOf2i0uO0MPbDhd1jm238I+U/2ZnRENj0cktKZhtchBMtCUSRQ5v4xBCUbKNmyVMw=="
+      },
+      "Json.More.Net": {
+        "type": "Transitive",
+        "resolved": "2.1.1",
+        "contentHash": "ZXAKl2VsdnIZeUo1PFII3Oi1m1L4YQjEyDjygHfHln5vgsjgIo749X6xWkv7qFYp8RROES+vOEfDcvvoVgs8kA=="
+      },
+      "JsonPointer.Net": {
+        "type": "Transitive",
+        "resolved": "5.3.1",
+        "contentHash": "3e2OJjU0OaE26XC/klgxbJuXvteFWTDJIJv0ITYWcJEoskq7jzUwPSC1s0iz4wPPQnfN7vwwFmg2gJfwRAPwgw==",
+        "dependencies": {
+          "Humanizer.Core": "2.14.1",
+          "Json.More.Net": "2.1.1"
+        }
+      },
       "Microsoft.ApplicationInsights": {
         "type": "Transitive",
         "resolved": "2.23.0",
@@ -130,10 +149,46 @@
         }
       },
       "ofdcompose.ofdirwriter": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "BigGustave": "[1.0.6, )",
+          "JpegLibrary": "[0.4.32, )",
+          "JsonSchema.Net": "[7.3.4, )",
+          "Ofdrw.Net.Packaging": "[1.0.0, )"
+        }
       },
       "ofdcompose.pdfirwriter": {
         "type": "Project"
+      },
+      "ofdrw.net.core": {
+        "type": "Project"
+      },
+      "ofdrw.net.packaging": {
+        "type": "Project",
+        "dependencies": {
+          "Ofdrw.Net.Core": "[1.0.0, )"
+        }
+      },
+      "BigGustave": {
+        "type": "CentralTransitive",
+        "requested": "[1.0.6, )",
+        "resolved": "1.0.6",
+        "contentHash": "/ytynq7BNctafL1XeMIKBbNWapuR0m8ULvCeRzCDGtM/VewZwni3RhlOiCLSa0CqWXFV1qNpUdVcI8B46QPtrg=="
+      },
+      "JpegLibrary": {
+        "type": "CentralTransitive",
+        "requested": "[0.4.32, )",
+        "resolved": "0.4.32",
+        "contentHash": "Lv11HXsyGZxuRUG/0sw+3itw930/c08VkEVXDPin819yheN3Y3YpWQYccs1dW+sBlsGs9S4Y4q6DzyBCctsEeQ=="
+      },
+      "JsonSchema.Net": {
+        "type": "CentralTransitive",
+        "requested": "[7.3.4, )",
+        "resolved": "7.3.4",
+        "contentHash": "7GggWrdzKrtGWETRn3dcMnmuLSyWaDkBK94TK80LEHQEVz4bmsQc7FYO7qL40RDdZU2YPz5d98aT9lW5OYExuA==",
+        "dependencies": {
+          "JsonPointer.Net": "5.3.1"
+        }
       }
     }
   }

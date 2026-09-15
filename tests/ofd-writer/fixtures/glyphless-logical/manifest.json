@@ -1,0 +1,12 @@
+{
+  "fixtureDerivation": "glyphless-logical",
+  "workerBaseIrDigest": "e43fb06400c1a830b2a1e814d09407be546d0edfab074789def9b11da77938d7",
+  "irDigest": "578b1752781ea0c19cf32a417093df03406bd7ef76eb7d968381b748c4ef83be",
+  "resources": [
+    {
+      "resourceId": "r0",
+      "file": "r0.bin",
+      "sha256": "fe74ca3b5cfa7ae0064a96956a1405671fec4e57c905ff3687cfc4b34e62a4c2"
+    }
+  ]
+}
