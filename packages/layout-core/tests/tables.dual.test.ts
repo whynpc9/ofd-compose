@@ -262,7 +262,7 @@ it("binds 400 RepeatRowGroup instances and preserves table, row and cell contrac
     true,
   );
   expect(digestCanonical(result.ir)).toMatchInlineSnapshot(
-    `"8ad91d471f44ee2c5160b7b87a39b881aefb107b63084a5da79fc2eb5c8abfe8"`,
+    `"505bca48d3f7baef859f583d5bb4acc6c2041cdd534ce1689c406919da7f55a6"`,
   );
 });
 it("places frozen media inside cells and retains barcode clipping safeguards in regions", async () => {
@@ -400,13 +400,13 @@ it("budgets repeated header source text and control-only output", async () => {
   cell.blocks = [
     {
       kind: "paragraph",
-      nodeId: "p",
+      nodeId: "x".repeat(300000),
       fragments: [
         { kind: "input-control", nodeId: "c", controlId: "control", controlType: "text" },
+        { kind: "input-control", nodeId: "c2", controlId: "control2", controlType: "text" },
       ],
     },
   ];
-  if (t.rows[0]) t.rows[0].nodeId = "x".repeat(300000);
   doc.body = [t];
   await expect(
     layout(doc, await fonts(), {
@@ -844,4 +844,84 @@ it("starts repeated-header indices at one after moving the original table to a f
     .filter((s) => s.repeatedHeader)
     .map((s) => s.repeatedHeader?.instanceIndex);
   expect(repeats).toEqual([1, 2, 3]);
+});
+
+it.each(["explicit", "inferred"] as const)(
+  "preflights oversized %s grids before waiting for fonts",
+  async (mode) => {
+    const doc = document([]);
+    const rows: ResolvedTable["rows"] = Array.from({ length: 10000 }, (_, r) => ({
+      kind: "table-row",
+      nodeId: `r${r}`,
+      cells: [{ kind: "table-cell", nodeId: `c${r}`, blocks: [] }],
+    }));
+    if (mode === "inferred")
+      fixtureValue(rows[0]).cells = Array.from({ length: 1024 }, (_, c) => ({
+        kind: "table-cell",
+        nodeId: `first${c}`,
+        blocks: [],
+      }));
+    doc.body = [
+      {
+        kind: "table",
+        nodeId: "t",
+        rows,
+        ...(mode === "explicit"
+          ? {
+              layout: {
+                columns: Array.from({ length: 1024 }, () => ({
+                  kind: "proportional" as const,
+                  value: 1,
+                })),
+              },
+            }
+          : {}),
+      },
+    ];
+    await expect(
+      layout(
+        doc,
+        [
+          {
+            family: "Noto",
+            weight: 400,
+            italic: false,
+            sha256: "0".repeat(64),
+            bytes: new Promise(() => {}),
+          },
+        ],
+        options,
+      ),
+    ).rejects.toMatchObject({ code: "LAYOUT_LIMIT", message: expect.stringContaining("grid") });
+  },
+);
+it("links repeated header text and control semantics to their original nodes", async () => {
+  const doc = document([]),
+    t = table(100),
+    cell = fixtureValue(t.rows[0]?.cells[0]);
+  cell.blocks = [
+    {
+      kind: "paragraph",
+      nodeId: "header",
+      fragments: [
+        { kind: "text", text: "Title", origin: { kind: "static", nodeId: "header-text" } },
+        { kind: "input-control", nodeId: "one", controlId: "one-control", controlType: "text" },
+        { kind: "input-control", nodeId: "two", controlId: "two-control", controlType: "text" },
+      ],
+    },
+  ];
+  doc.body = [t];
+  const result = await layout(doc, await fonts(), options);
+  const originals = new Map(
+    result.semanticMap
+      .filter((s) => s.table?.row === 0 && !s.repeatedHeader)
+      .map((s) => [s.nodeId, s]),
+  );
+  expect([...originals.keys()]).toEqual(["header-text", "one", "two"]);
+  const repeated = result.semanticMap.filter((s) => s.repeatedHeader);
+  expect(repeated.length).toBeGreaterThan(0);
+  for (const entry of repeated) {
+    expect(entry.repeatedHeader?.originalNodeId).toBe(entry.nodeId);
+    expect(originals.has(entry.repeatedHeader?.originalNodeId ?? "")).toBe(true);
+  }
 });

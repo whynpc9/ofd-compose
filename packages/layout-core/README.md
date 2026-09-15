@@ -324,6 +324,7 @@ measurement remains within the Layout IR coordinate ceiling. Rows never split (`
 `headerRows` counts leading resolved rows; a merge cannot cross that boundary. Headers stay
 with the first business row/group. With `repeatHeader:true`, subsequent pages reuse measured
 header geometry and add `repeatedHeader:{originalNodeId,instanceIndex}` to each semantic entry.
+`originalNodeId` names the original Semantic Map entry's text/control node.
 The first actual duplicate has index 1; relocating the original table does not advance it.
 Consumers extracting business text must exclude entries with that flag. `table` coordinates
 remain original zero-based rows/columns; RepeatRowGroup keys remain `repeatInstance` identities.
@@ -346,7 +347,8 @@ policy predicate: implicit heading behavior belongs to `tables-ltr@0`, while an 
 disabled heading policy does not silently activate widow/orphan defaults.
 
 Table input is preflighted before copying/font acquisition: at most 10000 rows per table,
-100000 cells and occupied span slots per document. Each table grid is limited to 1024 columns
+100000 cells and occupied span slots per document. Explicit and inferred row/column grid
+products are checked at this preflight stage too, before awaiting fonts. Each table grid is limited to 1024 columns
 and 100000 slots before allocation. Grid scans, copied glyphs, every lookahead pass, paths,
 source ranges, repeated header text/IDs, zero-text objects and markers consume the existing
 shared job budgets; discarded measurement/probe work is never refunded. Headers are copied

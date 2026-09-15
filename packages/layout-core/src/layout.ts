@@ -195,6 +195,15 @@ function preflightDocument(value: unknown): void {
         if (Array.isArray(rows)) {
           if (rows.length > 10000)
             throw new LayoutError("LAYOUT_LIMIT", "Table row budget exceeded before copying");
+          const columns = ownData(ownData(block, "layout"), "columns");
+          if (
+            Array.isArray(columns) &&
+            (columns.length > 1024 || rows.length * columns.length > 100000)
+          )
+            throw new LayoutError(
+              "LAYOUT_LIMIT",
+              "Table grid budget exceeded before resource acquisition",
+            );
           for (let r = 0; r < rows.length; r++) {
             const row = ownData(rows, String(r)),
               cells = ownData(row, "cells");
@@ -202,11 +211,21 @@ function preflightDocument(value: unknown): void {
             tableCells += cells.length;
             if (tableCells > 100000)
               throw new LayoutError("LAYOUT_LIMIT", "Table cell budget exceeded before copying");
+            let rowColumns = 0;
             for (let c = 0; c < cells.length; c++) {
               const cell = ownData(cells, String(c)),
                 spec = ownData(cell, "layout");
               const rs = ownData(spec, "rowSpan") ?? 1,
                 cs = ownData(spec, "columnSpan") ?? 1;
+              if (typeof cs === "number") rowColumns += cs;
+              if (
+                !Array.isArray(columns) &&
+                (rowColumns > 1024 || rows.length * rowColumns > 100000)
+              )
+                throw new LayoutError(
+                  "LAYOUT_LIMIT",
+                  "Inferred table grid budget exceeded before resource acquisition",
+                );
               if (typeof rs === "number" && typeof cs === "number") tableSlots += rs * cs;
               if (tableSlots > 100000)
                 throw new LayoutError("LAYOUT_LIMIT", "Table span budget exceeded before copying");
@@ -1506,7 +1525,7 @@ class ParagraphLayouter {
             if (!original.repeatInstance)
               for (const instance of rows[r]?.instancePath ?? [])
                 units += instance.nodeId.length + instance.key.length;
-            if (repeated) units += requiredLayoutValue(rows[r]).nodeId.length;
+            if (repeated) units += original.nodeId.length;
             this.metadata(table, units);
             this.work.sourceMappings += original.sourceRanges?.length ?? 0;
             if (++this.work.sourceMappings > layoutResourceLimits.sourceMappings)
@@ -1540,7 +1559,7 @@ class ParagraphLayouter {
               ...(repeated
                 ? {
                     repeatedHeader: {
-                      originalNodeId: requiredLayoutValue(rows[r]).nodeId,
+                      originalNodeId: original.nodeId,
                       instanceIndex: repeat,
                     },
                   }

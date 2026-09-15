@@ -118,3 +118,21 @@ Five additional shared regressions passed. Full local verification: **Node 542**
 **Chromium 335** (Layout 116), **0 cached**, with typecheck/build/lint passing. All **32 new
 shared tests** run in both environments. Both independent review axes confirmed these fixes
 without a concrete residual finding. Remote current-head closure remains required.
+
+
+## PR #10 fourth review follow-up
+
+The bot reviewed `9d33d1c376851aa56cf208ba345a53b93632796c` and raised two valid findings:
+
+- `4011826445`: repeated headers now reference the original semantic entry's `nodeId`, for
+  both text and control anchors. Metadata charging follows that exact identifier. The shared
+  canonical digest was updated for the corrected semantic references.
+- `4011826449`: preflight rejects explicit and inferred `rowCount × columnCount` grids over
+  budget before document copying or font acquisition. Both paths are tested with font promises
+  that never settle, proving that rejection does not wait for fonts.
+
+Three additional shared tests passed; the zero-text amplification case now uses a large actual
+semantic node ID. Full local verification: **Node 545** (Layout 122), **Chromium 338** (Layout
+119), **0 cached**, with typecheck/build/lint passing. All **35 new shared tests** run in both
+environments. Independent Standards and Spec follow-up review confirmed both fixes without a
+concrete remaining issue. The latest head still requires remote bot/CI closure.
