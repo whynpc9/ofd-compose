@@ -109,7 +109,12 @@ internal static class FontStructure
             }
             Require(covered==glyphs,"IR_RESOURCE","font","CFF charset coverage");
         }
-        else Require(charset>=0 && !dict.ContainsKey(1230),"IR_RESOURCE","font","CID CFF requires explicit charset");
+        else
+        {
+            Require(charset>=0 && !dict.ContainsKey(1230),"IR_RESOURCE","font","CID CFF requires explicit charset");
+            int coverage=charset switch {0=>229,1=>166,_=>87};
+            Require(glyphs<=coverage,"IR_RESOURCE","font","Glyph count exceeds predefined CFF charset coverage");
+        }
         Private(cff,dict);
         if(dict.ContainsKey(1230))
         {

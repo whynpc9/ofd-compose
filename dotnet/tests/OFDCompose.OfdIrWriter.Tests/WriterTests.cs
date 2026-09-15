@@ -358,6 +358,25 @@ public sealed class WriterTests
         var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(obj.GetRawText(),source));var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),fixture.Resources,cancellationToken:TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Null(result.ObjectMap);Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
     }
+    [Theory]
+    [InlineData(0)][InlineData(1)][InlineData(2)]
+    public async Task Predefined_cff_charsets_reject_excess_charstrings(int charset)
+    {
+        var fixture=await Fixture("cff");var resource=fixture.Resources[0];var bad=resource.Bytes.ToArray();
+        int start=FontTableOffset(bad,"CFF "),directory=28;
+        Assert.Equal("CFF ",Encoding.ASCII.GetString(bad,directory,4));
+        int length=(int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(bad.AsSpan(directory+12));
+        // Remove ROS designation using equal-length non-CID DICT entries; this is an intentionally malformed font.
+        byte[] ros=[28,1,138,28,1,139,139,12,30];int rosAt=bad.AsSpan(start,200).IndexOf(ros);Assert.True(rosAt>=0);
+        byte[] replacement=[141,12,6,139,12,5,139,12,2];replacement.CopyTo(bad,start+rosAt);
+        byte[] charsetOffset=[29,0,0,2,221,15];int charsetAt=bad.AsSpan(start,200).IndexOf(charsetOffset);Assert.True(charsetAt>=0);
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bad.AsSpan(start+charsetAt+1),(uint)charset);
+        uint checksum=0;for(int i=0;i<length;i+=4){uint word=0;for(int b=0;b<4;b++)word=(word<<8)|(i+b<length?bad[start+i+b]:0u);checksum=unchecked(checksum+word);}
+        System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bad.AsSpan(directory+4),checksum);RepairFontAdjustment(bad);
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(bad)));
+        var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);var diagnostic=Assert.Single(result.Diagnostics);Assert.Equal("IR_RESOURCE",diagnostic.Code);Assert.Contains("predefined CFF charset",diagnostic.Message);
+    }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)
     {
