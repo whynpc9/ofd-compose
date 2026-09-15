@@ -21,6 +21,8 @@ public sealed class OfdIrWriter
             limits.Validate();
             using var document = IrValidation.Parse(canonicalIr, irDigest, limits);
             var ir = document.RootElement;
+            long entryReservation=3L+ir.P("pages").GetArrayLength()+ir.P("resources").GetArrayLength()+(ir.A("resources").Any(r=>r.S("kind")=="image")?1:0);
+            Require(entryReservation<=limits.ZipEntries,"RESOURCE_LIMIT","output","ZIP entry reservation exceeded");
             var bytes = ResourceValidation.Validate(ir, resources, limits);
             // Reserve conservative XML/object expansion and package copies before allocating output models.
             long estimate = canonicalIr.Length * 8L + bytes.Values.Sum(b => (long)b.Length) * 2 + 65536;
@@ -33,6 +35,8 @@ public sealed class OfdIrWriter
             package.Options.Metadata.Creator = "OFDCompose.OfdIrWriter/0";
             var states = ir.A("graphicsStates").ToDictionary(s => s.S("id"));
             var descriptors = ir.A("resources").ToDictionary(r => r.S("id"));
+            var fontMaps=descriptors.Values.Where(r=>r.S("kind")=="font"&&r.Has("glyphIdMap"))
+                .ToDictionary(r=>r.S("id"),r=> (IReadOnlyDictionary<double,double>)r.A("glyphIdMap").ToDictionary(g=>g.N("original"),g=>g.N("subset")));
             int nextId = 1;
             string Id() => (nextId++).ToString(System.Globalization.CultureInfo.InvariantCulture);
             var resourceIds = descriptors.Keys.ToDictionary(key => key, _ => Id());
@@ -59,7 +63,7 @@ public sealed class OfdIrWriter
                     var matrix = Matrix(state.P("transform"));
                     var element = item.S("kind") switch
                     {
-                        "text" => Text(item, state, page, descriptors[item.S("fontId")], resourceIds[item.S("fontId")], matrix),
+                        "text" => Text(item, state, page, fontMaps.GetValueOrDefault(item.S("fontId")), resourceIds[item.S("fontId")], matrix),
                         "path" => Path(item, state, page, matrix),
                         "image" => Image(item, state, page, descriptors[item.S("resourceId")], resourceIds[item.S("resourceId")], bytes[item.S("resourceId")], matrix),
                         _ => throw new WriterFailure("UNSUPPORTED_FEATURE", item.S("id"), "Unsupported primitive")
@@ -80,7 +84,7 @@ public sealed class OfdIrWriter
         catch (Exception error) when (error is JsonException or InvalidOperationException or ArgumentException or XmlException or InvalidDataException or OverflowException or FormatException or EndOfStreamException or IndexOutOfRangeException)
         { return new(null, null, [new("IR_RESOURCE", "input", "Invalid IR or resource: " + error.GetType().Name)]); }
     }
-    private static OfdElement Text(JsonElement item, JsonElement state, JsonElement page, JsonElement font, string fontId, double[] matrix)
+    private static OfdElement Text(JsonElement item, JsonElement state, JsonElement page, IReadOnlyDictionary<double,double>? mapping, string fontId, double[] matrix)
     {
         string logical = item.S("logicalText");
         XmlConvert.VerifyXmlChars(logical);
@@ -89,7 +93,6 @@ public sealed class OfdIrWriter
         var xml = Graphic("TextObject", state, page, matrix);
         xml.Add(new XAttribute("Font", fontId), new XAttribute("Size", F(Mm(item.N("fontSize")))),
             new XAttribute("Fill", glyphs.Length == 0 ? "false" : "true"), new XAttribute("Stroke", "false"));
-        var mapping = font.Has("glyphIdMap") ? font.A("glyphIdMap").ToDictionary(g => g.N("original"), g => g.N("subset")) : null;
         if (glyphs.Length > 0)
         {
             XElement Map(int start, int count, IEnumerable<JsonElement> mappedGlyphs)

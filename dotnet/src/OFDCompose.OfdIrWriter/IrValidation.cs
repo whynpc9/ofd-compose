@@ -125,6 +125,8 @@ internal static class IrValidation
         OrderedDefinitions(ir.P("markers"), "m");
         var resources = ir.A("resources").ToDictionary(r => r.S("id"));
         var states = ir.A("graphicsStates").Select(s => s.S("id")).ToHashSet();
+        var fontGlyphSets=resources.Values.Where(r=>r.S("kind")=="font"&&r.Has("glyphIdMap"))
+            .ToDictionary(r=>r.S("id"),r=>r.A("glyphIdMap").Select(g=>g.N("original")).ToHashSet());
         var objects = new Dictionary<string, (JsonElement Object, JsonElement Page)>();
         var pages = new Dictionary<string, JsonElement>();
         int pageIndex = 0;
@@ -144,9 +146,8 @@ internal static class IrValidation
                 {
                     Require(resources.TryGetValue(obj.S("fontId"), out var font) && font.S("kind") == "font", "IR_REFERENCE", obj.S("id"), "Missing font");
                     Text(obj);
-                    if (font.Has("glyphIdMap"))
+                    if (fontGlyphSets.TryGetValue(font.S("id"),out var map))
                     {
-                        var map = font.A("glyphIdMap").Select(g => g.N("original")).ToHashSet();
                         foreach (var glyph in obj.A("glyphs")) Require(map.Contains(glyph.N("glyphId")), "IR_RESOURCE", obj.S("id"), "Unmapped glyph");
                     }
                 }

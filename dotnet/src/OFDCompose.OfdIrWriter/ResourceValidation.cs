@@ -85,7 +85,7 @@ internal static class ResourceValidation
         Require(png ? bytes.AsSpan().StartsWith(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }) : bytes.Length >= 4 && bytes[0] == 255 && bytes[1] == 216 && bytes[^2] == 255 && bytes[^1] == 217, "IR_RESOURCE", "image", "Image MIME/signature mismatch");
         if (png)
         {
-            int at = 8; bool end = false;
+            int at = 8, chunks = 0; bool end = false, hasData = false;
             using var compressed = new MemoryStream();
             while (at < bytes.Length)
             {
@@ -93,6 +93,13 @@ internal static class ResourceValidation
                 uint size = BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(at));
                 Require(size <= bytes.Length - at - 12, "IR_RESOURCE", "image", "Invalid PNG chunk length");
                 int length = (int)size;
+                Require(++chunks<=4096,"RESOURCE_LIMIT","image","PNG chunk budget exceeded");
+                var type=bytes.AsSpan(at+4,4);
+                Require(chunks!=1 || type.SequenceEqual("IHDR"u8) && length==13,"IR_RESOURCE","image","Invalid PNG IHDR");
+                Require(chunks==1 || !type.SequenceEqual("IHDR"u8),"IR_RESOURCE","image","Duplicate PNG IHDR");
+                Require(!type.SequenceEqual("acTL"u8) && !type.SequenceEqual("fcTL"u8) && !type.SequenceEqual("fdAT"u8),"UNSUPPORTED_FEATURE","image","Animated PNG requires normalization");
+                if(type.SequenceEqual("IDAT"u8) && length>0)hasData=true;
+                if(type.SequenceEqual("IEND"u8))Require(length==0 && hasData,"IR_RESOURCE","image","Invalid PNG IEND");
                 uint crc = 0xffffffff;
                 foreach (byte b in bytes.AsSpan(at + 4, length + 4))
                 {
@@ -127,6 +134,7 @@ internal static class ResourceValidation
         }
         else
         {
+            JpegProfile.Validate(bytes);
             using var pool=new BoundedDecodePool();
             var decoder=new JpegDecoder { MemoryPool=pool };decoder.SetInput(bytes);decoder.Identify();
             Require(decoder.Width==descriptor.I("pixelWidth") && decoder.Height==descriptor.I("pixelHeight"),"IR_RESOURCE","image","JPEG dimension mismatch");

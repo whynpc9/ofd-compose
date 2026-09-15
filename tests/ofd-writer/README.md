@@ -48,7 +48,8 @@ manifest. They are not claimed as unchanged Worker rendering decisions.
 
 Negative tests include wrong IR/resource digests, missing references, malformed
 TTF/CFF with recomputed digests, CID FDSelect outside its font, bad PNG CRC with
-consistent transport hashes, and byte/token/string/object/glyph/shared-clip budgets.
+consistent transport hashes, APNG, all EXIF orientations in both byte orders with
+non-default IFD offsets, unsupported JPEG processes, and byte/token/string/object/glyph/shared-clip/ZIP-entry budgets.
 No old 6000-row/500-page, 50/1000-page, LRU or 100k source-range case was reduced.
 
 A zero/near-zero object-coordinate error is not evidence of actual glyph rasterizing,

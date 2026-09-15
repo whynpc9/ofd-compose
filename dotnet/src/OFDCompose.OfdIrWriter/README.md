@@ -88,7 +88,9 @@ instructions or CFF charstrings, or certify every future reader's font parser.
 
 Before full image decoding: MIME signatures, PNG CRCs and bounded zlib expansion,
 actual dimensions and cumulative 16M pixels. Current PNG profile: 8-bit,
-noninterlaced; JPEG: 8-bit grayscale/three components. Other real variants return
+noninterlaced, non-animated; JPEG: SOF0/SOF1/SOF2 Huffman, 8-bit grayscale/three
+components, absent or 1 EXIF orientation. APP1/IFD offsets and byte order are parsed
+with bounded segment/entry counts (ADR-0003). Other real variants return
 `UNSUPPORTED_FEATURE`. JPEG decoding uses a 128 MiB bounded memory pool and block
 count budget. These decoder checks do not replace the runtime's hard process limit.
 

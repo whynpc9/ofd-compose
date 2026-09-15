@@ -161,6 +161,67 @@ public sealed class WriterTests
         var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),resources,cancellationToken:TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Equal("IR_RESOURCE",Assert.Single(result.Diagnostics).Code);
     }
+    [Fact]
+    public async Task Zip_entry_limit_precedes_resource_decoding()
+    {
+        var fixture=await Fixture("cff");
+        var invalid=fixture.Resources.Select(r=>new WriterResource(r.ResourceId,new byte[]{1})).ToList();
+        var result=await new OfdIrWriter().WriteAsync(fixture.Ir,Digest(fixture.Ir),invalid,new WriterLimits {ZipEntries=0},TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);Assert.Equal("RESOURCE_LIMIT",Assert.Single(result.Diagnostics).Code);
+    }
+    private static async Task<OfdWriteResult> ChangedImage(string fixtureName, Func<byte[],byte[]> change)
+    {
+        var fixture=await Fixture(fixtureName);
+        var image=fixture.Resources.Single(r=>r.Bytes.Span.StartsWith(new byte[]{137,80,78,71}) || r.Bytes.Span.StartsWith(new byte[]{255,216}));
+        var changed=change(image.Bytes.ToArray());
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(image.Bytes.ToArray()),Digest(changed)));
+        var resources=fixture.Resources.Select(r=>r.ResourceId==image.ResourceId?new WriterResource(r.ResourceId,changed):r).ToList();
+        return await new OfdIrWriter().WriteAsync(ir,Digest(ir),resources,cancellationToken:TestContext.Current.CancellationToken);
+    }
+    [Fact]
+    public async Task Apng_with_valid_crcs_is_not_embedded_as_static_png()
+    {
+        var result=await ChangedImage("combined",bytes=>
+        {
+            byte[] Chunk(string type,byte[] payload)
+            {
+                var chunk=new byte[payload.Length+12];System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(chunk,(uint)payload.Length);
+                Encoding.ASCII.GetBytes(type).CopyTo(chunk,4);payload.CopyTo(chunk,8);uint crc=0xffffffff;
+                foreach(byte b in chunk.AsSpan(4,payload.Length+4)){crc^=b;for(int i=0;i<8;i++)crc=(crc>>1)^((crc&1)!=0?0xedb88320u:0);}
+                System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(chunk.AsSpan(chunk.Length-4),~crc);return chunk;
+            }
+            byte[] control=[0,0,0,1,0,0,0,0];var frame=new byte[26];bytes.AsSpan(16,8).CopyTo(frame.AsSpan(4));frame[21]=1;frame[23]=30;
+            return [..bytes.AsSpan(0,33),..Chunk("acTL",control),..Chunk("fcTL",frame),..bytes.AsSpan(33)];
+        });
+        Assert.False(result.Ok);Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
+    }
+    [Theory]
+    [InlineData(1,true)] [InlineData(2,true)] [InlineData(3,true)] [InlineData(4,true)]
+    [InlineData(5,true)] [InlineData(6,true)] [InlineData(7,true)] [InlineData(8,true)]
+    [InlineData(1,false)] [InlineData(2,false)] [InlineData(3,false)] [InlineData(4,false)]
+    [InlineData(5,false)] [InlineData(6,false)] [InlineData(7,false)] [InlineData(8,false)]
+    public async Task Exif_orientation_uses_declared_ifd_offset_and_byte_order(int orientation,bool little)
+    {
+        var result=await ChangedImage("jpeg",bytes=>
+        {
+            // IFD deliberately starts at 24 rather than the common fixed offset 8.
+            var payload=new byte[6+24+2+12+4];Encoding.ASCII.GetBytes("Exif\0\0").CopyTo(payload,0);
+            payload[6]=payload[7]=(byte)(little?'I':'M');
+            void U16(int at,ushort n){if(little)System.Buffers.Binary.BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(6+at),n);else System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(payload.AsSpan(6+at),n);}
+            void U32(int at,uint n){if(little)System.Buffers.Binary.BinaryPrimitives.WriteUInt32LittleEndian(payload.AsSpan(6+at),n);else System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(payload.AsSpan(6+at),n);}
+            U16(2,42);U32(4,24);U16(24,1);U16(26,274);U16(28,3);U32(30,1);U16(34,(ushort)orientation);
+            var segment=new byte[payload.Length+4];segment[0]=255;segment[1]=225;System.Buffers.Binary.BinaryPrimitives.WriteUInt16BigEndian(segment.AsSpan(2),(ushort)(payload.Length+2));payload.CopyTo(segment,4);
+            return [..bytes.AsSpan(0,2),..segment,..bytes.AsSpan(2)];
+        });
+        Assert.Equal(orientation==1,result.Ok);
+        if(orientation!=1)Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
+    }
+    [Fact]
+    public async Task Non_huffman_jpeg_process_fails_explicitly()
+    {
+        var result=await ChangedImage("jpeg",bytes=>{int at=bytes.AsSpan().IndexOf(new byte[]{255,192});Assert.True(at>=0);bytes[at+1]=195;return bytes;});
+        Assert.False(result.Ok);Assert.Equal("UNSUPPORTED_FEATURE",Assert.Single(result.Diagnostics).Code);
+    }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)
     {
