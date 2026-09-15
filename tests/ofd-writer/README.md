@@ -32,7 +32,7 @@ Reader object API; the harness applies those matrices to compare page coordinate
 unique IDs, standard XML namespaces and deterministic final package entries.
 .NET checks typed path data and the Reader-preserved clip XML; Java checks its
 CT_Path/Clip model and AbbreviatedData parser. `mutation-gate.py` additionally
-corrupts an owned copy of a path vertex or clip fill rule and requires the Java
+corrupts an owned copy of a path vertex, clip fill rule or cluster CodePosition and requires the Java
 gate to reject it for that geometric reason.
 The writer itself validates schema/canonical/reference/font/image/budget constraints.
 
@@ -42,6 +42,9 @@ Cases:
 - `cff`, `truetype`, `glyphless`, `jpeg`: actual Worker outputs with real subset bytes.
 - `multi-glyph`: real Worker `q́` shaping; a single cluster contains two glyphs
   (including the zero-advance mark), asserted during fixture generation.
+- `nonidentity-contract`: explicitly synthetic original glyph IDs/digest with genuine
+  Worker subset bytes, solely to test transport remapping. It is not evidence of
+  a non-retain-GID Worker or of shaping against that synthetic original face.
 - `geometry`: explicitly derived from real CFF/PNG resources and glyphs; vertical
   positions, offsets, deliberately unrelated baseline, local/page paths, state
   clips, image clips, high-precision/small/negative matrix coefficients and alpha.

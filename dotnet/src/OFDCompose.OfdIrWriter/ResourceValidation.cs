@@ -64,6 +64,9 @@ internal static class ResourceValidation
         bool cffFlavor=span[..4].SequenceEqual("OTTO"u8);
         Require(cffFlavor==tables.ContainsKey("CFF ") && cffFlavor!=tables.ContainsKey("glyf"),
             "IR_RESOURCE","font","SFNT flavor does not match outline tables");
+        var maximumProfile=tables["maxp"];
+        Require(maximumProfile.Length >= (cffFlavor?6:32) && BinaryPrimitives.ReadUInt32BigEndian(span[maximumProfile.Offset..])==(cffFlavor?0x00005000u:0x00010000u),
+            "IR_RESOURCE","font","maxp version/length does not match outline flavor");
         int glyphCount = BinaryPrimitives.ReadUInt16BigEndian(span[(tables["maxp"].Offset + 4)..]);
         int tableEnd = 12 + count * 16;
         foreach(var table in tables.Values.OrderBy(t => t.Offset))

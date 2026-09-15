@@ -42,7 +42,7 @@ public final class ReaderGate {
     }
     public static void main(String[] args) throws Exception {
         var report = new JsonArray();
-        for (String name : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical", "duplicate-markers", "multi-glyph")) {
+        for (String name : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical", "duplicate-markers", "multi-glyph", "nonidentity-contract")) {
             JsonObject ir = JsonParser.parseString(Files.readString(Path.of(args[0],name,"ir.json"))).getAsJsonObject();
             Map<String,JsonObject> states = new HashMap<>();
             ir.getAsJsonArray("graphicsStates").forEach(e -> states.put(e.getAsJsonObject().get("id").getAsString(),e.getAsJsonObject()));
@@ -120,13 +120,27 @@ public final class ReaderGate {
                         var dy=code.getDeltaY()==null?new Double[0]:code.getDeltaY().toDouble();
                         double x=code.getX(),y=code.getY();
                         if(glyphs.size()>0) {
-                            var maps=text.getCGTransforms(); check(!maps.isEmpty(),"CG map");
+                            JsonObject font=null;
+                            for(var r:ir.getAsJsonArray("resources"))if(r.getAsJsonObject().get("id").getAsString().equals(obj.get("fontId").getAsString()))font=r.getAsJsonObject();
+                            Map<Long,Long> subsetMap=new HashMap<>();
+                            if(font.has("glyphIdMap"))for(var entry:font.getAsJsonArray("glyphIdMap"))subsetMap.put(entry.getAsJsonObject().get("original").getAsLong(),entry.getAsJsonObject().get("subset").getAsLong());
+                            var maps=text.getCGTransforms(); var clusters=obj.getAsJsonArray("clusters");check(maps.size()==clusters.size(),"exact cluster mapping count");
+                            for(int c=0;c<clusters.size();c++) {
+                                var cluster=clusters.get(c).getAsJsonObject();var range=cluster.getAsJsonObject("logicalRange");var indices=cluster.getAsJsonArray("glyphIndices");var mapping=maps.get(c);
+                                check(mapping.getCodePosition()==range.get("start").getAsInt(),"cluster CodePosition");
+                                check(mapping.getCodeCount()==range.get("end").getAsInt()-range.get("start").getAsInt(),"cluster CodeCount");
+                                check(mapping.getGlyphCount()==indices.size(),"cluster GlyphCount");var actualIds=mapping.getGlyphs().toDouble();check(actualIds.length==indices.size(),"cluster glyph list length");
+                                for(int g=0;g<indices.size();g++) {
+                                    long originalId=glyphs.get(indices.get(g).getAsInt()).getAsJsonObject().get("glyphId").getAsLong();
+                                    check(actualIds[g]==subsetMap.getOrDefault(originalId,originalId).longValue(),"subset-aware cluster glyph association");
+                                }
+                            }
                             check(maps.stream().mapToInt(c -> c.getCodeCount()).sum()==obj.get("logicalText").getAsString().length(),"UTF16 code count");
                             check(maps.stream().mapToInt(c -> c.getGlyphCount()).sum()==glyphs.size(),"glyph count");
                             var gids=maps.stream().flatMap(c -> Arrays.stream(c.getGlyphs().toDouble())).toArray(Double[]::new);
                             for(int g=0;g<glyphs.size();g++) {
                                 var glyph=glyphs.get(g).getAsJsonObject();
-                                check(gids[g]==n(glyph,"glyphId"),"retained glyph id");
+                                long originalId=glyph.get("glyphId").getAsLong();check(gids[g]==subsetMap.getOrDefault(originalId,originalId).longValue(),"mapped glyph id");
                                 if(g>0){x+=dx[g-1];y+=dy[g-1];}
                                 double ex=(n(glyph.getAsJsonObject("position"),"x")+n(glyph.getAsJsonObject("offset"),"x"))/1000;
                                 double ey=(n(glyph.getAsJsonObject("position"),"y")+n(glyph.getAsJsonObject("offset"),"y"))/1000;

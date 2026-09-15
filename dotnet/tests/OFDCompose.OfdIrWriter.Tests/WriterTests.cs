@@ -44,6 +44,7 @@ public sealed class WriterTests
     [InlineData("glyphless-logical")]
     [InlineData("duplicate-markers")]
     [InlineData("multi-glyph")]
+    [InlineData("nonidentity-contract")]
     public async Task Real_worker_output_roundtrips_through_net_reader(string name)
     {
         var fixture = await Fixture(name);
@@ -83,6 +84,19 @@ public sealed class WriterTests
                 {
                     Assert.Equal(obj.GetProperty("logicalText").GetString(), text.Text);
                     var glyphs = obj.GetProperty("glyphs").EnumerateArray().ToArray();
+                    var font=ir.RootElement.GetProperty("resources").EnumerateArray().Single(r=>r.GetProperty("id").GetString()==obj.GetProperty("fontId").GetString());
+                    var subsetMap=font.TryGetProperty("glyphIdMap",out var mappings)?mappings.EnumerateArray().ToDictionary(m=>m.GetProperty("original").GetUInt32(),m=>m.GetProperty("subset").GetUInt32()):null;
+                    var actualMappings=readXml.Elements().Where(e=>e.Name.LocalName=="CGTransform").ToArray();
+                    var clusters=obj.GetProperty("clusters").EnumerateArray().ToArray();Assert.Equal(clusters.Length,actualMappings.Length);
+                    for(int c=0;c<clusters.Length;c++)
+                    {
+                        var range=clusters[c].GetProperty("logicalRange");var indices=clusters[c].GetProperty("glyphIndices").EnumerateArray().Select(g=>g.GetInt32()).ToArray();var actual=actualMappings[c];
+                        Assert.Equal(range.GetProperty("start").GetInt32(),(int)actual.Attribute("CodePosition")!);
+                        Assert.Equal(range.GetProperty("end").GetInt32()-range.GetProperty("start").GetInt32(),(int?)actual.Attribute("CodeCount")??1);
+                        Assert.Equal(indices.Length,(int?)actual.Attribute("GlyphCount")??1);
+                        var glyphIds=actual.Elements().Single(e=>e.Name.LocalName=="Glyphs").Value.Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries).Select(v=>uint.Parse(v,CultureInfo.InvariantCulture));
+                        Assert.Equal(indices.Select(g=>{uint id=glyphs[g].GetProperty("glyphId").GetUInt32();return subsetMap is null?id:subsetMap[id];}),glyphIds);
+                    }
                     Assert.Single(text.Runs);
                     var run = text.Runs[0];
                     var dx = Deltas(run.DeltaX); var dy = Deltas(run.DeltaY);
@@ -376,6 +390,33 @@ public sealed class WriterTests
         var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(bad)));
         var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
         Assert.False(result.Ok);var diagnostic=Assert.Single(result.Diagnostics);Assert.Equal("IR_RESOURCE",diagnostic.Code);Assert.Contains("predefined CFF charset",diagnostic.Message);
+    }
+    private static void RepairTableChecksum(byte[] bytes,string tag)
+    {
+        int count=System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(bytes.AsSpan(4));
+        for(int d=12;d<12+count*16;d+=16)if(Encoding.ASCII.GetString(bytes,d,4)==tag)
+        {
+            int start=(int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(d+8)),length=(int)System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(d+12));
+            uint sum=0;for(int i=0;i<length;i+=4){uint word=0;for(int b=0;b<4;b++)word=(word<<8)|(i+b<length?bytes[start+i+b]:0u);sum=unchecked(sum+word);}
+            System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bytes.AsSpan(d+4),sum);RepairFontAdjustment(bytes);return;
+        }
+        throw new InvalidOperationException("Fixture table missing");
+    }
+    [Theory]
+    [InlineData("cff",false)][InlineData("truetype",false)][InlineData("truetype",true)]
+    public async Task Maxp_version_and_length_match_the_outline_flavor(string name,bool truncate)
+    {
+        var fixture=await Fixture(name);var resource=fixture.Resources[0];var bad=resource.Bytes.ToArray();
+        if(truncate)
+        {
+            int count=System.Buffers.Binary.BinaryPrimitives.ReadUInt16BigEndian(bad.AsSpan(4));
+            for(int d=12;d<12+count*16;d+=16)if(Encoding.ASCII.GetString(bad,d,4)=="maxp")System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bad.AsSpan(d+12),6);
+        }
+        else System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(bad.AsSpan(FontTableOffset(bad,"maxp")),name=="cff"?0x00010000u:0x00005000u);
+        RepairTableChecksum(bad,"maxp");
+        var ir=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(fixture.Ir).Replace(Digest(resource.Bytes.ToArray()),Digest(bad)));
+        var result=await new OfdIrWriter().WriteAsync(ir,Digest(ir),[new(resource.ResourceId,bad)],cancellationToken:TestContext.Current.CancellationToken);
+        Assert.False(result.Ok);var diagnostic=Assert.Single(result.Diagnostics);Assert.Equal("IR_RESOURCE",diagnostic.Code);Assert.Contains("maxp",diagnostic.Message);
     }
     private static double[] Deltas(string? values) => (values ?? "").Split(' ', StringSplitOptions.RemoveEmptyEntries).Select(v => double.Parse(v, CultureInfo.InvariantCulture)).ToArray();
     private static string Normalized(byte[] bytes)

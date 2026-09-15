@@ -11,7 +11,7 @@ image, fixtures, artifacts = sys.argv[1:]
 artifacts = pathlib.Path(artifacts).resolve()
 fixtures = pathlib.Path(fixtures).resolve()
 with tempfile.TemporaryDirectory(prefix="ofd-reader-mutations-") as temporary:
-    for mutation in ("path-vertex", "clip-rule"):
+    for mutation in ("path-vertex", "clip-rule", "cluster-map"):
         output = pathlib.Path(temporary) / mutation
         output.mkdir()
         for source in artifacts.glob("*.ofd"):
@@ -33,7 +33,10 @@ with tempfile.TemporaryDirectory(prefix="ofd-reader-mutations-") as temporary:
                             tokens[1] = str(float(tokens[1]) + 1)
                             text = text.replace(original, " ".join(tokens), 1)
                             changed = True
-                    elif 'Rule="Even-Odd"' in text:
+                    elif mutation == "cluster-map" and 'CodePosition="0"' in text:
+                        text = text.replace('CodePosition="0"', 'CodePosition="1"', 1)
+                        changed = True
+                    elif mutation == "clip-rule" and 'Rule="Even-Odd"' in text:
                         text = text.replace('Rule="Even-Odd"', 'Rule="NonZero"', 1)
                         changed = True
                     data = text.encode("utf-8")
@@ -44,7 +47,7 @@ with tempfile.TemporaryDirectory(prefix="ofd-reader-mutations-") as temporary:
              "-v", f"{fixtures}:/fixtures:ro", "-v", f"{output}:/input:ro", image, "/fixtures", "/input"],
             text=True, capture_output=True, check=False,
         )
-        expected = "geometry mismatch" if mutation == "path-vertex" else "path/clip fill rule"
+        expected = {"path-vertex": "geometry mismatch", "clip-rule": "path/clip fill rule", "cluster-map": "cluster CodePosition"}[mutation]
         if result.returncode == 0 or expected not in result.stderr:
             raise RuntimeError(f"Mutation gate did not reject {mutation} for the expected reason: {result.stderr}")
         print(f"{mutation}: rejected by Java Reader geometry assertions")

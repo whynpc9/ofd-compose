@@ -123,6 +123,21 @@ await writeFile(
 );
 for (const [name, baseName, change] of [
   [
+    "nonidentity-contract",
+    "multi-glyph",
+    (x) => {
+      // Synthetic original identities exercise the transport map; subset bytes remain real Worker output.
+      for (const font of x.resources.filter((r) => r.kind === "font")) {
+        font.originalDigest = hash(`synthetic-original:${font.originalDigest}`);
+        for (const pair of font.glyphIdMap) if (pair.original !== 0) pair.original += 1000;
+      }
+      for (const page of x.pages)
+        for (const obj of page.objects)
+          if (obj.kind === "text")
+            for (const glyph of obj.glyphs) if (glyph.glyphId !== 0) glyph.glyphId += 1000;
+    },
+  ],
+  [
     "duplicate-markers",
     "cff",
     (x) => {
