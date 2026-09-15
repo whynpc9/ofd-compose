@@ -18,10 +18,13 @@ export function rectangle(box: Box): Command[] {
   ];
 }
 /** Shared paragraph/cell/table border path. Stroke stays inside its assigned box. */
-export function borderPath(box: Box, stroke: Stroke): Command[] {
-  const inset = stroke.width / 2;
+export function validateBorderFits(box: Box, stroke: Stroke, nodeId?: string): void {
   if (stroke.width > Math.min(box.width, box.height))
-    throw new LayoutError("LAYOUT_OVERFLOW", "Border is larger than its assigned box");
+    throw new LayoutError("LAYOUT_OVERFLOW", "Border is larger than its assigned box", nodeId);
+}
+export function borderPath(box: Box, stroke: Stroke): Command[] {
+  validateBorderFits(box, stroke);
+  const inset = stroke.width / 2;
   return rectangle({
     x: box.x + inset,
     y: box.y + inset,

@@ -1718,6 +1718,19 @@
                     "minimum": 0,
                     "type": "number"
                   },
+                  "keepWithNext": {
+                    "type": "boolean"
+                  },
+                  "orphanLines": {
+                    "minimum": 1,
+                    "maximum": 100,
+                    "type": "integer"
+                  },
+                  "widowLines": {
+                    "minimum": 1,
+                    "maximum": 100,
+                    "type": "integer"
+                  },
                   "lineHeight": {
                     "anyOf": [
                       {
@@ -3134,6 +3147,59 @@
                 "const": "table",
                 "type": "string"
               },
+              "layout": {
+                "additionalProperties": false,
+                "type": "object",
+                "properties": {
+                  "columns": {
+                    "minItems": 1,
+                    "maxItems": 1024,
+                    "type": "array",
+                    "items": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "required": [
+                        "kind",
+                        "value"
+                      ],
+                      "properties": {
+                        "kind": {
+                          "anyOf": [
+                            {
+                              "const": "fixed",
+                              "type": "string"
+                            },
+                            {
+                              "const": "proportional",
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "value": {
+                          "exclusiveMinimum": 0,
+                          "type": "number"
+                        }
+                      }
+                    }
+                  },
+                  "headerRows": {
+                    "minimum": 0,
+                    "maximum": 10000,
+                    "type": "integer"
+                  },
+                  "repeatHeader": {
+                    "type": "boolean"
+                  },
+                  "rowSplit": {
+                    "const": "avoid",
+                    "type": "string"
+                  },
+                  "mergePagination": {
+                    "const": "keep-together",
+                    "type": "string"
+                  }
+                }
+              },
               "border": {
                 "additionalProperties": false,
                 "type": "object",
@@ -3273,6 +3339,28 @@
                       "const": "table-row",
                       "type": "string"
                     },
+                    "layout": {
+                      "additionalProperties": false,
+                      "type": "object",
+                      "properties": {
+                        "height": {
+                          "exclusiveMinimum": 0,
+                          "type": "number"
+                        },
+                        "heightMode": {
+                          "anyOf": [
+                            {
+                              "const": "fixed",
+                              "type": "string"
+                            },
+                            {
+                              "const": "auto",
+                              "type": "string"
+                            }
+                          ]
+                        }
+                      }
+                    },
                     "nodeId": {
                       "minLength": 1,
                       "type": "string"
@@ -3325,7 +3413,6 @@
                       }
                     },
                     "cells": {
-                      "minItems": 1,
                       "type": "array",
                       "items": {
                         "additionalProperties": false,
@@ -3339,6 +3426,46 @@
                           "kind": {
                             "const": "table-cell",
                             "type": "string"
+                          },
+                          "layout": {
+                            "additionalProperties": false,
+                            "type": "object",
+                            "properties": {
+                              "columnSpan": {
+                                "minimum": 1,
+                                "maximum": 1024,
+                                "type": "integer"
+                              },
+                              "rowSpan": {
+                                "minimum": 1,
+                                "maximum": 10000,
+                                "type": "integer"
+                              },
+                              "padding": {
+                                "minimum": 0,
+                                "type": "number"
+                              },
+                              "background": {
+                                "pattern": "^#[0-9a-fA-F]{6}$",
+                                "type": "string"
+                              },
+                              "verticalAlign": {
+                                "anyOf": [
+                                  {
+                                    "const": "top",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "const": "middle",
+                                    "type": "string"
+                                  },
+                                  {
+                                    "const": "bottom",
+                                    "type": "string"
+                                  }
+                                ]
+                              }
+                            }
                           },
                           "border": {
                             "additionalProperties": false,

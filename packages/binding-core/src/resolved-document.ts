@@ -12,6 +12,9 @@ import {
   ProvenanceSchema,
   RegionLayoutSchema,
   StrokeSchema,
+  TableCellLayoutSchema,
+  TableLayoutSchema,
+  TableRowLayoutSchema,
   TemplateSettingsSchema,
   TextStyleSchema,
 } from "@ofd-compose/document-model";
@@ -138,6 +141,7 @@ const resolvedTableCellOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-cell"),
+      layout: Type.Optional(TableCellLayoutSchema),
       border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),
@@ -150,9 +154,10 @@ const resolvedTableRowOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-row"),
+      layout: Type.Optional(TableRowLayoutSchema),
       nodeId: identifier,
       instancePath,
-      cells: Type.Array(resolvedTableCellOf(block), { minItems: 1 }),
+      cells: Type.Array(resolvedTableCellOf(block)),
     },
     { additionalProperties: false },
   );
@@ -161,6 +166,7 @@ const resolvedTableOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table"),
+      layout: Type.Optional(TableLayoutSchema),
       border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),

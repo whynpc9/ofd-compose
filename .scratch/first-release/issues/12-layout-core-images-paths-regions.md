@@ -10,7 +10,7 @@
 - [x] 条码矩形路径按物理尺寸落位，布局器不非均匀拉伸、不裁掉静区
 - [x] 分隔线、段落边框、基础矢量路径输出为 IR 路径（填充规则、描边、虚线、端点/连接）
 - [x] 表格/单元格边框的共享 `Stroke` 契约、绑定保留与 `borderPath` 几何能力就位（本票范围）
-- [ ] 表格/单元格边框随实际表格布局进入 IR（集成验收归 [issue 13](13-layout-core-tables.md)，本票不宣称完成）
+- [x] 表格/单元格边框随实际表格布局进入 IR（由 [issue 13](13-layout-core-tables.md) 实现并验证，见下方集成交接；Issue 12 原提交只交付共享能力）
 - [x] 固定区域与流式区域；固定区域溢出默认 `LAYOUT_OVERFLOW`，显式策略生效时仍产生诊断
 - [x] 图片跨页策略（整体移到下页/超页高报错）有用例
 - [x] Semantic Map 记录图片/条码的 bindingId 与重复实例
@@ -69,3 +69,17 @@ when the explicit overflow policy permits overwidth. Two dual-runtime regression
 the image transform and actual retained source interval (20 mm / 40 mm left crop respectively).
 The fix passed complete Layout Node 87 and Chromium 84 tests, typecheck, package build and
 repository lint; these are targeted package reruns, not another local full-workspace test run.
+
+
+## Issue 13 integration evidence (2026-09-15, on the issue 13 branch)
+
+Issue 13 supplies the previously unchecked integration at
+`c5a3f1b77387024c350cd84c099406b9e24b8257`: `packages/layout-core/src/layout.ts` emits real
+cell backgrounds and resolved Stroke grid segments, with `graphics.ts` shared border fit
+validation, merged-neighbor segmentation, cell/default conflict resolution and one stroke per
+shared physical edge. `packages/layout-core/tests/tables.dual.test.ts` verifies 2×2 grid edges,
+merged edges/alignment, repeated headers, borderless empty cells and control geometry with
+actual fonts. Full local Node 524 / Chromium 317 passed, including all Issue 12 tests.
+This closes the integration checkbox on Issue 13's branch; it does not rewrite or claim that
+Issue 12's original reviewed commit had table runtime support. Final writer/reader acceptance
+remains outside these core geometry tests.

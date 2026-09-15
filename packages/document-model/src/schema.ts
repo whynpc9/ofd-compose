@@ -5,7 +5,7 @@ import { PathNodeSchema, PlacementSchema, RegionLayoutSchema, StrokeSchema } fro
  * Document Model v0（issue 04 + issue 05）。
  *
  * 覆盖：段落 + 行内序列（静态文本、DynamicText、InputControl）；结构节点 ConditionalBlock / RepeatBlock /
- * RepeatRowGroup；表格 v0（行/单元格结构，版式属性待 issue 13/23）。媒体绑定等随后续票加入；
+ * RepeatRowGroup；表格 v0（列宽、行高、合并、边框与重复表头版式）。媒体绑定保留冻结尺寸与放置政策；
  * v0 冻结前的新增字段均为向后兼容扩展（旧实例仍合法），冻结后 `modelVersion` 递增并提供迁移。
  *
  * 身份约定（spec §4）：
@@ -425,6 +425,9 @@ export const ParagraphLayoutSchema = Type.Object(
     firstLineIndent: Type.Optional(Type.Number()),
     spaceBefore: Type.Optional(Type.Number({ minimum: 0 })),
     spaceAfter: Type.Optional(Type.Number({ minimum: 0 })),
+    keepWithNext: Type.Optional(Type.Boolean()),
+    orphanLines: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
+    widowLines: Type.Optional(Type.Integer({ minimum: 1, maximum: 100 })),
     lineHeight: Type.Optional(
       Type.Union([
         Type.Object(
@@ -494,11 +497,53 @@ export const RepeatKeySchema = Type.Union([
   ),
 ]);
 
+export const TableCellLayoutSchema = Type.Object(
+  {
+    columnSpan: Type.Optional(Type.Integer({ minimum: 1, maximum: 1024 })),
+    rowSpan: Type.Optional(Type.Integer({ minimum: 1, maximum: 10000 })),
+    padding: Type.Optional(Type.Number({ minimum: 0 })),
+    background: Type.Optional(Type.String({ pattern: "^#[0-9a-fA-F]{6}$" })),
+    verticalAlign: Type.Optional(
+      Type.Union([Type.Literal("top"), Type.Literal("middle"), Type.Literal("bottom")]),
+    ),
+  },
+  { additionalProperties: false },
+);
+export const TableRowLayoutSchema = Type.Object(
+  {
+    height: Type.Optional(Type.Number({ exclusiveMinimum: 0 })),
+    heightMode: Type.Optional(Type.Union([Type.Literal("fixed"), Type.Literal("auto")])),
+  },
+  { additionalProperties: false },
+);
+export const TableLayoutSchema = Type.Object(
+  {
+    columns: Type.Optional(
+      Type.Array(
+        Type.Object(
+          {
+            kind: Type.Union([Type.Literal("fixed"), Type.Literal("proportional")]),
+            value: Type.Number({ exclusiveMinimum: 0 }),
+          },
+          { additionalProperties: false },
+        ),
+        { minItems: 1, maxItems: 1024 },
+      ),
+    ),
+    headerRows: Type.Optional(Type.Integer({ minimum: 0, maximum: 10000 })),
+    repeatHeader: Type.Optional(Type.Boolean()),
+    rowSplit: Type.Optional(Type.Literal("avoid")),
+    mergePagination: Type.Optional(Type.Literal("keep-together")),
+  },
+  { additionalProperties: false },
+);
+
 /** 表格单元格：内容为块序列（段落 / 条件块 / 重复块 / 嵌套表格）。 */
 const tableCellOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-cell"),
+      layout: Type.Optional(TableCellLayoutSchema),
       border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),
@@ -511,8 +556,9 @@ const tableRowOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table-row"),
+      layout: Type.Optional(TableRowLayoutSchema),
       nodeId: identifier,
-      cells: Type.Array(tableCellOf(block), { minItems: 1 }),
+      cells: Type.Array(tableCellOf(block)),
     },
     { additionalProperties: false },
   );
@@ -532,12 +578,13 @@ const repeatRowGroupOf = <T extends TSchema>(block: T) =>
   );
 
 /**
- * 表格 v0：只承载绑定语义所需的行/单元格结构；列宽、边框、合并、跨页表头等版式属性随 issue 13/23 加入。
+ * 表格 v0：承载绑定行/单元格结构与 issue 13 的确定性布局属性。
  */
 const tableOf = <T extends TSchema>(block: T) =>
   Type.Object(
     {
       kind: Type.Literal("table"),
+      layout: Type.Optional(TableLayoutSchema),
       border: Type.Optional(StrokeSchema),
       nodeId: identifier,
       styleId: Type.Optional(identifier),

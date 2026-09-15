@@ -309,7 +309,7 @@ it("keeps astral/combining clusters intact and supports bullet labels", async ()
   expect(han?.clusters[0]?.logicalRange).toEqual({ start: 0, end: 2 });
   expect(texts(ir).some((t) => t.logicalText === "· ")).toBe(true);
 });
-it("retains terminal line offsets and rejects unsupported blocks/controls explicitly", async () => {
+it("retains terminal line offsets and supports controls and empty tables", async () => {
   const { lines } = await layout(document([p("甲\n")]), resources, options);
   expect(lines.map((l) => [l.start, l.end])).toEqual([
     [0, 2],
@@ -322,16 +322,10 @@ it("retains terminal line offsets and rejects unsupported blocks/controls explic
       inlines: [{ kind: "input-control", nodeId: "c", controlId: "control", controlType: "text" }],
     },
   ]);
-  await expect(layout(control, resources, options)).rejects.toMatchObject({
-    code: "LAYOUT_UNSUPPORTED",
-    nodeId: "p",
-  });
+  expect((await layout(control, resources, options)).ir.markers[0]?.controlId).toBe("control");
   const table = document([]);
   table.body = [{ kind: "table", nodeId: "t", rows: [] }];
-  await expect(layout(table, resources, options)).rejects.toMatchObject({
-    code: "LAYOUT_UNSUPPORTED",
-    nodeId: "t",
-  });
+  expect((await layout(table, resources, options)).ir.pages[0]?.objects).toEqual([]);
 });
 it("uses the selected font metrics for blank paragraphs and terminal lines, including fixed-height thresholds", async () => {
   const result = await layout(

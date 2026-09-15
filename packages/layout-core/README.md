@@ -1,4 +1,4 @@
-# Layout Core: paragraphs, pagination, media and regions
+# Layout Core: paragraphs, pagination, media, regions and tables
 
 Issues [09](../../.scratch/first-release/issues/09-layout-core-paragraphs-and-lines.md) and
 [10](../../.scratch/first-release/issues/10-layout-core-pagination-headers-footers-watermark.md) implement `layout(ResolvedDocument, LayoutFont[], LayoutOptions)` in shared TypeScript.
@@ -104,7 +104,7 @@ must update their schema before accepting newly populated fields.
 This is the LTR horizontal paragraph profile over Typography Core's existing P0 repertoire.
 Latin/Han/Greek/Cyrillic/Kana/Bopomofo script runs are itemized without ICU; common and combining
 characters inherit the neighboring script. Full Unicode bidi, vertical paragraph layout,
-emergency wrapping, tables and input-control rendering are not implemented.
+emergency wrapping are not implemented. Tables and input controls are covered below.
 Unsupported block/control types fail; an unbreakable line that exceeds the content width or
 height fails with `LAYOUT_OVERFLOW`. Per paragraph limit is 100000 UTF-16 units, checked fragment-by-fragment before text concatenation or run construction; malformed UTF-16 fragments fail at the same point. Per-job
 reshaping work is bounded at 2000000 units; candidate and run visits each have the same 2000000-operation ceiling (including control-only text). Before cloning, input JSON is bounded to 200000 nodes, depth 128 and 8000000 UTF-16 string/key units, with non-JSON object types rejected. Document body text has a separate cumulative 1000000-unit limit. Input count limits are 10000 paragraphs and 100000 fragments per document; output count limits are 100000 source mappings and 100000 text/path objects. A data-descriptor preflight rejects over-budget input before document copying/font loading, without invoking accessors. Output cardinality is reserved before mapping/object allocation. These independent counts include empty fragments and blank paragraphs. Expanded logical/display/source text is bounded at
@@ -260,7 +260,7 @@ positive-height box controls flow spacing. `Stroke` contains width/color/dash/da
 miterLimit. Paragraph `layout.border` emits an inset rectangle per paragraph page fragment.
 `borderPath(box, stroke)` is the shared inset-path builder for issue 13. Table and cell `border`
 are preserved by compile/bind and exported schemas; complete cell sizing, shared-edge resolution,
-row spans and table pagination remain issue 13. Layout still rejects table blocks pending that work.
+row spans and table pagination are implemented in issue 13 below.
 
 A `region` contains bound children and `layout: {mode, box, overflow?}`. Fixed boxes use absolute
 page mm and leave the surrounding flow cursor unchanged; intentional overlap is the template's
@@ -296,3 +296,67 @@ Tests pin one shared Node/Chromium canonical digest covering image cropping, reg
 and paragraph borders; unchanged paragraph/pagination fixtures retain their previous digests.
 Full writer integration, Firefox, Linux x64/arm64 and human reader/printing acceptance remain
 unverified by this issue.
+
+
+## Issue 13: tables and paragraph pagination policy
+
+`Table.layout.columns` declares `{kind:"fixed",value:mm}` and
+`{kind:"proportional",value:weight}` columns. Fixed widths reserve space first; weights divide
+remaining width. Omitted columns use equal widths inferred from row cells. Each grid slot must
+be explicitly covered by a cell or a span; use an empty `blocks` array for an empty cell.
+`Cell.layout` has positive `rowSpan`/`columnSpan` (default 1), `padding` in mm (default 1),
+`background` and `verticalAlign: top | middle | bottom`. `Row.layout.height` is a minimum
+for auto height; `heightMode:"fixed"` requires height and rejects oversized content.
+A row entirely covered by an earlier row span has `cells:[]`.
+
+Cells use the same real Typography and prepared Media paths as ordinary flow. Nested tables
+retain their nearest table coordinates. Input controls render their default value or placeholder
+through Typography, with control identity and `control-geometry` markers; empty text controls
+retain an empty source and a zero-width caret anchor. Adjacent empty controls get distinct
+zero-text objects and Semantic Map control identities in source order, including when mixed
+with ordinary text. Their boundary separates shaping runs without adding printable text. This is fixed output geometry, not the
+interactive editing UI. Existing region policies also transform and clip control markers.
+
+Cells measure against the actual parent height, including valid custom pages. Region overflow
+measurement remains within the Layout IR coordinate ceiling. Rows never split (`rowSplit:"avoid"`). Connected vertical spans form atomic groups
+(`mergePagination:"keep-together"`). An oversized cell, fixed row or merged group fails with
+`LAYOUT_OVERFLOW`; no text, image, barcode or business row is silently dropped.
+`headerRows` counts leading resolved rows; a merge cannot cross that boundary. Headers stay
+with the first business row/group. With `repeatHeader:true`, subsequent pages reuse measured
+header geometry and add `repeatedHeader:{originalNodeId,instanceIndex}` to each semantic entry.
+`originalNodeId` names the original Semantic Map entry's text/control node.
+The first actual duplicate has index 1; relocating the original table does not advance it.
+Consumers extracting business text must exclude entries with that flag. `table` coordinates
+remain original zero-based rows/columns; RepeatRowGroup keys remain `repeatInstance` identities.
+
+Table `border` supplies the grid default. An explicit cell Stroke wins over the table default;
+between two explicit cell strokes the wider wins, then the earlier cell in reading order.
+Edges split at grid boundaries, including merged neighbors, and each shared segment paints once
+per page. Backgrounds paint before text; resolved borders paint last. Borderless empty cells
+still receive a source anchor. Stroke dash/cap/join/color use the shared graphics-state contract.
+
+`Paragraph.layout.keepWithNext` keeps the paragraph with the next block's initial required
+lines or table header/first merged group; heading role enables it unless explicitly false.
+Explicit page/section breaks terminate the keep chain. `orphanLines` and `widowLines` constrain
+lines on each side of a break (1–100); when a pagination policy is selected, their defaults are 2.
+Lookahead measures the first independent media item, a table header/first connected span group,
+or the next paragraph's minimum legal initial line group. It does not lay out an entire image
+list or table a second time. Impossible constraints produce `LAYOUT_OVERFLOW`. Older paragraphs without these fields retain
+their prior line pagination behavior and pinned fixtures. Profile selection uses the same effective
+policy predicate: implicit heading behavior belongs to `tables-ltr@0`, while an explicitly
+disabled heading policy does not silently activate widow/orphan defaults.
+
+Table input is preflighted before copying/font acquisition: at most 10000 rows per table,
+100000 cells and occupied span slots per document. Explicit and inferred row/column grid
+products are checked at this preflight stage too, before awaiting fonts. Each table grid is limited to 1024 columns
+and 100000 slots before allocation. Grid scans, copied glyphs, every lookahead pass, paths,
+source ranges, repeated header text/IDs, zero-text objects and markers consume the existing
+shared job budgets; discarded measurement/probe work is never refunded. Headers are copied
+without reshaping or consuming prepared media again. These counters do not replace host Worker
+memory/time isolation. Tables within a region follow its overflow policy; page/section changes
+and nested regions remain invalid within atomic cell/region content.
+
+Shared real-font tests include 400 bound repeat instances, a pinned canonical IR digest,
+merged geometry/shared edges, empty controls, fixed-height/oversize failure and allocation
+limits. They verify source extraction and IR geometry, not final OFD/PDF writer interoperability
+or a supplied business-data acceptance sample.
