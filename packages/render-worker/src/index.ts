@@ -6,8 +6,16 @@ import {
   diagnosticCodes,
   type TemplateSource,
 } from "@ofd-compose/document-model";
-import { type LayoutFont, type LayoutOptions, layout } from "@ofd-compose/layout-core";
 import {
+  type LayoutFont,
+  type LayoutOptions,
+  layout,
+  layoutEngineVersion,
+  layoutResourceLimits,
+  lineBreakVersion,
+} from "@ofd-compose/layout-core";
+import {
+  canonicalizationVersion,
   canonicalSerialize,
   digestCanonical,
   digestSemanticDocument,
@@ -16,11 +24,12 @@ import {
 import {
   type AuthorizedImage,
   barcodeGeneratorVersion,
+  mediaLimits,
   mediaVersion,
   prepareMedia,
 } from "@ofd-compose/media-core";
 import { compile } from "@ofd-compose/template-compiler";
-import { fontDigest } from "@ofd-compose/typography-core";
+import { fontDigest, shapingAndLineBreakVersions } from "@ofd-compose/typography-core";
 import {
   prepayCanonical,
   RenderBudget,
@@ -119,6 +128,7 @@ export async function render(
       source: Uint8Array | Promise<Uint8Array>;
       length: number;
     }[] = [];
+    const kindBytes = { font: 0, image: 0, wasm: 0 };
     const add = (entry: unknown, kind: "font" | "image" | "wasm") => {
       budget.reserve("resources", 1);
       const length = field(entry, "byteLength");
@@ -131,6 +141,15 @@ export async function render(
         length > ceiling
       )
         throw new RenderError("RESOURCE_LIMIT", "Invalid resource byte length");
+      kindBytes[kind] += length;
+      const packCeiling =
+        kind === "font"
+          ? layoutResourceLimits.fontPackBytes
+          : kind === "image"
+            ? mediaLimits.totalBytes
+            : 2 * 1024 * 1024;
+      if (kindBytes[kind] > packCeiling)
+        throw new RenderError("RESOURCE_LIMIT", `Resource pack exceeds ${kind} byte ceiling`);
       budget.reserve("resourceBytes", length);
       const bytes = field(entry, "bytes");
       if (!(bytes instanceof Uint8Array) && !(bytes instanceof Promise))
@@ -309,6 +328,15 @@ export async function render(
     prepayCanonical(bound.document, budget, phase);
     const ir = withFontSubsets(laid.ir, subsets);
     const identity = {
+      modelVersion: bound.document.modelVersion,
+      compiledTemplateFormat: compiled.template.format,
+      irVersion: ir.irVersion,
+      canonicalizationVersion,
+      renderProfileVersion: settings.version,
+      layoutEngineVersion,
+      shapingAndLineBreakVersions,
+      lineBreakVersion,
+      layoutProfile: ir.identity.layoutProfile,
       resourcePackDigest,
       templateVersion: {
         schemaVersion: template.schemaVersion,

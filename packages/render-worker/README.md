@@ -46,13 +46,17 @@ const result = await render(template, data, {
   fail with `FONT_MISSING`/`RESOURCE_FORBIDDEN`; invalid fonts do not fall back to installed fonts. Metadata/style disagreement is `FONT_STYLE_UNAVAILABLE`; an absent exact
   family/style remains `FONT_MISSING`. Stage-error location
   fields (node/binding/data path/page index when present) survive diagnostic conversion.
+  Section-watermark media failures retain their owning paragraph node, including missing/invalid images.
 - Identity includes an order-independent `resourcePackDigest` over every owned font/image/WASM
   entry (validated metadata, length and byte digest), including unreferenced images. This digest
   also participates in LayoutIdentity and therefore the final IR hash. The host cannot override it.
 - Identity contains template revision/schema, expression and binding-policy versions, template,
   input-data, compiled, resolved, media and layout-configuration digests, explicit barcode generator version, the consumed
   RenderProfile snapshot, layout-input digest,
-  subset version and final IR digest. Top-level provenance and BindingRuntime envelopes are
+  subset version and final IR digest. Model, compiled format, IR, canonicalization, render-profile,
+  layout-engine, HarfBuzz/fontkit/repertoire and line-break policy versions plus the actual
+  capability profile are exposed structurally; the line-break version is the same exported
+  constant used to construct LayoutIdentity. Top-level provenance and BindingRuntime envelopes are
   excluded from semantic digests; source mappings, version/profile and media identities remain.
 - `withFontSubsets` attaches subset identities and rewrites canonical resource references
   **without quantizing micrometres again**. The returned digest is calculated from these final
@@ -107,7 +111,8 @@ and every layout work counter across pagination/retry passes. Binding also prepa
 work use the same job meter. Existing module ceilings remain in effect.
 
 Default ceilings: 200k JSON nodes, 8M string units, depth 64, 128 resource entries, 160 MiB
-input resources and 512M work units. Subset output reserves its entire 32 MiB accepted ceiling
+input resources and 512M work units. The underlying 128 MiB font-pack and 32,000,000-byte
+  image-pack ceilings are also checked from declarations before copying or awaiting any bytes. Subset output reserves its entire 32 MiB accepted ceiling
 **before** native execution, cumulatively 128 MiB (at most four distinct used subset fonts per job).
 This conservative reservation can reject a job even if its eventual small subsets would fit.
 Limits can only be lowered. `subsetBytes` reports reserved capacity, not actual output size.

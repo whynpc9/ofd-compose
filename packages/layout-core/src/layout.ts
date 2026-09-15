@@ -53,6 +53,7 @@ import { type PageGeometry, pageGeometry } from "./page.js";
 const maxLayoutCoordinate = 1_000_000;
 
 export const layoutEngineVersion = "ofd-compose/paginated-layout@0";
+export const lineBreakVersion = `${shapingAndLineBreakVersions.linebreak}/chinese-v1`;
 export const paragraphProfile = Object.freeze({
   name: "paragraphs-ltr",
   version: "0",
@@ -827,7 +828,7 @@ class ParagraphLayouter {
           ],
           layoutEngineVersion,
           shapingVersion: canonicalSerialize(shapingAndLineBreakVersions),
-          lineBreakVersion: `${shapingAndLineBreakVersions.linebreak}/chinese-v1`,
+          lineBreakVersion,
           formattingPolicy,
           profile,
           layoutOptions: {

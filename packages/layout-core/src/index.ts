@@ -9,6 +9,7 @@ export {
   layout,
   layoutEngineVersion,
   layoutResourceLimits,
+  lineBreakVersion,
   mediaRegionProfile,
   paragraphProfile,
   permitsChineseBreak,

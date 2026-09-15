@@ -645,3 +645,106 @@ it("distinguishes declared font style mismatch from an absent exact font face", 
     diagnostics: [{ code: "FONT_MISSING", phase: "layout" }],
   });
 });
+it("keeps section-watermark diagnostics attached to their owning paragraph", async () => {
+  const sample = await combined();
+  const source = textSource();
+  const page = {
+    paper: "A4" as const,
+    orientation: "portrait" as const,
+    margins: { top: 20, right: 20, bottom: 20, left: 20 },
+    watermarks: [
+      {
+        kind: "image" as const,
+        resourceId: "picture",
+        x: 20,
+        y: 20,
+        width: 10,
+        height: 10,
+        opacity: 0.3,
+        layer: "behind" as const,
+        transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+      },
+    ],
+  };
+  source.body = [
+    {
+      kind: "paragraph",
+      nodeId: "watermark-owner",
+      layout: { section: { id: "section", page } },
+      inlines: [{ kind: "text", nodeId: "text", text: "正文" }],
+    },
+  ];
+  const missing = await render(source, {}, pack, profile);
+  expect(missing).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "RESOURCE_FORBIDDEN", phase: "media", nodeId: "watermark-owner" }],
+  });
+  expect(missing.diagnostics[0]).not.toHaveProperty("bindingId");
+  const bytes = new Uint8Array(await sample.pack.images![0]!.bytes);
+  bytes[bytes.length - 1] = (bytes.at(-1) ?? 0) ^ 1;
+  const invalid = await render(
+    source,
+    {},
+    { ...sample.pack, images: [{ ...sample.pack.images![0]!, bytes, sha256: fontDigest(bytes) }] },
+    profile,
+  );
+  expect(invalid).toMatchObject({
+    ok: false,
+    diagnostics: [{ code: "MODEL_INVALID", phase: "media", nodeId: "watermark-owner" }],
+  });
+});
+it("exposes the actual independent layout, shaping and protocol versions", async () => {
+  const result = await render(textSource(), {}, pack, profile);
+  if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+  const versions = await import("@ofd-compose/layout-core");
+  const typography = await import("@ofd-compose/typography-core");
+  expect(result.identity.layoutEngineVersion).toBe(versions.layoutEngineVersion);
+  expect(result.identity.lineBreakVersion).toBe(versions.lineBreakVersion);
+  expect(result.identity.lineBreakVersion).toBe("@cto.af/linebreak@4.0.3/chinese-v1");
+  expect(result.identity.shapingAndLineBreakVersions).toEqual(
+    typography.shapingAndLineBreakVersions,
+  );
+  expect(result.identity.irVersion).toBe(result.ir.irVersion);
+  expect(result.identity.modelVersion).toBe(result.resolvedDocument.modelVersion);
+  expect(result.identity.canonicalizationVersion).toBe("ofd-compose/canonical@0");
+  expect(result.identity.renderProfileVersion).toBe(profile.version);
+  expect(result.identity.layoutProfile).toEqual(result.ir.identity.layoutProfile);
+});
+it("checks per-kind font/image pack ceilings before awaiting resource bytes", async () => {
+  const fonts = Array.from({ length: 5 }, (_, i) => ({
+    family: `font${i}`,
+    weight: 400,
+    italic: false,
+    sha256: "0".repeat(64),
+    byteLength: 32 * 1024 * 1024,
+    bytes: new Promise<Uint8Array>(() => {}),
+  }));
+  const tooManyFontBytes = await render(textSource(), {}, { ...pack, fonts }, profile);
+  expect(tooManyFontBytes).toMatchObject({
+    ok: false,
+    diagnostics: [
+      {
+        code: "RESOURCE_LIMIT",
+        phase: "render",
+        message: "Resource pack exceeds font byte ceiling",
+      },
+    ],
+  });
+  const images = Array.from({ length: 5 }, (_, i) => ({
+    id: `image${i}`,
+    sha256: "0".repeat(64),
+    byteLength: 8_000_000,
+    bytes: new Promise<Uint8Array>(() => {}),
+  }));
+  const tooManyImageBytes = await render(textSource(), {}, { ...pack, images }, profile);
+  expect(tooManyImageBytes).toMatchObject({
+    ok: false,
+    diagnostics: [
+      {
+        code: "RESOURCE_LIMIT",
+        phase: "render",
+        message: "Resource pack exceeds image byte ceiling",
+      },
+    ],
+  });
+});

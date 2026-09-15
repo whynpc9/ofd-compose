@@ -1,5 +1,47 @@
 {
   "identity": {
+    "modelVersion": "0",
+    "compiledTemplateFormat": "ofd-compose/compiled-template@0",
+    "irVersion": "ofd-compose/layout-ir@0",
+    "canonicalizationVersion": "ofd-compose/canonical@0",
+    "renderProfileVersion": "ofd-compose/render@0",
+    "layoutEngineVersion": "ofd-compose/paginated-layout@0",
+    "shapingAndLineBreakVersions": {
+      "harfbuzzjs": "1.6.0",
+      "harfbuzz": "14.3.0",
+      "harfbuzzWasmSha256": "66f25d50cdf9942366498d0504d13096d567946cb1f6b5af6cdd87f392be99da",
+      "unicode": "17.0.0",
+      "linebreak": "@cto.af/linebreak@4.0.3",
+      "fontkit": "2.0.4",
+      "repertoire": {
+        "version": "wp0.4-p0-repertoire-v1",
+        "sha256": "98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b",
+        "codePointCount": 71850
+      }
+    },
+    "lineBreakVersion": "@cto.af/linebreak@4.0.3/chinese-v1",
+    "layoutProfile": {
+      "features": [
+        "frozen-media",
+        "headings",
+        "input-controls",
+        "keep-with-next",
+        "numbering",
+        "page-bands",
+        "pagination",
+        "paragraphs",
+        "regions",
+        "repeat-headers",
+        "source-ranges",
+        "tables",
+        "text-decoration",
+        "vector-paths",
+        "watermarks",
+        "widow-orphan"
+      ],
+      "name": "tables-ltr",
+      "version": "0"
+    },
     "resourcePackDigest": "4837819c91dbcd37a88ee60c2a1140c581b95f3dace3f05c74ee7cb5758a28a4",
     "templateVersion": {
       "schemaVersion": "ofd-compose/document-model@0",
