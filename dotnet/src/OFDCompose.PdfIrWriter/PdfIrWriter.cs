@@ -97,8 +97,8 @@ public sealed class PdfIrWriter
                 int next=i==indices.Length-1?stop:cursor+(char.IsHighSurrogate(logical[cursor])?2:1);
                 Require(next-cursor<=256,"RESOURCE_LIMIT",obj.S("id"),"ToUnicode destination exceeds 512-byte mapping budget");
                 string mapped=logical[cursor..next];
-                Require(!(PdfJsWhitespace(mapped[0])&&mapped.Any(c=>!char.IsControl(c)&&!PdfJsWhitespace(c)&&char.GetUnicodeCategory(c)!=System.Globalization.UnicodeCategory.Format)),
-                    "UNSUPPORTED_FEATURE",obj.S("id"),"Whitespace-prefixed glyph mapping with printable text is not lossless in the pinned pdf.js extraction profile");
+                Require(!PdfJsDropsPrintableMapping(mapped),"UNSUPPORTED_FEATURE",obj.S("id"),
+                    "Glyph mapping loses printable text in the pinned pdf.js extraction profile");
                 texts[indices[i]]=mapped;cursor=next;
             }
         }
@@ -108,7 +108,7 @@ public sealed class PdfIrWriter
         b.Append("/Span BMC\nBT\n");
         for(int i=0;i<glyphs.Length;i++)
         {
-            var g=glyphs[i];double size=obj.N("fontSize");var code=font.Code(g.I("glyphId"),texts[i],g.P("advance").N("x")/size*1000);
+            var g=glyphs[i];double size=obj.N("fontSize");var code=font.Code(g.P("glyphId").GetUInt32(),texts[i],g.P("advance").N("x")/size*1000);
             b.Append($"/{code.Font} {F(size)} Tf\n1 0 0 -1 {F(g.P("position").N("x")+g.P("offset").N("x"))} {F(g.P("position").N("y")+g.P("offset").N("y"))} Tm\n<{code.Code:X4}> Tj\n");
         }
         b.Append("ET\nEMC\n");
@@ -127,6 +127,19 @@ public sealed class PdfIrWriter
         {int i=y*png.Width+x;var pixel=png.GetPixel(x,y);rgb[i*3]=pixel.R;rgb[i*3+1]=pixel.G;rgb[i*3+2]=pixel.B;alpha[i]=pixel.A;transparent|=pixel.A!=255;}
         string mask=transparent?$" /SMask {pdf.Stream(alpha,common+" /ColorSpace /DeviceGray")} 0 R":"";
         return pdf.Stream(rgb,common+" /ColorSpace /DeviceRGB"+mask);
+    }
+    private static bool PdfJsDropsPrintableMapping(string text)
+    {
+        bool printable=false,nonspacingMark=false;System.Globalization.UnicodeCategory last=default;
+        foreach(var rune in text.EnumerateRunes())
+        {
+            last=Rune.GetUnicodeCategory(rune);
+            nonspacingMark|=last==System.Globalization.UnicodeCategory.NonSpacingMark;
+            printable|=last is not (System.Globalization.UnicodeCategory.Control or System.Globalization.UnicodeCategory.Format
+                or System.Globalization.UnicodeCategory.SpaceSeparator or System.Globalization.UnicodeCategory.LineSeparator or System.Globalization.UnicodeCategory.ParagraphSeparator);
+        }
+        // Match the categorizer's alternative precedence: a preceding Mn match wins over final Cf.
+        return printable&&(PdfJsWhitespace(text[0])||!nonspacingMark&&last==System.Globalization.UnicodeCategory.Format);
     }
     // ECMAScript WhiteSpace + LineTerminator set used by pdf.js 5.4.149's /^\s/ category.
     // U+0085 is deliberately absent; Char.IsWhiteSpace is not an equivalent predicate.

@@ -13,6 +13,7 @@ namespace OFDCompose.PdfIrWriter.Tests;
 public sealed class WriterTests
 {
     internal static string Root { get { var d=new DirectoryInfo(AppContext.BaseDirectory);while(d is not null&&!File.Exists(Path.Combine(d.FullName,"pnpm-workspace.yaml")))d=d.Parent;return d!.FullName; } }
+    internal static string Output => Directory.CreateDirectory(Path.Combine(Root,".scratch/issue16-output")).FullName;
     internal static string Digest(byte[] b)=>Convert.ToHexStringLower(SHA256.HashData(b));
     internal static async Task<(byte[] Ir,List<WriterResource> Resources)> Fixture(string name)
     {
@@ -47,7 +48,7 @@ public sealed class WriterTests
         foreach(var resource in f.Resources.Where(r=>!r.Bytes.Span.StartsWith(new byte[]{137,80,78,71})))
             Assert.Contains(streams,b=>b.AsSpan().SequenceEqual(resource.Bytes.Span));
         Assert.Equal(result.Bytes,(await new PdfIrWriter().WriteAsync(f.Ir,Digest(f.Ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken)).Bytes);
-        string output=Path.Combine(Root,".scratch/issue16-output");Directory.CreateDirectory(output);await File.WriteAllBytesAsync(Path.Combine(output,name+".pdf"),result.Bytes!,TestContext.Current.CancellationToken);
+        string output=Output;await File.WriteAllBytesAsync(Path.Combine(output,name+".pdf"),result.Bytes!,TestContext.Current.CancellationToken);
         if(name=="visible-image")await File.WriteAllBytesAsync(Path.Combine(output,name+".ir.json"),f.Ir,TestContext.Current.CancellationToken);
         using var pdf=PdfDocument.Open(result.Bytes!,new ParsingOptions{UseLenientParsing=false});using var ir=JsonDocument.Parse(f.Ir);
         var states=ir.RootElement.GetProperty("graphicsStates").EnumerateArray().ToDictionary(s=>s.GetProperty("id").GetString()!);

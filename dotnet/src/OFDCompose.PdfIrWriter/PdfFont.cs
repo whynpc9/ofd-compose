@@ -13,7 +13,7 @@ internal sealed class PdfFont
     private readonly bool cff;
     private string cidSystemInfo="/Registry (Adobe) /Ordering (Identity) /Supplement 0";
     private readonly Dictionary<int,int> glyphCids = [];
-    private readonly Dictionary<int,int>? subsetMap;
+    private readonly Dictionary<uint,int>? subsetMap;
     private readonly List<Variant> variants = [];
     private sealed class Variant(int objectId, string name)
     {
@@ -25,7 +25,7 @@ internal sealed class PdfFont
     {
         this.pdf=pdf; cff=bytes.AsSpan().StartsWith("OTTO"u8);
         name="OFC"+resource.S("subsetDigest")[..16];
-        subsetMap=resource.Has("glyphIdMap")?resource.A("glyphIdMap").ToDictionary(g=>g.I("original"),g=>g.I("subset")):null;
+        subsetMap=resource.Has("glyphIdMap")?resource.A("glyphIdMap").ToDictionary(g=>g.P("original").GetUInt32(),g=>g.I("subset")):null;
         var tables=new Dictionary<string,(int Offset,int Length)>();
         int U16(int at)=>BinaryPrimitives.ReadUInt16BigEndian(bytes.AsSpan(at));
         int I16(int at)=>BinaryPrimitives.ReadInt16BigEndian(bytes.AsSpan(at));
@@ -95,10 +95,10 @@ internal sealed class PdfFont
         int flags=4+(fixedPitch?1:0)+(angle!=0?64:0);
         descriptor=pdf.Add($"<< /Type /FontDescriptor /FontName /{name} /Flags {flags} /FontBBox [{Metric(I16(head+36))} {Metric(I16(head+38))} {Metric(I16(head+40))} {Metric(I16(head+42))}] /ItalicAngle {IrValidation.Number(angle)} /Ascent {Metric(I16(hhea+4))} /Descent {Metric(I16(hhea+6))} /CapHeight {Metric(cap)} /StemV 80 /{(cff?"FontFile3":"FontFile2")} {file} 0 R >>");
     }
-    internal (string Font,int Code) Code(int original, string text, double width)
+    internal (string Font,int Code) Code(uint original, string text, double width)
     {
         Require(text.Length<=256,"RESOURCE_LIMIT","font","ToUnicode destination exceeds 512-byte mapping budget");
-        int gid=subsetMap is null?original:subsetMap[original];
+        int gid=subsetMap is null?checked((int)original):subsetMap[original];
         foreach(var variant in variants)
         {
             if(cff)

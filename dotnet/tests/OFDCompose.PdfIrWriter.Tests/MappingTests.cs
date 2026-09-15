@@ -25,7 +25,7 @@ public sealed class MappingTests
         obj["glyphs"]=glyphs;obj["clusters"]=clusters;obj["logicalText"]=logical;obj["displayText"]=logical;page["objects"]=new JsonArray(obj);node["markers"]=new JsonArray();
         var bytes=Canonical(node);var result=await new PdfIrWriter().WriteAsync(bytes,WriterTests.Digest(bytes),f.Resources,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));using var pdf=PdfDocument.Open(result.Bytes!);Assert.Equal(logical,pdf.GetPage(1).Text);
-        string output=Path.Combine(WriterTests.Root,".scratch/issue16-output");await File.WriteAllBytesAsync(Path.Combine(output,name+"-mapping.pdf"),result.Bytes!,TestContext.Current.CancellationToken);
+        string output=WriterTests.Output;await File.WriteAllBytesAsync(Path.Combine(output,name+"-mapping.pdf"),result.Bytes!,TestContext.Current.CancellationToken);
         await File.WriteAllBytesAsync(Path.Combine(output,name+"-mapping.ir.json"),bytes,TestContext.Current.CancellationToken);
     }
     [Fact] public async Task Printable_logical_display_difference_extracts_without_loss()
@@ -34,12 +34,12 @@ public sealed class MappingTests
         var obj=node["pages"]![0]!["objects"]![0]!;obj["logicalText"]=obj["logicalText"]!.GetValue<string>().Replace("\r\n","XY",StringComparison.Ordinal);
         byte[] ir=Canonical(node);var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));
         using var pdf=PdfDocument.Open(result.Bytes!);Assert.Equal("XY<&>\"'abc中文 𠮷",pdf.GetPage(1).Text);
-        string output=Path.Combine(WriterTests.Root,".scratch/issue16-output");
+        string output=WriterTests.Output;
         await File.WriteAllBytesAsync(Path.Combine(output,"logical-display-printable.pdf"),result.Bytes!,TestContext.Current.CancellationToken);
         await File.WriteAllBytesAsync(Path.Combine(output,"logical-display-printable.ir.json"),ir,TestContext.Current.CancellationToken);
     }
-    [Theory][InlineData(" A",false)][InlineData("\u00a0A",false)][InlineData("\u0085A",true)]
-    public async Task Whitespace_prefix_matches_javascript_set(string logical,bool expectedOk)
+    [Theory][InlineData(" A",false)][InlineData("\u00a0A",false)][InlineData("\u0085A",true)][InlineData("A\u200b",false)][InlineData("A\U000e0001",false)]
+    public async Task PdfJs_category_loss_is_diagnosed_precisely(string logical,bool expectedOk)
     {
         var f=await WriterTests.Fixture("truetype");var n=JsonNode.Parse(f.Ir)!;var page=n["pages"]![0]!;var obj=page["objects"]![0]!.DeepClone();
         obj["glyphs"]=new JsonArray(obj["glyphs"]![0]!.DeepClone());obj["logicalText"]=logical;obj["displayText"]=logical;
@@ -47,13 +47,24 @@ public sealed class MappingTests
         page["objects"]=new JsonArray(obj);n["markers"]=new JsonArray();byte[] ir=Canonical(n);
         var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);
         Assert.Equal(expectedOk,result.Ok);
-        if(result.Ok)
+        if(result.Ok&&expectedOk)
         {
             using var pdf=PdfDocument.Open(result.Bytes!);Assert.Equal(logical,pdf.GetPage(1).Text);
-            await File.WriteAllBytesAsync(Path.Combine(WriterTests.Root,".scratch/issue16-output/nel-control.pdf"),result.Bytes!,TestContext.Current.CancellationToken);
-            await File.WriteAllBytesAsync(Path.Combine(WriterTests.Root,".scratch/issue16-output/nel-control.ir.json"),ir,TestContext.Current.CancellationToken);
+            await File.WriteAllBytesAsync(Path.Combine(WriterTests.Output,"nel-control.pdf"),result.Bytes!,TestContext.Current.CancellationToken);
+            await File.WriteAllBytesAsync(Path.Combine(WriterTests.Output,"nel-control.ir.json"),ir,TestContext.Current.CancellationToken);
         }
         else Assert.Contains(result.Diagnostics,d=>d.Code=="UNSUPPORTED_FEATURE"&&d.Path=="p0o0");
+    }
+    [Theory][InlineData(2147483648u)][InlineData(4294967295u)]
+    public async Task Original_glyph_ids_use_full_uint32_contract(uint original)
+    {
+        var f=await WriterTests.Fixture("nonidentity-contract");var n=JsonNode.Parse(f.Ir)!;
+        var font=n["resources"]!.AsArray().Single(r=>r!["kind"]!.GetValue<string>()=="font")!;
+        var glyph=n["pages"]![0]!["objects"]![0]!["glyphs"]![0]!;uint previous=glyph["glyphId"]!.GetValue<uint>();glyph["glyphId"]=original;
+        var map=font["glyphIdMap"]!.AsArray();var entry=map.Single(r=>r!["original"]!.GetValue<uint>()==previous)!;entry["original"]=original;
+        font["glyphIdMap"]=new JsonArray(map.OrderBy(r=>r!["original"]!.GetValue<uint>()).Select(r=>r!.DeepClone()).ToArray());
+        byte[] ir=Canonical(n);var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(result.Ok,JsonSerializer.Serialize(result.Diagnostics));using var pdf=PdfDocument.Open(result.Bytes!);Assert.Equal("q́",pdf.GetPage(1).Text);
     }
     [Theory][InlineData(0)][InlineData(1)]
     public async Task Combining_cluster_each_glyph_has_independent_reader_geometry(int index)

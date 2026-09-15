@@ -21,3 +21,5 @@ PdfPig checks logical text and baseline coordinates against transformed IR with 
 Run fresh test processes and compare output SHA-256 to verify process-independent determinism. PNG visual inspection uses `pdftoppm`; generated artifacts and scratch PDFs are ignored. CI runs readers, mutations and qpdf after .NET tests. Printing, reader product matrices, business fixtures and PDF/A are not accepted by these gates.
 
 Image geometry compares all four PdfPig image corners against the IR mm-per-pixel linear terms and µm translations (0.001 pt tolerance), including PNG, JPEG and transformed/local-clipped image cases. The regression fails on the original missing-1000 implementation; image-scale and image-local-clip raster mutations are independently detected.
+
+Regression boundaries also cover original glyph IDs 2^31 and 2^32−1 with a valid explicit subset map, BMP/supplementary format-suffixed mappings, and isolated MappingTests execution from an absent output directory. Each artifact writer creates its output directory independently.
