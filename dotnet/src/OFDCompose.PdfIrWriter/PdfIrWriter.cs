@@ -42,8 +42,7 @@ public sealed class PdfIrWriter
             bool Isolated(JsonElement obj)
             {
                 if(obj.S("kind")!="text"||obj.S("logicalText").Any(PdfJsWhitespace))return false;
-                int previous=-1;
-                foreach(var glyph in obj.A("glyphs")){cancellationToken.ThrowIfCancellationRequested();int cluster=glyph.I("clusterId");if(cluster<previous)return false;previous=cluster;}
+                cancellationToken.ThrowIfCancellationRequested();
                 return true;
             }
             long expandedClips=ir.A("graphicsStates").Where(state=>state.Has("clip")).Sum(state=>(long)state.P("clip").P("commands").GetArrayLength());

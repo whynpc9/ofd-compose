@@ -47,3 +47,5 @@ Glyph-level Form isolation also applies to semantic text when every text in the 
 ## Accepted Worker double-space case
 
 On 2026-09-19 the user accepted only the pinned pdf.js 5.4.149 high-level `o  f` → `o f` result. Run `node tests/pdf-writer/accepted-whitespace-gate.mjs` after .NET tests. The gate uses a fixed IR digest and explicit source/display/ToUnicode/width/high-level expectations; PdfPig separately checks exact text, embedded font and original geometry. All25 existing positives remain literal-exact. No generic whitespace normalization, other unverified difference or character loss/reordering is accepted. Existing NBSP/LF negatives remain.
+
+Nonmonotonic visual arrays are also eligible for whitespace-free glyph Forms after logical cluster traversal. `rtl-wide` reproduces and prevents `off` becoming `o f f`; all26 high-level literal-exact positives remain strict, separately from the single accepted Worker case. The four RTL raster cases retain the original measured overlap tolerance; the wide case requires exact pixels.

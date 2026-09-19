@@ -140,6 +140,13 @@
     "actual": "office é 中文 𠮷"
   },
   {
+    "case": "rtl-wide",
+    "page": 0,
+    "classification": "exact",
+    "expected": "off",
+    "actual": "off"
+  },
+  {
     "case": "rtl-order",
     "page": 0,
     "classification": "exact",

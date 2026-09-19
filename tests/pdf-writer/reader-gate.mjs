@@ -20,6 +20,7 @@ for (const name of [
   "cff-mapping",
   "nel-control",
   "visible-image",
+  "rtl-wide",
   "rtl-order",
   "rtl-positions",
   "rtl-overlap",

@@ -119,29 +119,33 @@
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 189,
-    "pdfTests": 67,
+    "dotnetFull": 190,
+    "pdfTests": 68,
     "mutationGates": 9,
-    "freshProcessDeterminism": "22 positive PDF outputs identical across fresh processes",
+    "freshProcessDeterminism": "26 literal-exact positives plus 1 accepted Worker case identical across fresh processes",
     "isolatedMappingTestsFreshDirectory": 16,
     "pixelIdenticalPages": 20,
     "highLevelPositiveCasesLiteralExact": 14,
-    "rtlPositiveCases": 3,
+    "rtlPositiveCases": 4,
     "spacingPositiveCases": 5,
     "acceptedWhitespaceCases": 1
   },
   "rtlCases": [
     {
-      "case": "rtl-order",
-      "sha256": "a9065173a2376e62152bfb5afc3d8ecb18b96f971404dedbc0da7f6024436d89"
+      "case": "rtl-overlap",
+      "sha256": "fdbb4c74e177ba786c1739ed26cabc8890ef1cb6f3bf63e7ce0602250ae3e1a9"
     },
     {
-      "case": "rtl-overlap",
-      "sha256": "d2c586ae2e5ce9b50dfd73439a2ff31bc26e99cab80aefa77631153f317fd213"
+      "case": "rtl-wide",
+      "sha256": "772a84af470852032d8d62daae03061a464dd715a1475e059085478b8fd02c87"
+    },
+    {
+      "case": "rtl-order",
+      "sha256": "c0cf94f7f43cf342d629068a1845a971bd95fd9f6fc0243e6d5aa95d9a8e06d3"
     },
     {
       "case": "rtl-positions",
-      "sha256": "3babc6a37e1f8e0ac12ecda2b44452a13867a526863c294bb759e723c8d301b9"
+      "sha256": "425caea1125da07a61b20ef8abc52b0a923a48630f5388f8928c8ded5468a671"
     }
   ],
   "spacingCases": [

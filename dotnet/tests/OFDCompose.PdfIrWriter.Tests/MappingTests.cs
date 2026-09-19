@@ -87,11 +87,12 @@ public sealed class MappingTests
         var result=await new PdfIrWriter().WriteAsync(ir,WriterTests.Digest(ir),f.Resources,new WriterLimits{OutputBytes=budget},TestContext.Current.CancellationToken);
         Assert.False(result.Ok);Assert.Contains(result.Diagnostics,d=>d.Code=="RESOURCE_LIMIT"&&d.Path=="output");
     }
-    [Theory][InlineData(false,false)][InlineData(false,true)][InlineData(true,false)]
-    public async Task Rtl_visual_glyph_array_preserves_logical_text_and_positions(bool overlap,bool rightToLeftPositions)
+    [Theory][InlineData(false,false,false)][InlineData(false,true,false)][InlineData(true,false,false)][InlineData(false,false,true)]
+    public async Task Rtl_visual_glyph_array_preserves_logical_text_and_positions(bool overlap,bool rightToLeftPositions,bool wide)
     {
         var f=await WriterTests.Fixture("truetype");var n=JsonNode.Parse(f.Ir)!;var obj=n["pages"]![0]!["objects"]![0]!.DeepClone();
         var glyphs=obj["glyphs"]!.AsArray().Take(3).Select(g=>g!.DeepClone()).ToArray();
+        if(wide)for(int i=0;i<glyphs.Length;i++)glyphs[i]["position"]!["x"]=20000+i*40000;
         if(rightToLeftPositions)for(int i=0;i<glyphs.Length;i++)glyphs[i]["position"]!["x"]=60000-i*5000;
         if(overlap){foreach(var g in glyphs)g["position"]!["x"]=20000;n["graphicsStates"]![0]!["opacity"]=0.5;}
         obj["logicalText"]="off";obj["displayText"]="off";obj["glyphs"]=new JsonArray(glyphs.Reverse().ToArray());
@@ -102,7 +103,7 @@ public sealed class MappingTests
         Assert.Equal(3,pdf.GetPage(1).Letters.Count);
         for(int i=0;i<3;i++){var letter=pdf.GetPage(1).Letters[i];Assert.InRange(Math.Abs(letter.StartBaseLine.X-(glyphs[i]["position"]!["x"]!.GetValue<int>()+glyphs[i]["offset"]!["x"]!.GetValue<int>())*72d/25400),0,0.001);
             Assert.InRange(Math.Abs(letter.StartBaseLine.Y-(n["pages"]![0]!["height"]!.GetValue<int>()-glyphs[i]["position"]!["y"]!.GetValue<int>()-glyphs[i]["offset"]!["y"]!.GetValue<int>())*72d/25400),0,0.001);}
-        string name=overlap?"rtl-overlap":rightToLeftPositions?"rtl-positions":"rtl-order";string output=Directory.CreateDirectory(Path.Combine(WriterTests.Output,"rtl")).FullName;
+        string name=wide?"rtl-wide":overlap?"rtl-overlap":rightToLeftPositions?"rtl-positions":"rtl-order";string output=Directory.CreateDirectory(Path.Combine(WriterTests.Output,"rtl")).FullName;
         await File.WriteAllBytesAsync(Path.Combine(output,name+".pdf"),result.Bytes!,TestContext.Current.CancellationToken);await File.WriteAllBytesAsync(Path.Combine(output,name+".ir.json"),ir,TestContext.Current.CancellationToken);
         var reference=n.DeepClone();var referenceObject=reference["pages"]![0]!["objects"]![0]!;referenceObject["logicalText"]="ffo";referenceObject["displayText"]="ffo";referenceObject["direction"]="rtl";
         for(int i=0;i<3;i++){referenceObject["glyphs"]![i]!["clusterId"]=i;referenceObject["clusters"]![i]!["glyphIndices"]=new JsonArray(i);}
