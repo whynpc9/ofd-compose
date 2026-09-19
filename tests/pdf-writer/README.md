@@ -32,7 +32,7 @@ Form grouping adds no visual change: `compare-renderings.py` verifies all 20 pag
 
 Resource cancellation tests cover cancellation after validation enumeration starts, decoder IO, and token propagation into font/JPEG helpers. All OFD validation regressions remain in the solution gate.
 
-`fixtures/whitespace-reader/` contains immutable owned probes demonstrating the pinned reader's whitespace normalization. NBSP/LF glyph mappings are now explicit negatives; ASCII `A  B` (and real Worker `o  f`) remains a normal-input acceptance question, not a passing literal-exact case. Do not treat a green fixed-corpus gate as resolution of that pending decision.
+`fixtures/whitespace-reader/` contains immutable owned probes demonstrating the pinned reader's whitespace normalization. NBSP/LF glyph mappings are now explicit negatives; The real Worker `o  f` high-level difference was accepted on 2026-09-19 under the separate exact expectations below. Synthetic `A  B` remains evidence only; neither is presented as literal-exact high-level output.
 
 Fallback Form reservations include the entire repeated graphics state (including dash arrays), not only clips; a low-output-budget regression detects otherwise highly-compressible repeated state expansion before emission.
 
@@ -43,3 +43,7 @@ Parsing cancellation also covers token scanning, canonical quoting/recursion and
 Eight spacing cases, including semantic and semantics-free inputs, verify unrelated columns, a leading boundary space, a trailing boundary space, and widely separated printable/combining glyphs within one cluster. Stock high-level text is literal-exact; pre-fix PDFs in `fixtures/spacing-reference` are independent visual references, and CI requires unchanged pixels.
 
 Glyph-level Form isolation also applies to semantic text when every text in the connected container is eligible and whitespace-free. A context containing actual whitespace remains grouped, including real spaces across font runs. Semantics presence alone does not disable isolation; multiple whitespace-free runs sharing a container are covered.
+
+## Accepted Worker double-space case
+
+On 2026-09-19 the user accepted only the pinned pdf.js 5.4.149 high-level `o  f` → `o f` result. Run `node tests/pdf-writer/accepted-whitespace-gate.mjs` after .NET tests. The gate uses a fixed IR digest and explicit source/display/ToUnicode/width/high-level expectations; PdfPig separately checks exact text, embedded font and original geometry. All25 existing positives remain literal-exact. No generic whitespace normalization, other unverified difference or character loss/reordering is accepted. Existing NBSP/LF negatives remain.

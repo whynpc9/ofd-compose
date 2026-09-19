@@ -1,6 +1,6 @@
 # ADR-0004：PDF 固定写出与独立 reader 文本边界
 
-**状态：** Proposed（普通连续 ASCII 空白的严格高层验收仍待用户决定）
+**状态：** Accepted（2026-09-19 用户直接接受下述已验证差异）
 **日期：** 2026-09-16
 **关联：** 本地 issue 16 / PR #13；ADR-0001；后续 18/19 业务、设备、打印 profile
 
@@ -16,16 +16,15 @@
 
 PDF ToUnicode 可表达 NBSP、LF 等 Unicode；限制来自固定 pdf.js 5.4.149 的高层抽取，而非 PDF 格式。公开 API 只有 includeMarkedContent / disableNormalization，没有 keepWhiteSpace。后者仅为内部 evaluator 参数；公开 API 明确说明空白会转换为 U+0020。已验证的空白前缀+可打印内容、invisible-format、NBSP/LF glyph 映射返回定位到 objectId 的 UNSUPPORTED_FEATURE。源 metadata 含这些字符、结构性段落/分页换行，不因此被拒绝。
 
-## 尚未通过的正常连续 ASCII 空格
+## 已接受的明确高层差异（2026-09-19）
 
 真实 public Render Worker 的普通段落 `o  f`：IR logical/display 均为 `o  f`，四个 glyph，原字体空格字形和 advance 连续；PDF 的 ToUnicode/PdfPig 保留双空格，但 stock `getTextContent({disableNormalization:true})` 返回 `o f`。原输入、subset 和 PDF 位于 `tests/pdf-writer/fixtures/whitespace-reader/worker-double/`。这是正常输入，不通过改原文、改 fixture 期望、移挪 cluster Unicode、隐藏文字或扩大 UNSUPPORTED 来关闭。
 
-待用户选择：
+2026-09-19，用户在主协调任务对“仅接受已验证的 pdf.js 高层空白归一差异，保留正常文本能力并调整高层逐字符验收”的明确问题直接回复“接受”。本决定只覆盖固定 pdf.js 5.4.149 对真实 Worker `o  f` 的高层 `o f` 结果；不推广到其他空白、字符丢失、交换或非空白差异。
 
-1. 允许仅已验证的 stock 高层空白归一差异，保留原文、字形、显示与独立底层 exact；明确该 API 的非 literal-copy 边界。
-2. 坚持 stock 高层逐字符一致：本项继续未完成，等待可保真的读取策略或能力变化。
+`tests/pdf-writer/accepted-whitespace.json` 固定原始 IR 摘要、reader 版本和两个不同的明确期望；独立 gate 校验当前 writer 产物的四个 glyph、ToUnicode Unicode、W 与高层结果。PdfPig 检查原文 exact、原有字形位置/范围与嵌入字体字节不变。已有 25 个正常正向用例仍逐字符严格相等，不使用 strip、通用归一或 separator allowlist。NBSP/LF 和其他既有正确诊断不变。
 
-这份 Proposed ADR 不代表用户已接受第一项，也不代表 issue 16 或生产 profile 已验收。
+Issue 16 按此明确 reader profile 完成验收；不宣称所有 reader 的复制文本逐字符无差异，也不代表后续业务、设备、打印或生产 profile 已验收。PR 仍需独立合并授权。
 
 ## 一手依据
 
@@ -37,4 +36,4 @@ RTL 编码处置：同一个共享颜色/alpha/clip/state 的 text primitive 内
 
 当前 untagged PDF profile 只支持实际非空 text 对象的 semantic readingOrder 与固定 page/paint 次序一致的输入；比较相对顺序，不要求 readingOrder 等于 drawOrder，忽略非文本及空 text 的顺序变化。冲突在分配输出前以对象 ID 的 `UNSUPPORTED_FEATURE` 诊断。该输入仍是合法 Layout IR；PDF 格式可表达结构阅读顺序，后续 tagged profile/readout adapter 需要独立实现与验证。原同一 text 内 RTL logical cluster 支持保留。
 
-反序语义 BA / 绘制 AB 的真实 probe 已验证当前输出的 PdfPig 与 stock pdf.js 都提取 AB。固定 pdf.js 的 GetTextContent 调用 extractTextContent、PdfPig ContentStreamProcessor 按内容操作积累 Letter 的源码支持该提取路径判断；本次未构造和执行 tagged StructureTree 变体，不把源码检查冒充 tagged-reader 运行证明。普通双 ASCII 空格的用户验收项保持开放。
+反序语义 BA / 绘制 AB 的真实 probe 已验证当前输出的 PdfPig 与 stock pdf.js 都提取 AB。固定 pdf.js 的 GetTextContent 调用 extractTextContent、PdfPig ContentStreamProcessor 按内容操作积累 Letter 的源码支持该提取路径判断；本次未构造和执行 tagged StructureTree 变体，不把源码检查冒充 tagged-reader 运行证明。普通双 ASCII 空格按上述 2026-09-19 的精确范围接受。

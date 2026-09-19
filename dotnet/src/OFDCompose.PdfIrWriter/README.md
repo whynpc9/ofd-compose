@@ -23,7 +23,7 @@ Semantic Form grouping removes the earlier synthesized column separators without
 
 PdfPig merges combining marks into the preceding Letter: the combined sample verifies exact text and base geometry; isolated-glyph tests verify both q and acute positions independently. This is not a one-Letter-per-glyph proof.
 
-**Open acceptance decision:** real Worker input `o  f` produces IR logical/display text `o  f` and four correctly placed glyphs, but stock pdf.js returns `o f` even with `disableNormalization: true`. The original Unicode remains in ToUnicode and PdfPig. Consecutive ASCII spaces have not been rejected or altered to hide this mismatch; strict acceptance for that normal case is pending the user's decision. See [ADR-0004](../../../docs/decisions/ADR-0004-pdf-writer-reader-profile.md) and the archived reader probes.
+**Accepted reader boundary (2026-09-19):** the user accepted only the verified real Worker `o  f` case returning `o f` in stock pdf.js 5.4.149 high-level extraction. Source/display/ToUnicode/PdfPig remain `o  f`; glyph geometry and font bytes are preserved. `accepted-whitespace.json` and its independent gate pin the input digest, reader version and explicit differing results. All 25 existing high-level literal-exact cases remain strict. This does not accept other unverified whitespace or any non-whitespace loss/reordering; existing diagnostics remain. See [ADR-0004](../../../docs/decisions/ADR-0004-pdf-writer-reader-profile.md).
 
 ## Resource limits
 

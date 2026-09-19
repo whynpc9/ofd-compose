@@ -110,7 +110,7 @@ public sealed class WriterTests
         Assert.Equal(count,result.ObjectMap!.Count);
         await File.WriteAllTextAsync(Path.Combine(output,name+"-geometry.json"),JsonSerializer.Serialize(new{Reader="PdfPig 0.1.11",MaxBaselineErrorPt=max,MaxReaderExtentErrorPt=maxEnd,MaxImageCornerErrorPt=maxImage}),TestContext.Current.CancellationToken);
     }
-    private static Dictionary<int,byte[]> DecodedStreams(byte[] bytes)
+    internal static Dictionary<int,byte[]> DecodedStreams(byte[] bytes)
     {
         string wire=Encoding.Latin1.GetString(bytes);var end=Regex.Match(wire,@"startxref\n(\d+)\n%%EOF\n$");Assert.True(end.Success);
         int xref=int.Parse(end.Groups[1].Value,CultureInfo.InvariantCulture);string[] lines=wire[xref..].Split('\n');int count=int.Parse(lines[1].Split(' ')[1],CultureInfo.InvariantCulture);

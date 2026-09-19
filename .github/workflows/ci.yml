@@ -64,11 +64,15 @@ jobs:
       - name: Independent PDF readers and mutation gates
         run: |
           node tests/pdf-writer/reader-gate.mjs
+          node tests/pdf-writer/accepted-whitespace-gate.mjs
           docker build -t ofd-compose-qpdf tests/pdf-writer
+          accepted_baseline="$(mktemp -d)"
+          cp tests/pdf-writer/fixtures/whitespace-reader/worker-double/worker.pdf "$accepted_baseline/worker-double.pdf"
+          python3 tests/pdf-writer/compare-renderings.py "$accepted_baseline" .scratch/issue16-output/accepted-whitespace --image ofd-compose-qpdf --baseline-label "Archived Worker double-space paint"
           PDF_READER_IMAGE=ofd-compose-qpdf python3 tests/pdf-writer/mutation-gate.py
           docker run --rm --network none --memory 256m --cpus 2 \
             -v "$PWD/.scratch/issue16-output:/pdf:ro" --entrypoint sh ofd-compose-qpdf \
-            -c 'for f in /pdf/*.pdf /pdf/rtl/*.pdf /pdf/rtl/reference/*.pdf /pdf/spacing/*.pdf; do qpdf --check "$f" || exit; done'
+            -c 'for f in /pdf/*.pdf /pdf/rtl/*.pdf /pdf/rtl/reference/*.pdf /pdf/spacing/*.pdf /pdf/accepted-whitespace/*.pdf; do qpdf --check "$f" || exit; done'
 
       - name: Form grouping preserves baseline pixels
         env:

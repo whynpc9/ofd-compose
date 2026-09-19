@@ -14,4 +14,4 @@ Observed stock pdf.js 5.4.149 results with disableNormalization=true:
 | `A  B` | `A  B` | `A B` |
 | real Worker `o  f` | `o  f` | `o f` |
 
-NBSP/LF inputs are retained as writer negatives. Consecutive ASCII whitespace is pending a user acceptance decision; these files do not mark it as passed or authorize normalization of source text.
+NBSP/LF inputs are retained as writer negatives. On 2026-09-19 the user accepted only the verified real Worker `o  f` high-level `o f` difference at pdf.js 5.4.149. The separate `accepted-whitespace.json` contract pins that case; synthetic probes do not authorize generic normalization or further exceptions. Source text remains unchanged.
