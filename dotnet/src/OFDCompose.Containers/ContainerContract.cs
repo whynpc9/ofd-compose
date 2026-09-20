@@ -1,0 +1,47 @@
+namespace OFDCompose.Containers;
+
+public enum ContainerProfile { NativeEditable, Distribution }
+public sealed record SourceAsset(string Sha256, ReadOnlyMemory<byte> Bytes);
+public sealed record ContainerResult(byte[]? Bytes, string? Error)
+{
+    public bool Ok => Bytes is not null;
+}
+public sealed record ExtractionResult(string? Error, string? Profile = null, byte[]? SourceJson = null,
+    IReadOnlyList<SourceAsset>? Assets = null, string? Integrity = null, string? Signature = null)
+{
+    public bool Ok => Error is null;
+}
+public sealed record ContainerLimits
+{
+    public int PackageBytes { get; init; } = 256 * 1024 * 1024;
+    public int ExpandedBytes { get; init; } = 256 * 1024 * 1024;
+    public int EntryBytes { get; init; } = 32 * 1024 * 1024;
+    public int Entries { get; init; } = 4096;
+    public int JsonBytes { get; init; } = 32 * 1024 * 1024;
+    public int JsonTokens { get; init; } = 2_000_000;
+    public int StringBytes { get; init; } = 16 * 1024 * 1024;
+    public long WorkBytes { get; init; } = 2L * 1024 * 1024 * 1024;
+}
+internal sealed class ContainerFailure(string code) : Exception(code);
+internal sealed class ContainerBudget(ContainerLimits limits, CancellationToken token)
+{
+    private long work;
+    internal readonly ContainerLimits Limits = Validate(limits);
+    private static ContainerLimits Validate(ContainerLimits limits)
+    {
+        var ceiling = new ContainerLimits();
+        foreach (var property in typeof(ContainerLimits).GetProperties())
+        {
+            long value = Convert.ToInt64(property.GetValue(limits));
+            Need(value > 0 && value <= Convert.ToInt64(property.GetValue(ceiling)), "SIZE_LIMIT");
+        }
+        return limits;
+    }
+    internal void Charge(long count)
+    {
+        token.ThrowIfCancellationRequested();
+        Need(count >= 0 && count <= Limits.WorkBytes - work, "SIZE_LIMIT");
+        work += count;
+    }
+    internal static void Need(bool valid, string code) { if (!valid) throw new ContainerFailure(code); }
+}

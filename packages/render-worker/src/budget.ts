@@ -22,6 +22,8 @@ export const renderLimits = Object.freeze({
   subsetBytes: 128 * 1024 * 1024,
 });
 export interface RenderControl {
+  /** Explicit opt-in to minimized native editing source; distribution omits it. */
+  sourceAttachment?: boolean;
   limits?: Partial<Record<keyof typeof renderLimits, number>>;
   signal?: Cancellation;
 }

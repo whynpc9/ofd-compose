@@ -59,6 +59,7 @@ jobs:
       - name: .NET tests
         env:
           OFD_WRITER_OUTPUT: ${{ runner.temp }}/ofd-reader-input
+          OFD17_EVIDENCE: ${{ runner.temp }}/ofd-source-input
         run: dotnet test dotnet/OFDCompose.slnx --no-restore
 
       - name: Independent PDF readers and mutation gates
@@ -97,6 +98,9 @@ jobs:
             -v "$PWD/tests/ofd-writer/fixtures:/fixtures:ro" \
             -v "${{ runner.temp }}/ofd-reader-input:/input:ro" \
             ofd-compose-reader /fixtures /input
+          docker run --rm --network none --memory 512m --cpus 2 \
+            -v "${{ runner.temp }}/ofd-source-input:/source:ro" \
+            ofd-compose-reader /source/fixtures /source initial edited
           python3 tests/ofd-writer/mutation-gate.py ofd-compose-reader \
             "$PWD/tests/ofd-writer/fixtures" "${{ runner.temp }}/ofd-reader-input"
 

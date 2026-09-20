@@ -1,4 +1,9 @@
-import { bind, type JsonValue } from "@ofd-compose/binding-core";
+import {
+  bind,
+  isResolvedDocument,
+  type JsonValue,
+  type ResolvedDocument,
+} from "@ofd-compose/binding-core";
 import {
   type Diagnostic,
   type DiagnosticCode,
@@ -40,6 +45,11 @@ import {
 import { inspectFont, subsetFont, subsetVersion } from "./subset.js";
 
 export { type RenderControl, renderLimits } from "./budget.js";
+
+import { createSourceContent, type SourceContent } from "./source.js";
+
+export type { EditingFont, EditingImage, SourceContent } from "./source.js";
+
 export { subsetVersion } from "./subset.js";
 
 export interface ResourceBytes {
@@ -108,13 +118,52 @@ export async function render(
   profile: RenderProfile,
   control: RenderControl = {},
 ) {
+  return run(source, data, pack, profile, control);
+}
+
+/** Finalize already-filled content without compiling or binding any expression. */
+export async function finalizeResolved(
+  document: ResolvedDocument,
+  pack: ResourcePack,
+  profile: RenderProfile,
+  control: RenderControl = {},
+) {
+  return run(undefined, undefined, pack, profile, control, document);
+}
+
+/** Reopen a validated attachment with a host-supplied content-addressed authorization pack.
+ * No callback, URL or filesystem path from attachment content is ever executed. */
+export async function finalizeSource(
+  content: SourceContent,
+  pack: ResourcePack,
+  control: RenderControl = {},
+) {
+  return run(undefined, undefined, pack, undefined, control, undefined, content);
+}
+
+async function run(
+  source: TemplateSource | undefined,
+  data: JsonValue | undefined,
+  pack: ResourcePack,
+  profile: RenderProfile | undefined,
+  control: RenderControl,
+  resolved?: ResolvedDocument,
+  attachment?: SourceContent,
+) {
   const diagnostics: Diagnostic[] = [];
   let phase: DiagnosticPhase = "render";
   try {
     const budget = new RenderBudget(control.signal, control.limits);
-    const template = snapshot(source, budget);
-    const input = snapshot(data, budget);
-    const settings = snapshot(profile, budget);
+    const template = source === undefined ? undefined : snapshot(source, budget);
+    const input = data === undefined ? null : snapshot(data, budget);
+    const reopened = attachment === undefined ? undefined : snapshot(attachment, budget);
+    const filled =
+      reopened?.resolvedDocument ??
+      (resolved === undefined ? undefined : snapshot(resolved, budget));
+    if (filled && !isResolvedDocument(filled))
+      throw new RenderError("MODEL_INVALID", "Invalid ResolvedDocument");
+    const settings = reopened?.renderProfile ?? snapshot(profile, budget);
+    if (!settings) throw new RenderError("MODEL_INVALID", "RenderProfile is required");
     if (
       settings.version !== "ofd-compose/render@0" ||
       Object.hasOwn(settings.layout, "images") ||
@@ -202,6 +251,42 @@ export async function render(
     for (const entry of list(field(pack, "fonts"), 64)) add(entry, "font");
     for (const entry of list(field(pack, "images") ?? [], 64)) add(entry, "image");
     add(field(pack, "subsetWasm"), "wasm");
+    if (reopened) {
+      for (const expected of reopened.resources.fonts) {
+        budget.charge("render", 128);
+        const candidates = specs.filter(
+          (spec) =>
+            spec.kind === "font" &&
+            (spec.metadata as LayoutFont).family === expected.family &&
+            (spec.metadata as LayoutFont).weight === expected.weight &&
+            (spec.metadata as LayoutFont).italic === expected.italic,
+        );
+        if (candidates.length === 0)
+          throw new RenderError("FONT_MISSING", "Authorized full font is unavailable");
+        if (
+          candidates.length !== 1 ||
+          (candidates[0]?.metadata as LayoutFont | undefined)?.sha256 !== expected.sha256 ||
+          candidates[0]?.length !== expected.byteLength
+        )
+          throw new RenderError(
+            "FONT_DIGEST_MISMATCH",
+            "Authorization does not match the attached full font identity",
+          );
+      }
+      for (const expected of reopened.resources.images) {
+        budget.charge("render", 128);
+        if (
+          !specs.some(
+            (spec) =>
+              spec.kind === "image" &&
+              (spec.metadata as { id: string }).id === expected.id &&
+              (spec.metadata as { sha256: string }).sha256 === expected.sha256 &&
+              spec.length === expected.byteLength,
+          )
+        )
+          throw new RenderError("RESOURCE_FORBIDDEN", "Authorized source image is unavailable");
+      }
+    }
     let failed = false;
     const own = (spec: (typeof specs)[number], bytes: Uint8Array) => {
       if (failed) throw new RenderError("RESOURCE_FORBIDDEN", "Resource acquisition stopped");
@@ -260,22 +345,50 @@ export async function render(
         return left < right ? -1 : left > right ? 1 : 0;
       }),
     );
-    phase = "compile";
-    budget.charge(phase, budget.used.jsonNodes);
-    const compiled = compile(template, { job: budget });
-    diagnostics.push(...compiled.diagnostics);
-    if (!compiled.ok) return { ok: false as const, diagnostics };
-    phase = "bind";
-    const bound = bind(compiled.template, input, { job: budget });
-    diagnostics.push(...bound.diagnostics);
-    if (!bound.ok) return { ok: false as const, diagnostics };
+    let document: ResolvedDocument;
+    let templateIdentity = {} as Partial<{
+      compiledTemplateFormat: string;
+      templateVersion: { schemaVersion: string; documentId: string; revisionId: string };
+      templateDigest: string;
+      dataDigest: string;
+      compiledDigest: string;
+    }>;
+    if (template !== undefined) {
+      phase = "compile";
+      budget.charge(phase, budget.used.jsonNodes);
+      const compiled = compile(template, { job: budget });
+      diagnostics.push(...compiled.diagnostics);
+      if (!compiled.ok) return { ok: false as const, diagnostics };
+      phase = "bind";
+      const bound = bind(compiled.template, input, { job: budget });
+      diagnostics.push(...bound.diagnostics);
+      if (!bound.ok) return { ok: false as const, diagnostics };
+      document = bound.document;
+      prepayCanonical(template, budget, "render");
+      prepayCanonical(input, budget, "render");
+      prepayCanonical(compiled.template, budget, "render");
+      templateIdentity = {
+        compiledTemplateFormat: compiled.template.format,
+        templateVersion: {
+          schemaVersion: template.schemaVersion,
+          documentId: template.documentId,
+          revisionId: template.revisionId,
+        },
+        templateDigest: digestSemanticDocument(template),
+        dataDigest: digestCanonical(input),
+        compiledDigest: digestSemanticDocument({ ...compiled.template }),
+      };
+    } else {
+      if (!filled) throw new RenderError("MODEL_INVALID", "ResolvedDocument is required");
+      document = filled;
+    }
     // Validate and prepay generated JSON before media/layout canonicalization.
-    snapshot(bound.document, budget, "bind");
+    snapshot(document, budget, "bind");
     phase = "media";
     const images = loaded
       .filter((item) => item.kind === "image")
       .map((item) => ({ ...(item.metadata as Omit<AuthorizedImage, "bytes">), bytes: item.bytes }));
-    const media = prepareMedia(bound.document, { resources: images }, budget);
+    const media = prepareMedia(document, { resources: images }, budget);
     diagnostics.push(...media.diagnostics);
     if (!media.ok) return { ok: false as const, diagnostics };
     const fonts = loaded
@@ -289,7 +402,7 @@ export async function render(
         ...resource,
         id: sourceId,
       }));
-    const laid = await layout(bound.document, fonts, layoutOptions, media, budget);
+    const laid = await layout(document, fonts, layoutOptions, media, budget);
     diagnostics.push(...laid.diagnostics);
     phase = "subset";
     const wasmBytes = loaded.find((item) => item.kind === "wasm")?.bytes;
@@ -322,14 +435,10 @@ export async function render(
       phase,
       8,
     );
-    prepayCanonical(template, budget, phase);
-    prepayCanonical(input, budget, phase);
-    prepayCanonical(compiled.template, budget, phase);
-    prepayCanonical(bound.document, budget, phase);
+    prepayCanonical(document, budget, phase);
     const ir = withFontSubsets(laid.ir, subsets);
     const identity = {
-      modelVersion: bound.document.modelVersion,
-      compiledTemplateFormat: compiled.template.format,
+      modelVersion: document.modelVersion,
       irVersion: ir.irVersion,
       canonicalizationVersion,
       renderProfileVersion: settings.version,
@@ -338,17 +447,10 @@ export async function render(
       lineBreakVersion,
       layoutProfile: ir.identity.layoutProfile,
       resourcePackDigest,
-      templateVersion: {
-        schemaVersion: template.schemaVersion,
-        documentId: template.documentId,
-        revisionId: template.revisionId,
-      },
-      expressionLanguageVersion: compiled.template.expressionLanguageVersion,
-      bindingPolicyVersion: bound.document.bindingPolicyVersion,
-      templateDigest: digestSemanticDocument(template),
-      dataDigest: digestCanonical(input),
-      compiledDigest: digestSemanticDocument({ ...compiled.template }),
-      resolvedDocumentDigest: digestSemanticDocument(bound.document),
+      ...templateIdentity,
+      expressionLanguageVersion: document.expressionLanguageVersion,
+      bindingPolicyVersion: document.bindingPolicyVersion,
+      resolvedDocumentDigest: digestSemanticDocument(document),
       mediaVersion,
       barcodeGeneratorVersion,
       mediaDigest: media.mediaIdentity,
@@ -376,9 +478,31 @@ export async function render(
         writerImages.push({ resourceId: resource.id, digest: resource.digest, bytes });
       }
     }
+    const editingSource = control.sourceAttachment
+      ? createSourceContent(
+          document,
+          ir,
+          settings,
+          loaded
+            .filter((item) => item.kind === "font")
+            .map((item) => ({
+              ...(item.metadata as Omit<LayoutFont, "bytes">),
+              byteLength: item.length,
+            })),
+          loaded
+            .filter((item) => item.kind === "image")
+            .map((item) => ({
+              ...(item.metadata as { id: string; sha256: string; mimeType?: string }),
+              byteLength: item.length,
+              bytes: item.bytes,
+            })),
+          budget,
+        )
+      : undefined;
     return {
       ok: true as const,
-      resolvedDocument: bound.document,
+      editingSource,
+      resolvedDocument: document,
       ir,
       semanticMap: ir.semantics,
       diagnostics,

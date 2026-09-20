@@ -1,0 +1,187 @@
+using System.Diagnostics;
+using System.IO.Compression;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Xml.Linq;
+using OFDCompose.Containers;
+using OFDCompose.OfdIrWriter;
+using Ofdrw.Net.Reader.Readers;
+using Xunit;
+
+namespace OFDCompose.Containers.Tests;
+public sealed class ContainerTests
+{
+    private static string Root
+    {
+        get { var dir = new DirectoryInfo(AppContext.BaseDirectory); while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "pnpm-workspace.yaml"))) dir = dir.Parent; return dir!.FullName; }
+    }
+    private static string Hash(byte[] value) => Convert.ToHexStringLower(SHA256.HashData(value));
+    private sealed record Fixture(string Directory, byte[] Source, OfdWriteResult Ofd, byte[] Sealed, JsonNode Identity);
+    private static readonly Lazy<Task<Fixture>> Initial = new(() => Build("initial"));
+    private static async Task<Fixture> Build(string mode, string? source = null)
+    {
+        string directory = Path.Combine(Path.GetTempPath(), "ofd17-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(directory);
+        var start = new ProcessStartInfo("node") { WorkingDirectory = Root, RedirectStandardOutput = true, RedirectStandardError = true };
+        start.ArgumentList.Add(Path.Combine(Root, "tests/source-container/worker.mjs"));
+        start.ArgumentList.Add(mode); start.ArgumentList.Add(directory);
+        if (source is not null) start.ArgumentList.Add(source);
+        using var child = Process.Start(start)!;
+        var stdout = child.StandardOutput.ReadToEndAsync(); var stderr = child.StandardError.ReadToEndAsync();
+        await child.WaitForExitAsync(TestContext.Current.CancellationToken);
+        Assert.True(child.ExitCode == 0, await stderr); await stdout;
+        var ir = await File.ReadAllBytesAsync(Path.Combine(directory, "ir.json"));
+        var manifest = JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(directory, "manifest.json")))!;
+        var resources = new List<WriterResource>();
+        foreach (var resource in manifest["resources"]!.AsArray())
+            resources.Add(new(resource!["resourceId"]!.GetValue<string>(), await File.ReadAllBytesAsync(Path.Combine(directory, resource["file"]!.GetValue<string>()))));
+        var ofd = await new OfdIrWriter.OfdIrWriter().WriteAsync(ir, Hash(ir), resources, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.True(ofd.Ok, JsonSerializer.Serialize(ofd.Diagnostics));
+        var sourceBytes = await File.ReadAllBytesAsync(Path.Combine(directory, "source.json"));
+        var assets = new List<SourceAsset>();
+        foreach (var asset in manifest["sourceAssets"]!.AsArray()) assets.Add(new(asset!["sha256"]!.GetValue<string>(), await File.ReadAllBytesAsync(Path.Combine(directory, asset["file"]!.GetValue<string>()))));
+        var sealedResult = SourceContainer.Create(ofd.Bytes!, Hash(ir), ofd.ObjectMap!, ContainerProfile.NativeEditable, sourceBytes, assets, cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(sealedResult.Ok, sealedResult.Error + ": " + string.Join(",", Zip(ofd.Bytes!).Keys));
+        await File.WriteAllBytesAsync(Path.Combine(directory, "native.ofd"), sealedResult.Bytes!, TestContext.Current.CancellationToken);
+        return new(directory, sourceBytes, ofd, sealedResult.Bytes!, manifest["identity"]!);
+    }
+    private static Dictionary<string, byte[]> Zip(byte[] bytes)
+    {
+        using var archive = new ZipArchive(new MemoryStream(bytes), ZipArchiveMode.Read);
+        return archive.Entries.ToDictionary(e => e.FullName, e => { using var source=e.Open(); using var target=new MemoryStream(); source.CopyTo(target); return target.ToArray(); });
+    }
+    private static byte[] Pack(Dictionary<string, byte[]> entries, string? duplicate = null)
+    {
+        using var memory = new MemoryStream();
+        using (var archive = new ZipArchive(memory, ZipArchiveMode.Create, true))
+        {
+            foreach (var (name, bytes) in entries) { using var entry = archive.CreateEntry(name).Open(); entry.Write(bytes); }
+            if (duplicate is not null) { using var entry=archive.CreateEntry(duplicate).Open(); entry.Write([1]); }
+        }
+        return memory.ToArray();
+    }
+    private static byte[] Mutate(byte[] input, Action<JsonNode, Dictionary<string, byte[]>> action)
+    {
+        var entries = Zip(input); const string path="Doc_0/Attachs/ofd-compose.json";
+        var manifest=JsonNode.Parse(entries[path])!; action(manifest,entries);
+        entries[path]=Encoding.UTF8.GetBytes(manifest.ToJsonString()); return Pack(entries);
+    }
+    [Fact]
+    public async Task Extract_edit_new_glyph_finalize_real_worker_and_reader_preserve_old_bytes()
+    {
+        var first = await Initial.Value;
+        string originalHash = Hash(first.Sealed);
+        var extracted = SourceContainer.Extract(first.Sealed, cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(extracted.Ok, extracted.Error);
+        Assert.Equal("internal-consistency-only", extracted.Integrity); Assert.Equal("unsigned", extracted.Signature);
+        var firstRead = await new OfdReader().ReadAsync(new MemoryStream(first.Sealed), TestContext.Current.CancellationToken);
+        var attachment = Assert.Single(firstRead.Attachments);
+        Assert.Equal("application/json", attachment.MediaType);
+        Assert.Equal(Zip(first.Sealed)["Doc_0/Attachs/ofd-compose.json"], attachment.Data);
+        string input = Path.Combine(first.Directory,"extracted.json"); await File.WriteAllBytesAsync(input,extracted.SourceJson!, TestContext.Current.CancellationToken);
+        var second = await Build("edit",input);
+        var secondExtract = SourceContainer.Extract(second.Sealed, cancellationToken:TestContext.Current.CancellationToken); Assert.True(secondExtract.Ok,secondExtract.Error);
+        var secondRead = await new OfdReader().ReadAsync(new MemoryStream(second.Sealed), TestContext.Current.CancellationToken);
+        Assert.Equal("office 中文",string.Concat(firstRead.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text)));
+        Assert.Equal("edited office 中文新",string.Concat(secondRead.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text)));
+        var before = JsonNode.Parse(first.Source)!; var after = JsonNode.Parse(secondExtract.SourceJson!)!;
+        Assert.Equal("revision-1",before["resolvedDocument"]!["revisionId"]!.GetValue<string>());
+        Assert.Equal("revision-2",after["resolvedDocument"]!["revisionId"]!.GetValue<string>());
+        foreach (string key in new[]{"resolvedDocumentDigest","irDigest","layoutInputDigest"}) Assert.NotEqual(first.Identity[key]!.ToJsonString(),second.Identity[key]!.ToJsonString());
+        Assert.NotEqual(before["resources"]!["layout"]![0]!["subsetDigest"]!.GetValue<string>(),after["resources"]!["layout"]![0]!["subsetDigest"]!.GetValue<string>());
+        Assert.Equal(before["resources"]!["fonts"]!.ToJsonString(),after["resources"]!["fonts"]!.ToJsonString());
+        Assert.Equal(originalHash,Hash(first.Sealed));
+        Assert.False(second.Identity.AsObject().ContainsKey("dataDigest"));
+        Assert.False(second.Identity.AsObject().ContainsKey("compiledDigest"));
+        foreach(var secret in new[]{"UNUSED_SECRET","DEBUG_SECRET","TOKEN_SECRET","PASSWORD_SECRET","UNUSED_STYLE_SECRET","unknownFunction"})
+        { Assert.DoesNotContain(secret,Encoding.UTF8.GetString(first.Source)); Assert.DoesNotContain(secret,Encoding.UTF8.GetString(second.Source)); }
+        Assert.Contains("printed",Encoding.UTF8.GetString(first.Source)); Assert.Contains("office 中文",Encoding.UTF8.GetString(first.Source));
+        // Preserve file paths for independent Java reader evidence outside the runtime code.
+        if (Environment.GetEnvironmentVariable("OFD17_EVIDENCE") is { } evidence)
+        { Directory.CreateDirectory(evidence); File.WriteAllBytes(Path.Combine(evidence,"initial.ofd"),first.Sealed); File.WriteAllBytes(Path.Combine(evidence,"edited.ofd"),second.Sealed); File.WriteAllText(Path.Combine(evidence,"paths.json"),JsonSerializer.Serialize(new[]{first.Directory,second.Directory}));
+          foreach(var (name, directory) in new[]{("initial",first.Directory),("edited",second.Directory)}) { var target=Path.Combine(evidence,"fixtures",name);Directory.CreateDirectory(target); foreach(var file in new[]{"ir.json","source.json"})File.Copy(Path.Combine(directory,file),Path.Combine(target,file),true); } }
+    }
+    [Theory]
+    [InlineData("protocol", "PROTOCOL_INVALID")]
+    [InlineData("digest", "DIGEST_MISMATCH")]
+    [InlineData("resource", "RESOURCE_MISSING")]
+    [InlineData("version", "VERSION_UNSUPPORTED")]
+    [InlineData("extension", "VERSION_UNSUPPORTED")]
+    [InlineData("mime", "SCHEMA_INVALID")]
+    [InlineData("schema", "SCHEMA_INVALID")]
+    public async Task Recognizable_failures(string mutation,string expected)
+    {
+        var first=await Initial.Value;
+        var bytes=Mutate(first.Sealed,(manifest,entries)=> {
+            switch(mutation)
+            {
+                case "protocol": manifest["protocol"]="forged"; break;
+                case "digest": manifest["parts"]![0]!["sha256"]=new string('0',64); break;
+                case "resource": entries.Remove(entries.Keys.First(p=>p.EndsWith(".otf"))); break;
+                case "version": manifest["containerProfileVersion"]="future"; break;
+                case "extension": manifest["capabilities"]!.AsArray().Add("execute-script"); break;
+                case "mime": manifest["parts"]![0]!["mimeType"]="text/javascript"; break;
+                case "schema": var content=JsonNode.Parse(manifest["parts"]![0]!["content"]!.GetValue<string>())!; content["credentials"]="SECRET"; manifest["parts"]![0]!["content"]=content.ToJsonString(); break;
+            }
+        });
+        Assert.Equal(expected,SourceContainer.Extract(bytes, cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Distribution_has_no_source_or_semantics_anywhere()
+    {
+        var first=await Initial.Value;
+        var result=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution, cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(result.Ok,result.Error);
+        var extracted=SourceContainer.Extract(result.Bytes!, cancellationToken:TestContext.Current.CancellationToken); Assert.True(extracted.Ok,extracted.Error);
+        Assert.Equal("distribution",extracted.Profile); Assert.Null(extracted.SourceJson);
+        foreach(var bytes in Zip(result.Bytes!).Values)
+        { var text=Encoding.UTF8.GetString(bytes); Assert.DoesNotContain("resolved-document@",text); Assert.DoesNotContain("printed",text); Assert.DoesNotContain("revision-1",text); }
+        Assert.Equal("DISTRIBUTION_SOURCE_FORBIDDEN",SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,first.Source, cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Budget_cancellation_path_duplicates_DTD_and_forged_name_fail_closed()
+    {
+        var first=await Initial.Value;
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){PackageBytes=100}, cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){Entries=1}, cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("CANCELLED",SourceContainer.Extract(first.Sealed,cancellationToken:new(true)).Error);
+        foreach(string alias in new[]{"../escape","Doc_0/Res/é.bin","Doc_0\\escape","/absolute","a//b","a/./b"})
+        { var entries=Zip(first.Sealed);entries.Add(alias,[1]);Assert.Equal("PACKAGE_PATH",SourceContainer.Extract(Pack(entries), cancellationToken:TestContext.Current.CancellationToken).Error); }
+        Assert.Equal("PACKAGE_DUPLICATE",SourceContainer.Extract(Pack(Zip(first.Sealed),"ofd.XML"), cancellationToken:TestContext.Current.CancellationToken).Error);
+        var dtd=Zip(first.Sealed);dtd["OFD.xml"]=Encoding.UTF8.GetBytes("<!DOCTYPE OFD [<!ENTITY x SYSTEM 'file:///etc/passwd'>]><OFD xmlns='http://www.ofdspec.org/2016'>&x;</OFD>");
+        Assert.False(SourceContainer.Extract(Pack(dtd), cancellationToken:TestContext.Current.CancellationToken).Ok);
+        var forged=Zip(first.Sealed);forged["Doc_0/Attachs/Attachments.xml"]=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(forged["Doc_0/Attachs/Attachments.xml"]).Replace("ofd-compose.json","forged.json"));
+        Assert.Equal("ATTACHMENT_INVALID",SourceContainer.Extract(Pack(forged), cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Signed_presence_is_unverified_and_signed_input_cannot_be_resealed()
+    {
+        var first=await Initial.Value;
+        var signed=Mutate(first.Sealed,(manifest,entries)=> {
+            var root=XDocument.Parse(Encoding.UTF8.GetString(entries["OFD.xml"]));
+            root.Descendants().First(e=>e.Name.LocalName=="DocBody").Add(new XElement(root.Root!.Name.Namespace+"Signatures","Doc_0/Signs/Signatures.xml"));
+            entries["OFD.xml"]=Encoding.UTF8.GetBytes(root.ToString());
+            entries["Doc_0/Signs/Signatures.xml"]=Encoding.UTF8.GetBytes("<Signatures xmlns='http://www.ofdspec.org/2016'/>");
+            var record=manifest["entries"]!.AsArray().Single(e=>e!["path"]!.GetValue<string>()=="OFD.xml")!;
+            record["byteLength"]=entries["OFD.xml"].Length;record["sha256"]=Hash(entries["OFD.xml"]);
+        });
+        var result=SourceContainer.Extract(signed,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(result.Ok,result.Error);Assert.Equal("present-unverified",result.Signature);Assert.Equal("internal-consistency-only",result.Integrity);
+        Assert.Equal("SIGNED_INPUT_UNSUPPORTED",SourceContainer.Create(signed,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Fact]
+    public async Task Combined_media_assets_are_preserved_and_missing_source_image_is_rejected()
+    {
+        var fixture=await Build("combined");
+        var extracted=SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(extracted.Ok,extracted.Error);Assert.NotEmpty(extracted.Assets!);
+        var bytes=Mutate(fixture.Sealed,(_,entries)=>entries.Remove(entries.Keys.First(p=>p.StartsWith("Doc_0/Attachs/Assets/"))));
+        Assert.Equal("RESOURCE_MISSING",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+        var read=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
+        Assert.Contains(read.Pages.SelectMany(p=>p.Elements),e=>e is Ofdrw.Net.Core.Models.OfdImageElement);
+    }
+
+}

@@ -13,3 +13,12 @@
 - [ ] round-trip：提取 → 加载 ResolvedDocument → 修改文字 → 插入子集外新字符（需完整字体身份可取回）→ render → 新 OFD；新 revisionId 与摘要不同，旧文件字节不变
 - [ ] 非回编辑分发 profile 的最小实现：不带编辑源，manifest 声明为派生物
 - [ ] 签名状态字段在 WP1 固定为"未签/未验证"，接口边界记录
+
+## Comments
+
+2026-09-20: implementation under `codex/issue-17-source-attachments`, based on issue 16
+`7aefe1bf308bb449672de497b0c7d4e6e536326a`. Container protocol, filled-document worker
+seams and library round-trip tests are implemented; see ADR-0005 and
+`tests/source-container/README.md`. Desktop target-reader extraction is **Not verified**.
+The single-JSON attachment remains experimental; do not mark this issue fully accepted
+or freeze the issue 19 structure from .NET/Java library evidence alone.

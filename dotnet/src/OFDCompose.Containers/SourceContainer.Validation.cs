@@ -1,0 +1,166 @@
+using System.Text.Json;
+using System.Xml;
+using static OFDCompose.Containers.ContainerBudget;
+using static OFDCompose.Containers.SourceValidation;
+
+namespace OFDCompose.Containers;
+public static partial class SourceContainer
+{
+    private static void ValidateWriterPackage(Dictionary<string, byte[]> entries, string irDigest, ContainerBudget budget)
+    {
+        string[] elementNames = ["OFD","DocBody","DocInfo","DocID","Creator","DocRoot","Document","CommonData","MaxUnitID","PageArea","PhysicalBox","PublicRes","DocumentRes","Pages","Page","Res","Fonts","Font","FontFile","MultiMedias","MultiMedia","MediaFile","Content","Layer","TextObject","PathObject","ImageObject","FillColor","StrokeColor","CGTransform","Glyphs","TextCode","Clips","Clip","Area","Path","AbbreviatedData"];
+        string[] attributeNames = ["Version","DocType","ID","BaseLoc","FontName","FamilyName","Type","Format","Boundary","CTM","Alpha","LineWidth","Cap","Join","MiterLimit","DashPattern","DashOffset","Value","Font","Size","HScale","ReadDirection","CharDirection","Weight","Italic","Fill","Stroke","Rule","CodePosition","CodeCount","GlyphCount","X","Y","DeltaX","DeltaY","ResourceID"];
+        foreach(var (path, bytes) in entries.Where(e=>e.Key.EndsWith(".xml",StringComparison.Ordinal)))
+        {
+            var xml=SafePackage.Xml(bytes,budget);
+            Need(!xml.DescendantNodes().Any(n=>n is System.Xml.Linq.XComment or System.Xml.Linq.XProcessingInstruction),"UNEXPECTED_METADATA");
+            foreach(var element in xml.Descendants())
+            {
+                budget.Charge(32);
+                Need(element.Name.Namespace==SafePackage.Ns && elementNames.Contains(element.Name.LocalName),"UNEXPECTED_METADATA");
+                Need(element.Attributes().All(a=>a.IsNamespaceDeclaration || a.Name.NamespaceName=="" && attributeNames.Contains(a.Name.LocalName)),"UNEXPECTED_METADATA");
+            }
+            if(path=="OFD.xml")
+            {
+                Need(xml.Descendants(SafePackage.Ns+"DocID").Select(e=>e.Value).SequenceEqual([irDigest[..32]]) && xml.Descendants(SafePackage.Ns+"Creator").Select(e=>e.Value).SequenceEqual(["OFDCompose.OfdIrWriter/0"]),"UNEXPECTED_METADATA");
+                Need(xml.Descendants(SafePackage.Ns+"DocRoot").Select(e=>e.Value).SequenceEqual(["Doc_0/Document.xml"]),"PROTOCOL_INVALID");
+            }
+        }
+    }
+    private static void SourceVersions(JsonElement root)
+    {
+        var document = root.GetProperty("resolvedDocument");
+        Need(Text(document,"format") == "ofd-compose/resolved-document@0" && Text(document,"modelVersion") == "0"
+            && Text(document,"templateSchemaVersion") == "ofd-compose/document-model@0"
+            && Text(document,"expressionLanguageVersion") == "expr-1"
+            && Text(document,"bindingPolicyVersion") is "strict-1" or "legacy-compat-1"
+            && Text(root.GetProperty("renderProfile"),"version") == "ofd-compose/render@0", "VERSION_UNSUPPORTED");
+    }
+    private static bool Malformed(Exception e) => e is JsonException or XmlException or InvalidDataException or InvalidOperationException or ArgumentException or KeyNotFoundException or OverflowException or FormatException or NotSupportedException;
+    private static string AssetPath(string digest) => "Doc_0/Attachs/Assets/" + digest + ".bin";
+    private static bool IsWriterEntry(string path) => path is "OFD.xml" or "Doc_0/Document.xml" or "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml"
+        || System.Text.RegularExpressions.Regex.IsMatch(path, "^Doc_0/(Pages/Page_[0-9]+/Content\\.xml|Res/[a-zA-Z0-9_.-]+\\.(otf|ttf|png|jpg|jpeg))$", System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
+    private static bool Signed(Dictionary<string, byte[]> entries, ContainerBudget budget)
+    {
+        if (entries.Keys.Any(p => p.Contains("Sign", StringComparison.OrdinalIgnoreCase))) return true;
+        return entries.TryGetValue("OFD.xml", out var root) && SafePackage.Xml(root, budget).Descendants(SafePackage.Ns + "Signatures").Any();
+    }
+    private static void ValidateAttachment(Dictionary<string, byte[]> entries, ContainerBudget budget)
+    {
+        Need(entries.TryGetValue("OFD.xml", out var ofd) && entries.TryGetValue("Doc_0/Document.xml", out _), "PROTOCOL_INVALID");
+        var root = SafePackage.Xml(ofd!, budget);
+        Need(root.Descendants(SafePackage.Ns + "DocRoot").Select(e => e.Value).SequenceEqual(["Doc_0/Document.xml"]), "PROTOCOL_INVALID");
+        var doc = SafePackage.Xml(entries["Doc_0/Document.xml"], budget);
+        Need(doc.Descendants(SafePackage.Ns + "Attachments").Select(e => e.Value).SequenceEqual(["Attachs/Attachments.xml"]), "ATTACHMENT_INVALID");
+        Need(entries.TryGetValue(AttachmentsPath, out var bytes), "ATTACHMENT_INVALID");
+        var attachment = SafePackage.Xml(bytes!, budget);
+        var nodes = attachment.Root!.Elements().ToArray();
+        Need(nodes.Length == 1 && nodes[0].Name == SafePackage.Ns + "Attachment", "ATTACHMENT_INVALID");
+        var node = nodes[0];
+        Need((string?)node.Attribute("Name") == "ofd-compose.json" && (string?)node.Attribute("Format") == "application/json"
+            && (string?)node.Attribute("Usage") == "ofd-compose" && node.Attribute("External") is null
+            && node.Elements().Select(e => (e.Name, e.Value)).SequenceEqual([(SafePackage.Ns + "FileLoc", "ofd-compose.json")]), "ATTACHMENT_INVALID");
+    }
+    private static void ValidateInventory(JsonElement inventory, Dictionary<string, byte[]> entries, ContainerBudget budget, bool schemaOnly = false)
+    {
+        Need(inventory.ValueKind == JsonValueKind.Array && inventory.GetArrayLength() <= budget.Limits.Entries, "SCHEMA_INVALID");
+        var paths = new HashSet<string>();
+        foreach (var entry in inventory.EnumerateArray())
+        {
+            Keys(entry, "path", "byteLength", "sha256");
+            string path = Text(entry, "path"); SafePackage.Path(path);
+            Need(IsWriterEntry(path) || System.Text.RegularExpressions.Regex.IsMatch(path, "^Doc_0/Attachs/Assets/[a-f0-9]{64}\\.bin$"), "UNEXPECTED_ENTRY");
+            Need(paths.Add(path) && path is not ManifestPath and not AttachmentsPath && IsDigest(Text(entry, "sha256"))
+                && entry.GetProperty("byteLength").TryGetInt32(out int size) && size >= 0 && size <= budget.Limits.EntryBytes, "SCHEMA_INVALID");
+        }
+        if (schemaOnly) return;
+        foreach (var entry in inventory.EnumerateArray())
+        {
+            Need(entries.TryGetValue(Text(entry, "path"), out var bytes), "RESOURCE_MISSING");
+            Need(bytes!.Length == entry.GetProperty("byteLength").GetInt32() && SafePackage.Hash(bytes, budget) == Text(entry, "sha256"), "DIGEST_MISMATCH");
+        }
+        // Signature sidecars may be observed but are never considered verified or part of the editing source.
+        Need(entries.Keys.All(p => paths.Contains(p) || p is ManifestPath or AttachmentsPath || p.StartsWith("Doc_0/Signs/", StringComparison.Ordinal)), "UNEXPECTED_ENTRY");
+    }
+    private static void AddAssets(JsonElement resources, IReadOnlyList<SourceAsset> assets, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    {
+        Need(assets.Count <= 64, "SIZE_LIMIT");
+        var declared = resources.GetProperty("images").EnumerateArray().GroupBy(r => Text(r, "sha256")).ToDictionary(g => g.Key, g => g.First().GetProperty("byteLength").GetInt32());
+        var seen = new HashSet<string>();
+        foreach (var asset in assets)
+        {
+            Need(IsDigest(asset.Sha256) && declared.TryGetValue(asset.Sha256, out int size) && size == asset.Bytes.Length, "RESOURCE_INVALID");
+            Need(asset.Bytes.Length <= budget.Limits.EntryBytes, "SIZE_LIMIT");
+            budget.Charge(asset.Bytes.Length * 2L);
+            var bytes = asset.Bytes.ToArray();
+            Need(SafePackage.Hash(bytes, budget) == asset.Sha256, "DIGEST_MISMATCH");
+            if (seen.Add(asset.Sha256)) entries.Add(AssetPath(asset.Sha256), bytes);
+        }
+        Need(seen.Count == declared.Count, "RESOURCE_MISSING");
+    }
+    private static void Resources(JsonElement resources, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    {
+        var fonts = resources.GetProperty("fonts").EnumerateArray().ToArray();
+        var images = resources.GetProperty("images").EnumerateArray().ToArray();
+        var layout = resources.GetProperty("layout").EnumerateArray().ToArray();
+        Need(fonts.Length <= 64 && images.Length <= 64 && layout.Length <= 128, "SIZE_LIMIT");
+        Need(fonts.Select(f => f.GetRawText()).Distinct().Count() == fonts.Length && images.Select(f => Text(f, "id")).Distinct().Count() == images.Length, "RESOURCE_INVALID");
+        var resourceEntries = entries.Where(e => e.Key.StartsWith("Doc_0/Res/", StringComparison.Ordinal)).Select(e => (e.Key, Bytes: e.Value, Hash: SafePackage.Hash(e.Value, budget))).ToArray();
+        var ids = new HashSet<string>();
+        foreach (var resource in layout)
+        {
+            budget.Charge(64);
+            Need(ids.Add(Text(resource, "id")), "RESOURCE_INVALID");
+            string kind = Text(resource, "kind");
+            string digest = Text(resource, kind == "font" ? "subsetDigest" : "digest");
+            Need(resourceEntries.Any(e => e.Hash == digest), "RESOURCE_MISSING");
+            if (kind == "font")
+            {
+                Need(fonts.Any(f => Text(f, "sha256") == Text(resource, "originalDigest")), "FONT_IDENTITY_MISSING");
+                Need(Text(resource, "originalDigest") != digest, "FONT_SUBSET_IS_NOT_FULL");
+            }
+        }
+        Need(fonts.All(f => layout.Any(r => Text(r, "kind") == "font" && Text(r, "originalDigest") == Text(f, "sha256"))), "RESOURCE_INVALID");
+        foreach (var image in images)
+        {
+            Need(entries.TryGetValue(AssetPath(Text(image, "sha256")), out var bytes), "RESOURCE_MISSING");
+            Need(bytes!.Length == image.GetProperty("byteLength").GetInt32() && SafePackage.Hash(bytes, budget) == Text(image, "sha256"), "DIGEST_MISMATCH");
+            Need(bytes.AsSpan().StartsWith(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }) || bytes.AsSpan().StartsWith(new byte[] { 255, 216, 255 }), "RESOURCE_INVALID");
+        }
+    }
+    private static Dictionary<string, string[]> ReadObjectMap(JsonElement value, ContainerBudget budget)
+    {
+        Need(value.ValueKind == JsonValueKind.Object, "SCHEMA_INVALID");
+        var result = new Dictionary<string, string[]>();
+        foreach (var property in value.EnumerateObject())
+        {
+            budget.Charge(64);
+            Need(property.Name.Length <= 256 && property.Value.ValueKind == JsonValueKind.Array && property.Value.GetArrayLength() is > 0 and <= 32, "SCHEMA_INVALID");
+            var values = property.Value.EnumerateArray().Select(e => e.GetString()!).ToArray();
+            Need(values.All(v => v is not null && v.Length is > 0 and <= 256), "SCHEMA_INVALID");
+            result.Add(property.Name, values);
+        }
+        return result;
+    }
+    private static void SemanticMap(JsonElement semantics, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    {
+        Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
+        var physical = new HashSet<string>();
+        foreach (var entry in entries.Where(e => e.Key.StartsWith("Doc_0/Pages/", StringComparison.Ordinal) && e.Key.EndsWith("/Content.xml", StringComparison.Ordinal)))
+        {
+            var xml = SafePackage.Xml(entry.Value, budget);
+            foreach (var element in xml.Descendants().Where(e => e.Name.LocalName is "TextObject" or "ImageObject" or "PathObject"))
+                Need(physical.Add((string?)element.Attribute("ID") ?? ""), "SEMANTIC_REFERENCE");
+        }
+        var mapped = new HashSet<string>();
+        foreach (var (id, targets) in objectMap)
+        {
+            budget.Charge(64);
+            Need(id.Length is > 0 and <= 256 && targets.Length is > 0 and <= 32, "SEMANTIC_REFERENCE");
+            foreach (var target in targets) Need(physical.Contains(target) && mapped.Add(target), "SEMANTIC_REFERENCE");
+        }
+        Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
+        foreach (var semantic in semantics.EnumerateArray())
+        { budget.Charge(32); Need(objectMap.ContainsKey(Text(semantic, "objectId")), "SEMANTIC_REFERENCE"); }
+    }
+}

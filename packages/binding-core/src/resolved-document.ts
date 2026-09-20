@@ -20,6 +20,7 @@ import {
 } from "@ofd-compose/document-model";
 import { expressionLanguageVersion } from "@ofd-compose/template-compiler";
 import { type Static, type TSchema, Type } from "@sinclair/typebox";
+import { Value } from "@sinclair/typebox/value";
 
 /**
  * ResolvedDocument v0：本次绑定的实际内容与数据实例关系（spec §3 三个不可互替对象之一）。
@@ -334,4 +335,9 @@ export function instanceIdentity(instancePath: readonly RepeatInstance[] | undef
   return (instancePath ?? [])
     .map((i) => `${escapeIdentityPart(i.nodeId)}=${escapeIdentityPart(i.key)}`)
     .join("/");
+}
+
+/** Callers must bound/snapshot untrusted JSON before schema validation. */
+export function isResolvedDocument(value: unknown): value is ResolvedDocument {
+  return Value.Check(ResolvedDocumentSchema, value);
 }
