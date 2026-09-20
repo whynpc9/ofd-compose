@@ -45,26 +45,25 @@ public static partial class SourceContainer
         }
         return owned;
     }
-    private static void ValidateWriterPackage(Dictionary<string, byte[]> entries, string irDigest, ContainerBudget budget)
+    private static uint ValidateWriterPackage(Dictionary<string, byte[]> entries, string irDigest, ContainerBudget budget)
     {
-        string[] elementNames = ["OFD","DocBody","DocInfo","DocID","Creator","DocRoot","Document","CommonData","MaxUnitID","PageArea","PhysicalBox","PublicRes","DocumentRes","Pages","Page","Res","Fonts","Font","FontFile","MultiMedias","MultiMedia","MediaFile","Content","Layer","TextObject","PathObject","ImageObject","FillColor","StrokeColor","CGTransform","Glyphs","TextCode","Clips","Clip","Area","Path","AbbreviatedData"];
-        string[] attributeNames = ["Version","DocType","ID","BaseLoc","FontName","FamilyName","Type","Format","Boundary","CTM","Alpha","LineWidth","Cap","Join","MiterLimit","DashPattern","DashOffset","Value","Font","Size","HScale","ReadDirection","CharDirection","Weight","Italic","Fill","Stroke","Rule","CodePosition","CodeCount","GlyphCount","X","Y","DeltaX","DeltaY","ResourceID"];
+        uint maximum=0;
         foreach(var (path, bytes) in entries.Where(e=>e.Key.EndsWith(".xml",StringComparison.Ordinal)))
         {
             var xml=SafePackage.Xml(bytes,budget);
-            Need(!xml.DescendantNodes().Any(n=>n is System.Xml.Linq.XComment or System.Xml.Linq.XProcessingInstruction),"UNEXPECTED_METADATA");
-            foreach(var element in xml.Root!.DescendantsAndSelf())
+            WriterXmlGrammar.Validate(xml,path,budget);
+            foreach(var id in xml.Descendants().Attributes("ID"))
             {
-                budget.Charge(32);
-                Need(element.Name.Namespace==SafePackage.Ns && elementNames.Contains(element.Name.LocalName),"UNEXPECTED_METADATA");
-                Need(element.Attributes().All(a=>a.IsNamespaceDeclaration || a.Name.NamespaceName=="" && attributeNames.Contains(a.Name.LocalName)),"UNEXPECTED_METADATA");
+                Need(uint.TryParse(id.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint value)&&value>0,"PACKAGE_REFERENCE");
+                maximum=Math.Max(maximum,value);
             }
             if(path=="OFD.xml")
             {
-                Need(xml.Descendants(SafePackage.Ns+"DocID").Select(e=>e.Value).SequenceEqual([irDigest[..32]]) && xml.Descendants(SafePackage.Ns+"Creator").Select(e=>e.Value).SequenceEqual(["OFDCompose.OfdIrWriter/0"]),"UNEXPECTED_METADATA");
+                Need(xml.Descendants(SafePackage.Ns+"DocID").Select(e=>e.Value).SequenceEqual([irDigest[..32]]),"UNEXPECTED_METADATA");
                 Need(xml.Descendants(SafePackage.Ns+"DocRoot").Select(e=>e.Value).SequenceEqual(["Doc_0/Document.xml"]),"PROTOCOL_INVALID");
             }
         }
+        return maximum;
     }
     private static void SourceVersions(JsonElement root)
     {

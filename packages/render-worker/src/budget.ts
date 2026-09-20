@@ -41,6 +41,7 @@ export class RenderBudget implements JobContext {
   constructor(
     readonly signal?: Cancellation,
     limits: RenderControl["limits"] = {},
+    readonly captureSource = false,
   ) {
     this.limits = { ...renderLimits };
     for (const key of Object.keys(renderLimits) as (keyof typeof renderLimits)[]) {

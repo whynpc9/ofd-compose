@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
-full .NET 243 (49 container cases plus the unchanged 194 baseline cases). The final
+full .NET 250 (56 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -60,3 +60,9 @@ Root-attribute leak mutations were already rejected before the traversal clarifi
 (`XDocument.Descendants` includes its root); four regression cases preserve that boundary.
 Further tests cover a two-family permutation, the explicit resource-map permutation,
 and a native resource declaration whose image was removed from all page objects.
+
+Source coverage rejects added renderable occurrences with no semantic mapping. Watermark
+objects carry bounded JSON pointers to their actual page/section source settings;
+swapping watermark assets is rejected. Source capture is opt-in and tests require exactly
+the same IR with or without it. Fixed-writer XML uses contextual element/attribute rules,
+and MaxUnitID must cover actual package IDs before adding the attachment.

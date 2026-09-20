@@ -33,11 +33,11 @@ public static partial class SourceContainer
             Need(entries.ContainsKey("OFD.xml") && entries.ContainsKey("Doc_0/Document.xml"), "PROTOCOL_INVALID");
             // Only a fresh fixed-writer package can be sealed. This prevents hidden sources in distribution output.
             Need(entries.Keys.All(IsWriterEntry), "UNEXPECTED_ENTRY");
-            ValidateWriterPackage(entries, irDigest, budget);
+            uint actualMax=ValidateWriterPackage(entries, irDigest, budget);
             var doc = SafePackage.Xml(entries["Doc_0/Document.xml"], budget);
             Need(!doc.Descendants(SafePackage.Ns + "Attachments").Any() && !doc.Descendants(SafePackage.Ns + "Extensions").Any(), "UNEXPECTED_ENTRY");
             var maxUnit=doc.Descendants(SafePackage.Ns+"MaxUnitID").Single();
-            Need(uint.TryParse(maxUnit.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint maxId) && maxId<uint.MaxValue,"RESOURCE_INVALID");
+            Need(uint.TryParse(maxUnit.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint maxId) && maxId<uint.MaxValue && maxId>=actualMax,"RESOURCE_INVALID");
             string attachmentId=(maxId+1).ToString(System.Globalization.CultureInfo.InvariantCulture);
             maxUnit.Value=attachmentId;
             doc.Root!.Add(new XElement(SafePackage.Ns + "Attachments", "Attachs/Attachments.xml"));

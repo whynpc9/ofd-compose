@@ -157,7 +157,11 @@ async function run(
   const diagnostics: Diagnostic[] = [];
   let phase: DiagnosticPhase = "render";
   try {
-    const budget = new RenderBudget(control.signal, control.limits);
+    const budget = new RenderBudget(
+      control.signal,
+      control.limits,
+      control.sourceAttachment === true,
+    );
     const template = source === undefined ? undefined : snapshot(source, budget);
     const input = data === undefined ? null : snapshot(data, budget);
     const reopened = attachment === undefined ? undefined : snapshot(attachment, budget);
@@ -516,6 +520,7 @@ async function run(
               bytes: item.bytes,
             })),
           budget,
+          laid.watermarkSources,
         )
       : undefined;
     return {

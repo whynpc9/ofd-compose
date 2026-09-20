@@ -487,4 +487,50 @@ public sealed class ContainerTests
         Assert.Equal("RESOURCE_INCOMPLETE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
+    [Fact]
+    public async Task Additional_unmapped_source_text_is_rejected_after_rehashing()
+    {
+        var first=await Initial.Value;
+        var bytes=Mutate(first.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            source["body"]!.AsArray().Add(JsonNode.Parse("{\"kind\":\"paragraph\",\"nodeId\":\"extra-p\",\"fragments\":[{\"kind\":\"text\",\"text\":\"EXTRA_UNRENDERED_TEXT\",\"origin\":{\"kind\":\"static\",\"nodeId\":\"extra-t\"}}]}"));
+            string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Theory]
+    [InlineData("element")]
+    [InlineData("attribute")]
+    [InlineData("text")]
+    public async Task XML_metadata_must_obey_the_fixed_writer_context(string mutation)
+    {
+        var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));
+        if(mutation=="element")xml.Root!.Add(new XElement(xml.Root.Name.Namespace+"Creator","FULL_SOURCE_SECRET"));
+        if(mutation=="attribute")xml.Root!.SetAttributeValue("Value","FULL_SOURCE_SECRET");
+        if(mutation=="text")xml.Root!.Add(new XText("FULL_SOURCE_SECRET"));
+        entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
+        Assert.Equal("UNEXPECTED_METADATA",result.Error);
+    }
+    [Theory]
+    [InlineData("0")]
+    [InlineData("1")]
+    public async Task Stale_MaxUnitID_cannot_create_duplicate_attachment_IDs(string maximum)
+    {
+        var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));xml.Descendants().Single(e=>e.Name.LocalName=="MaxUnitID").Value=maximum;entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
+        Assert.Equal("RESOURCE_INVALID",result.Error);Assert.Null(result.Bytes);
+    }
+    [Fact]
+    public async Task Watermark_sources_remain_bound_to_their_actual_image_objects()
+    {
+        var fixture=await Build("watermarks");
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resources")!;var resources=JsonNode.Parse(part["content"]!.GetValue<string>())!;var images=resources["images"]!.AsArray();Assert.Equal(2,images.Count);
+            foreach(string key in new[]{"sha256","byteLength"}){var first=images[0]![key]!.DeepClone();images[0]![key]=images[1]![key]!.DeepClone();images[1]![key]=first;}
+            string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }

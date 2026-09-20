@@ -94,6 +94,7 @@ if (mode === "combined" || mode === "two-images") {
   mode === "initial" ||
   mode === "empty-paragraph" ||
   mode === "two-fonts" ||
+  mode === "watermarks" ||
   mode.startsWith("checkbox-")
 ) {
   const source = {
@@ -118,6 +119,49 @@ if (mode === "combined" || mode === "two-images") {
       },
     ],
   };
+  if (mode === "watermarks") {
+    const png = new Uint8Array(
+      JSON.parse(
+        await readFile(
+          new URL("../../packages/render-worker/tests/node-image.json", import.meta.url),
+        ),
+      ),
+    );
+    const corpus = JSON.parse(
+      await readFile(new URL("../../packages/media-core/tests/fixtures.json", import.meta.url)),
+    );
+    const jpeg = new Uint8Array(Buffer.from(corpus.jpeg, "base64"));
+    pack.images = [
+      {
+        id: "first",
+        sha256: createHash("sha256").update(png).digest("hex"),
+        byteLength: png.length,
+        bytes: png,
+      },
+      {
+        id: "second",
+        sha256: createHash("sha256").update(jpeg).digest("hex"),
+        byteLength: jpeg.length,
+        bytes: jpeg,
+      },
+    ];
+    source.settings.page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      watermarks: ["first", "second"].map((resourceId, i) => ({
+        kind: "image",
+        resourceId,
+        x: 10 + i * 30,
+        y: 50,
+        width: 10,
+        height: 10,
+        layer: "behind",
+        opacity: 1,
+        transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+      })),
+    };
+  }
   if (mode === "two-fonts") {
     const other = fontManifest[2];
     const bytes = new Uint8Array(

@@ -76,6 +76,24 @@ it("requires the explicitly authorized full font and never treats a subset as th
 
 it("keeps visible values and source relationships while excluding unused business input", async () => {
   const fixture = await combined();
+  fixture.source.settings.page = {
+    paper: "A4",
+    orientation: "portrait",
+    margins: { top: 20, bottom: 20, left: 20, right: 20 },
+    watermarks: [
+      {
+        kind: "image",
+        resourceId: "picture",
+        x: 2,
+        y: 2,
+        width: 10,
+        height: 10,
+        layer: "behind",
+        opacity: 1,
+        transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+      },
+    ],
+  };
   const font = fixture.pack.fonts[0];
   if (!font) throw new Error("fixture");
   const pack = {
@@ -91,6 +109,18 @@ it("keeps visible values and source relationships while excluding unused busines
   );
   if (!result.ok || !result.editingSource) throw new Error(JSON.stringify(result.diagnostics));
   const source = JSON.parse(result.editingSource.json) as SourceContent;
+  expect(source.semanticMap.watermarks.length).toBe(result.ir.pages.length);
+  expect(
+    source.semanticMap.watermarks.every((w) => w.pointer === "/settings/page/watermarks/0"),
+  ).toBe(true);
+  const withoutCapture = await render(
+    fixture.source,
+    { ...fixture.data, neverUsed: "SECRET_TOKEN" },
+    pack,
+    profile,
+  );
+  if (!withoutCapture.ok) throw new Error(JSON.stringify(withoutCapture.diagnostics));
+  expect(withoutCapture.ir).toEqual(result.ir);
   expect(result.editingSource.json).not.toContain("SECRET_TOKEN");
   expect(result.editingSource.json).not.toContain("UNUSED_ALIAS_SECRET");
   expect(result.editingSource.json).toContain("winner-binding");

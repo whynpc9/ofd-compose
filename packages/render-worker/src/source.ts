@@ -49,6 +49,7 @@ export function createSourceContent(
   fonts: EditingFont[],
   images: (EditingImage & { bytes: Uint8Array })[],
   budget: RenderBudget,
+  watermarkSources: { objectId: string; pointer: string }[] = [],
 ) {
   const minimal = minimizeResolved(document, budget);
   const imageIds = new Set<string>();
@@ -82,6 +83,7 @@ export function createSourceContent(
     },
     semanticMap: {
       entries: ir.semantics,
+      watermarks: watermarkSources,
       decorations: ir.pages
         .flatMap((page) => page.objects)
         .filter((object) => !semanticIds.has(object.id))

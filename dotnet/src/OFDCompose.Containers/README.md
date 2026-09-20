@@ -72,3 +72,9 @@ selection is checked against the mapped original font identity, including paragr
 styles and explicit fragment inheritance. The writer only returns its existing mapping;
 this adds no layout or font selection to the writer and does not change writer bytes.
 Both profiles reject declared resources unused by page objects.
+
+Native semantic validation requires every renderable source occurrence to be mapped.
+Watermark image origins are returned by the layout stage as JSON pointers to the source
+page settings; they do not enter Layout IR or change its digest. XML validation enforces
+legal parent/child and attribute contexts, including text-bearing metadata boundaries.
+Stale MaxUnitID values are rejected before allocating a new attachment ID.

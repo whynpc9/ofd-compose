@@ -89,6 +89,7 @@ internal static class SafePackage
         foreach(var (path,bytes) in entries.Where(e=>e.Key.EndsWith(".xml",StringComparison.Ordinal)&&!e.Key.StartsWith("Doc_0/Signs/",StringComparison.Ordinal)))
         {
             var xml=Xml(bytes,budget);
+            WriterXmlGrammar.Validate(xml,path,budget);
             foreach(var id in xml.Descendants().Attributes("ID"))
             {
                 budget.Charge(32);Need(uint.TryParse(id.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint value)&&value>0&&ids.Add(id.Value),"PACKAGE_REFERENCE");
@@ -104,6 +105,8 @@ internal static class SafePackage
                 foreach(var element in xml.Root!.Elements(Ns+"Content").Elements(Ns+"Layer").Elements().Where(e=>e.Name.LocalName is "TextObject" or "ImageObject"))
                     references.Add((string?)element.Attribute(element.Name.LocalName=="TextObject"?"Font":"ResourceID")??"");
         }
+        Need(uint.TryParse(document.Descendants(Ns+"MaxUnitID").Single().Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint maximum),"PACKAGE_REFERENCE");
+        Need(ids.All(id=>uint.Parse(id,System.Globalization.CultureInfo.InvariantCulture)<=maximum),"PACKAGE_REFERENCE");
         Need(references.All(resources.Contains),"RESOURCE_MISSING");
         if(requirePageReachability)Need(resources.SetEquals(references),"RESOURCE_ORPHAN");
         Need(resourcePaths.SetEquals(entries.Keys.Where(p=>p.StartsWith("Doc_0/Res/",StringComparison.Ordinal))),"RESOURCE_ORPHAN");

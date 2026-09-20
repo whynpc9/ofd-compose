@@ -6,7 +6,7 @@ using static OFDCompose.Containers.SourceValidation;
 namespace OFDCompose.Containers;
 internal static class SemanticValidation
 {
-    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, string Family);
+    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, string Family, bool Renderable);
     private static string? Optional(JsonElement value, string key) => value.TryGetProperty(key,out var field)?field.GetString():null;
     private static string Repeat(JsonElement value, string key) => value.TryGetProperty(key,out var array)
         ? string.Join("",array.EnumerateArray().Select(e=> { string id=Text(e,"nodeId"), k=Text(e,"key"); return id.Length+":"+id+k.Length+":"+k; })) : "";
@@ -42,11 +42,16 @@ internal static class SemanticValidation
                 var key=(id,Optional(origin,"bindingId"),repeat);
                 if(!index.TryGetValue(key,out var list)) index[key]=list=[];
                 string[]? images=kind=="image-binding"?value.GetProperty("sources").EnumerateArray().Select(source=>source.ValueKind==JsonValueKind.String?SourceContainer.InlineImageDigest(source.GetString()!,budget):sourceImages[Text(source,"resourceId")]).ToArray():null;
-                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,family));
+                bool renderable=kind is "path" or "barcode-binding" or "input-control" || kind=="text" && !string.IsNullOrEmpty(text)
+                    || kind=="image-binding" && images!.Length>0
+                    || kind=="paragraph" && value.GetProperty("fragments").EnumerateArray().All(f=>Text(f,"kind")=="text"&&Text(f,"text").Length==0);
+                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,family,renderable));
             }
             foreach(var property in value.EnumerateObject())if(property.Name is not "origin" and not "instancePath")Walk(property.Value,repeat,family);
         }
         Walk(document.GetProperty("body"),"",defaultFamily);
+        foreach(var candidates in index.Values)Need(candidates.Count(c=>c.Renderable)<=1,"SEMANTIC_SOURCE_AMBIGUOUS");
+        var sourceCovered=new HashSet<SourceNode>();
         var covered=new HashSet<string>();
         var semantics=map.GetProperty("entries");
         foreach(var decoration in map.GetProperty("decorations").EnumerateArray())
@@ -68,9 +73,11 @@ internal static class SemanticValidation
                 string? binding=Optional(reference,"bindingId"),control=Optional(reference,"controlId");
                 if(!index.TryGetValue((Text(reference,"nodeId"),binding,repeat),out var candidates))return false;
                 budget.Charge(candidates.Count*32L);
-                return candidates.Any(c=>c.Repeat==repeat && c.Binding==binding && (control is null||control==c.Control)
+                var matches=candidates.Where(c=>c.Repeat==repeat && c.Binding==binding && (control is null||control==c.Control)
                     && (!checkText || c.Text==Text(reference.GetProperty("sourceText"),"text"))
-                    && (originalFont is null || sourceFonts.Any(f=>Text(f,"family")==c.Family&&Text(f,"sha256")==originalFont)));
+                    && (originalFont is null || sourceFonts.Any(f=>Text(f,"family")==c.Family&&Text(f,"sha256")==originalFont))).ToArray();
+                foreach(var candidate in matches)if(checkText||candidate.Text is null)sourceCovered.Add(candidate);
+                return matches.Length>0;
             }
             Need(Source(semantic,semantic.TryGetProperty("sourceText",out _)),"SEMANTIC_SOURCE");
             var sourceKey=(Text(semantic,"nodeId"),Optional(semantic,"bindingId"),repeat);
@@ -111,8 +118,39 @@ internal static class SemanticValidation
             }
         }
         Need(covered.SetEquals(objectMap.Keys),"SEMANTIC_INCOMPLETE");
+        Need(index.Values.SelectMany(c=>c).Where(c=>c.Renderable).All(sourceCovered.Contains),"SEMANTIC_INCOMPLETE");
+        var decorationIds=map.GetProperty("decorations").EnumerateArray().Select(e=>e.GetString()!).ToHashSet();
+        var watermarkIds=new HashSet<string>();
+        foreach(var watermark in map.GetProperty("watermarks").EnumerateArray())
+        {
+            budget.Charge(128);
+            string id=Text(watermark,"objectId");
+            Need(watermarkIds.Add(id)&&decorationIds.Contains(id)&&objectMap.TryGetValue(id,out _),"SEMANTIC_REFERENCE");
+            var origin=Pointer(document,Text(watermark,"pointer"),budget);
+            Need(Text(origin,"kind")=="image"&&sourceImages.TryGetValue(Text(origin,"resourceId"),out _),"SEMANTIC_SOURCE");
+            string digest=sourceImages[Text(origin,"resourceId")];
+            Need(objectMap[id].Length==1&&objects[objectMap[id][0]].ImageDigest==digest,"RESOURCE_IMAGE_MISMATCH");
+        }
+        Need(decorationIds.Where(id=>objectMap[id].Any(target=>objects[target].ImageDigest is not null)).All(watermarkIds.Contains),"SEMANTIC_INCOMPLETE");
         // A source-bearing document cannot relabel all output as decoration.
         Need(semantics.GetArrayLength()>0 || !index.Values.SelectMany(v=>v).Any(v=>v.Text is {Length:>0}),"SEMANTIC_INCOMPLETE");
+    }
+    private static JsonElement Pointer(JsonElement root,string pointer,ContainerBudget budget)
+    {
+        Need(pointer.Length is >0 and <=2048 && pointer[0]=='/',"SEMANTIC_SOURCE");
+        var value=root;
+        foreach(var encoded in pointer[1..].Split('/'))
+        {
+            budget.Charge(encoded.Length+32);
+            string key=encoded.Replace("~1","/",StringComparison.Ordinal).Replace("~0","~",StringComparison.Ordinal);
+            if(value.ValueKind==JsonValueKind.Array)
+            {
+                Need(int.TryParse(key,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out int index)&&index>=0&&index<value.GetArrayLength()&&key==index.ToString(System.Globalization.CultureInfo.InvariantCulture),"SEMANTIC_SOURCE");
+                value=value[index];
+            }
+            else {Need(value.ValueKind==JsonValueKind.Object&&value.TryGetProperty(key,out _),"SEMANTIC_SOURCE");value=value.GetProperty(key);}
+        }
+        return value;
     }
     private static bool Boundary(string text,int offset)=>offset==0||offset==text.Length||!char.IsHighSurrogate(text[offset-1])||!char.IsLowSurrogate(text[offset]);
 }
