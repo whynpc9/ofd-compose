@@ -1,7 +1,7 @@
 using System.Text;
 namespace OFDCompose.PdfIrWriter;
 
-internal sealed record PdfGlyphSpan(int Start,int Length);
+internal sealed record PdfGlyphSpan(int Start,int Length,bool LeadingSpace,bool TrailingSpace);
 internal sealed record PdfPrimitiveSpan(string Id,string? TextGroup,int Start,int Length,List<PdfGlyphSpan>? IsolatedGlyphs,bool LeadingSpace,bool TrailingSpace);
 
 /// <summary>Groups consecutive paint operations without changing their coordinates or order.</summary>
@@ -13,15 +13,15 @@ internal static class PdfPageForms
     {
         var page=new StringBuilder(original[..prefixLength]);var pending=new StringBuilder();
         var members=new List<(string Id,int Start,int Length)>();
-        var locations=new Dictionary<string,List<(int Stream,int Start,int Length)>>();int? group=null;
-        var groupIds=new int[primitives.Count];Array.Fill(groupIds,-1);var groupIsolation=new Dictionary<int,bool>();
+        var locations=new Dictionary<string,List<(int Stream,int Start,int Length)>>();int? group=null;bool? previousSpace=null;
+        var groupIds=new int[primitives.Count];Array.Fill(groupIds,-1);
         PdfPrimitiveSpan? previousText=null;int currentGroup=-1;
         for(int i=0;i<primitives.Count;i++)
         {
             pdf.CheckCancellation();var item=primitives[i];if(item.TextGroup is null)continue;
             bool connected=previousText is not null&&(previousText.TextGroup==item.TextGroup||previousText.TrailingSpace||item.LeadingSpace);
             if(!connected)currentGroup++;
-            groupIds[i]=currentGroup;groupIsolation[currentGroup]=groupIsolation.GetValueOrDefault(currentGroup,true)&&item.IsolatedGlyphs is not null;previousText=item;
+            groupIds[i]=currentGroup;previousText=item;
         }
         void Add(string id,int stream,int start,int length)
         {
@@ -39,31 +39,32 @@ internal static class PdfPageForms
         void Flush()
         {
             if(pending.Length==0)return;
-            Form(pending.ToString(),members);pending.Clear();members.Clear();group=null;
+            Form(pending.ToString(),members);pending.Clear();members.Clear();
         }
         for(int primitiveIndex=0;primitiveIndex<primitives.Count;primitiveIndex++)
         {
             var primitive=primitives[primitiveIndex];
             pdf.CheckCancellation();
-            if(primitive.IsolatedGlyphs is {Count:>0} glyphs&&groupIsolation[groupIds[primitiveIndex]])
-            {
-                Flush();
-                string prefix=original.Substring(primitive.Start,glyphs[0].Start-primitive.Start);
-                int end=glyphs[^1].Start+glyphs[^1].Length;
-                string suffix=original.Substring(end,primitive.Start+primitive.Length-end);
-                // Preserve original paint order, including noncontiguous cluster memberships.
-                for(int first=0;first<glyphs.Count;first++)
-                {
-                    string body=prefix+original.Substring(glyphs[first].Start,glyphs[first].Length)+suffix;
-                    Form(body,[(primitive.Id,0,body.Length)]);
-                }
-                continue;
-            }
             if(primitive.TextGroup is not null)
             {
                 int next=groupIds[primitiveIndex];
-                if(group is not null&&group!=next)Flush();
-                group=next;
+                if(group!=next){Flush();previousSpace=null;group=next;}
+            }
+            if(primitive.IsolatedGlyphs is {Count:>0} glyphs)
+            {
+                string prefix=original.Substring(primitive.Start,glyphs[0].Start-primitive.Start);
+                int end=glyphs[^1].Start+glyphs[^1].Length;
+                string suffix=original.Substring(end,primitive.Start+primitive.Length-end);
+                // Real boundary spaces connect neighbors; unrelated glyph gaps cannot create text.
+                foreach(var glyph in glyphs)
+                {
+                    pdf.CheckCancellation();
+                    if(previousSpace is false&&!glyph.LeadingSpace)Flush();
+                    string body=prefix+original.Substring(glyph.Start,glyph.Length)+suffix;
+                    int start=pending.Length;pending.Append(body);members.Add((primitive.Id,start,body.Length));
+                    previousSpace=glyph.TrailingSpace;
+                }
+                continue;
             }
             int offset=pending.Length;pending.Append(original,primitive.Start,primitive.Length);
             members.Add((primitive.Id,offset,primitive.Length));

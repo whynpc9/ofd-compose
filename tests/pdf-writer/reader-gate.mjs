@@ -29,6 +29,8 @@ for (const name of [
   "spacing-cluster",
   "spacing-combining",
   "spacing-semantic-runs",
+  "spacing-mixed",
+  "spacing-mixed-semantic",
   "spacing-columns",
   "spacing-leading",
   "spacing-trailing",

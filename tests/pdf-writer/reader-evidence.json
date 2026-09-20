@@ -11,8 +11,8 @@
     },
     {
       "case": "cff",
-      "bytes": 121895,
-      "sha256": "6c844d1319d0d7c2626a8ae53b6d2cfe0acaa17e641dc21d09377eec5ce083be",
+      "bytes": 123129,
+      "sha256": "15300a98962de1c1a9968f864530ee8d5488c7e3770745af0e5e52d860d731f3",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
       "MaxReaderExtentErrorPt": 1.4210854715202004e-14,
@@ -20,8 +20,8 @@
     },
     {
       "case": "combined",
-      "bytes": 226781,
-      "sha256": "deaf47203ad4ac8f1bdb1df588aafef5e115cee329dba47601fbf2f88cf3d1d2",
+      "bytes": 385292,
+      "sha256": "1f79524bc6d94549f6f3d5dd7bfcbf5681ea1132a5d2323aaf63bd793bd3240f",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.1368683772161603e-13,
       "MaxReaderExtentErrorPt": 1.1368683772161603e-13,
@@ -29,8 +29,8 @@
     },
     {
       "case": "duplicate-markers",
-      "bytes": 121895,
-      "sha256": "62fd7ef01e0ce59080743b0d5acfdf2e28e1d9400a2fbc6315ce8c8afc6e1061",
+      "bytes": 123129,
+      "sha256": "2357ccec2efc3003f7906e4d8f93cbceec94ec75fd70f0f7ced87bd9caf1f36f",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
       "MaxReaderExtentErrorPt": 1.4210854715202004e-14,
@@ -38,8 +38,8 @@
     },
     {
       "case": "geometry",
-      "bytes": 122354,
-      "sha256": "4c318b4742126966ec0366ef49c28ce380925e00a641e67e336ac27401d41c12",
+      "bytes": 123890,
+      "sha256": "1cd18d850f811d6b0327cf1356c5bea5452b92b833d84f479097104f3e66bd8b",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 2.2737367544323206e-13,
       "MaxReaderExtentErrorPt": 2.2737367544323206e-13,
@@ -56,8 +56,8 @@
     },
     {
       "case": "jpeg",
-      "bytes": 304159,
-      "sha256": "350980838588d652f3b0ba3fe92e5d7b1c730f552d92851a1a25736c9b6ae155",
+      "bytes": 462617,
+      "sha256": "d6ba1ae5d8cf1dcd5cdb18b4ae4442288d3953f8bda9c42ae2ca503486385b05",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.1368683772161603e-13,
       "MaxReaderExtentErrorPt": 1.1368683772161603e-13,
@@ -65,13 +65,13 @@
     },
     {
       "case": "logical-display-printable",
-      "bytes": 125544,
-      "sha256": "1d850d92ad89ded6bc362cb85e71acef475028c752f12c42cd999fcec38a886f"
+      "bytes": 125855,
+      "sha256": "6358862a4642600e8fab12a3a6ba19868e6b42ac66b5f60d4e8e515c754bcec5"
     },
     {
       "case": "multi-glyph",
-      "bytes": 4207,
-      "sha256": "b3a7039a442c25304f2a81310ff8378a6b33299d26eee817a7f7058e589cdac9",
+      "bytes": 4510,
+      "sha256": "d63437d5d6310f9c3f252a7154263f24bdb305139c99a68889b9c90bf3e45682",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 7.105427357601002e-15,
       "MaxReaderExtentErrorPt": 0,
@@ -84,8 +84,8 @@
     },
     {
       "case": "nonidentity-contract",
-      "bytes": 4207,
-      "sha256": "f14ea9b687fb5344976fc05fa150f715bb47c23bc4f02663bd481fc90738d586",
+      "bytes": 4510,
+      "sha256": "5a20711795fa78f35102e080cd869e5c8abf0f03a45abbd8e6721ce7e9ebc722",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 7.105427357601002e-15,
       "MaxReaderExtentErrorPt": 0,
@@ -98,8 +98,8 @@
     },
     {
       "case": "truetype",
-      "bytes": 4680,
-      "sha256": "57c299d9230a465cbc84a15e5fe0b787a5a0f827f83c0e7dda70a54e6e8a5dfe",
+      "bytes": 6506,
+      "sha256": "9878ad2ab7904b7a7a62293491b237a83efcbae0321047f5b8ec7efc9937b994",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 1.4210854715202004e-14,
       "MaxReaderExtentErrorPt": 0.0014456692913427105,
@@ -107,8 +107,8 @@
     },
     {
       "case": "visible-image",
-      "bytes": 122364,
-      "sha256": "af000fff3db24e7b77c41f57f4804faade4616de0f1fe2e27b357ded0e427c25",
+      "bytes": 123903,
+      "sha256": "91b066986c78a4ce25a49f90bfab863778e8fd13144855f2ee12780e5fc4f875",
       "Reader": "PdfPig 0.1.11",
       "MaxBaselineErrorPt": 2.2737367544323206e-13,
       "MaxReaderExtentErrorPt": 2.2737367544323206e-13,
@@ -119,15 +119,15 @@
   "validation": {
     "nodeFullNoCache": 604,
     "chromiumFullNoCache": 395,
-    "dotnetFull": 190,
-    "pdfTests": 68,
+    "dotnetFull": 194,
+    "pdfTests": 72,
     "mutationGates": 9,
-    "freshProcessDeterminism": "26 literal-exact positives plus 1 accepted Worker case identical across fresh processes",
+    "freshProcessDeterminism": "28 strict positives and 1 accepted Worker case identical across fresh processes",
     "isolatedMappingTestsFreshDirectory": 16,
     "pixelIdenticalPages": 20,
     "highLevelPositiveCasesLiteralExact": 14,
     "rtlPositiveCases": 4,
-    "spacingPositiveCases": 5,
+    "spacingPositiveCases": 10,
     "acceptedWhitespaceCases": 1
   },
   "rtlCases": [
@@ -150,12 +150,12 @@
   ],
   "spacingCases": [
     {
-      "case": "spacing-cluster",
-      "sha256": "3deba32723c17a5b67dbdb98b010eaecdff316e52e15c87c7c1e347de58a8546"
+      "case": "spacing-mixed-semantic",
+      "sha256": "c2e09114cdfeb6ffbcd48885d3d9d155c7c4df9274e0a82d9e3deb4acf1fada5"
     },
     {
-      "case": "spacing-columns",
-      "sha256": "04d40e7f061de9ddd885923084ecfd2e865c8cc89888615e0249e8e13972a890"
+      "case": "spacing-trailing",
+      "sha256": "1fdaedb552844a1c8bbeb77deb4ff5b097dc733a6174bc882eb747cd5b3608bc"
     },
     {
       "case": "spacing-combining",
@@ -163,11 +163,31 @@
     },
     {
       "case": "spacing-leading",
-      "sha256": "e701a7723d28a076e32dee86344db3b6b92d666c686ae352b089e9e786518863"
+      "sha256": "d940df0a194e81323cec2920fe4ecf5870bb4d28cbd87b091ad5f8cc782f077a"
     },
     {
-      "case": "spacing-trailing",
-      "sha256": "bec928decb83a60c887ada96ce831a47d6ec28353f69aea380a076f59055e99f"
+      "case": "spacing-cluster",
+      "sha256": "3deba32723c17a5b67dbdb98b010eaecdff316e52e15c87c7c1e347de58a8546"
+    },
+    {
+      "case": "spacing-semantic-runs",
+      "sha256": "cf89a8f14fef41a08d84f3fb9e50dc3edb5068dd106f48d902f5192762726be0"
+    },
+    {
+      "case": "spacing-cluster-semantic",
+      "sha256": "abb9b53e5b56ec33818453a8d391841428527eec5472ecf2a6d1b9993085cc79"
+    },
+    {
+      "case": "spacing-columns",
+      "sha256": "8222a72bdf3d438e4cdcbbf697b92af82dd26eba9fb3f575a708e37f91952033"
+    },
+    {
+      "case": "spacing-combining-semantic",
+      "sha256": "d328e0f445f233e895ad30423378de6a0b53a60a85ca62c61c3f2dd3d8952828"
+    },
+    {
+      "case": "spacing-mixed",
+      "sha256": "1bd41048d3ceda0a1f23074d10cd2a5221fe9458895b7bff28a87a0214412b3b"
     }
   ],
   "acceptedReaderBoundary": {

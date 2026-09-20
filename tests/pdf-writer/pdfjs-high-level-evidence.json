@@ -203,6 +203,20 @@
     "actual": "of"
   },
   {
+    "case": "spacing-mixed",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o fff",
+    "actual": "o fff"
+  },
+  {
+    "case": "spacing-mixed-semantic",
+    "page": 0,
+    "classification": "exact",
+    "expected": "o fff",
+    "actual": "o fff"
+  },
+  {
     "case": "spacing-columns",
     "page": 0,
     "classification": "exact",

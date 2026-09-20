@@ -57,7 +57,7 @@ def mutate(data, kind):
         elif kind == 'ctm' and b' Tm\n' in raw:
             modified = re.sub(rb'1 0 0 -1 ([\d.]+) ', lambda m: b'1 0 0 -1 ' + str(float(m[1]) + 5000).encode() + b' ', raw, count=1)
         elif kind == 'clip' and b'W* n\n' in raw:
-            modified = raw.replace(b'W* n\n', b'n\n', 1)
+            modified = raw.replace(b'W* n\n', b'n\n')
         elif kind == 'imageclip' and b'W n\n' in raw:
             modified = raw.replace(b'W n\n', b'n\n', 1)
         elif kind == 'imagescale' and b'2000 0 0 -2000 0 2000 cm\n' in raw:
@@ -70,7 +70,9 @@ def mutate(data, kind):
         header = re.sub(rb'/Length \d+', f'/Length {len(encoded)}'.encode(), obj[:start])
         objects[i] = header + encoded + obj[end:]
         changed = True
-        break
+        # Glyph Forms repeat the same clip; corrupt every copy of that state.
+        if kind != 'clip':
+            break
     assert changed, f'{kind}: mutation did not change a target stream'
     result = bytearray(data[:offsets[0]])
     new_offsets = []

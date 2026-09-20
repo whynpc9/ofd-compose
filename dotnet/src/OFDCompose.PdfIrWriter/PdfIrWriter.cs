@@ -41,7 +41,7 @@ public sealed class PdfIrWriter
             }
             bool Isolated(JsonElement obj)
             {
-                if(obj.S("kind")!="text"||obj.S("logicalText").Any(PdfJsWhitespace))return false;
+                if(obj.S("kind")!="text")return false;
                 cancellationToken.ThrowIfCancellationRequested();
                 return true;
             }
@@ -160,10 +160,10 @@ public sealed class PdfIrWriter
             var g=glyphs[i];double size=obj.N("fontSize");var code=font.Code(g.P("glyphId").GetUInt32(),texts[i],g.P("advance").N("x")/size*1000);
             int start=b.Length;
             b.Append($"/{code.Font} {F(size)} Tf\n1 0 0 -1 {F(g.P("position").N("x")+g.P("offset").N("x"))} {F(g.P("position").N("y")+g.P("offset").N("y"))} Tm\n<{code.Code:X4}> Tj\n");
-            glyphSpans?.Add(new(start,b.Length-start));
+            glyphSpans?.Add(new(start,b.Length-start,texts[i][0]==' ',texts[i][^1]==' '));
         }
         b.Append("ET\nEMC\n");
-        return order.Length==0?(false,false):(texts[order[0]].All(c=>c==' '),texts[order[^1]].All(c=>c==' '));
+        return order.Length==0?(false,false):(texts[order[0]][0]==' ',texts[order[^1]][^1]==' ');
     }
     private static int Image(PdfObjects pdf,JsonElement r,byte[] bytes,CancellationToken cancellationToken)
     {
@@ -191,7 +191,7 @@ public sealed class PdfIrWriter
                 or System.Globalization.UnicodeCategory.SpaceSeparator or System.Globalization.UnicodeCategory.LineSeparator or System.Globalization.UnicodeCategory.ParagraphSeparator);
         }
         // Match the categorizer's alternative precedence: a preceding Mn match wins over final Cf.
-        if(PdfJsWhitespace(text[0]))return printable||text.Any(c=>c!=' ');
+        if(PdfJsWhitespace(text[0]))return printable||text.Length!=1||text[0]!=' ';
         return !nonspacingMark&&last==System.Globalization.UnicodeCategory.Format;
     }
     // ECMAScript WhiteSpace + LineTerminator set used by pdf.js 5.4.149's /^\s/ category.
