@@ -52,12 +52,12 @@ public sealed class ContainerTests
         using var archive = new ZipArchive(new MemoryStream(bytes), ZipArchiveMode.Read);
         return archive.Entries.ToDictionary(e => e.FullName, e => { using var source=e.Open(); using var target=new MemoryStream(); source.CopyTo(target); return target.ToArray(); });
     }
-    private static byte[] Pack(Dictionary<string, byte[]> entries, string? duplicate = null)
+    private static byte[] Pack(Dictionary<string, byte[]> entries, string? duplicate = null, CompressionLevel level = CompressionLevel.Optimal)
     {
         using var memory = new MemoryStream();
         using (var archive = new ZipArchive(memory, ZipArchiveMode.Create, true))
         {
-            foreach (var (name, bytes) in entries) { using var entry = archive.CreateEntry(name).Open(); entry.Write(bytes); }
+            foreach (var (name, bytes) in entries) { using var entry = archive.CreateEntry(name,level).Open(); entry.Write(bytes); }
             if (duplicate is not null) { using var entry=archive.CreateEntry(duplicate).Open(); entry.Write([1]); }
         }
         return memory.ToArray();
@@ -246,10 +246,10 @@ public sealed class ContainerTests
         }
         System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()=>GetEnumerator();
     }
-    private sealed class ChangingMemory(byte[] initial) : System.Buffers.MemoryManager<byte>
+    private sealed class ChangingMemory(byte[] initial, byte[]? subsequent = null) : System.Buffers.MemoryManager<byte>
     {
         private int reads;
-        private readonly byte[] later=new byte[initial.Length];
+        private readonly byte[] later=subsequent??new byte[initial.Length];
         public ReadOnlyMemory<byte> Input=>CreateMemory(initial.Length);
         public override Span<byte> GetSpan()=>reads++==0?initial:later;
         public override System.Buffers.MemoryHandle Pin(int elementIndex=0)=>throw new NotSupportedException();
@@ -411,6 +411,31 @@ public sealed class ContainerTests
         var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);entries.Add("Doc_0/Res/leak.png",Encoding.UTF8.GetBytes("FULL_SOURCE_SECRET"));
         var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?first.Source:default,cancellationToken:TestContext.Current.CancellationToken);
         Assert.Equal("RESOURCE_ORPHAN",result.Error);Assert.Null(result.Bytes);
+    }
+
+    [Fact]
+    public async Task Distribution_rejects_a_resource_declared_in_XML_but_unused_by_pages()
+    {
+        var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);entries.Add("Doc_0/Res/leak.png",Encoding.UTF8.GetBytes("FULL_SOURCE_SECRET"));
+        var resource=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/PublicRes.xml"]));var ns=resource.Root!.Name.Namespace;
+        resource.Root.Add(new XElement(ns+"MultiMedias",new XElement(ns+"MultiMedia",new XAttribute("ID","777"),new XAttribute("Type","Image"),new XAttribute("Format","PNG"),new XElement(ns+"MediaFile","leak.png"))));
+        entries["Doc_0/PublicRes.xml"]=Encoding.UTF8.GetBytes(resource.ToString());
+        var doc=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));doc.Descendants(ns+"MaxUnitID").Single().Value="777";entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(doc.ToString());
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.Equal("RESOURCE_ORPHAN",result.Error);Assert.Null(result.Bytes);
+    }
+    [Fact]
+    public async Task Package_preflight_and_parse_use_the_same_owned_snapshot()
+    {
+        var first=await Initial.Value;var entries=Zip(first.Sealed);const string path="Doc_0/Attachs/ofd-compose.json";
+        var manifest=JsonNode.Parse(entries[path])!;var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;
+        string content=part["content"]!.GetValue<string>().Replace("revision-1","revision-2",StringComparison.Ordinal);part["content"]=content;part["sha256"]=Hash(Encoding.UTF8.GetBytes(content));
+        entries[path]=Encoding.UTF8.GetBytes(manifest.ToJsonString());var changed=Pack(entries,level:CompressionLevel.NoCompression);Assert.Equal(first.Sealed.Length,changed.Length);
+        changed[14]^=1; // The second version also lies in the local-header CRC; BCL alone ignores it.
+        Assert.Equal("PACKAGE_SIZE",SourceContainer.Extract(changed,cancellationToken:TestContext.Current.CancellationToken).Error);
+        using var input=new ChangingMemory(first.Sealed,changed);
+        var result=SourceContainer.Extract(input.Input,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,result.Error);
+        Assert.Equal("revision-1",JsonNode.Parse(result.SourceJson!)!["resolvedDocument"]!["revisionId"]!.GetValue<string>());
     }
 
 }

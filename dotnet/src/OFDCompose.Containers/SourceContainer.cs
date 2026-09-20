@@ -61,7 +61,7 @@ public static partial class SourceContainer
             }
             else {
                 Need(profile == ContainerProfile.Distribution && sourceJson.IsEmpty && (assets?.Count ?? 0) == 0, "DISTRIBUTION_SOURCE_FORBIDDEN");
-                SafePackage.References(entries,budget);
+                SafePackage.References(entries,budget,requirePageReachability:true);
                 string identity=JsonSerializer.Serialize(irDigest,ContainerJsonContext.Default.String);
                 parts.Add(new("irDigest","application/json",SafePackage.Hash(Encoding.UTF8.GetBytes(identity),budget),identity));
             }
@@ -153,7 +153,7 @@ public static partial class SourceContainer
                     }
                     Need(Text(manifest, "modelVersion") == Text(root.GetProperty("resolvedDocument"), "modelVersion"), "VERSION_UNSUPPORTED");
                 }
-                else { Need(objectMap.Count == 0 && entries.Keys.All(p => IsWriterEntry(p) || p is ManifestPath or AttachmentsPath), "DISTRIBUTION_SOURCE_FORBIDDEN"); SafePackage.References(entries,budget); }
+                else { Need(objectMap.Count == 0 && entries.Keys.All(p => IsWriterEntry(p) || p is ManifestPath or AttachmentsPath), "DISTRIBUTION_SOURCE_FORBIDDEN"); SafePackage.References(entries,budget,requirePageReachability:true); }
                 Need(Text(manifest, "containerProfileVersion") == ProfileVersion && Text(manifest, "irVersion") == "ofd-compose/layout-ir@0" && Text(manifest, "modelVersion") == "0", "VERSION_UNSUPPORTED");
                 string[] expected = profile == "native-editable" ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"];
                 Need(manifest.GetProperty("capabilities").EnumerateArray().Select(e => e.GetString()).SequenceEqual(expected), "VERSION_UNSUPPORTED");

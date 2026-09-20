@@ -25,8 +25,9 @@ internal static class SafePackage
     {
         Need(input.Length <= budget.Limits.PackageBytes, "SIZE_LIMIT");
         budget.Charge(input.Length);
-        PreflightDirectory(input.Span, budget);
-        using var stream = new MemoryStream(input.ToArray(), false);
+        var owned=input.ToArray();
+        PreflightDirectory(owned, budget);
+        using var stream = new MemoryStream(owned, false);
         using var zip = new ZipArchive(stream, ZipArchiveMode.Read);
         // BCL ZIP metadata is bounded by the compressed package ceiling; entry payloads remain unopened.
         Need(zip.Entries.Count <= budget.Limits.Entries, "SIZE_LIMIT");
@@ -63,7 +64,7 @@ internal static class SafePackage
         }
         return result;
     }
-    internal static void References(Dictionary<string,byte[]> entries,ContainerBudget budget)
+    internal static void References(Dictionary<string,byte[]> entries,ContainerBudget budget,bool requirePageReachability=false)
     {
         Need(entries.TryGetValue("OFD.xml",out var rootBytes) && entries.TryGetValue("Doc_0/Document.xml",out _),"PACKAGE_REFERENCE");
         var root=Xml(rootBytes!,budget,"OFD");
@@ -104,6 +105,7 @@ internal static class SafePackage
                     references.Add((string?)element.Attribute(element.Name.LocalName=="TextObject"?"Font":"ResourceID")??"");
         }
         Need(references.All(resources.Contains),"RESOURCE_MISSING");
+        if(requirePageReachability)Need(resources.SetEquals(references),"RESOURCE_ORPHAN");
         Need(resourcePaths.SetEquals(entries.Keys.Where(p=>p.StartsWith("Doc_0/Res/",StringComparison.Ordinal))),"RESOURCE_ORPHAN");
     }
     private static void PreflightDirectory(ReadOnlySpan<byte> bytes, ContainerBudget budget)
