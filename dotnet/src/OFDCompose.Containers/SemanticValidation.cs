@@ -147,10 +147,10 @@ internal static class SemanticValidation
             string repeat=Repeat(semantic,"repeatInstance");
             bool Source(JsonElement reference,bool checkText,string? originalFont=null,int? start=null,int? end=null)
             {
-                string? binding=Optional(reference,"bindingId"),control=Optional(reference,"controlId");
+                string? binding=Optional(reference,"bindingId"),control=Optional(semantic,"controlId");
                 if(!index.TryGetValue((Text(reference,"nodeId"),binding,repeat),out var candidates))return false;
                 budget.Charge(candidates.Count*32L);
-                var matches=candidates.Where(c=>c.Repeat==repeat && c.Binding==binding && (control is null||control==c.Control)
+                var matches=candidates.Where(c=>c.Repeat==repeat && c.Binding==binding && control==c.Control
                     && targets!.All(target=>PhysicalKind(c,objects[target]))
                     && (!checkText || c.Text==Text(reference.GetProperty("sourceText"),"text"))
                     && (originalFont is null || MatchesFace(c.Face,originalFont))).ToArray();

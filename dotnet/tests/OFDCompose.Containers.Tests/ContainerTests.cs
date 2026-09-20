@@ -1235,4 +1235,66 @@ public sealed class ContainerTests
         Assert.True(result.Ok,result.Error);
     }
 
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable,"PNG")]
+    [InlineData(ContainerProfile.NativeEditable,"JPEG")]
+    [InlineData(ContainerProfile.Distribution,"PNG")]
+    [InlineData(ContainerProfile.Distribution,"JPEG")]
+    public async Task Declared_image_format_must_match_actual_bytes(ContainerProfile profile,string originalFormat)
+    {
+        var fixture=await Build("two-images");
+        void Change(Dictionary<string,byte[]> entries)
+        {
+            foreach(string path in entries.Keys.Where(path=>path is "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml").ToArray())
+            {
+                var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));
+                foreach(var image in xml.Descendants().Where(node=>node.Name.LocalName=="MultiMedia"&&(string?)node.Attribute("Format")==originalFormat))image.SetAttributeValue("Format",originalFormat=="PNG"?"JPEG":"PNG");
+                entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
+            }
+        }
+        var sealedBytes=profile==ContainerProfile.NativeEditable?fixture.Sealed:SourceContainer.Create(fixture.Ofd.Bytes!,fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Bytes!;
+        var changed=Mutate(sealedBytes,(manifest,entries)=> {
+            Change(entries);
+            foreach(var record in manifest["entries"]!.AsArray()){byte[] bytes=entries[record!["path"]!.GetValue<string>()];record["byteLength"]=bytes.Length;record["sha256"]=Hash(bytes);}
+        });
+        Assert.Equal("RESOURCE_FORMAT_MISMATCH",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        var unsealed=Zip(fixture.Ofd.Bytes!);Change(unsealed);
+        var assets=Zip(fixture.Sealed).Where(item=>item.Key.StartsWith("Doc_0/Attachs/Assets/",StringComparison.Ordinal)).Select(item=>new SourceAsset(Hash(item.Value),item.Value)).ToArray();
+        Assert.Equal("RESOURCE_FORMAT_MISMATCH",SourceContainer.Create(Pack(unsealed),fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?fixture.Source:default,profile==ContainerProfile.NativeEditable?assets:null,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken,resourceMap:fixture.Ofd.ResourceMap).Error);
+    }
+    [Theory]
+    [InlineData("checkbox-true")]
+    [InlineData("empty-control")]
+    [InlineData("control-metadata")]
+    public async Task Input_control_semantics_must_keep_exact_control_identity(string mode)
+    {
+        var fixture=await Build(mode);
+        var changed=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="semanticMap")!;var map=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            map["entries"]!.AsArray().First(entry=>entry!["controlId"] is not null)!.AsObject().Remove("controlId");
+            string json=map.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Theory]
+    [InlineData("PNG","png")]
+    [InlineData("JPEG","jpeg")]
+    [InlineData("JPEG","JPG")]
+    [InlineData("JPEG","jpg")]
+    public async Task Supported_image_format_aliases_keep_the_same_resource_identity(string original,string alias)
+    {
+        var fixture=await Build("two-images");
+        var changed=Mutate(fixture.Sealed,(manifest,entries)=> {
+            foreach(string path in entries.Keys.Where(path=>path is "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml").ToArray())
+            {
+                var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));
+                foreach(var image in xml.Descendants().Where(node=>node.Name.LocalName=="MultiMedia"&&(string?)node.Attribute("Format")==original))image.SetAttributeValue("Format",alias);
+                entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
+                var record=manifest["entries"]!.AsArray().Single(record=>record!["path"]!.GetValue<string>()==path)!;record["byteLength"]=entries[path].Length;record["sha256"]=Hash(entries[path]);
+            }
+        });
+        var result=SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,result.Error);
+    }
+
 }

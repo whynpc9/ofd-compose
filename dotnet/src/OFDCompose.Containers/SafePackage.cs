@@ -85,7 +85,7 @@ internal static class SafePackage
         }
         Need(pageEntries.Count==0,"PACKAGE_REFERENCE");
         var ids=new HashSet<string>();var resources=new HashSet<string>();var references=new List<string>();
-        var resourcePaths=new HashSet<string>();
+        var resourcePaths=new HashSet<string>();var mediaFormats=new List<(string Format,byte[] Bytes)>();
         foreach(var (path,bytes) in entries.Where(e=>e.Key.EndsWith(".xml",StringComparison.Ordinal)&&!e.Key.StartsWith("Doc_0/Signs/",StringComparison.Ordinal)))
         {
             var xml=Xml(bytes,budget);
@@ -98,7 +98,13 @@ internal static class SafePackage
             {
                 Need((string?)xml.Root!.Attribute("BaseLoc")=="Res","PACKAGE_REFERENCE");
                 foreach(var location in xml.Descendants().Where(e=>e.Name.LocalName is "FontFile" or "MediaFile"))
-                { Path(location.Value);Need(!location.Value.Contains('/') && entries.ContainsKey("Doc_0/Res/"+location.Value),"RESOURCE_MISSING");resourcePaths.Add("Doc_0/Res/"+location.Value); }
+                {
+                    Path(location.Value);Need(!location.Value.Contains('/') && entries.ContainsKey("Doc_0/Res/"+location.Value),"RESOURCE_MISSING");resourcePaths.Add("Doc_0/Res/"+location.Value);
+                    if(location.Name==Ns+"MediaFile")
+                    {
+                        budget.Charge(64);mediaFormats.Add(((string?)location.Parent!.Attribute("Format")??"",entries["Doc_0/Res/"+location.Value]));
+                    }
+                }
                 foreach(var resource in xml.Descendants().Where(e=>e.Name.LocalName is "Font" or "MultiMedia"))resources.Add((string?)resource.Attribute("ID")??"");
             }
             if(path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal))
@@ -110,6 +116,12 @@ internal static class SafePackage
         Need(references.All(resources.Contains),"RESOURCE_MISSING");
         if(requirePageReachability)Need(resources.SetEquals(references),"RESOURCE_ORPHAN");
         Need(resourcePaths.SetEquals(entries.Keys.Where(p=>p.StartsWith("Doc_0/Res/",StringComparison.Ordinal))),"RESOURCE_ORPHAN");
+        foreach(var (format,image) in mediaFormats)
+        {
+            budget.Charge(32);
+            bool png=format.Equals("PNG",StringComparison.OrdinalIgnoreCase),jpeg=format.Equals("JPEG",StringComparison.OrdinalIgnoreCase)||format.Equals("JPG",StringComparison.OrdinalIgnoreCase);
+            Need(png&&image.AsSpan().StartsWith(new byte[]{137,80,78,71,13,10,26,10})||jpeg&&image.AsSpan().StartsWith(new byte[]{255,216,255}),"RESOURCE_FORMAT_MISMATCH");
+        }
     }
     private static void PreflightDirectory(ReadOnlySpan<byte> bytes, ContainerBudget budget)
     {

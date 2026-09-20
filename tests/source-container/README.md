@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 615, fresh Chromium 405,
-full .NET 339 (145 container cases plus the unchanged 194 baseline cases).
+full .NET 350 (156 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -173,3 +173,10 @@ The full suite took 94.2 s versus the prior 324-case run at 72.5 s; these includ
 test counts and are not an isolated performance benchmark. No dependency was added.
 Full-font authorization and one real renderer replay are now required even for ordinary
 native text/images. Desktop Reader remains Not verified.
+
+Declared MultiMedia PNG/JPEG formats must match actual resource signatures after
+reachability validation, for both native and distribution Create/Extract. Existing
+case variants and JPG aliases remain accepted. Input-control semantics require the
+exact controlId; source ranges inherit that identity from their enclosing semantic entry,
+matching actual Layout Core output. Seven rehashed counterexamples were accepted before
+these checks and rejected afterward; ordinary, empty and checkbox control fixtures pass.
