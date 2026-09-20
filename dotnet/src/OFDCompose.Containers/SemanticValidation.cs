@@ -8,7 +8,7 @@ internal sealed record RenderedObject(int Page,int Order,string? Text,string? Im
 internal static class SemanticValidation
 {
     private sealed record SourceFace(string Family,int Weight,bool Italic);
-    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, SourceFace Face, bool Renderable, JsonElement Value);
+    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, SourceFace Face, bool Renderable, JsonElement Value, int Ordinal);
     private static string? Optional(JsonElement value, string key) => value.TryGetProperty(key,out var field)?field.GetString():null;
     private static string Repeat(JsonElement value, string key) => value.TryGetProperty(key,out var array)
         ? string.Join("",array.EnumerateArray().Select(e=> { string id=Text(e,"nodeId"), k=Text(e,"key"); return id.Length+":"+id+k.Length+":"+k; })) : "";
@@ -27,6 +27,7 @@ internal static class SemanticValidation
         var paths=new SourcePathValidation(barcodeGeometryResolver,budget);
         var imagePositions=new Dictionary<(string Id,string? Binding,string Repeat),int>();
         var index=new Dictionary<(string Id,string? Binding,string Repeat),List<SourceNode>>();
+        int sourceOrdinal=0;
         var numbered=new List<(string Pointer,JsonElement Source,SourceFace Face)>();
         void Walk(JsonElement value,string repeat,SourceFace face,string pointer)
         {
@@ -54,7 +55,7 @@ internal static class SemanticValidation
                 bool renderable=kind is "path" or "barcode-binding" or "input-control" || kind=="text" && !string.IsNullOrEmpty(text)
                     || kind=="image-binding" && images!.Length>0
                     || kind=="paragraph" && value.GetProperty("fragments").EnumerateArray().All(f=>Text(f,"kind")=="text"&&Text(f,"text").Length==0);
-                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,face,renderable,value));
+                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,face,renderable,value,sourceOrdinal++));
             }
             foreach(var property in value.EnumerateObject())if(property.Name is not "origin" and not "instancePath")Walk(property.Value,repeat,face,pointer+"/"+property.Name.Replace("~","~0",StringComparison.Ordinal).Replace("/","~1",StringComparison.Ordinal));
         }
@@ -63,6 +64,15 @@ internal static class SemanticValidation
         var listLabels=numbered.Select((n,i)=>(n.Pointer,Label:labels[i],n.Face)).ToDictionary(n=>n.Pointer,n=>(Text:n.Label,n.Face));
         foreach(var candidates in index.Values)Need(candidates.Count(c=>c.Renderable)<=1,"SEMANTIC_SOURCE_AMBIGUOUS");
         var sourceCovered=new HashSet<SourceNode>();
+        int lastSourceOrdinal=-1;
+        void Cover(SourceNode node)
+        {
+            if(sourceCovered.Add(node)&&node.Renderable)
+            {
+                Need(node.Ordinal>lastSourceOrdinal,"SEMANTIC_ORDER");
+                lastSourceOrdinal=node.Ordinal;
+            }
+        }
         var textCoverage=new Dictionary<SourceNode,List<(int Start,int End)>>();
         var covered=new HashSet<string>();
         var semantics=map.GetProperty("entries");
@@ -71,7 +81,7 @@ internal static class SemanticValidation
             budget.Charge(32);
             Need(objectMap.ContainsKey(decoration.GetString()!) && covered.Add(decoration.GetString()!),"SEMANTIC_REFERENCE");
         }
-        int order=0;
+        int order=0,lastPage=-1,lastObjectOrder=-1;
         foreach(var semantic in semantics.EnumerateArray())
         {
             budget.Charge(128);
@@ -79,6 +89,12 @@ internal static class SemanticValidation
             Need(objectMap.TryGetValue(objectId,out var targets) && covered.Add(objectId),"SEMANTIC_REFERENCE");
             Need(semantic.GetProperty("readingOrder").GetInt32()==order++,"SEMANTIC_REFERENCE");
             Need(semantic.TryGetProperty("pageIndex",out var page) && targets!.All(t=>objects[t].Page==page.GetInt32()),"SEMANTIC_REFERENCE");
+            foreach(var target in targets!)
+            {
+                var actual=objects[target];
+                Need(actual.Page>lastPage||actual.Page==lastPage&&actual.Order>lastObjectOrder,"SEMANTIC_ORDER");
+                lastPage=actual.Page;lastObjectOrder=actual.Order;
+            }
             string repeat=Repeat(semantic,"repeatInstance");
             bool Source(JsonElement reference,bool checkText,string? originalFont=null,int? start=null,int? end=null)
             {
@@ -90,12 +106,12 @@ internal static class SemanticValidation
                     && (originalFont is null || MatchesFace(c.Face,originalFont))).ToArray();
                 foreach(var candidate in matches)
                 {
-                    if(candidate.Text is null)sourceCovered.Add(candidate);
+                    if(candidate.Text is null)Cover(candidate);
                     if(start is not null && end is not null)
                     {
                         if(!textCoverage.TryGetValue(candidate,out var intervals))textCoverage[candidate]=intervals=[];
                         intervals.Add((start.Value,end.Value));
-                        sourceCovered.Add(candidate);
+                        Cover(candidate);
                     }
                 }
                 return matches.Length>0;

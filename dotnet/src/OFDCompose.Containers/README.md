@@ -105,3 +105,7 @@ not paragraph text or original Data. Request serialization is prepaid before tra
 and capped at 16 MiB; returned labels are bounded and matched to actual text/font faces.
 Missing or denied capability fails closed. Effective font-face associations include
 family, weight and italic through default, heading, paragraph and fragment overrides.
+
+Semantic reading order is checked against physical page/object order and the first
+appearance of each renderable source occurrence in source traversal. Repeated header
+occurrences and later text fragments do not create new first appearances.

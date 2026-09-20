@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
-full .NET 275 (81 container cases plus the unchanged 194 baseline cases). The final
+full .NET 277 (83 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -91,3 +91,8 @@ family, weight and italic together. Same-family regular/bold and regular/italic 
 reject rehashed paragraph/fragment changes. Numbering verification explicitly delegates
 to the same Layout Core function as real layout, with no second .NET numbering algorithm;
 missing, denied or over-budget host requests fail closed.
+
+The first mapped appearance of each renderable source occurrence must follow source
+traversal order, and semantic targets must follow physical page/object order. Rehashed
+source-only swaps and combined source/semantic swaps fail; repeated table headers and
+later fragments of an existing occurrence remain supported.

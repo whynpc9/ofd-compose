@@ -749,4 +749,32 @@ public sealed class ContainerTests
         Assert.Equal("SIZE_LIMIT",result.Error);Assert.False(called);
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Source_traversal_order_cannot_diverge_from_semantic_and_physical_order(bool rewriteSemantics)
+    {
+        var fixture=await Build("two-fonts");
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            foreach(var part in manifest["parts"]!.AsArray())
+            {
+                string name=part!["name"]!.GetValue<string>();
+                if(name!="resolvedDocument"&&!(rewriteSemantics&&name=="semanticMap"))continue;
+                var content=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+                if(name=="resolvedDocument")
+                {
+                    var body=content["body"]!.AsArray();var first=body[0]!.DeepClone();body[0]=body[1]!.DeepClone();body[1]=first;
+                }
+                else
+                {
+                    var entries=content["entries"]!.AsArray().Select(e=>e!.DeepClone()).Reverse().ToArray();
+                    for(int i=0;i<entries.Length;i++)entries[i]["readingOrder"]=i;
+                    content["entries"]=new JsonArray(entries);
+                }
+                string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            }
+        });
+        Assert.Equal("SEMANTIC_ORDER",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }
