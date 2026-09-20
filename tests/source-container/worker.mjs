@@ -146,6 +146,7 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
   });
 } else if (
   mode === "initial" ||
+  mode === "control-metadata" ||
   mode === "decorated-paths" ||
   mode === "page-border" ||
   mode === "links" ||
@@ -187,6 +188,27 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
       },
     ],
   };
+  if (mode === "control-metadata")
+    source.body[0].inlines = [
+      {
+        kind: "input-control",
+        nodeId: "select",
+        controlId: "selection",
+        controlType: "select",
+        defaultValue: "shown",
+        placeholder: "HIDDEN_PLACEHOLDER",
+        options: ["shown", "HIDDEN_OPTION"],
+        required: true,
+      },
+      {
+        kind: "input-control",
+        nodeId: "fallback",
+        controlId: "fallback-value",
+        controlType: "text",
+        placeholder: "visible fallback",
+        required: false,
+      },
+    ];
   if (mode === "decorated-paths" || mode === "page-border") {
     source.settings.page = {
       paper: "A4",

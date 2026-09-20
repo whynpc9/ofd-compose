@@ -145,3 +145,8 @@ boundary for those native documents. The library never launches a process or res
 attachment-chosen paths/URLs. The test host uses known font-manifest hashes, owned temp
 files, a cancellable 45-second process and bounded output. This does not close the desktop
 reader gate or certify every text/image placement or signature.
+
+Filled input controls retain identity, type, style and their displayed value/fallback.
+Choice catalogs (`options`), `required` flags and shadowed placeholders are not retained
+in this minimal filled-source profile. Extraction rejects their reintroduction; any
+editor choice or validation policy must be provided explicitly by its host.

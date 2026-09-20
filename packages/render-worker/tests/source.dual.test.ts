@@ -290,6 +290,57 @@ it.each([false, true])(
   },
 );
 
+it("retains filled control identity and displayed fallback without unused form metadata", async () => {
+  const pack = await resources(),
+    source = textSource();
+  source.body = [
+    {
+      kind: "paragraph",
+      nodeId: "controls",
+      inlines: [
+        {
+          kind: "input-control",
+          nodeId: "select",
+          controlId: "selection",
+          controlType: "select",
+          defaultValue: "shown",
+          placeholder: "HIDDEN_PLACEHOLDER",
+          options: ["shown", "HIDDEN_OPTION"],
+          required: true,
+        },
+        {
+          kind: "input-control",
+          nodeId: "fallback",
+          controlId: "fallback-value",
+          controlType: "text",
+          placeholder: "visible fallback",
+          required: false,
+        },
+      ],
+    },
+  ];
+  const captured = await render(source, {}, pack, profile, { sourceAttachment: true });
+  if (!captured.ok || !captured.editingSource)
+    throw new Error(JSON.stringify(captured.diagnostics));
+  expect(captured.editingSource.json).not.toContain("HIDDEN_");
+  expect(captured.editingSource.json).not.toContain('"options"');
+  expect(captured.editingSource.json).not.toContain('"required"');
+  expect(captured.editingSource.json).toContain("visible fallback");
+  const without = await render(source, {}, pack, profile);
+  if (!without.ok) throw new Error("fixture");
+  expect(captured.ir).toEqual(without.ir);
+  const reopened = await finalizeSource(
+    JSON.parse(captured.editingSource.json) as SourceContent,
+    pack,
+  );
+  if (!reopened.ok) throw new Error(JSON.stringify(reopened.diagnostics));
+  expect(reopened.ir.pages).toEqual(captured.ir.pages);
+  expect(reopened.ir.graphicsStates).toEqual(captured.ir.graphicsStates);
+  expect(reopened.semanticMap.map((entry) => entry.controlId)).toEqual(
+    captured.semanticMap.map((entry) => entry.controlId),
+  );
+});
+
 it("bounds source snapshots, repeated identities, full resource bytes and cancellation before output", async () => {
   const pack = await resources();
   const first = await render(textSource(), {}, pack, profile, { sourceAttachment: true });

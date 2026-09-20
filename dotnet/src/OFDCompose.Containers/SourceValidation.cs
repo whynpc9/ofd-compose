@@ -47,6 +47,8 @@ internal static class SourceValidation
         budget.Charge(32);
         if (value.ValueKind == JsonValueKind.Array) foreach (var child in value.EnumerateArray()) Visit(child, styles, budget);
         if (value.ValueKind != JsonValueKind.Object) return;
+        if(value.TryGetProperty("kind",out var kind)&&kind.ValueEquals("input-control"))
+            Need(!value.TryGetProperty("options",out _)&&!value.TryGetProperty("required",out _)&&!(value.TryGetProperty("defaultValue",out _)&&value.TryGetProperty("placeholder",out _)),"SOURCE_NOT_MINIMAL");
         foreach (var property in value.EnumerateObject())
         {
             if (property.Name == "styleId") styles.Add(property.Value.GetString()!);

@@ -1033,4 +1033,19 @@ public sealed class ContainerTests
         Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
+    [Theory]
+    [InlineData("options")]
+    [InlineData("required")]
+    [InlineData("placeholder")]
+    public async Task Unrendered_control_metadata_is_not_retained_or_reintroduced(string field)
+    {
+        var fixture=await Build("control-metadata");string text=Encoding.UTF8.GetString(fixture.Source);Assert.DoesNotContain("HIDDEN_",text);Assert.Contains("visible fallback",text);
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;var control=source["body"]![0]!["fragments"]![0]!;
+            if(field=="options")control[field]=new JsonArray("HIDDEN_OPTION");else if(field=="required")control[field]=true;else control[field]="HIDDEN_PLACEHOLDER";
+            string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }

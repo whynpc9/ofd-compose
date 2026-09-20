@@ -161,6 +161,11 @@ export function minimizeResolved(
       record.expression = "";
       record.valueState = "value";
     }
+    if (record.kind === "input-control") {
+      delete record.options;
+      delete record.required;
+      if (Object.hasOwn(record, "defaultValue")) delete record.placeholder;
+    }
     if (Array.isArray(record.instancePath)) repeats.remap(record.instancePath);
     delete record.dataPath;
     if (typeof record.styleId === "string") styles.add(record.styleId);
