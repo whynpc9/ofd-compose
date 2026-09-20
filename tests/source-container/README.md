@@ -32,10 +32,14 @@ an application observation. No actual desktop extraction, visual display, licens
 entitlement or supported-OFD claim follows from those observations. ADR-0005 remains
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
-Local validation snapshot before publication: fresh Node 609, fresh Chromium 399,
-full .NET 213 (19 container cases plus the unchanged 194 baseline cases). The final
+Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
+full .NET 217 (23 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
 `reader-evidence.json` for concrete artifact/part/full-font/subset hashes.
+
+Bot review regressions also cover replacing an authorized or inline source image while
+recomputing every affected digest, real true/false checkbox OFD output, owned snapshots
+of caller-controlled JSON/object maps, and standard numeric attachment IDs/MaxUnitID.
