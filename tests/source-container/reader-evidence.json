@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-09-20",
-  "sourceCommitBeforeFinalEvidence": "e18f8bd6752e657ccb2271d87a0249f4800b5c9c",
+  "sourceCommitBeforeFinalEvidence": "e99b8f095588f56ce7119050b3e94a6ae8c403e4",
   "data": "owned synthetic fixture only",
   "libraryReaders": {
     "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
@@ -25,8 +25,8 @@
   "artifacts": [
     {
       "name": "initial",
-      "sha256": "e92eea23821b33b3a738622fdaaff36eddcbf8e146a8db26819f80ad81209f10",
-      "bytes": 709031,
+      "sha256": "089bf303086fa0ac8732934bbeb1351ea379964942c46c0f50281e1a98cd429d",
+      "bytes": 709056,
       "revisionId": "revision-1",
       "irDigest": "5787d5e2eba56ec8bea958f0dd8a70170e9d9e946f623b6a6ce6f91bdedb5489",
       "parts": {
@@ -45,12 +45,15 @@
           "weight": 400
         }
       ],
-      "subsetDigests": ["a0ef7f47511c97f08a7113a7bc429da209968efe679f15469fed28c2360608cc"]
+      "subsetDigests": ["a0ef7f47511c97f08a7113a7bc429da209968efe679f15469fed28c2360608cc"],
+      "resourceMap": {
+        "r0": "1"
+      }
     },
     {
       "name": "edited",
-      "sha256": "40a5f6607e3ef4ac54e2791a35a73a6cac46f6343e30a2c28f4ba86084c02ac1",
-      "bytes": 711864,
+      "sha256": "81622a8f954fbca468fc5dc942c947bd1c1b07310b99d6683f81f1535ec4124b",
+      "bytes": 711889,
       "revisionId": "revision-2",
       "irDigest": "319d72691f86690d952e629fc02f0407945f3c1c10c0ebc8261376fa3a21c583",
       "parts": {
@@ -69,7 +72,10 @@
           "weight": 400
         }
       ],
-      "subsetDigests": ["f902db9d2276077af52ac14995050e43fab4ba70a7c029e333a4b5447b864ad4"]
+      "subsetDigests": ["f902db9d2276077af52ac14995050e43fab4ba70a7c029e333a4b5447b864ad4"],
+      "resourceMap": {
+        "r0": "1"
+      }
     }
   ],
   "signatureStatus": "unsigned; signed presence test reports present-unverified, never valid",
