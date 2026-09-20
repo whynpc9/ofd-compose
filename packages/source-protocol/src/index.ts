@@ -91,12 +91,16 @@ const common = {
     {
       entries: CanonicalLayoutIRSchema.properties.semantics,
       decorations: Type.Array(id, { maxItems: 200000 }),
-      watermarks: Type.Array(
+      pageDecorations: Type.Array(
         Type.Object(
-          { objectId: id, pointer: Type.String({ minLength: 1, maxLength: 2048 }) },
+          {
+            objectId: id,
+            pointer: Type.String({ minLength: 1, maxLength: 2048 }),
+            sectionPage: Type.Integer({ minimum: 1, maximum: 1000 }),
+          },
           { additionalProperties: false },
         ),
-        { maxItems: 16000 },
+        { maxItems: 200000 },
       ),
     },
     { additionalProperties: false },

@@ -763,7 +763,10 @@ class ParagraphLayouter {
   private readonly pageSettingsByIndex: (PageSettings | undefined)[] = [];
   private readonly sectionStarts: number[] = [];
   private readonly pageSettingPaths = new WeakMap<object, string>();
-  private readonly watermarkOrigins = new WeakMap<object, string>();
+  private readonly pageDecorationOrigins = new WeakMap<
+    object,
+    { pointer: string; sectionPage: number }
+  >();
   constructor(
     private readonly doc: ResolvedDocument,
     private readonly faces: Face[],
@@ -887,20 +890,20 @@ class ParagraphLayouter {
       this.pageIndex = index;
       this.decoratePage();
     }
-    const watermarkSources: { objectId: string; pointer: string }[] = [];
+    const pageDecorationSources: { objectId: string; pointer: string; sectionPage: number }[] = [];
     if (this.sourceJob)
       for (const page of this.ir.pages) {
         for (const [index, object] of page.objects.entries()) {
-          const pointer = this.watermarkOrigins.get(object);
-          if (pointer !== undefined) {
-            this.sourceJob.charge("layout", pointer.length + 64);
-            watermarkSources.push({ objectId: `p${page.pageIndex}o${index}`, pointer });
+          const origin = this.pageDecorationOrigins.get(object);
+          if (origin !== undefined) {
+            this.sourceJob.charge("layout", origin.pointer.length + 64);
+            pageDecorationSources.push({ objectId: `p${page.pageIndex}o${index}`, ...origin });
           }
         }
       }
     const ir = canonicalizeLayoutIR(this.ir);
     return {
-      ...(this.sourceJob ? { watermarkSources } : {}),
+      ...(this.sourceJob ? { pageDecorationSources } : {}),
       ir,
       usesTotalPages: this.usesTotalPages,
       semanticMap: ir.semantics,
@@ -1048,6 +1051,9 @@ class ParagraphLayouter {
           layout: { ...properties, border: undefined, spaceBefore: 0, spaceAfter: 0 },
         },
         index,
+        undefined,
+        undefined,
+        this.pageSettingPaths.get(paragraph),
       );
     } finally {
       this.inRegion = false;
@@ -1543,6 +1549,8 @@ class ParagraphLayouter {
                 table.nodeId,
               );
             const object = structuredClone(original);
+            const decorationOrigin = this.pageDecorationOrigins.get(original);
+            if (decorationOrigin) this.pageDecorationOrigins.set(object, decorationOrigin);
             const state = this.ir.graphicsStates[Number(original.stateId.slice(5))];
             if (!state) throw new Error("Missing state");
             if (state.clip) this.commands(state.clip.commands.length);
@@ -2225,13 +2233,17 @@ class ParagraphLayouter {
     for (const [watermarkIndex, watermark] of (settings.watermarks ?? []).entries()) {
       const before = page.objects.length;
       this.watermark(watermark);
-      if (this.sourceJob && watermark.kind === "image") {
+      if (this.sourceJob) {
         const settingPath = this.pageSettingPaths.get(settings);
         if (settingPath === undefined)
           throw new LayoutError("LAYOUT_INPUT", "Missing watermark source location");
         const pointer = `${settingPath}/watermarks/${watermarkIndex}`;
         this.sourceJob.charge("layout", pointer.length + 64);
-        for (const object of page.objects.slice(before)) this.watermarkOrigins.set(object, pointer);
+        for (const object of page.objects.slice(before))
+          this.pageDecorationOrigins.set(object, {
+            pointer,
+            sectionPage: this.pageIndex - (this.sectionStarts[this.pageIndex] ?? 0) + 1,
+          });
       }
       if (watermark.layer === "behind")
         for (const object of page.objects.slice(before)) behindIds.add(object.id);
@@ -2300,7 +2312,17 @@ class ParagraphLayouter {
         height: band.height,
       };
       this.y = this.decorationBox.y;
+      const before = page.objects.length;
       this.generatedParagraph(text, band.style, band.alignment);
+      if (this.sourceJob) {
+        const settingPath = this.pageSettingPaths.get(settings);
+        if (settingPath === undefined)
+          throw new LayoutError("LAYOUT_INPUT", "Missing page band source location");
+        const pointer = `${settingPath}/${kind}`;
+        this.sourceJob.charge("layout", pointer.length + 64);
+        for (const object of page.objects.slice(before))
+          this.pageDecorationOrigins.set(object, { pointer, sectionPage });
+      }
     }
     // Paint background watermarks first while preserving body reading order and stable object references.
     page.objects = [
@@ -2579,6 +2601,7 @@ class ParagraphLayouter {
     paragraphIndex: number,
     generatedStyle?: TextStyle,
     maxLines?: number,
+    sourcePointer = this.pageSettingPaths.get(paragraph),
   ) {
     if (++this.work.paragraphs > layoutResourceLimits.layoutParagraphs)
       throw new LayoutError("LAYOUT_LIMIT", "Paragraph layout budget exceeded", paragraph.nodeId);
@@ -2848,9 +2871,18 @@ class ParagraphLayouter {
         });
       }
       if (lineIndex === 0) {
+        const page = requiredLayoutValue(this.ir.pages[this.pageIndex]);
+        const before = page.objects.length;
         let labelX = box.x + left + indent - labelWidth;
         for (const labelPiece of labelPieces)
           labelX += this.emit(labelPiece, labelX, baseline, paragraph, [], [], 0, true);
+        if (this.sourceJob && labelPieces.length) {
+          if (sourcePointer === undefined)
+            throw new LayoutError("LAYOUT_INPUT", "Missing numbering source location");
+          this.sourceJob.charge("layout", sourcePointer.length + 64);
+          for (const object of page.objects.slice(before))
+            this.pageDecorationOrigins.set(object, { pointer: sourcePointer, sectionPage: 1 });
+        }
       }
       for (const piece of pieces) {
         x += this.emit(piece, x, baseline, paragraph, spans, gaps, extra);

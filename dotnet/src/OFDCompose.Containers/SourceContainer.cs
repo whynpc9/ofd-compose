@@ -20,7 +20,7 @@ public static partial class SourceContainer
     public static ContainerResult Create(ReadOnlyMemory<byte> ofd, string irDigest,
         IReadOnlyDictionary<string, string[]> objectMap, ContainerProfile profile,
         ReadOnlyMemory<byte> sourceJson = default, IReadOnlyList<SourceAsset>? assets = null,
-        string? parentArtifactDigest = null, ContainerLimits? limits = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string,string>? resourceMap = null)
+        string? parentArtifactDigest = null, ContainerLimits? limits = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string,string>? resourceMap = null, BarcodeGeometryResolver? barcodeGeometryResolver = null)
     {
         try
         {
@@ -57,7 +57,7 @@ public static partial class SourceContainer
                 }
                 AddAssets(root.GetProperty("resources"), assets ?? [], entries, budget);
                 var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, ownedResources, budget);
-                SemanticMap(root, objectMap, entries, links, ownedResources, budget);
+                SemanticMap(root, objectMap, entries, links, ownedResources, budget, barcodeGeometryResolver);
                 SourceVersions(root);
             }
             else {
@@ -93,7 +93,7 @@ public static partial class SourceContainer
         catch (Exception error) when (Malformed(error)) { return new(null, "SCHEMA_INVALID"); }
     }
 
-    public static ExtractionResult Extract(ReadOnlyMemory<byte> ofd, ContainerLimits? limits = null, CancellationToken cancellationToken = default)
+    public static ExtractionResult Extract(ReadOnlyMemory<byte> ofd, ContainerLimits? limits = null, CancellationToken cancellationToken = default, BarcodeGeometryResolver? barcodeGeometryResolver = null)
     {
         try
         {
@@ -148,7 +148,7 @@ public static partial class SourceContainer
                 {
                     var root = source.RootElement;
                     var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, resourceMap, budget);
-                    SemanticMap(root, objectMap, entries, links, resourceMap, budget);
+                    SemanticMap(root, objectMap, entries, links, resourceMap, budget, barcodeGeometryResolver);
                 SourceVersions(root);
                     foreach (var image in root.GetProperty("resources").GetProperty("images").EnumerateArray())
                     {

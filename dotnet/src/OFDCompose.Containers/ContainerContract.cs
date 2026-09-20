@@ -1,5 +1,9 @@
 namespace OFDCompose.Containers;
 
+/// <summary>Explicit trusted host service backed by the pinned media-core encoder. No implementation is selected by attachment data.</summary>
+public sealed record BarcodeGeometryRequest(string GeneratorVersion,string Value,ReadOnlyMemory<byte> OptionsJson);
+/// <summary>Returns UTF-8 JSON for the generated local millimetre command array, or empty memory to deny verification.</summary>
+public delegate ReadOnlyMemory<byte> BarcodeGeometryResolver(BarcodeGeometryRequest request,CancellationToken cancellationToken);
 public enum ContainerProfile { NativeEditable, Distribution }
 public sealed record SourceAsset(string Sha256, ReadOnlyMemory<byte> Bytes);
 public sealed record ContainerResult(byte[]? Bytes, string? Error)
@@ -26,6 +30,7 @@ internal sealed class ContainerFailure(string code) : Exception(code);
 internal sealed class ContainerBudget(ContainerLimits limits, CancellationToken token)
 {
     private long work;
+    internal CancellationToken Token => token;
     internal readonly ContainerLimits Limits = Validate(limits);
     private static ContainerLimits Validate(ContainerLimits limits)
     {

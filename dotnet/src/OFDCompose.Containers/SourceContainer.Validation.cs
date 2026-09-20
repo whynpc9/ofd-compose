@@ -268,11 +268,11 @@ public static partial class SourceContainer
         }
         return result;
     }
-    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget)
+    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver)
     {
         Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
         var physical = new HashSet<string>();
-        var objects = new Dictionary<string,(int Page,string? Text,string? ImageDigest,string? OriginalFont)>();
+        var objects = new Dictionary<string,RenderedObject>();
         var originalFonts=root.GetProperty("resources").GetProperty("layout").EnumerateArray().Where(r=>Text(r,"kind")=="font").ToDictionary(r=>resourceMap[Text(r,"id")],r=>Text(r,"originalDigest"));
         foreach (var entry in entries.Where(e => e.Key.StartsWith("Doc_0/Pages/", StringComparison.Ordinal) && e.Key.EndsWith("/Content.xml", StringComparison.Ordinal)))
         {
@@ -282,7 +282,7 @@ public static partial class SourceContainer
             {
                 string id=(string?)element.Attribute("ID")??"";
                 Need(physical.Add(id), "SEMANTIC_REFERENCE");
-                objects.Add(id,(pageIndex,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null,element.Name.LocalName=="ImageObject"?links[(string)element.Attribute("ResourceID")!].Digest:null,element.Name.LocalName=="TextObject"?originalFonts[(string)element.Attribute("Font")!]:null));
+                objects.Add(id,new(pageIndex,objects.Count,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null,element.Name.LocalName=="ImageObject"?links[(string)element.Attribute("ResourceID")!].Digest:null,element.Name.LocalName=="TextObject"?originalFonts[(string)element.Attribute("Font")!]:null,element));
             }
         }
         var mapped = new HashSet<string>();
@@ -293,6 +293,6 @@ public static partial class SourceContainer
             foreach (var target in targets) Need(physical.Contains(target) && mapped.Add(target), "SEMANTIC_REFERENCE");
         }
         Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
-        SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,budget);
+        SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,budget,barcodeGeometryResolver);
     }
 }

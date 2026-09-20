@@ -33,6 +33,7 @@ export function minimizeResolved(
     if (!value || typeof value !== "object") return;
     const record = value as Record<string, unknown>;
     if (record.kind === "dynamic-text") record.expression = "";
+    delete record.dataPath;
     if (typeof record.styleId === "string") styles.add(record.styleId);
     for (const child of Object.values(record)) visit(child);
   };
@@ -49,7 +50,7 @@ export function createSourceContent(
   fonts: EditingFont[],
   images: (EditingImage & { bytes: Uint8Array })[],
   budget: RenderBudget,
-  watermarkSources: { objectId: string; pointer: string }[] = [],
+  pageDecorationSources: { objectId: string; pointer: string; sectionPage: number }[] = [],
 ) {
   const minimal = minimizeResolved(document, budget);
   const imageIds = new Set<string>();
@@ -83,7 +84,7 @@ export function createSourceContent(
     },
     semanticMap: {
       entries: ir.semantics,
-      watermarks: watermarkSources,
+      pageDecorations: pageDecorationSources,
       decorations: ir.pages
         .flatMap((page) => page.objects)
         .filter((object) => !semanticIds.has(object.id))

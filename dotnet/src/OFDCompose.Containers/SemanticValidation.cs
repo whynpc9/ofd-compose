@@ -4,14 +4,15 @@ using static OFDCompose.Containers.ContainerBudget;
 using static OFDCompose.Containers.SourceValidation;
 
 namespace OFDCompose.Containers;
+internal sealed record RenderedObject(int Page,int Order,string? Text,string? ImageDigest,string? OriginalFont,XElement Xml);
 internal static class SemanticValidation
 {
-    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, string Family, bool Renderable);
+    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, string Family, bool Renderable, JsonElement Value);
     private static string? Optional(JsonElement value, string key) => value.TryGetProperty(key,out var field)?field.GetString():null;
     private static string Repeat(JsonElement value, string key) => value.TryGetProperty(key,out var array)
         ? string.Join("",array.EnumerateArray().Select(e=> { string id=Text(e,"nodeId"), k=Text(e,"key"); return id.Length+":"+id+k.Length+":"+k; })) : "";
     internal static void Validate(JsonElement map, JsonElement document, JsonElement resources, JsonElement renderProfile, IReadOnlyDictionary<string,string[]> objectMap,
-        IReadOnlyDictionary<string,(int Page,string? Text,string? ImageDigest,string? OriginalFont)> objects, ContainerBudget budget)
+        IReadOnlyDictionary<string,RenderedObject> objects, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver)
     {
         string defaultFamily=Text(renderProfile.GetProperty("layout").GetProperty("defaultStyle"),"fontFamily");
         var sourceFonts=resources.GetProperty("fonts").EnumerateArray().ToArray();
@@ -22,16 +23,37 @@ internal static class SemanticValidation
             return Optional(style,"fontFamily")??inherited;
         }
         var sourceImages=resources.GetProperty("images").EnumerateArray().ToDictionary(i=>Text(i,"id"),i=>Text(i,"sha256"));
+        var paths=new SourcePathValidation(barcodeGeometryResolver,budget);
         var imagePositions=new Dictionary<(string Id,string? Binding,string Repeat),int>();
         var index=new Dictionary<(string Id,string? Binding,string Repeat),List<SourceNode>>();
-        void Walk(JsonElement value,string repeat,string family)
+        var listLabels=new Dictionary<string,(string Text,string Family)>();
+        var counts=new Dictionary<string,int>();var initialized=new HashSet<string>();
+        void Walk(JsonElement value,string repeat,string family,string pointer)
         {
             budget.Charge(32);
-            if(value.ValueKind==JsonValueKind.Array) { foreach(var child in value.EnumerateArray())Walk(child,repeat,family);return; }
+            if(value.ValueKind==JsonValueKind.Array) { int i=0;foreach(var child in value.EnumerateArray())Walk(child,repeat,family,pointer+"/"+i++);return; }
             if(value.ValueKind!=JsonValueKind.Object)return;
             if(value.TryGetProperty("instancePath",out _)) repeat=Repeat(value,"instancePath");
             string? kind=Optional(value,"kind"), id=Optional(value,"nodeId");
-            if(kind=="paragraph")family=StyledFamily(value,defaultFamily);
+            if(kind=="paragraph")
+            {
+                family=StyledFamily(value,defaultFamily);
+                if(value.TryGetProperty("layout",out var layout)&&layout.TryGetProperty("numbering",out var numbering))
+                {
+                    string listId=Text(numbering,"listId");int? start=numbering.TryGetProperty("start",out var first)?first.GetInt32():null;
+                    if(start is not null&&value.TryGetProperty("instancePath",out var instances)&&instances.GetArrayLength()>0)
+                    {
+                        string parents=string.Concat(instances.EnumerateArray().Take(instances.GetArrayLength()-1).Select(p=>{string n=Text(p,"nodeId"),k=Text(p,"key");return n.Length+":"+n+k.Length+":"+k;}));
+                        string key=listId.Length+":"+listId+id!.Length+":"+id+parents;
+                        if(!initialized.Add(key))start=null;
+                    }
+                    int count=start??counts.GetValueOrDefault(listId)+1;counts[listId]=count;
+                    string format=Text(numbering,"format"),label=format=="decimal"?count.ToString(System.Globalization.CultureInfo.InvariantCulture):format=="bullet"?"·":Alpha(count);
+                    if(format=="upper-alpha")label=label.ToUpperInvariant();
+                    label+=Optional(numbering,"suffix")??(format=="bullet"?" ":". ");
+                    listLabels.Add(pointer,(label,family));
+                }
+            }
             if(kind is "text" or "input-control")family=StyledFamily(value,Optional(value,"styleInheritance")=="explicit"?defaultFamily:family);
             JsonElement origin=value;
             if(kind=="text" && value.TryGetProperty("origin",out var o)) { origin=o;id=Text(o,"nodeId"); }
@@ -45,11 +67,11 @@ internal static class SemanticValidation
                 bool renderable=kind is "path" or "barcode-binding" or "input-control" || kind=="text" && !string.IsNullOrEmpty(text)
                     || kind=="image-binding" && images!.Length>0
                     || kind=="paragraph" && value.GetProperty("fragments").EnumerateArray().All(f=>Text(f,"kind")=="text"&&Text(f,"text").Length==0);
-                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,family,renderable));
+                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,family,renderable,value));
             }
-            foreach(var property in value.EnumerateObject())if(property.Name is not "origin" and not "instancePath")Walk(property.Value,repeat,family);
+            foreach(var property in value.EnumerateObject())if(property.Name is not "origin" and not "instancePath")Walk(property.Value,repeat,family,pointer+"/"+property.Name.Replace("~","~0",StringComparison.Ordinal).Replace("/","~1",StringComparison.Ordinal));
         }
-        Walk(document.GetProperty("body"),"",defaultFamily);
+        Walk(document.GetProperty("body"),"",defaultFamily,"/body");
         foreach(var candidates in index.Values)Need(candidates.Count(c=>c.Renderable)<=1,"SEMANTIC_SOURCE_AMBIGUOUS");
         var sourceCovered=new HashSet<SourceNode>();
         var textCoverage=new Dictionary<SourceNode,List<(int Start,int End)>>();
@@ -100,6 +122,11 @@ internal static class SemanticValidation
                 Need(objects[targets![0]].ImageDigest==expected[position%expected.Length],"RESOURCE_IMAGE_MISMATCH");
                 imagePositions[sourceKey]=position+1;
             }
+            foreach(var candidate in index[sourceKey].Where(n=>Optional(n.Value,"kind") is "path" or "barcode-binding"))
+            {
+                Need(targets!.Length==1,"SEMANTIC_SOURCE");
+                paths.Validate(candidate.Value,objects[targets[0]].Xml);
+            }
             if(semantic.TryGetProperty("sourceRanges",out var ranges))
             {
                 Need(targets!.Length==1 && objects[targets[0]].Text is not null,"SEMANTIC_SOURCE");
@@ -143,20 +170,68 @@ internal static class SemanticValidation
             Need(end==node.Text!.Length,"SEMANTIC_INCOMPLETE");
         }
         var decorationIds=map.GetProperty("decorations").EnumerateArray().Select(e=>e.GetString()!).ToHashSet();
-        var watermarkIds=new HashSet<string>();
-        foreach(var watermark in map.GetProperty("watermarks").EnumerateArray())
+        var generatedIds=new HashSet<string>();
+        var generated=new Dictionary<(int Page,string Pointer),List<(RenderedObject Object,int SectionPage)>>();
+        foreach(var witness in map.GetProperty("pageDecorations").EnumerateArray())
         {
             budget.Charge(128);
-            string id=Text(watermark,"objectId");
-            Need(watermarkIds.Add(id)&&decorationIds.Contains(id)&&objectMap.TryGetValue(id,out _),"SEMANTIC_REFERENCE");
-            var origin=Pointer(document,Text(watermark,"pointer"),budget);
-            Need(Text(origin,"kind")=="image"&&sourceImages.TryGetValue(Text(origin,"resourceId"),out _),"SEMANTIC_SOURCE");
-            string digest=sourceImages[Text(origin,"resourceId")];
-            Need(objectMap[id].Length==1&&objects[objectMap[id][0]].ImageDigest==digest,"RESOURCE_IMAGE_MISMATCH");
+            string id=Text(witness,"objectId"),pointer=Text(witness,"pointer");
+            Need(generatedIds.Add(id)&&decorationIds.Contains(id)&&objectMap.TryGetValue(id,out _)&&objectMap[id].Length==1,"SEMANTIC_REFERENCE");
+            var actual=objects[objectMap[id][0]];int sectionPage=witness.GetProperty("sectionPage").GetInt32();
+            Need(sectionPage>0&&sectionPage<=actual.Page+1,"SEMANTIC_SOURCE");
+            var key=(actual.Page,pointer);
+            if(!generated.TryGetValue(key,out var list))generated[key]=list=[];
+            list.Add((actual,sectionPage));
         }
-        Need(decorationIds.Where(id=>objectMap[id].Any(target=>objects[target].ImageDigest is not null)).All(watermarkIds.Contains),"SEMANTIC_INCOMPLETE");
+        var generatedPointers=generated.Keys.Select(key=>key.Pointer).ToHashSet();
+        Need(listLabels.Keys.All(generatedPointers.Contains),"SEMANTIC_INCOMPLETE");
+        int pageCount=objects.Values.Select(o=>o.Page).DefaultIfEmpty(0).Max()+1;
+        foreach(var (key,list) in generated)
+        {
+            budget.Charge(list.Count*32L*(1+(int)Math.Log2(Math.Max(1,list.Count))));
+            var origin=Pointer(document,key.Pointer,budget);
+            string? kind=Optional(origin,"kind");
+            if(kind is "image" or "text")
+            {
+                int separator=key.Pointer.LastIndexOf("/watermarks/",StringComparison.Ordinal);
+                Need(separator>=0,"SEMANTIC_SOURCE");
+                string settingsPath=key.Pointer[..separator];
+                Need(settingsPath=="/settings/page"||settingsPath.StartsWith("/body/",StringComparison.Ordinal)&&settingsPath.EndsWith("/layout/section/page",StringComparison.Ordinal),"SEMANTIC_SOURCE");
+                var watermarks=Pointer(document,settingsPath+"/watermarks",budget);
+                Need(watermarks.ValueKind==JsonValueKind.Array,"SEMANTIC_SOURCE");
+            }
+            if(kind=="image")
+            {
+                Need(sourceImages.TryGetValue(Text(origin,"resourceId"),out var digest)&&list.Count==1&&list[0].Object.ImageDigest==digest,"RESOURCE_IMAGE_MISMATCH");
+                continue;
+            }
+            Need(list.All(item=>item.Object.ImageDigest is null)&&list.Any(item=>item.Object.Text is not null),"SEMANTIC_SOURCE");
+            string expected;
+            if(kind=="paragraph") {Need(listLabels.TryGetValue(key.Pointer,out var label),"SEMANTIC_SOURCE");expected=label.Text;}
+            else if(kind=="text")expected=Text(origin,"text");
+            else
+            {
+                Need(key.Pointer.EndsWith("/header",StringComparison.Ordinal)||key.Pointer.EndsWith("/footer",StringComparison.Ordinal),"SEMANTIC_SOURCE");
+                var settings=Pointer(document,key.Pointer[..key.Pointer.LastIndexOf('/')],budget);
+                int sectionPage=list[0].SectionPage;
+                Need(list.All(item=>item.SectionPage==sectionPage),"SEMANTIC_SOURCE");
+                int number=(settings.TryGetProperty("startPageNumber",out var start)?start.GetInt32():1)+sectionPage-1;
+                int total=pageCount;
+                budget.Charge(origin.GetProperty("parts").EnumerateArray().Sum(part=>Text(part,"kind")=="text"?Text(part,"text").Length*4L:32L));
+                expected=string.Concat(origin.GetProperty("parts").EnumerateArray().Select(part=>Text(part,"kind") switch {"text"=>Text(part,"text"),"total-pages"=>total.ToString(System.Globalization.CultureInfo.InvariantCulture),_=>number.ToString(System.Globalization.CultureInfo.InvariantCulture)}));
+            }
+            budget.Charge(expected.Length*4L);
+            Need(string.Concat(list.OrderBy(item=>item.Object.Order).Select(item=>item.Object.Text))==expected,"SEMANTIC_SOURCE");
+            string family=kind=="paragraph"?listLabels[key.Pointer].Family:origin.TryGetProperty("style",out var style)?Optional(style,"fontFamily")??defaultFamily:defaultFamily;
+            Need(list.Where(item=>item.Object.Text is not null).All(item=>sourceFonts.Any(font=>Text(font,"family")==family&&Text(font,"sha256")==item.Object.OriginalFont)),"FONT_FAMILY_MISMATCH");
+        }
+        Need(decorationIds.Where(id=>objectMap[id].Any(target=>objects[target].ImageDigest is not null||objects[target].Text is not null)).All(generatedIds.Contains),"SEMANTIC_INCOMPLETE");
         // A source-bearing document cannot relabel all output as decoration.
         Need(semantics.GetArrayLength()>0 || !index.Values.SelectMany(v=>v).Any(v=>v.Text is {Length:>0}),"SEMANTIC_INCOMPLETE");
+    }
+    private static string Alpha(int value)
+    {
+        string result="";for(int n=value;n>0;n=(n-1)/26)result=(char)('a'+(n-1)%26)+result;return result;
     }
     private static JsonElement Pointer(JsonElement root,string pointer,ContainerBudget budget)
     {

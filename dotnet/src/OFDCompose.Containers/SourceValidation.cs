@@ -42,6 +42,7 @@ internal static class SourceValidation
         {
             if (property.Name == "styleId") styles.Add(property.Value.GetString()!);
             if (property.Name == "expression") Need(property.Value.GetString() == "", "SOURCE_NOT_MINIMAL");
+            Need(property.Name != "dataPath", "SOURCE_NOT_MINIMAL");
             Need(property.Name != "path", "RESOURCE_FORBIDDEN");
             Visit(property.Value, styles, budget);
         }

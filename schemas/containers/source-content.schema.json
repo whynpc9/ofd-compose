@@ -3909,7 +3909,7 @@
     "semanticMap": {
       "additionalProperties": false,
       "type": "object",
-      "required": ["entries", "decorations", "watermarks"],
+      "required": ["entries", "decorations", "pageDecorations"],
       "properties": {
         "entries": {
           "type": "array",
@@ -4121,13 +4121,13 @@
             "type": "string"
           }
         },
-        "watermarks": {
-          "maxItems": 16000,
+        "pageDecorations": {
+          "maxItems": 200000,
           "type": "array",
           "items": {
             "additionalProperties": false,
             "type": "object",
-            "required": ["objectId", "pointer"],
+            "required": ["objectId", "pointer", "sectionPage"],
             "properties": {
               "objectId": {
                 "minLength": 1,
@@ -4138,6 +4138,11 @@
                 "minLength": 1,
                 "maxLength": 2048,
                 "type": "string"
+              },
+              "sectionPage": {
+                "minimum": 1,
+                "maximum": 1000,
+                "type": "integer"
               }
             }
           }

@@ -109,9 +109,9 @@ it("keeps visible values and source relationships while excluding unused busines
   );
   if (!result.ok || !result.editingSource) throw new Error(JSON.stringify(result.diagnostics));
   const source = JSON.parse(result.editingSource.json) as SourceContent;
-  expect(source.semanticMap.watermarks.length).toBe(result.ir.pages.length);
+  expect(source.semanticMap.pageDecorations.length).toBe(result.ir.pages.length);
   expect(
-    source.semanticMap.watermarks.every((w) => w.pointer === "/settings/page/watermarks/0"),
+    source.semanticMap.pageDecorations.every((w) => w.pointer === "/settings/page/watermarks/0"),
   ).toBe(true);
   const withoutCapture = await render(
     fixture.source,
@@ -122,6 +122,7 @@ it("keeps visible values and source relationships while excluding unused busines
   if (!withoutCapture.ok) throw new Error(JSON.stringify(withoutCapture.diagnostics));
   expect(withoutCapture.ir).toEqual(result.ir);
   expect(result.editingSource.json).not.toContain("SECRET_TOKEN");
+  expect(result.editingSource.json).not.toContain("dataPath");
   expect(result.editingSource.json).not.toContain("UNUSED_ALIAS_SECRET");
   expect(result.editingSource.json).toContain("winner-binding");
   expect(source.semanticMap.entries).toEqual(result.semanticMap);

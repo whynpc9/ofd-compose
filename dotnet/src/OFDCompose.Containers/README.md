@@ -29,7 +29,7 @@ cancellation bound copies, hashes, parsing, and output; failure returns no artif
 
 `render(..., {sourceAttachment:true})` returns minimized source and needed original
 image bytes. It omits original Data, expression bodies, conditional/repeat evaluation
-logs, provenance and unused styles; it retains printed text, active input-control
+logs, optional business-data paths, provenance and unused styles; it retains printed text, active input-control
 semantics, stable node/binding/repeat identities and source ranges. It does not
 redact values deliberately displayed in the document. Embedded image data is needed
 content, not business-input retention. Full font metadata and byte lengths are
@@ -74,7 +74,25 @@ this adds no layout or font selection to the writer and does not change writer b
 Both profiles reject declared resources unused by page objects.
 
 Native semantic validation requires every renderable source occurrence to be mapped.
-Watermark image origins are returned by the layout stage as JSON pointers to the source
+Page decoration origins (image/text watermarks, page bands and generated list labels) are returned by the layout stage as JSON pointers to the source
 page settings; they do not enter Layout IR or change its digest. XML validation enforces
 legal parent/child and attribute contexts, including text-bearing metadata boundaries.
 Stale MaxUnitID values are rejected before allocating a new attachment ID.
+
+Native path validation compares local quantized commands and paint against the actual
+OFD PathObject. Native barcodes additionally require an explicitly injected
+`BarcodeGeometryResolver` on Create/Extract. The trusted host must run the pinned
+`bwip-js@4.11.4/drawing-context@1` media-core algorithm on the bounded owned value/options
+request and return its local millimetre command array; the container compares the
+commands and black bars/no-stroke paint with the real OFD. Missing host capability
+returns `BARCODE_VERIFIER_REQUIRED`; denial or resolver failure produces no successful
+artifact/source. The attachment cannot select a resolver, executable or resource URL.
+The host is responsible for execution time/cancellation and output limits. The test
+bridge `tests/source-container/verify-barcode.mjs` uses the existing encoder with bounded
+stdin/stdout and a 15-second cancellable host process; the library never launches it.
+
+These checks validate local content/paint relationships, not a complete re-layout proof:
+page placement, transforms, declared layout boxes and all layout styles are not rebuilt
+by extraction. `internal-consistency-only` does not certify that arbitrary edited source
+will reproduce every original pixel. Editing still goes through the real Worker, and
+this experimental container profile remains unfrozen.

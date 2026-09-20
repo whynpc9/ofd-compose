@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
-full .NET 258 (64 container cases plus the unchanged 194 baseline cases). The final
+full .NET 270 (76 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -73,3 +73,15 @@ unmapped prefix, suffix or middle range. Image occurrences require all source it
 The XML grammar also validates single-value cardinality, finite numeric values,
 glyph integers and fixed-writer path command syntax, preventing hidden source text in
 otherwise valid XML contexts.
+
+The page-decoration map binds text/image watermarks and page bands to actual output;
+removing the witness or changing visible text after rehashing is rejected. Optional
+`dataPath` provenance is stripped and cannot be reintroduced. Numeric OFD IDs must use
+canonical decimal spelling. Path local commands/paint are compared directly; barcode
+value/options use an explicit trusted host resolver running the existing pinned
+media-core encoder. The actual combined fixture verifies Code128 and EAN13 through
+that bridge. Missing/denied/incorrect resolver results fail closed. These are local
+content checks, not a complete independent re-layout proof (see the container README).
+
+Generated numbering also has paragraph origins: decimal/alpha markers, custom suffixes,
+continuation/restart and repeated list starts are validated without changing the IR.

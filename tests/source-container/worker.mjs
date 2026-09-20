@@ -92,6 +92,9 @@ if (mode === "combined" || mode === "two-images") {
   });
 } else if (
   mode === "initial" ||
+  mode === "path" ||
+  mode === "list" ||
+  mode === "text-watermarks" ||
   mode === "whitespace" ||
   mode === "empty-paragraph" ||
   mode === "two-fonts" ||
@@ -120,6 +123,63 @@ if (mode === "combined" || mode === "two-images") {
       },
     ],
   };
+  if (mode === "list") {
+    source.body[0].layout = {
+      role: "list-item",
+      numbering: { listId: "plain", format: "decimal" },
+    };
+    source.body.push({
+      kind: "paragraph",
+      nodeId: "alpha",
+      layout: { numbering: { listId: "plain", format: "upper-alpha", start: 27, suffix: "项 " } },
+      inlines: [{ kind: "text", nodeId: "alpha-text", text: "next" }],
+    });
+    source.body.push({
+      kind: "repeat-block",
+      nodeId: "repeat",
+      bindingId: "repeat-binding",
+      expression: { kind: "legacy", text: "items" },
+      repeatKey: { kind: "ordinal", orderDependentIdentity: true },
+      children: [
+        {
+          kind: "paragraph",
+          nodeId: "repeat-p",
+          layout: { numbering: { listId: "items", format: "decimal", start: 5 } },
+          inlines: [{ kind: "text", nodeId: "repeat-t", text: "item" }],
+        },
+      ],
+    });
+  }
+  if (mode === "path")
+    source.body.push({
+      kind: "path",
+      nodeId: "path",
+      width: 20,
+      height: 20,
+      fill: "#112233",
+      commands: [
+        { op: "move", x: 1.2345, y: 0 },
+        { op: "line", x: 20, y: 0 },
+        { op: "line", x: 0, y: 20 },
+        { op: "close" },
+      ],
+    });
+  if (mode === "text-watermarks")
+    source.settings.page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      header: { height: 10, parts: [{ kind: "text", text: "header " }, { kind: "page-number" }] },
+      watermarks: ["first 中文", "second 中文"].map((text, i) => ({
+        kind: "text",
+        text,
+        x: 30,
+        y: 50 + i * 30,
+        layer: "behind",
+        opacity: 1,
+        transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+      })),
+    };
   if (mode === "watermarks") {
     const png = new Uint8Array(
       JSON.parse(
@@ -201,6 +261,7 @@ if (mode === "combined" || mode === "two-images") {
     source,
     {
       visible: mode === "whitespace" ? "  office\t中文\r\n尾部  \n" : "office 中文",
+      items: [{}, {}],
       unused: "UNUSED_SECRET",
       debug: "DEBUG_SECRET",
       token: "TOKEN_SECRET",

@@ -92,7 +92,7 @@ internal static class SafePackage
             WriterXmlGrammar.Validate(xml,path,budget);
             foreach(var id in xml.Descendants().Attributes("ID"))
             {
-                budget.Charge(32);Need(uint.TryParse(id.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint value)&&value>0&&ids.Add(id.Value),"PACKAGE_REFERENCE");
+                budget.Charge(32);Need(uint.TryParse(id.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint value)&&value>0&&id.Value==value.ToString(System.Globalization.CultureInfo.InvariantCulture)&&ids.Add(id.Value),"PACKAGE_REFERENCE");
             }
             if(path is "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml")
             {

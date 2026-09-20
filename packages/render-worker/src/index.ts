@@ -520,7 +520,7 @@ async function run(
               bytes: item.bytes,
             })),
           budget,
-          laid.watermarkSources,
+          laid.pageDecorationSources,
         )
       : undefined;
     return {
