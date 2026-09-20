@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "type": "object",
+  "required": ["version", "irDigest"],
+  "properties": {
+    "version": {
+      "minLength": 1,
+      "maxLength": 128,
+      "type": "string"
+    },
+    "irDigest": {
+      "pattern": "^[a-f0-9]{64}$",
+      "type": "string"
+    }
+  }
+}

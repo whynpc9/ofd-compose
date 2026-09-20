@@ -8,7 +8,7 @@ font, executes attachments, or verifies signatures.
 The experimental format has one `application/json` attachment named
 `ofd-compose.json`, registered through standard OFD `Attachments.xml`. Its
 `namespace=ofd-compose`, `protocol=ofd-compose/source@0`, and
-`containerProfileVersion=ofd-compose/container-experimental@0` are explicit.
+`containerProfileVersion=ofd-compose/container-experimental@1` are explicit.
 Five parts carry minimal ResolvedDocument, exact RenderProfile, resource inventory,
 Semantic Map (entries plus an explicit decoration-object partition), and full IR identity. Each part's `content` is a **JSON string containing JSON text**;
 its SHA-256 covers the UTF-8 bytes of that string's decoded value, so re-escaping
@@ -60,7 +60,7 @@ or semantic list and recomputing its digest does not satisfy these checks.
 
 The full manifest IR digest must equal the hashed `irDigest` JSON-string part; its first
 32 hex characters must also match the OFD DocID. This detects changing either half of
-the manifest digest without updating protected parts, while remaining an internal
+the manifest digest without updating individually hashed parts, while remaining an internal
 consistency check, not authentication. Resource XML/page references and resource-file
 reachability are checked for both profiles. Font weight/italic/face and requested family
 metadata are checked against the layout/source; unused family aliases are minimized.
@@ -179,3 +179,24 @@ never launches processes or obtains resources from attachment URLs or paths.
 Editing full fonts must be unique by family/weight/italic. This matches finalizeSource,
 which selects exactly one authorized face before comparing its full-font SHA-256; the
 current Worker does not resolve multiple digests for one face as version alternatives.
+
+The experimental @1 container separates two identities. Manifest `irDigest` identifies
+the original artifact IR and still matches DocID/full OFD envelope metadata. Required
+native `replayIdentity` is `{version:"ofd-compose/filled-source-replay@0",irDigest:...}`:
+Create computes it from the same single trusted replay of the owned minimal filled
+source, effective render profile and authorized full resources. Extract recomputes and
+compares it, and returns the sealed identity as `ExtractionResult.ReplayIdentity`.
+Distribution declares null. The strict structural schema derives from TypeBox and is
+embedded in .NET; unsupported identity versions fail before a successful extraction.
+
+These digests can legitimately differ: removal of expressions/provenance/unused source
+and opaque repeat/link/shaping projection changes the full input identity while page
+XML remains equivalent. Unedited replay identity is stable; text/revision edits produce
+a new replay identity. Never compare replay digest to the original artifact IR digest.
+The same replay also supplies complete IR resource records, compared with attached
+`resources.layout`, including image metadata and font feature/variation/glyph mappings.
+
+All digests, envelope metadata and replay identities are consistency checks inside an
+unsigned/unverified package. A party rewriting source, identities, physical pages and
+resources coherently may create another consistent package. Authenticity requires an
+external trusted expected digest or signature verification, neither supplied here.

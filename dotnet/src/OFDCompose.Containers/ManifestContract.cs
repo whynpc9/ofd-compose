@@ -9,7 +9,7 @@ internal sealed record SourceManifest(
     string Protocol, string Profile, string ContainerProfileVersion, string ModelVersion,
     string IrVersion, string IrDigest, string[] Capabilities, SourceProvenance Provenance,
     string SignaturePolicy, List<SourcePart> Parts, EntryIdentity[] Entries,
-    IReadOnlyDictionary<string, string[]> ObjectMap, IReadOnlyDictionary<string,string> ResourceMap);
+    IReadOnlyDictionary<string, string[]> ObjectMap, IReadOnlyDictionary<string,string> ResourceMap,SourceReplayIdentity? ReplayIdentity);
 [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
 [JsonSerializable(typeof(SourceManifest))]
 [JsonSerializable(typeof(string))]

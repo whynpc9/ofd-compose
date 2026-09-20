@@ -16,17 +16,19 @@ public sealed record RenderedTableRelation(string ObjectId,ReadOnlyMemory<byte> 
 public sealed record RenderedPageBand(int PageIndex,string Pointer,string Text);
 /// <summary>Complete fixed-writer page with dimensions, ordered objects, geometry, text, paint and clips.</summary>
 public sealed record RenderedPagePayload(int PageIndex,ReadOnlyMemory<byte> Xml);
-public sealed record SourceRenderEvidence(IReadOnlyList<GeneratedPathPayload> Paths,IReadOnlyList<RenderedTableRelation> Tables,IReadOnlyList<RenderedPageBand> Bands,IReadOnlyList<RenderedPagePayload> Pages,IReadOnlyDictionary<string,string> ResourceDigests);
+public sealed record SourceRenderEvidence(IReadOnlyList<GeneratedPathPayload> Paths,IReadOnlyList<RenderedTableRelation> Tables,IReadOnlyList<RenderedPageBand> Bands,IReadOnlyList<RenderedPagePayload> Pages,IReadOnlyDictionary<string,string> ResourceDigests,ReadOnlyMemory<byte> LayoutResourcesJson,string ReplayIrDigest);
 /// <summary>One explicit trusted replay of the pinned renderer with authorized resources per native operation; null denies verification.</summary>
 public delegate SourceRenderEvidence? SourceRenderResolver(SourceRenderRequest request,CancellationToken cancellationToken);
 public enum ContainerProfile { NativeEditable, Distribution }
+/// <summary>Identity of the actual controlled replay of owned minimal source/profile/authorized resources; distinct from the original artifact IR identity.</summary>
+public sealed record SourceReplayIdentity(string Version,string IrDigest);
 public sealed record SourceAsset(string Sha256, ReadOnlyMemory<byte> Bytes);
 public sealed record ContainerResult(byte[]? Bytes, string? Error)
 {
     public bool Ok => Bytes is not null;
 }
 public sealed record ExtractionResult(string? Error, string? Profile = null, byte[]? SourceJson = null,
-    IReadOnlyList<SourceAsset>? Assets = null, string? Integrity = null, string? Signature = null)
+    IReadOnlyList<SourceAsset>? Assets = null, string? Integrity = null, string? Signature = null, SourceReplayIdentity? ReplayIdentity = null)
 {
     public bool Ok => Error is null;
 }

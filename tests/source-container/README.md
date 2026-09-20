@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 615, fresh Chromium 405,
-full .NET 350 (156 container cases plus the unchanged 194 baseline cases).
+full .NET 364 (170 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -180,3 +180,12 @@ case variants and JPG aliases remain accepted. Input-control semantics require t
 exact controlId; source ranges inherit that identity from their enclosing semantic entry,
 matching actual Layout Core output. Seven rehashed counterexamples were accepted before
 these checks and rejected afterward; ordinary, empty and checkbox control fixtures pass.
+
+The @1 container keeps original artifact IR identity separate from the sealed filled-source
+replay identity computed by Create's trusted host. Extraction replays the minimal source,
+profile and authorized resources and compares that independent declaration. Tests verify
+original/replay IR digests may differ with identical pages/resources/graphics states,
+unchanged replay stays stable, actual edits change replay identity, and rehashed document,
+revision, permitted pagination-profile and font-family identity changes are rejected.
+Complete image/font layout-resource metadata is compared against the same replay.
+These checks do not authenticate a package whose attacker rewrites all associated content.

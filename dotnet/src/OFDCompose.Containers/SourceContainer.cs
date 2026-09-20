@@ -7,12 +7,12 @@ using static OFDCompose.Containers.SourceValidation;
 
 namespace OFDCompose.Containers;
 
-/// <summary>WP0.8 experimental single JSON attachment. Extraction never runs source or fetches resources.
+/// <summary>WP0.8 experimental single JSON attachment. Native validation invokes an explicit controlled filled-source replay host; it never evaluates template expressions or fetches attachment-selected resources.
 /// Hashes establish internal consistency only. No signature verification is performed.</summary>
 public static partial class SourceContainer
 {
     public const string Protocol = "ofd-compose/source@0";
-    public const string ProfileVersion = "ofd-compose/container-experimental@0";
+    public const string ProfileVersion = "ofd-compose/container-experimental@1";
     private const string ManifestPath = "Doc_0/Attachs/ofd-compose.json";
     private const string AttachmentsPath = "Doc_0/Attachs/Attachments.xml";
     private static readonly string[] PartNames = ["resolvedDocument", "renderProfile", "resources", "semanticMap", "irDigest"];
@@ -49,6 +49,7 @@ public static partial class SourceContainer
             entries["Doc_0/Document.xml"] = SafePackage.Encode(doc);
             var parts = new List<SourcePart>();
             string modelVersion = "0";
+            SourceReplayIdentity? replayIdentity=null;
             if (profile == ContainerProfile.NativeEditable)
             {
                 using var source = Parse(sourceJson, budget);
@@ -62,7 +63,8 @@ public static partial class SourceContainer
                 }
                 AddAssets(root.GetProperty("resources"), assets ?? [], entries, budget);
                 var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, ownedResources, budget);
-                var objects=SemanticMap(root, objectMap, entries, links, ownedResources, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver);
+                var objects=SemanticMap(root, objectMap, entries, links, ownedResources, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver,out var computedReplayIdentity);
+                replayIdentity=computedReplayIdentity;
                 SourceVersions(root);
             }
             else {
@@ -84,7 +86,7 @@ public static partial class SourceContainer
                 profile == ContainerProfile.NativeEditable ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"],
                 new("OFDCompose.Containers/0", parentArtifactDigest), "unsigned-or-unverified", parts, inventory,
                 profile == ContainerProfile.NativeEditable ? objectMap : new Dictionary<string, string[]>(),
-                profile == ContainerProfile.NativeEditable ? ownedResources : new Dictionary<string,string>());
+                profile == ContainerProfile.NativeEditable ? ownedResources : new Dictionary<string,string>(),replayIdentity);
             entries.Add(ManifestPath, JsonSerializer.SerializeToUtf8Bytes(manifest, ContainerJsonContext.Default.SourceManifest));
             Need(entries[ManifestPath].Length <= budget.Limits.JsonBytes, "SIZE_LIMIT");
             entries.Add(AttachmentsPath, SafePackage.Encode(new XDocument(new XElement(SafePackage.Ns + "Attachments",
@@ -110,9 +112,11 @@ public static partial class SourceContainer
             var manifest = parsed.RootElement;
             Need(Text(manifest, "namespace") == "ofd-compose" && Text(manifest, "protocol") == Protocol, "PROTOCOL_INVALID");
             ValidateAttachment(entries, budget);
-            Keys(manifest, "namespace", "protocol", "profile", "containerProfileVersion", "modelVersion", "irVersion", "irDigest", "capabilities", "provenance", "signaturePolicy", "parts", "entries", "objectMap", "resourceMap");
+            Keys(manifest, "namespace", "protocol", "profile", "containerProfileVersion", "modelVersion", "irVersion", "irDigest", "capabilities", "provenance", "signaturePolicy", "parts", "entries", "objectMap", "resourceMap", "replayIdentity");
             string profile = Text(manifest, "profile");
             Need(profile is "native-editable" or "distribution" && IsDigest(Text(manifest, "irDigest")), "SCHEMA_INVALID");
+            SourceReplayIdentity? replayIdentity=profile=="native-editable"?ParseReplayIdentity(manifest.GetProperty("replayIdentity"),manifestBytes!.Length,budget):null;
+            if(profile=="distribution")Need(manifest.GetProperty("replayIdentity").ValueKind==JsonValueKind.Null,"SCHEMA_INVALID");
             Keys(manifest.GetProperty("provenance"), "producer", "parentArtifactDigest");
             Need(Text(manifest.GetProperty("provenance"), "producer") == "OFDCompose.Containers/0", "SCHEMA_INVALID");
             var parent = manifest.GetProperty("provenance").GetProperty("parentArtifactDigest");
@@ -155,8 +159,10 @@ public static partial class SourceContainer
                 {
                     var root = source.RootElement;
                     var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, resourceMap, budget);
-                    objects=SemanticMap(root, objectMap, entries, links, resourceMap, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver);
+                    objects=SemanticMap(root, objectMap, entries, links, resourceMap, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver,out var computedReplayIdentity);
                     SourceVersions(root);
+                    Need(replayIdentity!.Version==computedReplayIdentity.Version,"VERSION_UNSUPPORTED");
+                    Need(replayIdentity.IrDigest==computedReplayIdentity.IrDigest,"SOURCE_REPLAY_IDENTITY_MISMATCH");
                     foreach (var image in root.GetProperty("resources").GetProperty("images").EnumerateArray())
                     {
                         string digest = Text(image, "sha256");
@@ -169,7 +175,7 @@ public static partial class SourceContainer
                 string[] expected = profile == "native-editable" ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"];
                 Need(manifest.GetProperty("capabilities").EnumerateArray().Select(e => e.GetString()).SequenceEqual(expected), "VERSION_UNSUPPORTED");
                 Need(Text(manifest, "signaturePolicy") == "unsigned-or-unverified", "SIGNATURE_POLICY_UNSUPPORTED");
-                return new(null, profile, sourceJson, assets, "internal-consistency-only", Signed(entries, budget) ? "present-unverified" : "unsigned");
+                return new(null, profile, sourceJson, assets, "internal-consistency-only", Signed(entries, budget) ? "present-unverified" : "unsigned",replayIdentity);
             }
             finally { source?.Dispose(); }
         }

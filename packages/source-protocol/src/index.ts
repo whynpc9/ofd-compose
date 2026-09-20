@@ -8,6 +8,15 @@ const id = Type.String({ minLength: 1, maxLength: 256 });
 const digest = Type.String({ pattern: "^[a-f0-9]{64}$" });
 const bytes = Type.Integer({ minimum: 1, maximum: 33554432 });
 const version = Type.String({ minLength: 1, maxLength: 128 });
+export const SourceReplayIdentitySchema = Type.Object(
+  { version: Type.Literal("ofd-compose/filled-source-replay@0"), irDigest: digest },
+  { additionalProperties: false },
+);
+export const SourceReplayIdentityWireSchema = Type.Object(
+  { version, irDigest: digest },
+  { additionalProperties: false },
+);
+export type SourceReplayIdentity = Static<typeof SourceReplayIdentitySchema>;
 export const EditingFontSchema = Type.Object(
   {
     family: id,

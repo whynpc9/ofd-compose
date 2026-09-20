@@ -598,10 +598,12 @@ if (
         "Host has no authorized full font with requested digest",
       );
     }
-    content.resolvedDocument.body[0].fragments[0].text = "edited office 中文新";
-    content.resolvedDocument.revisionId = "revision-2";
-    // An inert expression string must never be interpreted in this seam.
-    content.resolvedDocument.body[0].fragments[0].origin.expression = "unknownFunction(secret)";
+    if (mode !== "replay-unchanged") {
+      content.resolvedDocument.body[0].fragments[0].text = "edited office 中文新";
+      content.resolvedDocument.revisionId = "revision-2";
+      // An inert expression string must never be interpreted in this seam.
+      content.resolvedDocument.body[0].fragments[0].origin.expression = "unknownFunction(secret)";
+    }
   }
   result = await finalizeSource(content, pack, { sourceAttachment: true });
 }

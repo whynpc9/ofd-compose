@@ -268,7 +268,7 @@ public static partial class SourceContainer
         }
         return result;
     }
-    private static Dictionary<string,RenderedObject> SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver,SourceRenderResolver? sourceRenderResolver)
+    private static Dictionary<string,RenderedObject> SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver,SourceRenderResolver? sourceRenderResolver,out SourceReplayIdentity replayIdentity)
     {
         Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
         var physical = new HashSet<string>();
@@ -296,7 +296,7 @@ public static partial class SourceContainer
         SourceVersions(root);
         var bands=SourceRenderValidation.Validate(root,objectMap,objects,entries,sourceRenderResolver,budget,out var renderProof);
         SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,entries.Keys.Count(path=>path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)&&path.EndsWith("/Content.xml",StringComparison.Ordinal)),budget,barcodeGeometryResolver,numberingLabelsResolver,bands);
-        SourceRenderValidation.ValidatePages(root,entries,links.ToDictionary(item=>item.Key,item=>item.Value.Digest),sourceRenderResolver,renderProof,budget);
+        replayIdentity=SourceRenderValidation.ValidatePages(root,entries,links.ToDictionary(item=>item.Key,item=>item.Value.Digest),sourceRenderResolver,renderProof,budget);
         return objects;
     }
 }

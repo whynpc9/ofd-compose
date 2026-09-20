@@ -99,7 +99,7 @@ public sealed class ContainerTests
         using var captured=JsonDocument.Parse(await File.ReadAllBytesAsync(Path.Combine(directory,"source.json"),timeout.Token));
         var irObjects=root.GetProperty("pages").EnumerateArray().SelectMany(page=>page.GetProperty("objects").EnumerateArray().Select((item,index)=>(Page:page.GetProperty("pageIndex").GetInt32(),Index:index,Item:item))).ToDictionary(item=>item.Item.GetProperty("id").GetString()!);
         var bands=captured.RootElement.GetProperty("semanticMap").GetProperty("pageDecorations").EnumerateArray().Where(entry=>entry.GetProperty("pointer").GetString()!.EndsWith("/header",StringComparison.Ordinal)||entry.GetProperty("pointer").GetString()!.EndsWith("/footer",StringComparison.Ordinal)).GroupBy(entry=>(irObjects[entry.GetProperty("objectId").GetString()!].Page,Pointer:entry.GetProperty("pointer").GetString()!)).Select(group=>new RenderedPageBand(group.Key.Page,group.Key.Pointer,string.Concat(group.Select(entry=>irObjects[entry.GetProperty("objectId").GetString()!]).OrderBy(item=>item.Index).Where(item=>item.Item.GetProperty("kind").GetString()=="text").Select(item=>item.Item.GetProperty("logicalText").GetString())))).ToArray();
-        return new(result.ToArray(),tables,bands,root.GetProperty("pages").EnumerateArray().Select(page=>new RenderedPagePayload(page.GetProperty("pageIndex").GetInt32(),package[$"Doc_0/Pages/Page_{page.GetProperty("pageIndex").GetInt32()}/Content.xml"])).ToArray(),written.ResourceMap!.ToDictionary(item=>item.Value,item=>Hash(resources.Single(resource=>resource.ResourceId==item.Key).Bytes.ToArray())));
+        return new(result.ToArray(),tables,bands,root.GetProperty("pages").EnumerateArray().Select(page=>new RenderedPagePayload(page.GetProperty("pageIndex").GetInt32(),package[$"Doc_0/Pages/Page_{page.GetProperty("pageIndex").GetInt32()}/Content.xml"])).ToArray(),written.ResourceMap!.ToDictionary(item=>item.Value,item=>Hash(resources.Single(resource=>resource.ResourceId==item.Key).Bytes.ToArray())),Encoding.UTF8.GetBytes(root.GetProperty("resources").GetRawText()),Hash(ir));
     }
     private static string Hash(byte[] value) => Convert.ToHexStringLower(SHA256.HashData(value));
     private sealed record Fixture(string Directory, byte[] Source, OfdWriteResult Ofd, byte[] Sealed, JsonNode Identity);
@@ -414,7 +414,11 @@ public sealed class ContainerTests
         });
         Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(Inline(replacement),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         byte[] originalImage=Zip(fixture.Sealed).First(e=>e.Key.StartsWith("Doc_0/Attachs/Assets/",StringComparison.Ordinal)).Value;
-        var sameImage=SourceContainer.Extract(Inline(originalImage),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(sameImage.Ok,sameImage.Error);
+        var sameImage=SourceContainer.Extract(Inline(originalImage),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.Equal("SOURCE_REPLAY_IDENTITY_MISMATCH",sameImage.Error);
+        var inlineSource=JsonNode.Parse(fixture.Source)!;inlineSource["resolvedDocument"]!["body"]!.AsArray().Single(b=>b!["kind"]!.GetValue<string>()=="image-binding")!["sources"]=new JsonArray(Convert.ToBase64String(originalImage));inlineSource["resources"]!["images"]=new JsonArray();
+        var resealed=SourceContainer.Create(fixture.Ofd.Bytes!,fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.NativeEditable,Encoding.UTF8.GetBytes(inlineSource.ToJsonString()),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken,resourceMap:fixture.Ofd.ResourceMap);
+        Assert.True(resealed.Ok,resealed.Error);Assert.True(SourceContainer.Extract(resealed.Bytes!,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
 
     [Fact]
@@ -1295,6 +1299,82 @@ public sealed class ContainerTests
             }
         });
         var result=SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,result.Error);
+    }
+
+    [Theory]
+    [InlineData("mimeType")]
+    [InlineData("pixelWidth")]
+    [InlineData("pixelHeight")]
+    [InlineData("features")]
+    [InlineData("glyphIdMap")]
+    public async Task Complete_layout_resource_metadata_must_match_trusted_renderer(string field)
+    {
+        var fixture=await Build(field is "features" or "glyphIdMap"?"initial":"two-images");
+        var changed=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resources")!;var resources=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            var resource=resources["layout"]!.AsArray().First(item=>item!["kind"]!.GetValue<string>()==(field is "features" or "glyphIdMap"?"font":"image"))!;
+            if(field=="features")resource[field]=new JsonObject{["liga"]=0};
+            else if(field=="glyphIdMap")resource[field]![0]!["original"]=999;
+            else if(field=="mimeType")resource[field]="image/jpeg";
+            else resource[field]=resource[field]!.GetValue<int>()+1;
+            string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("RESOURCE_LAYOUT_MISMATCH",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Theory]
+    [InlineData("documentId")]
+    [InlineData("revisionId")]
+    [InlineData("profile")]
+    [InlineData("font-family")]
+    public async Task Rehashed_replay_inputs_must_match_sealed_filled_source_identity(string field)
+    {
+        var fixture=await Initial.Value;
+        var changed=Mutate(fixture.Sealed,(manifest,_)=> {
+            foreach(var part in manifest["parts"]!.AsArray())
+            {
+                string name=part!["name"]!.GetValue<string>();var value=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+                if(name=="resolvedDocument"&&field is "documentId" or "revisionId")value[field]="changed-identity";
+                if(name=="renderProfile"&&field=="profile")value["layout"]!["pagination"]=new JsonObject{["maxPages"]=999,["maxIterations"]=3};
+                if(name=="renderProfile"&&field=="font-family")value["layout"]!["defaultStyle"]!["fontFamily"]="AuthorizedAlias";
+                if(name=="resources"&&field=="font-family")value["fonts"]![0]!["family"]="AuthorizedAlias";
+                string json=value.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            }
+        });
+        Assert.Equal("SOURCE_REPLAY_IDENTITY_MISMATCH",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Original_IR_identity_and_stable_filled_source_replay_identity_are_distinct()
+    {
+        var fixture=await Initial.Value;
+        var replayed=await Build("replay-unchanged",Path.Combine(fixture.Directory,"source.json"));
+        JsonNode Manifest(byte[] bytes)=>JsonNode.Parse(Zip(bytes)["Doc_0/Attachs/ofd-compose.json"])!;
+        var first=Manifest(fixture.Sealed);var second=Manifest(replayed.Sealed);
+        Assert.NotEqual(first["irDigest"]!.GetValue<string>(),first["replayIdentity"]!["irDigest"]!.GetValue<string>());
+        Assert.Equal(first["replayIdentity"]!["irDigest"]!.GetValue<string>(),second["irDigest"]!.GetValue<string>());
+        Assert.True(JsonNode.DeepEquals(first["replayIdentity"],second["replayIdentity"]));
+        Assert.Equal(first["replayIdentity"]!["irDigest"]!.GetValue<string>(),SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).ReplayIdentity!.IrDigest);
+        var originalIr=JsonNode.Parse(await File.ReadAllBytesAsync(Path.Combine(fixture.Directory,"ir.json"),TestContext.Current.CancellationToken))!;
+        var replayedIr=JsonNode.Parse(await File.ReadAllBytesAsync(Path.Combine(replayed.Directory,"ir.json"),TestContext.Current.CancellationToken))!;
+        foreach(string key in new[]{"pages","resources","graphicsStates"})Assert.True(JsonNode.DeepEquals(originalIr[key],replayedIr[key]),key);
+        var edited=await Build("edit",Path.Combine(fixture.Directory,"source.json"));
+        Assert.NotEqual(first["replayIdentity"]!["irDigest"]!.GetValue<string>(),Manifest(edited.Sealed)["replayIdentity"]!["irDigest"]!.GetValue<string>());
+    }
+    [Theory]
+    [InlineData("version","VERSION_UNSUPPORTED")]
+    [InlineData("digest","SOURCE_REPLAY_IDENTITY_MISMATCH")]
+    [InlineData("shape","SCHEMA_INVALID")]
+    [InlineData("size","SIZE_LIMIT")]
+    public async Task Sealed_replay_identity_has_a_strict_versioned_contract(string change,string expected)
+    {
+        var fixture=await Initial.Value;
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            if(change=="size")manifest["replayIdentity"]!["version"]=new string('x',8192);
+            else if(change=="version")manifest["replayIdentity"]!["version"]="unsupported";
+            else if(change=="digest")manifest["replayIdentity"]!["irDigest"]=new string('0',64);
+            else manifest["replayIdentity"]!["extra"]=true;
+        });
+        Assert.Equal(expected,SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
 }

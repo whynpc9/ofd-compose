@@ -98,7 +98,7 @@ internal static class SourceRenderValidation
         Need(proof is not null&&proof.Paths is not null&&proof.Tables is not null&&proof.Bands is not null&&proof.Paths.Count<=200000&&proof.Tables.Count<=200000&&proof.Bands.Count<=2000,"SOURCE_RENDER_VERIFICATION_FAILED");
         return proof!;
     }
-    internal static void ValidatePages(JsonElement source,Dictionary<string,byte[]> entries,IReadOnlyDictionary<string,string> resourceDigests,SourceRenderResolver? resolver,SourceRenderEvidence? proof,ContainerBudget budget)
+    internal static SourceReplayIdentity ValidatePages(JsonElement source,Dictionary<string,byte[]> entries,IReadOnlyDictionary<string,string> resourceDigests,SourceRenderResolver? resolver,SourceRenderEvidence? proof,ContainerBudget budget)
     {
         proof??=Request(source,entries,resolver,budget);
         Need(proof.Pages is not null&&proof.Pages.Count is >0 and <=1000&&proof.ResourceDigests is not null&&proof.ResourceDigests.Count<=128,"SOURCE_RENDER_VERIFICATION_FAILED");
@@ -119,6 +119,10 @@ internal static class SourceRenderValidation
             Need(XNode.DeepEquals(PageCanonical(expected.Root!,expectedDigests,budget),PageCanonical(actual.Root!,resourceDigests,budget)),"SOURCE_RENDER_MISMATCH");
         }
         Need(seen.Count==entries.Keys.Count(path=>path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)&&path.EndsWith("/Content.xml",StringComparison.Ordinal)),"SOURCE_RENDER_MISMATCH");
+        Need(!proof.LayoutResourcesJson.IsEmpty&&proof.LayoutResourcesJson.Length<=budget.Limits.JsonBytes&&IsDigest(proof.ReplayIrDigest),"SOURCE_RENDER_VERIFICATION_FAILED");
+        using var resources=SafePackage.Json(proof.LayoutResourcesJson,budget);
+        Need(JsonElement.DeepEquals(resources.RootElement,source.GetProperty("resources").GetProperty("layout")),"RESOURCE_LAYOUT_MISMATCH");
+        return new("ofd-compose/filled-source-replay@0",proof.ReplayIrDigest);
     }
     private static XElement PageCanonical(XElement element,IReadOnlyDictionary<string,string> resources,ContainerBudget budget)
     {

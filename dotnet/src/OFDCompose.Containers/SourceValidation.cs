@@ -12,6 +12,16 @@ internal static class SourceValidation
         using var reader = new StreamReader(stream);
         return JsonSchema.FromText(reader.ReadToEnd());
     });
+    private static readonly Lazy<JsonSchema> ReplaySchema = new(() => {
+        using var stream=typeof(SourceValidation).Assembly.GetManifestResourceStream("replay-identity.schema.json")!;
+        using var reader=new StreamReader(stream);return JsonSchema.FromText(reader.ReadToEnd());
+    });
+    internal static SourceReplayIdentity ParseReplayIdentity(JsonElement value,int containingJsonBytes,ContainerBudget budget)
+    {
+        budget.Charge(containingJsonBytes*8L+8192);string json=value.GetRawText();Need(json.Length<=1024,"SIZE_LIMIT");
+        Need(ReplaySchema.Value.Evaluate(JsonNode.Parse(json),new EvaluationOptions {OutputFormat=OutputFormat.Flag}).IsValid,"SCHEMA_INVALID");budget.Charge(0);
+        return new(Text(value,"version"),Text(value,"irDigest"));
+    }
     internal static JsonDocument Parse(ReadOnlyMemory<byte> bytes, ContainerBudget budget)
     {
         var document = SafePackage.Json(bytes, budget);
