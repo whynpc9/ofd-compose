@@ -80,7 +80,7 @@ public static partial class SourceContainer
         || System.Text.RegularExpressions.Regex.IsMatch(path, "^Doc_0/(Pages/Page_[0-9]+/Content\\.xml|Res/[a-zA-Z0-9_.-]+\\.(otf|ttf|png|jpg|jpeg))$", System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromSeconds(1));
     private static bool Signed(Dictionary<string, byte[]> entries, ContainerBudget budget)
     {
-        if (entries.Keys.Any(p => p.Contains("Sign", StringComparison.OrdinalIgnoreCase))) return true;
+        if (entries.Keys.Any(p => p.StartsWith("Doc_0/Signs/", StringComparison.Ordinal))) return true;
         return entries.TryGetValue("OFD.xml", out var root) && SafePackage.Xml(root, budget).Descendants(SafePackage.Ns + "Signatures").Any();
     }
     private static void ValidateAttachment(Dictionary<string, byte[]> entries, ContainerBudget budget)

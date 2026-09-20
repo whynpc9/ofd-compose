@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 615, fresh Chromium 405,
-full .NET 320 (126 container cases plus the unchanged 194 baseline cases).
+full .NET 324 (130 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -150,3 +150,8 @@ reopened geometry tests cover default links both enabled and absent. Extraction 
 rehashing hidden text back into those bands. Editing-font identities retain family,
 weight, italic and SHA-256 without an unverifiable byteLength; host resource packs still
 validate actual lengths and digests, and attachment length reintroduction is rejected.
+
+Signature presence is limited to the actual `Doc_0/Signs/` hierarchy or the OFD
+`Signatures` declaration. A referenced resource named `Design.otf` stays unsigned
+for both native and distribution profiles; declaration-only and sidecar-only signature
+presence stays unverified and cannot be resealed.

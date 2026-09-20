@@ -240,21 +240,40 @@ public sealed class ContainerTests
         var forged=Zip(first.Sealed);forged["Doc_0/Attachs/Attachments.xml"]=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(forged["Doc_0/Attachs/Attachments.xml"]).Replace("ofd-compose.json","forged.json"));
         Assert.Equal("ATTACHMENT_INVALID",SourceContainer.Extract(Pack(forged), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
-    [Fact]
-    public async Task Signed_presence_is_unverified_and_signed_input_cannot_be_resealed()
+    [Theory]
+    [InlineData(true,true)]
+    [InlineData(true,false)]
+    [InlineData(false,true)]
+    public async Task Signed_presence_is_unverified_and_signed_input_cannot_be_resealed(bool declaration,bool sidecar)
     {
         var first=await Initial.Value;
         var signed=Mutate(first.Sealed,(manifest,entries)=> {
             var root=XDocument.Parse(Encoding.UTF8.GetString(entries["OFD.xml"]));
-            root.Descendants().First(e=>e.Name.LocalName=="DocBody").Add(new XElement(root.Root!.Name.Namespace+"Signatures","Doc_0/Signs/Signatures.xml"));
+            if(declaration)root.Descendants().First(e=>e.Name.LocalName=="DocBody").Add(new XElement(root.Root!.Name.Namespace+"Signatures","Doc_0/Signs/Signatures.xml"));
             entries["OFD.xml"]=Encoding.UTF8.GetBytes(root.ToString());
-            entries["Doc_0/Signs/Signatures.xml"]=Encoding.UTF8.GetBytes("<Signatures xmlns='http://www.ofdspec.org/2016'/>");
+            if(sidecar)entries["Doc_0/Signs/Signatures.xml"]=Encoding.UTF8.GetBytes("<Signatures xmlns='http://www.ofdspec.org/2016'/>");
             var record=manifest["entries"]!.AsArray().Single(e=>e!["path"]!.GetValue<string>()=="OFD.xml")!;
             record["byteLength"]=entries["OFD.xml"].Length;record["sha256"]=Hash(entries["OFD.xml"]);
         });
         var result=SourceContainer.Extract(signed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(result.Ok,result.Error);Assert.Equal("present-unverified",result.Signature);Assert.Equal("internal-consistency-only",result.Integrity);
         Assert.Equal("SIGNED_INPUT_UNSUPPORTED",SourceContainer.Create(signed,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
+    }
+
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable)]
+    [InlineData(ContainerProfile.Distribution)]
+    public async Task Resource_name_containing_sign_is_not_a_signature(ContainerProfile profile)
+    {
+        var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);
+        string resourcePath=entries.Keys.Single(path=>path.EndsWith(".otf",StringComparison.Ordinal));
+        string renamed="Doc_0/Res/Design.otf";entries[renamed]=entries[resourcePath];entries.Remove(resourcePath);
+        foreach(string path in entries.Keys.Where(path=>path.EndsWith(".xml",StringComparison.Ordinal)).ToArray())
+            entries[path]=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(entries[path]).Replace(Path.GetFileName(resourcePath),Path.GetFileName(renamed),StringComparison.Ordinal));
+        var created=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?first.Source:default,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
+        Assert.True(created.Ok,created.Error);
+        var extracted=SourceContainer.Extract(created.Bytes!,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(extracted.Ok,extracted.Error);Assert.Equal("unsigned",extracted.Signature);
     }
 
     [Fact]
