@@ -20,13 +20,14 @@ public static partial class SourceContainer
     public static ContainerResult Create(ReadOnlyMemory<byte> ofd, string irDigest,
         IReadOnlyDictionary<string, string[]> objectMap, ContainerProfile profile,
         ReadOnlyMemory<byte> sourceJson = default, IReadOnlyList<SourceAsset>? assets = null,
-        string? parentArtifactDigest = null, ContainerLimits? limits = null, CancellationToken cancellationToken = default)
+        string? parentArtifactDigest = null, ContainerLimits? limits = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string,string>? resourceMap = null)
     {
         try
         {
             var budget = new ContainerBudget(limits ?? new(), cancellationToken);
             Need(IsDigest(irDigest) && (parentArtifactDigest is null || IsDigest(parentArtifactDigest)), "SCHEMA_INVALID");
             objectMap = OwnObjectMap(objectMap, budget);
+            var ownedResources=OwnResourceMap(resourceMap,profile==ContainerProfile.NativeEditable,budget);
             var entries = SafePackage.Read(ofd, budget);
             Need(!Signed(entries, budget), "SIGNED_INPUT_UNSUPPORTED");
             Need(entries.ContainsKey("OFD.xml") && entries.ContainsKey("Doc_0/Document.xml"), "PROTOCOL_INVALID");
@@ -55,8 +56,8 @@ public static partial class SourceContainer
                     parts.Add(new(name, "application/json", SafePackage.Hash(Bytes(content, budget), budget), content.GetRawText()));
                 }
                 AddAssets(root.GetProperty("resources"), assets ?? [], entries, budget);
-                var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, budget);
-                SemanticMap(root, objectMap, entries, links, budget);
+                var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, ownedResources, budget);
+                SemanticMap(root, objectMap, entries, links, ownedResources, budget);
                 SourceVersions(root);
             }
             else {
@@ -69,6 +70,7 @@ public static partial class SourceContainer
             long manifestReservation = 4096 + inventory.Length * 1024L + sourceJson.Length * 6L;
             if(profile == ContainerProfile.NativeEditable) foreach(var (id, targets) in objectMap)
                 manifestReservation += 128L + id.Length * 6L + targets.Sum(t => 16L + t.Length * 6L);
+            foreach(var (id,target) in ownedResources)manifestReservation+=128+id.Length*6L+target.Length*6L;
             Need(manifestReservation <= budget.Limits.JsonBytes, "SIZE_LIMIT");
             budget.Charge(manifestReservation * 4L);
             var manifest = new SourceManifest("ofd-compose", Protocol,
@@ -76,7 +78,8 @@ public static partial class SourceContainer
                 ProfileVersion, modelVersion, "ofd-compose/layout-ir@0", irDigest,
                 profile == ContainerProfile.NativeEditable ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"],
                 new("OFDCompose.Containers/0", parentArtifactDigest), "unsigned-or-unverified", parts, inventory,
-                profile == ContainerProfile.NativeEditable ? objectMap : new Dictionary<string, string[]>());
+                profile == ContainerProfile.NativeEditable ? objectMap : new Dictionary<string, string[]>(),
+                profile == ContainerProfile.NativeEditable ? ownedResources : new Dictionary<string,string>());
             entries.Add(ManifestPath, JsonSerializer.SerializeToUtf8Bytes(manifest, ContainerJsonContext.Default.SourceManifest));
             Need(entries[ManifestPath].Length <= budget.Limits.JsonBytes, "SIZE_LIMIT");
             entries.Add(AttachmentsPath, SafePackage.Encode(new XDocument(new XElement(SafePackage.Ns + "Attachments",
@@ -102,7 +105,7 @@ public static partial class SourceContainer
             var manifest = parsed.RootElement;
             Need(Text(manifest, "namespace") == "ofd-compose" && Text(manifest, "protocol") == Protocol, "PROTOCOL_INVALID");
             ValidateAttachment(entries, budget);
-            Keys(manifest, "namespace", "protocol", "profile", "containerProfileVersion", "modelVersion", "irVersion", "irDigest", "capabilities", "provenance", "signaturePolicy", "parts", "entries", "objectMap");
+            Keys(manifest, "namespace", "protocol", "profile", "containerProfileVersion", "modelVersion", "irVersion", "irDigest", "capabilities", "provenance", "signaturePolicy", "parts", "entries", "objectMap", "resourceMap");
             string profile = Text(manifest, "profile");
             Need(profile is "native-editable" or "distribution" && IsDigest(Text(manifest, "irDigest")), "SCHEMA_INVALID");
             Keys(manifest.GetProperty("provenance"), "producer", "parentArtifactDigest");
@@ -131,6 +134,7 @@ public static partial class SourceContainer
                     source = Parse(sourceJson, budget);
                 }
                 var objectMap = ReadObjectMap(manifest.GetProperty("objectMap"), budget);
+                var resourceMap=ReadResourceMap(manifest.GetProperty("resourceMap"),budget);
                 ValidateInventory(manifest.GetProperty("entries"), entries, budget, schemaOnly: true);
                 // Schema is validated before any digest comparison.
                 foreach (var part in parts.EnumerateArray())
@@ -143,8 +147,8 @@ public static partial class SourceContainer
                 if (source is not null)
                 {
                     var root = source.RootElement;
-                    var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, budget);
-                    SemanticMap(root, objectMap, entries, links, budget);
+                    var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, resourceMap, budget);
+                    SemanticMap(root, objectMap, entries, links, resourceMap, budget);
                 SourceVersions(root);
                     foreach (var image in root.GetProperty("resources").GetProperty("images").EnumerateArray())
                     {
@@ -153,7 +157,7 @@ public static partial class SourceContainer
                     }
                     Need(Text(manifest, "modelVersion") == Text(root.GetProperty("resolvedDocument"), "modelVersion"), "VERSION_UNSUPPORTED");
                 }
-                else { Need(objectMap.Count == 0 && entries.Keys.All(p => IsWriterEntry(p) || p is ManifestPath or AttachmentsPath), "DISTRIBUTION_SOURCE_FORBIDDEN"); SafePackage.References(entries,budget,requirePageReachability:true); }
+                else { Need(objectMap.Count == 0 && resourceMap.Count==0 && entries.Keys.All(p => IsWriterEntry(p) || p is ManifestPath or AttachmentsPath), "DISTRIBUTION_SOURCE_FORBIDDEN"); SafePackage.References(entries,budget,requirePageReachability:true); }
                 Need(Text(manifest, "containerProfileVersion") == ProfileVersion && Text(manifest, "irVersion") == "ofd-compose/layout-ir@0" && Text(manifest, "modelVersion") == "0", "VERSION_UNSUPPORTED");
                 string[] expected = profile == "native-editable" ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"];
                 Need(manifest.GetProperty("capabilities").EnumerateArray().Select(e => e.GetString()).SequenceEqual(expected), "VERSION_UNSUPPORTED");

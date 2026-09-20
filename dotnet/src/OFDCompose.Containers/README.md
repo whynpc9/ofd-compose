@@ -64,3 +64,11 @@ the manifest digest without updating protected parts, while remaining an interna
 consistency check, not authentication. Resource XML/page references and resource-file
 reachability are checked for both profiles. Font weight/italic/face and requested family
 metadata are checked against the layout/source; unused family aliases are minimized.
+
+The writer returns an explicit IR resource ID → OFD resource ID `ResourceMap`. Native
+`Create` requires that map via `resourceMap:` and validates it against resource XML and
+page references; the manifest retains it for extraction. Source text font-family
+selection is checked against the mapped original font identity, including paragraph
+styles and explicit fragment inheritance. The writer only returns its existing mapping;
+this adds no layout or font selection to the writer and does not change writer bytes.
+Both profiles reject declared resources unused by page objects.

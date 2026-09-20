@@ -42,7 +42,7 @@ public sealed class ContainerTests
         var sourceBytes = await File.ReadAllBytesAsync(Path.Combine(directory, "source.json"));
         var assets = new List<SourceAsset>();
         foreach (var asset in manifest["sourceAssets"]!.AsArray()) assets.Add(new(asset!["sha256"]!.GetValue<string>(), await File.ReadAllBytesAsync(Path.Combine(directory, asset["file"]!.GetValue<string>()))));
-        var sealedResult = SourceContainer.Create(ofd.Bytes!, Hash(ir), ofd.ObjectMap!, ContainerProfile.NativeEditable, sourceBytes, assets, cancellationToken:TestContext.Current.CancellationToken);
+        var sealedResult = SourceContainer.Create(ofd.Bytes!, Hash(ir), ofd.ObjectMap!, ContainerProfile.NativeEditable, sourceBytes, assets, cancellationToken:TestContext.Current.CancellationToken, resourceMap:ofd.ResourceMap);
         Assert.True(sealedResult.Ok, sealedResult.Error + ": " + string.Join(",", Zip(ofd.Bytes!).Keys));
         await File.WriteAllBytesAsync(Path.Combine(directory, "native.ofd"), sealedResult.Bytes!, TestContext.Current.CancellationToken);
         return new(directory, sourceBytes, ofd, sealedResult.Bytes!, manifest["identity"]!);
@@ -133,13 +133,13 @@ public sealed class ContainerTests
     public async Task Distribution_has_no_source_or_semantics_anywhere()
     {
         var first=await Initial.Value;
-        var result=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution, cancellationToken:TestContext.Current.CancellationToken);
+        var result=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution, cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.True(result.Ok,result.Error);
         var extracted=SourceContainer.Extract(result.Bytes!, cancellationToken:TestContext.Current.CancellationToken); Assert.True(extracted.Ok,extracted.Error);
         Assert.Equal("distribution",extracted.Profile); Assert.Null(extracted.SourceJson);
         foreach(var bytes in Zip(result.Bytes!).Values)
         { var text=Encoding.UTF8.GetString(bytes); Assert.DoesNotContain("resolved-document@",text); Assert.DoesNotContain("printed",text); Assert.DoesNotContain("revision-1",text); }
-        Assert.Equal("DISTRIBUTION_SOURCE_FORBIDDEN",SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,first.Source, cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("DISTRIBUTION_SOURCE_FORBIDDEN",SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,first.Source, cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
     }
     [Fact]
     public async Task Budget_cancellation_path_duplicates_DTD_and_forged_name_fail_closed()
@@ -170,7 +170,7 @@ public sealed class ContainerTests
         });
         var result=SourceContainer.Extract(signed,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(result.Ok,result.Error);Assert.Equal("present-unverified",result.Signature);Assert.Equal("internal-consistency-only",result.Integrity);
-        Assert.Equal("SIGNED_INPUT_UNSUPPORTED",SourceContainer.Create(signed,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SIGNED_INPUT_UNSUPPORTED",SourceContainer.Create(signed,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
     }
 
     [Fact]
@@ -261,7 +261,7 @@ public sealed class ContainerTests
     {
         var first=await Initial.Value;
         using var source=new ChangingMemory(first.Source);
-        var created=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),new ChangingMap(first.Ofd.ObjectMap!),ContainerProfile.NativeEditable,source.Input,cancellationToken:TestContext.Current.CancellationToken);
+        var created=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),new ChangingMap(first.Ofd.ObjectMap!),ContainerProfile.NativeEditable,source.Input,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.True(created.Ok,created.Error);
         var extracted=SourceContainer.Extract(created.Bytes!,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(extracted.Ok,extracted.Error);
@@ -350,7 +350,7 @@ public sealed class ContainerTests
             entries[path]=Encoding.UTF8.GetBytes(xml.ToString());return Pack(entries);
         }
         Assert.Equal("PACKAGE_XML",SourceContainer.Extract(Change(first.Sealed),cancellationToken:TestContext.Current.CancellationToken).Error);
-        if(Zip(first.Ofd.Bytes!).ContainsKey(path))Assert.Equal("PACKAGE_XML",SourceContainer.Create(Change(first.Ofd.Bytes!),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.NativeEditable,first.Source,cancellationToken:TestContext.Current.CancellationToken).Error);
+        if(Zip(first.Ofd.Bytes!).ContainsKey(path))Assert.Equal("PACKAGE_XML",SourceContainer.Create(Change(first.Ofd.Bytes!),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.NativeEditable,first.Source,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
     }
 
     [Theory]
@@ -366,7 +366,7 @@ public sealed class ContainerTests
         if(mutation=="page-location")xml.Descendants().Single(e=>e.Name.LocalName=="Page").SetAttributeValue("BaseLoc","Pages/Page_99/Content.xml");
         if(mutation=="font-location")xml.Descendants().Single(e=>e.Name.LocalName=="FontFile").Value="missing.otf";
         entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.Equal(mutation=="font-location"?"RESOURCE_MISSING":"PACKAGE_REFERENCE",result.Error);
     }
 
@@ -409,7 +409,7 @@ public sealed class ContainerTests
     public async Task Orphan_resource_bytes_cannot_carry_hidden_source(ContainerProfile profile)
     {
         var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);entries.Add("Doc_0/Res/leak.png",Encoding.UTF8.GetBytes("FULL_SOURCE_SECRET"));
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?first.Source:default,cancellationToken:TestContext.Current.CancellationToken);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?first.Source:default,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("RESOURCE_ORPHAN",result.Error);Assert.Null(result.Bytes);
     }
 
@@ -421,7 +421,7 @@ public sealed class ContainerTests
         resource.Root.Add(new XElement(ns+"MultiMedias",new XElement(ns+"MultiMedia",new XAttribute("ID","777"),new XAttribute("Type","Image"),new XAttribute("Format","PNG"),new XElement(ns+"MediaFile","leak.png"))));
         entries["Doc_0/PublicRes.xml"]=Encoding.UTF8.GetBytes(resource.ToString());
         var doc=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));doc.Descendants(ns+"MaxUnitID").Single().Value="777";entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(doc.ToString());
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("RESOURCE_ORPHAN",result.Error);Assert.Null(result.Bytes);
     }
     [Fact]
@@ -436,6 +436,55 @@ public sealed class ContainerTests
         using var input=new ChangingMemory(first.Sealed,changed);
         var result=SourceContainer.Extract(input.Input,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,result.Error);
         Assert.Equal("revision-1",JsonNode.Parse(result.SourceJson!)!["resolvedDocument"]!["revisionId"]!.GetValue<string>());
+    }
+
+    [Theory]
+    [InlineData("OFD.xml")]
+    [InlineData("Doc_0/Document.xml")]
+    [InlineData("Doc_0/PublicRes.xml")]
+    [InlineData("Doc_0/Pages/Page_0/Content.xml")]
+    public async Task Root_metadata_cannot_hide_source_on_distribution(string path)
+    {
+        var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));
+        xml.Root!.SetAttributeValue("leak","FULL_SOURCE_SECRET");entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
+        Assert.Equal("UNEXPECTED_METADATA",result.Error);
+    }
+
+    [Fact]
+    public async Task Native_rejects_a_declared_image_without_a_page_reference()
+    {
+        var fixture=await Build("two-images");var entries=Zip(fixture.Ofd.Bytes!);var removed=fixture.Ofd.ObjectMap!.Last();
+        var page=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Pages/Page_0/Content.xml"]));page.Descendants().Single(e=>(string?)e.Attribute("ID")==removed.Value[0]).Remove();
+        entries["Doc_0/Pages/Page_0/Content.xml"]=Encoding.UTF8.GetBytes(page.ToString());
+        var source=JsonNode.Parse(fixture.Source)!;var semantics=source["semanticMap"]!["entries"]!.AsArray();semantics.Remove(semantics.Single(e=>e!["objectId"]!.GetValue<string>()==removed.Key));
+        var map=fixture.Ofd.ObjectMap!.Where(p=>p.Key!=removed.Key).ToDictionary(p=>p.Key,p=>p.Value);
+        var assets=SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Assets!;
+        var result=SourceContainer.Create(Pack(entries),fixture.Identity["irDigest"]!.GetValue<string>(),map,ContainerProfile.NativeEditable,Encoding.UTF8.GetBytes(source.ToJsonString()),assets,cancellationToken:TestContext.Current.CancellationToken,resourceMap:fixture.Ofd.ResourceMap);
+        Assert.Equal("RESOURCE_ORPHAN",result.Error);
+    }
+    [Fact]
+    public async Task Font_family_permutation_is_checked_against_each_rendered_text_resource()
+    {
+        var fixture=await Build("two-fonts");
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resources")!;
+            var resources=JsonNode.Parse(part["content"]!.GetValue<string>())!;var fonts=resources["fonts"]!.AsArray();Assert.Equal(2,fonts.Count);
+            string first=fonts[0]!["family"]!.GetValue<string>();fonts[0]!["family"]=fonts[1]!["family"]!.DeepClone();fonts[1]!["family"]=first;
+            string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("FONT_FAMILY_MISMATCH",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Fact]
+    public async Task Physical_resource_map_cannot_permute_distinct_font_resources()
+    {
+        var fixture=await Build("two-fonts");
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var map=manifest["resourceMap"]!.AsObject();var keys=map.Select(p=>p.Key).ToArray();Assert.Equal(2,keys.Length);
+            string first=map[keys[0]]!.GetValue<string>();map[keys[0]]=map[keys[1]]!.DeepClone();map[keys[1]]=first;
+        });
+        Assert.Equal("RESOURCE_INCOMPLETE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
 }

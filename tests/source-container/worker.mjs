@@ -90,7 +90,12 @@ if (mode === "combined" || mode === "two-images") {
   result = await render(fixture.source, fixture.data, pack, fixture.profile, {
     sourceAttachment: true,
   });
-} else if (mode === "initial" || mode === "empty-paragraph" || mode.startsWith("checkbox-")) {
+} else if (
+  mode === "initial" ||
+  mode === "empty-paragraph" ||
+  mode === "two-fonts" ||
+  mode.startsWith("checkbox-")
+) {
   const source = {
     schemaVersion: "ofd-compose/document-model@0",
     documentId: "source-roundtrip",
@@ -113,6 +118,29 @@ if (mode === "combined" || mode === "two-images") {
       },
     ],
   };
+  if (mode === "two-fonts") {
+    const other = fontManifest[2];
+    const bytes = new Uint8Array(
+      await readFile(
+        new URL(`../../packages/typography-core/fonts/${other.file}`, import.meta.url),
+      ),
+    );
+    pack.fonts.push({
+      family: "Second",
+      weight: 400,
+      italic: false,
+      sha256: other.sha256,
+      byteLength: bytes.length,
+      bytes,
+    });
+    source.styles.second = { fontFamily: "Second" };
+    source.body.push({
+      kind: "paragraph",
+      nodeId: "second-p",
+      styleId: "second",
+      inlines: [{ kind: "text", nodeId: "second-t", text: "second 中文" }],
+    });
+  }
   if (mode === "empty-paragraph") source.body[0].inlines = [];
   if (mode.startsWith("checkbox-"))
     source.body[0].inlines = [

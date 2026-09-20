@@ -7,6 +7,31 @@ using static OFDCompose.Containers.SourceValidation;
 namespace OFDCompose.Containers;
 public static partial class SourceContainer
 {
+    private static Dictionary<string,string> OwnResourceMap(IReadOnlyDictionary<string,string>? input,bool required,ContainerBudget budget)
+    {
+        Need(!required||input is not null,"RESOURCE_MAP_MISSING");
+        var result=new Dictionary<string,string>();
+        if(input is null)return result;
+        Need(input.Count<=128,"SIZE_LIMIT");
+        foreach(var (id,target) in input)
+        {
+            Need(result.Count<128 && id.Length is >0 and <=256 && target.Length is >0 and <=256,"SIZE_LIMIT");
+            budget.Charge(128+id.Length*6L+target.Length*6L);Need(result.TryAdd(id,target),"RESOURCE_INCOMPLETE");
+        }
+        return result;
+    }
+    private static Dictionary<string,string> ReadResourceMap(JsonElement value,ContainerBudget budget)
+    {
+        Need(value.ValueKind==JsonValueKind.Object,"SCHEMA_INVALID");
+        var result=new Dictionary<string,string>();
+        foreach(var property in value.EnumerateObject())
+        {
+            string target=property.Value.GetString()??throw new ContainerFailure("SCHEMA_INVALID");
+            Need(result.Count<128 && property.Name.Length is >0 and <=256 && target.Length is >0 and <=256,"SIZE_LIMIT");
+            budget.Charge(128+property.Name.Length*6L+target.Length*6L);result.Add(property.Name,target);
+        }
+        return result;
+    }
     private static IReadOnlyDictionary<string,string[]> OwnObjectMap(IReadOnlyDictionary<string,string[]> input,ContainerBudget budget)
     {
         Need(input.Count is >=0 and <=200_000,"SIZE_LIMIT");
@@ -28,7 +53,7 @@ public static partial class SourceContainer
         {
             var xml=SafePackage.Xml(bytes,budget);
             Need(!xml.DescendantNodes().Any(n=>n is System.Xml.Linq.XComment or System.Xml.Linq.XProcessingInstruction),"UNEXPECTED_METADATA");
-            foreach(var element in xml.Descendants())
+            foreach(var element in xml.Root!.DescendantsAndSelf())
             {
                 budget.Charge(32);
                 Need(element.Name.Namespace==SafePackage.Ns && elementNames.Contains(element.Name.LocalName),"UNEXPECTED_METADATA");
@@ -118,9 +143,9 @@ public static partial class SourceContainer
         }
         Need(seen.Count == declared.Count, "RESOURCE_MISSING");
     }
-    private static Dictionary<string,(string Kind,string Digest)> Resources(JsonElement resources, JsonElement resolved, JsonElement renderProfile, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    private static Dictionary<string,(string Kind,string Digest)> Resources(JsonElement resources, JsonElement resolved, JsonElement renderProfile, Dictionary<string, byte[]> entries, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget)
     {
-        SafePackage.References(entries,budget);
+        SafePackage.References(entries,budget,requirePageReachability:true);
         var fonts = resources.GetProperty("fonts").EnumerateArray().ToArray();
         var images = resources.GetProperty("images").EnumerateArray().ToArray();
         var layout = resources.GetProperty("layout").EnumerateArray().ToArray();
@@ -146,6 +171,13 @@ public static partial class SourceContainer
         var declaredSet=declared.Values.ToHashSet();
         var layoutSet=layout.Select(r=>(Text(r,"kind"),Text(r,Text(r,"kind")=="font"?"subsetDigest":"digest"))).ToHashSet();
         Need(declaredSet.SetEquals(layoutSet),"RESOURCE_INCOMPLETE");
+        Need(resourceMap.Count==layout.Length && resourceMap.Values.ToHashSet().SetEquals(declared.Keys),"RESOURCE_INCOMPLETE");
+        foreach(var item in layout)
+        {
+            Need(resourceMap.TryGetValue(Text(item,"id"),out var target),"RESOURCE_INCOMPLETE");
+            Need(declared.TryGetValue(target,out var physical),"RESOURCE_INCOMPLETE");
+            Need(physical.Kind==Text(item,"kind") && physical.Digest==Text(item,physical.Kind=="font"?"subsetDigest":"digest"),"RESOURCE_INCOMPLETE");
+        }
         foreach(var page in entries.Where(e=>e.Key.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)))
             foreach(var node in SafePackage.Xml(page.Value,budget).Descendants().Where(e=>e.Name.LocalName is "TextObject" or "ImageObject"))
             {
@@ -237,11 +269,12 @@ public static partial class SourceContainer
         }
         return result;
     }
-    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, ContainerBudget budget)
+    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget)
     {
         Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
         var physical = new HashSet<string>();
-        var objects = new Dictionary<string,(int Page,string? Text,string? ImageDigest)>();
+        var objects = new Dictionary<string,(int Page,string? Text,string? ImageDigest,string? OriginalFont)>();
+        var originalFonts=root.GetProperty("resources").GetProperty("layout").EnumerateArray().Where(r=>Text(r,"kind")=="font").ToDictionary(r=>resourceMap[Text(r,"id")],r=>Text(r,"originalDigest"));
         foreach (var entry in entries.Where(e => e.Key.StartsWith("Doc_0/Pages/", StringComparison.Ordinal) && e.Key.EndsWith("/Content.xml", StringComparison.Ordinal)))
         {
             var xml = SafePackage.Xml(entry.Value, budget);
@@ -250,7 +283,7 @@ public static partial class SourceContainer
             {
                 string id=(string?)element.Attribute("ID")??"";
                 Need(physical.Add(id), "SEMANTIC_REFERENCE");
-                objects.Add(id,(pageIndex,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null,element.Name.LocalName=="ImageObject"?links[(string)element.Attribute("ResourceID")!].Digest:null));
+                objects.Add(id,(pageIndex,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null,element.Name.LocalName=="ImageObject"?links[(string)element.Attribute("ResourceID")!].Digest:null,element.Name.LocalName=="TextObject"?originalFonts[(string)element.Attribute("Font")!]:null));
             }
         }
         var mapped = new HashSet<string>();
@@ -261,6 +294,6 @@ public static partial class SourceContainer
             foreach (var target in targets) Need(physical.Contains(target) && mapped.Add(target), "SEMANTIC_REFERENCE");
         }
         Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
-        SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),objectMap,objects,budget);
+        SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,budget);
     }
 }
