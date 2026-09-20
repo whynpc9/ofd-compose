@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { canonicalSerialize } from "../../packages/layout-ir/dist/index.mjs";
 import { finalizeSource, render } from "../../packages/render-worker/dist/index.mjs";
 
-const [mode, output, sourceFile] = process.argv.slice(2);
+const [mode, output, sourceFile, assetsFile] = process.argv.slice(2);
 const fontManifest = JSON.parse(
   await readFile(new URL("../../packages/typography-core/fonts/manifest.json", import.meta.url)),
 );
@@ -146,6 +146,8 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
   });
 } else if (
   mode === "initial" ||
+  mode === "decorated-paths" ||
+  mode === "page-border" ||
   mode === "links" ||
   mode === "table-links" ||
   mode === "empty-bands" ||
@@ -185,6 +187,46 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
       },
     ],
   };
+  if (mode === "decorated-paths" || mode === "page-border") {
+    source.settings.page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      border: { inset: 5, width: 0.5, color: "#112233" },
+    };
+    if (mode === "decorated-paths") {
+      source.styles.paint = { highlight: "#FFFF00", underline: true, strikethrough: true };
+      source.body[0].styleId = "paint";
+      source.body[0].layout = { border: { width: 0.3, color: "#445566" } };
+      source.body.push({
+        kind: "table",
+        nodeId: "paint-table",
+        border: { width: 0.2, color: "#006600" },
+        layout: { columns: [{ kind: "fixed", value: 60 }] },
+        rows: [
+          {
+            kind: "table-row",
+            nodeId: "paint-row",
+            cells: [
+              {
+                kind: "table-cell",
+                nodeId: "paint-cell",
+                border: { width: 0.4, color: "#AA0000" },
+                layout: { background: "#E0E0E0", padding: 2 },
+                blocks: [
+                  {
+                    kind: "paragraph",
+                    nodeId: "paint-p",
+                    inlines: [{ kind: "text", nodeId: "paint-text", text: "cell" }],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      });
+    }
+  }
   if (mode === "links") {
     source.styles.linked = {
       link: "https://example.invalid/?token=LINK_SECRET_STYLE",
@@ -491,19 +533,42 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
   );
 } else {
   const content = JSON.parse(await readFile(sourceFile, "utf8"));
-  // Host-only authorization map. No path/URL supplied by the attachment is ever opened.
-  for (const identity of content.resources.fonts) {
-    assert.equal(
-      identity.sha256,
-      font.sha256,
-      "Host has no authorized full font with requested digest",
+  if (mode === "verify-generated") {
+    pack.fonts = [];
+    for (const identity of content.resources.fonts) {
+      const authorized = fontManifest.find((font) => font.sha256 === identity.sha256);
+      assert.ok(authorized, "Host has no authorized full font");
+      const bytes = new Uint8Array(
+        await readFile(
+          new URL(`../../packages/typography-core/fonts/${authorized.file}`, import.meta.url),
+        ),
+      );
+      assert.equal(identity.byteLength, bytes.length);
+      pack.fonts.push({ ...identity, bytes });
+    }
+    const ownedAssets = JSON.parse(await readFile(assetsFile, "utf8"));
+    pack.images = await Promise.all(
+      content.resources.images.map(async (image) => {
+        const asset = ownedAssets.find((asset) => asset.sha256 === image.sha256);
+        assert.ok(asset);
+        return { ...image, bytes: new Uint8Array(await readFile(asset.file)) };
+      }),
     );
-    assert.equal(identity.byteLength, full.length);
+  } else {
+    // Host-only authorization map. No path/URL supplied by the attachment is ever opened.
+    for (const identity of content.resources.fonts) {
+      assert.equal(
+        identity.sha256,
+        font.sha256,
+        "Host has no authorized full font with requested digest",
+      );
+      assert.equal(identity.byteLength, full.length);
+    }
+    content.resolvedDocument.body[0].fragments[0].text = "edited office 中文新";
+    content.resolvedDocument.revisionId = "revision-2";
+    // An inert expression string must never be interpreted in this seam.
+    content.resolvedDocument.body[0].fragments[0].origin.expression = "unknownFunction(secret)";
   }
-  content.resolvedDocument.body[0].fragments[0].text = "edited office 中文新";
-  content.resolvedDocument.revisionId = "revision-2";
-  // An inert expression string must never be interpreted in this seam.
-  content.resolvedDocument.body[0].fragments[0].origin.expression = "unknownFunction(secret)";
   result = await finalizeSource(content, pack, { sourceAttachment: true });
 }
 assert.equal(result.ok, true, JSON.stringify(result.diagnostics));

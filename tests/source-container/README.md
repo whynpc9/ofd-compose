@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 612, fresh Chromium 402,
-full .NET 294 (100 container cases plus the unchanged 194 baseline cases). The final
+full .NET 304 (110 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -118,3 +118,12 @@ profile/semantics, including table/cell styles. Visible underlines are materiali
 and opaque shaping groups preserve original run boundaries so URL removal cannot
 change ligatures. Shared paragraph-style rules and actual re-finalization tests require
 identical pages, graphics states and resources after this projection.
+
+Generated path decorations require a trusted `GeneratedPathResolver` when present or
+potentially requested by retained source paint settings. The host uses the real Worker
+and fixed writer to recompute path XML, with explicit full-font authorization and owned
+source-image assets. The container compares the complete generated-path set, page/object
+positions and path/paint/clip payloads. It ignores only identifier/namespace serialization
+and non-leaf formatting whitespace. Tests cover page/paragraph/cell borders, backgrounds,
+highlight/underline changes, missing paths and attempts to relabel paths as paragraph
+semantics. Typed physical-object mapping preserves legitimate trailing-line-break anchors.

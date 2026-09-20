@@ -268,7 +268,7 @@ public static partial class SourceContainer
         }
         return result;
     }
-    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver)
+    private static Dictionary<string,RenderedObject> SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver)
     {
         Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
         var physical = new HashSet<string>();
@@ -277,12 +277,12 @@ public static partial class SourceContainer
         foreach (var entry in entries.Where(e => e.Key.StartsWith("Doc_0/Pages/", StringComparison.Ordinal) && e.Key.EndsWith("/Content.xml", StringComparison.Ordinal)))
         {
             var xml = SafePackage.Xml(entry.Value, budget);
-            int pageIndex=int.Parse(entry.Key.Split('/')[2][5..],System.Globalization.CultureInfo.InvariantCulture);
+            int pageIndex=int.Parse(entry.Key.Split('/')[2][5..],System.Globalization.CultureInfo.InvariantCulture),objectIndex=0;
             foreach (var element in xml.Descendants().Where(e => e.Name.LocalName is "TextObject" or "ImageObject" or "PathObject"))
             {
                 string id=(string?)element.Attribute("ID")??"";
                 Need(physical.Add(id), "SEMANTIC_REFERENCE");
-                objects.Add(id,new(pageIndex,objects.Count,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null,element.Name.LocalName=="ImageObject"?links[(string)element.Attribute("ResourceID")!].Digest:null,element.Name.LocalName=="TextObject"?originalFonts[(string)element.Attribute("Font")!]:null,element));
+                objects.Add(id,new(pageIndex,objectIndex++,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null,element.Name.LocalName=="ImageObject"?links[(string)element.Attribute("ResourceID")!].Digest:null,element.Name.LocalName=="TextObject"?originalFonts[(string)element.Attribute("Font")!]:null,element));
             }
         }
         var mapped = new HashSet<string>();
@@ -294,5 +294,6 @@ public static partial class SourceContainer
         }
         Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
         SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,entries.Keys.Count(path=>path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)&&path.EndsWith("/Content.xml",StringComparison.Ordinal)),budget,barcodeGeometryResolver,numberingLabelsResolver);
+        return objects;
     }
 }

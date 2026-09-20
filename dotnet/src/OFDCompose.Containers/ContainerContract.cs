@@ -8,6 +8,11 @@ public delegate ReadOnlyMemory<byte> BarcodeGeometryResolver(BarcodeGeometryRequ
 public sealed record NumberingLabelsRequest(string AlgorithmVersion,ReadOnlyMemory<byte> ParagraphsJson);
 /// <summary>Trusted host executes Layout Core numbering rules and returns a JSON string array in request order.</summary>
 public delegate ReadOnlyMemory<byte> NumberingLabelsResolver(NumberingLabelsRequest request,CancellationToken cancellationToken);
+/// <summary>Owned filled source and source-image bytes for an explicitly trusted real Worker/fixed-writer verification host.</summary>
+public sealed record GeneratedPathRequest(string AlgorithmVersion,ReadOnlyMemory<byte> SourceJson,IReadOnlyList<SourceAsset> Assets);
+public sealed record GeneratedPathPayload(string ObjectId,int PageIndex,int ObjectIndex,ReadOnlyMemory<byte> Xml);
+/// <summary>Recomputes generated path objects from source; null denies verification. Attachment data never selects an implementation.</summary>
+public delegate IReadOnlyList<GeneratedPathPayload>? GeneratedPathResolver(GeneratedPathRequest request,CancellationToken cancellationToken);
 public enum ContainerProfile { NativeEditable, Distribution }
 public sealed record SourceAsset(string Sha256, ReadOnlyMemory<byte> Bytes);
 public sealed record ContainerResult(byte[]? Bytes, string? Error)

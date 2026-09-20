@@ -90,6 +90,28 @@ internal static class SemanticValidation
         var labels=SourceNumberingValidation.Resolve(numbered.Select(n=>n.Source).ToArray(),numberingLabelsResolver,budget);
         var listLabels=numbered.Select((n,i)=>(n.Pointer,Label:labels[i],n.Face)).ToDictionary(n=>n.Pointer,n=>(Text:n.Label,n.Face));
         foreach(var candidates in index.Values)Need(candidates.Count(c=>c.Renderable)<=1,"SEMANTIC_SOURCE_AMBIGUOUS");
+        var emptyAnchorCache=new Dictionary<SourceNode,bool>();
+        bool EmptyAnchor(SourceNode node)
+        {
+            if(emptyAnchorCache.TryGetValue(node,out bool allowed))return allowed;
+            budget.Charge(64);
+            string? kind=Optional(node.Value,"kind");
+            if(node.Text==""||kind=="paragraph"&&node.Renderable)allowed=true;
+            else if(kind=="table-cell")allowed=!node.Value.GetProperty("blocks").EnumerateArray().Any(block=>Paints(block,budget));
+            else if(kind=="paragraph")
+            {
+                var fragments=node.Value.GetProperty("fragments");
+                for(int i=fragments.GetArrayLength()-1;i>=0;i--)
+                {
+                    budget.Charge(64);var fragment=fragments[i];var origin=fragment.TryGetProperty("origin",out var o)?o:fragment;
+                    if(!index.TryGetValue((Text(origin,"nodeId"),Optional(origin,"bindingId"),node.Repeat),out var candidates))break;
+                    string? text=candidates.FirstOrDefault(c=>c.Value.Equals(fragment))?.Text;
+                    if(string.IsNullOrEmpty(text))continue;
+                    allowed=text[^1] is '\r' or '\n' or '\u2028' or '\u2029';break;
+                }
+            }
+            emptyAnchorCache[node]=allowed;return allowed;
+        }
         var sourceCovered=new HashSet<SourceNode>();
         int lastSourceOrdinal=-1;
         void Cover(SourceNode node)
@@ -129,6 +151,7 @@ internal static class SemanticValidation
                 if(!index.TryGetValue((Text(reference,"nodeId"),binding,repeat),out var candidates))return false;
                 budget.Charge(candidates.Count*32L);
                 var matches=candidates.Where(c=>c.Repeat==repeat && c.Binding==binding && (control is null||control==c.Control)
+                    && targets!.All(target=>PhysicalKind(c,objects[target]))
                     && (!checkText || c.Text==Text(reference.GetProperty("sourceText"),"text"))
                     && (originalFont is null || MatchesFace(c.Face,originalFont))).ToArray();
                 foreach(var candidate in matches)
@@ -168,7 +191,8 @@ internal static class SemanticValidation
                 Need(objects[targets![0]].ImageDigest==expected[position%expected.Length],"RESOURCE_IMAGE_MISMATCH");
                 imagePositions[sourceKey]=position+1;
             }
-            foreach(var candidate in index[sourceKey].Where(n=>Optional(n.Value,"kind") is "path" or "barcode-binding"))
+            var pathNodes=index[sourceKey].Where(n=>Optional(n.Value,"kind") is "path" or "barcode-binding").ToArray();
+            foreach(var candidate in pathNodes)
             {
                 Need(targets!.Length==1,"SEMANTIC_SOURCE");
                 paths.Validate(candidate.Value,objects[targets[0]].Xml);
@@ -197,7 +221,15 @@ internal static class SemanticValidation
                 Need(end==logical.Length,"SEMANTIC_SOURCE");
             }
             else {
-                Need(targets!.All(t=>objects[t].Text is null or ""),"SEMANTIC_SOURCE");
+                bool atomic=imageNodes.Length>0||pathNodes.Length>0;
+                Need(targets!.All(t=>atomic?objects[t].Text is null:objects[t].Text==""),"SEMANTIC_SOURCE");
+                if(!atomic)
+                {
+                    var anchors=index[sourceKey].Where(EmptyAnchor).ToArray();
+                    Need(anchors.Length==1,"SEMANTIC_SOURCE");
+                    if(!atomicCounts.TryGetValue(anchors[0],out var counts))atomicCounts[anchors[0]]=counts=[];
+                    counts[page.GetInt32()]=counts.GetValueOrDefault(page.GetInt32())+1;
+                }
                 foreach(var target in targets!)Need(Source(semantic,false,objects[target].OriginalFont),"FONT_FAMILY_MISMATCH");
             }
         }
@@ -335,6 +367,22 @@ internal static class SemanticValidation
         Need(decorationIds.Where(id=>objectMap[id].Any(target=>objects[target].ImageDigest is not null||objects[target].Text is not null)).All(generatedIds.Contains),"SEMANTIC_INCOMPLETE");
         // A source-bearing document cannot relabel all output as decoration.
         Need(semantics.GetArrayLength()>0 || !index.Values.SelectMany(v=>v).Any(v=>v.Text is {Length:>0}),"SEMANTIC_INCOMPLETE");
+    }
+    private static bool PhysicalKind(SourceNode node,RenderedObject actual)=>Optional(node.Value,"kind") switch
+    {
+        "path" or "barcode-binding"=>actual.Xml.Name==SafePackage.Ns+"PathObject",
+        "image-binding"=>actual.Xml.Name==SafePackage.Ns+"ImageObject",
+        "paragraph" or "text" or "input-control" or "table-cell"=>actual.Xml.Name==SafePackage.Ns+"TextObject",
+        _=>false
+    };
+    private static bool Paints(JsonElement block,ContainerBudget budget)
+    {
+        budget.Charge(32);
+        return Optional(block,"kind") switch {
+            "image-binding"=>block.GetProperty("sources").GetArrayLength()>0,
+            "region"=>block.GetProperty("layout").TryGetProperty("background",out _)||block.GetProperty("layout").TryGetProperty("border",out _)||block.GetProperty("children").EnumerateArray().Any(child=>Paints(child,budget)),
+            _=>true
+        };
     }
     private static JsonElement Pointer(JsonElement root,string pointer,ContainerBudget budget)
     {

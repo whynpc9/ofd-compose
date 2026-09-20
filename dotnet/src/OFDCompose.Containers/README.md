@@ -91,7 +91,9 @@ The host is responsible for execution time/cancellation and output limits. The t
 bridge `tests/source-container/verify-barcode.mjs` uses the existing encoder with bounded
 stdin/stdout and a 15-second cancellable host process; the library never launches it.
 
-These checks validate local content/paint relationships, not a complete re-layout proof:
+These checks validate local content/paint relationships; generated paths additionally use
+the explicit real-render host described below. This is not a complete re-layout proof
+for every object:
 page placement, transforms, declared layout boxes and all layout styles are not rebuilt
 by extraction. `internal-consistency-only` does not certify that arbitrary edited source
 will reproduce every original pixel. Editing still goes through the real Worker, and
@@ -126,3 +128,20 @@ Page-decoration completeness is derived for each source section/page, respecting
 and empty bands. Editing sources omit all unprinted link targets. Underline appearance
 and opaque shaping equivalence groups retain original text geometry, using the same
 paragraph-style rules as Layout Core; original capture-on/off IR remains identical.
+
+Generated borders, backgrounds, highlights, underlines and other path decorations use an
+explicit `GeneratedPathResolver`. The request contains owned minimal source JSON and
+owned source-image bytes. An authorized host supplies the locked full fonts, runs the
+existing Worker/fixed-writer chain, and returns each generated PathObject XML with its
+canonical object ID and physical page/index. The library compares the entire expected
+set and fixed XML payload (including geometry, paint and clips); it neither implements
+a second layout engine nor accepts a self-rehashed source digest as verification.
+
+This capability is required whenever actual path decorations or retained settings that
+can generate them exist. Without it, native Create/Extract returns
+`GENERATED_PATH_VERIFIER_REQUIRED`; denial or failed recomputation returns no successful
+source/artifact. Full-font availability is therefore needed at this host verification
+boundary for those native documents. The library never launches a process or resolves
+attachment-chosen paths/URLs. The test host uses known font-manifest hashes, owned temp
+files, a cancellable 45-second process and bounded output. This does not close the desktop
+reader gate or certify every text/image placement or signature.
