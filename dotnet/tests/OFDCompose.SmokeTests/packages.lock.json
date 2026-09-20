@@ -158,7 +158,12 @@
         }
       },
       "ofdcompose.pdfirwriter": {
-        "type": "Project"
+        "type": "Project",
+        "dependencies": {
+          "BigGustave": "[1.0.6, )",
+          "JpegLibrary": "[0.4.32, )",
+          "JsonSchema.Net": "[7.3.4, )"
+        }
       },
       "ofdrw.net.core": {
         "type": "Project"

@@ -1,0 +1,198 @@
+{
+  "scope": "local WP0.7 only; generated from owned committed Worker fixtures",
+  "pdfpig": "0.1.11",
+  "pdfjs": "5.4.149",
+  "qpdf": "11.3.0",
+  "cases": [
+    {
+      "case": "cff-mapping",
+      "bytes": 123729,
+      "sha256": "087ac1a5e80bb5d68ff49f539fa9897f9c30dbf7f0ba77f34b55ca2026116a33"
+    },
+    {
+      "case": "cff",
+      "bytes": 123129,
+      "sha256": "15300a98962de1c1a9968f864530ee8d5488c7e3770745af0e5e52d860d731f3",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.4210854715202004e-14,
+      "MaxReaderExtentErrorPt": 1.4210854715202004e-14,
+      "MaxImageCornerErrorPt": 0
+    },
+    {
+      "case": "combined",
+      "bytes": 385292,
+      "sha256": "1f79524bc6d94549f6f3d5dd7bfcbf5681ea1132a5d2323aaf63bd793bd3240f",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.1368683772161603e-13,
+      "MaxReaderExtentErrorPt": 1.1368683772161603e-13,
+      "MaxImageCornerErrorPt": 2.842170943040401e-14
+    },
+    {
+      "case": "duplicate-markers",
+      "bytes": 123129,
+      "sha256": "2357ccec2efc3003f7906e4d8f93cbceec94ec75fd70f0f7ced87bd9caf1f36f",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.4210854715202004e-14,
+      "MaxReaderExtentErrorPt": 1.4210854715202004e-14,
+      "MaxImageCornerErrorPt": 0
+    },
+    {
+      "case": "geometry",
+      "bytes": 123890,
+      "sha256": "1cd18d850f811d6b0327cf1356c5bea5452b92b833d84f479097104f3e66bd8b",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 2.2737367544323206e-13,
+      "MaxReaderExtentErrorPt": 2.2737367544323206e-13,
+      "MaxImageCornerErrorPt": 2.2737367544323206e-13
+    },
+    {
+      "case": "glyphless",
+      "bytes": 2542,
+      "sha256": "f1c2e7ea1e5168329cc9c83a3def07e624e134ba15169fdfd1c9d3a2772a4493",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 0,
+      "MaxReaderExtentErrorPt": 0,
+      "MaxImageCornerErrorPt": 0
+    },
+    {
+      "case": "jpeg",
+      "bytes": 462617,
+      "sha256": "d6ba1ae5d8cf1dcd5cdb18b4ae4442288d3953f8bda9c42ae2ca503486385b05",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.1368683772161603e-13,
+      "MaxReaderExtentErrorPt": 1.1368683772161603e-13,
+      "MaxImageCornerErrorPt": 2.842170943040401e-14
+    },
+    {
+      "case": "logical-display-printable",
+      "bytes": 125855,
+      "sha256": "6358862a4642600e8fab12a3a6ba19868e6b42ac66b5f60d4e8e515c754bcec5"
+    },
+    {
+      "case": "multi-glyph",
+      "bytes": 4510,
+      "sha256": "d63437d5d6310f9c3f252a7154263f24bdb305139c99a68889b9c90bf3e45682",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 7.105427357601002e-15,
+      "MaxReaderExtentErrorPt": 0,
+      "MaxImageCornerErrorPt": 0
+    },
+    {
+      "case": "nel-control",
+      "bytes": 4387,
+      "sha256": "59d39c611adef44e9b8f073e18996b162d36a7b2c4021e075f8586b729539610"
+    },
+    {
+      "case": "nonidentity-contract",
+      "bytes": 4510,
+      "sha256": "5a20711795fa78f35102e080cd869e5c8abf0f03a45abbd8e6721ce7e9ebc722",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 7.105427357601002e-15,
+      "MaxReaderExtentErrorPt": 0,
+      "MaxImageCornerErrorPt": 0
+    },
+    {
+      "case": "truetype-mapping",
+      "bytes": 5070,
+      "sha256": "dcb4569b647d897af6a0493f6b3d522620ca8183e84b833a31efcf01f90fac89"
+    },
+    {
+      "case": "truetype",
+      "bytes": 6506,
+      "sha256": "9878ad2ab7904b7a7a62293491b237a83efcbae0321047f5b8ec7efc9937b994",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 1.4210854715202004e-14,
+      "MaxReaderExtentErrorPt": 0.0014456692913427105,
+      "MaxImageCornerErrorPt": 0
+    },
+    {
+      "case": "visible-image",
+      "bytes": 123903,
+      "sha256": "91b066986c78a4ce25a49f90bfab863778e8fd13144855f2ee12780e5fc4f875",
+      "Reader": "PdfPig 0.1.11",
+      "MaxBaselineErrorPt": 2.2737367544323206e-13,
+      "MaxReaderExtentErrorPt": 2.2737367544323206e-13,
+      "MaxImageCornerErrorPt": 1.1368683772161603e-13
+    }
+  ],
+  "poppler": "22.12.0-2+deb12u3 (fixed Docker image)",
+  "validation": {
+    "nodeFullNoCache": 604,
+    "chromiumFullNoCache": 395,
+    "dotnetFull": 194,
+    "pdfTests": 72,
+    "mutationGates": 9,
+    "freshProcessDeterminism": "28 strict positives and 1 accepted Worker case identical across fresh processes",
+    "isolatedMappingTestsFreshDirectory": 16,
+    "pixelIdenticalPages": 20,
+    "highLevelPositiveCasesLiteralExact": 14,
+    "rtlPositiveCases": 4,
+    "spacingPositiveCases": 10,
+    "acceptedWhitespaceCases": 1
+  },
+  "rtlCases": [
+    {
+      "case": "rtl-overlap",
+      "sha256": "fdbb4c74e177ba786c1739ed26cabc8890ef1cb6f3bf63e7ce0602250ae3e1a9"
+    },
+    {
+      "case": "rtl-wide",
+      "sha256": "772a84af470852032d8d62daae03061a464dd715a1475e059085478b8fd02c87"
+    },
+    {
+      "case": "rtl-order",
+      "sha256": "c0cf94f7f43cf342d629068a1845a971bd95fd9f6fc0243e6d5aa95d9a8e06d3"
+    },
+    {
+      "case": "rtl-positions",
+      "sha256": "425caea1125da07a61b20ef8abc52b0a923a48630f5388f8928c8ded5468a671"
+    }
+  ],
+  "spacingCases": [
+    {
+      "case": "spacing-mixed-semantic",
+      "sha256": "c2e09114cdfeb6ffbcd48885d3d9d155c7c4df9274e0a82d9e3deb4acf1fada5"
+    },
+    {
+      "case": "spacing-trailing",
+      "sha256": "1fdaedb552844a1c8bbeb77deb4ff5b097dc733a6174bc882eb747cd5b3608bc"
+    },
+    {
+      "case": "spacing-combining",
+      "sha256": "f9f3972bb2b1cfcc6fc86189bbae96451fbcb5775137538c2a492318f0f91dd8"
+    },
+    {
+      "case": "spacing-leading",
+      "sha256": "d940df0a194e81323cec2920fe4ecf5870bb4d28cbd87b091ad5f8cc782f077a"
+    },
+    {
+      "case": "spacing-cluster",
+      "sha256": "3deba32723c17a5b67dbdb98b010eaecdff316e52e15c87c7c1e347de58a8546"
+    },
+    {
+      "case": "spacing-semantic-runs",
+      "sha256": "cf89a8f14fef41a08d84f3fb9e50dc3edb5068dd106f48d902f5192762726be0"
+    },
+    {
+      "case": "spacing-cluster-semantic",
+      "sha256": "abb9b53e5b56ec33818453a8d391841428527eec5472ecf2a6d1b9993085cc79"
+    },
+    {
+      "case": "spacing-columns",
+      "sha256": "8222a72bdf3d438e4cdcbbf697b92af82dd26eba9fb3f575a708e37f91952033"
+    },
+    {
+      "case": "spacing-combining-semantic",
+      "sha256": "d328e0f445f233e895ad30423378de6a0b53a60a85ca62c61c3f2dd3d8952828"
+    },
+    {
+      "case": "spacing-mixed",
+      "sha256": "1bd41048d3ceda0a1f23074d10cd2a5221fe9458895b7bff28a87a0214412b3b"
+    }
+  ],
+  "acceptedReaderBoundary": {
+    "date": "2026-09-19",
+    "contract": "accepted-whitespace.json",
+    "scope": "Only pinned real Worker o  f -> o f high-level result; source/ToUnicode/PdfPig exact, existing25 strict cases unchanged"
+  }
+}

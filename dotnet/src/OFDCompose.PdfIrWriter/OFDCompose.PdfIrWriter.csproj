@@ -1,2 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><DefineConstants>$(DefineConstants);PDF_WRITER</DefineConstants></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../FixedWriterValidation/*.cs" Link="Validation/%(Filename)%(Extension)" />
+    <PackageReference Include="JsonSchema.Net" />
+    <PackageReference Include="BigGustave" />
+    <PackageReference Include="JpegLibrary" />
+    <EmbeddedResource Include="../../../schemas/layout-ir/canonical-layout-ir.schema.json" LogicalName="canonical-layout-ir.schema.json" />
+  </ItemGroup>
 </Project>

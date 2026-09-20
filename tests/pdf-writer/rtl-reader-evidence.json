@@ -1,0 +1,25 @@
+{
+  "baseline": "IR visual glyph emission order",
+  "pdfCases": 3,
+  "pixelIdenticalPages": 2,
+  "pages": [
+    {
+      "page": "rtl-order-1.ppm",
+      "maxChannelDelta": 0,
+      "changedChannels": 0,
+      "changedPixels": []
+    },
+    {
+      "page": "rtl-overlap-1.ppm",
+      "maxChannelDelta": 1,
+      "changedChannels": 15,
+      "changedPixels": [[70, 75], [71, 75], [69, 76], [70, 76], [69, 80]]
+    },
+    {
+      "page": "rtl-positions-1.ppm",
+      "maxChannelDelta": 0,
+      "changedChannels": 0,
+      "changedPixels": []
+    }
+  ]
+}

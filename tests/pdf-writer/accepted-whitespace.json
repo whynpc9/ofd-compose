@@ -1,0 +1,14 @@
+{
+  "acceptedOn": "2026-09-19",
+  "authority": "User directly accepted the verified high-level whitespace difference in coordinator task 01a09855-dc6d-7c41-9009-2e4c540a1865",
+  "pdfjsVersion": "5.4.149",
+  "fixture": "worker-double",
+  "irSha256": "d9302a61f1a57370a96b977f09e0cbbafb10fda041e8facb99e95b26faed51a0",
+  "logicalText": "o  f",
+  "displayText": "o  f",
+  "glyphCount": 4,
+  "toUnicodeText": "o  f",
+  "pdfPigText": "o  f",
+  "highLevelText": "o f",
+  "scope": "Only this verified ordinary Worker double-ASCII-space case; no generic whitespace normalization or non-whitespace differences accepted."
+}

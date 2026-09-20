@@ -17,7 +17,8 @@
       "!schemas/layout-ir/*.schema.json",
       "!packages/layout-ir/fixtures/*.json",
       "!**/*.grit",
-      "!tests/ofd-writer/fixtures"
+      "!tests/ofd-writer/fixtures",
+      "!tests/pdf-writer/fixtures"
     ]
   },
   "formatter": {

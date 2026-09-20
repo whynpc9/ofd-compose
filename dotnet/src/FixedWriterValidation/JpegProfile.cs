@@ -1,21 +1,29 @@
 using System.Buffers.Binary;
+#if PDF_WRITER
+using OFDCompose.PdfIrWriter;
+using static OFDCompose.PdfIrWriter.J;
+#else
+using OFDCompose.OfdIrWriter;
 using static OFDCompose.OfdIrWriter.J;
+#endif
 
-namespace OFDCompose.OfdIrWriter;
+namespace OFDCompose.FixedWriting;
 
 /// <summary>ADR-0003 JPEG process and EXIF policy, checked before decoder allocation.</summary>
 internal static class JpegProfile
 {
-    internal static void Validate(ReadOnlySpan<byte> bytes)
+    internal static void Validate(ReadOnlySpan<byte> bytes,CancellationToken cancellationToken=default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         int at = 2, segments = 0, headerBytes = 0;
         bool entropy = false, frame = false, scan = false;
         while (at < bytes.Length)
         {
+            if((at&4095)==0)cancellationToken.ThrowIfCancellationRequested();
             if (entropy && bytes[at] != 255) { at++; continue; }
             int markerStart = at;
             Require(bytes[at++] == 255, "IR_RESOURCE", "image", "Malformed JPEG marker");
-            while (at < bytes.Length && bytes[at] == 255) at++;
+            while (at < bytes.Length && bytes[at] == 255) {if((at&4095)==0)cancellationToken.ThrowIfCancellationRequested();at++;}
             Require(at < bytes.Length, "IR_RESOURCE", "image", "Truncated JPEG marker");
             int marker = bytes[at++];
             if (marker == 0 || marker is >= 208 and <= 215)
@@ -46,7 +54,7 @@ internal static class JpegProfile
             }
             if (marker == 225)
             {
-                Exif(bytes.Slice(at + 2, length - 2));
+                Exif(bytes.Slice(at + 2, length - 2),cancellationToken);
                 Require(!frame, "UNSUPPORTED_FEATURE", "image", "JPEG metadata after SOF requires normalization");
             }
             entropy = marker == 218;
@@ -55,7 +63,7 @@ internal static class JpegProfile
         }
         throw new WriterFailure("IR_RESOURCE", "image", "JPEG is missing EOI");
     }
-    private static void Exif(ReadOnlySpan<byte> payload)
+    private static void Exif(ReadOnlySpan<byte> payload,CancellationToken cancellationToken)
     {
         if (!payload.StartsWith("Exif\0\0"u8)) return;
         Require(payload.Length >= 14, "IR_RESOURCE", "image", "Truncated EXIF header");
@@ -71,6 +79,7 @@ internal static class JpegProfile
         Require((long)offset + 2 + count * 12 + 4 <= tiff.Length, "IR_RESOURCE", "image", "Truncated EXIF IFD");
         for (int i = 0; i < count; i++)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             int at = (int)offset + 2 + i * 12;
             if (Read16(tiff, at, little) != 274) continue;
             Require(Read16(tiff, at + 2, little) == 3 && Read32(tiff, at + 4, little) == 1,

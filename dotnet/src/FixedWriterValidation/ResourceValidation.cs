@@ -4,17 +4,25 @@ using System.Text.Json;
 using System.IO.Compression;
 using BigGustave;
 using JpegLibrary;
+#if PDF_WRITER
+using OFDCompose.PdfIrWriter;
+using static OFDCompose.PdfIrWriter.J;
+#else
+using OFDCompose.OfdIrWriter;
 using static OFDCompose.OfdIrWriter.J;
+#endif
 
-namespace OFDCompose.OfdIrWriter;
+namespace OFDCompose.FixedWriting;
 internal static class ResourceValidation
 {
-    internal static Dictionary<string, byte[]> Validate(JsonElement ir, IReadOnlyList<WriterResource> supplied, WriterLimits limits)
+    internal static Dictionary<string, byte[]> Validate(JsonElement ir, IReadOnlyList<WriterResource> supplied, WriterLimits limits, CancellationToken cancellationToken=default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         Require(supplied.Count <= limits.Resources, "RESOURCE_LIMIT", "resources", "Resource count exceeded");
         long total = 0;
         foreach (var resource in supplied)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             total += resource.Bytes.Length;
             Require(total <= limits.ResourceBytes && resource.Bytes.Length <= limits.ResourceEntryBytes, "RESOURCE_LIMIT", "resources", "Resource bytes exceeded");
             Require(resource.ResourceId.Length <= 64, "RESOURCE_LIMIT", "resources", "Resource ID too long");
@@ -23,28 +31,31 @@ internal static class ResourceValidation
         var result = new Dictionary<string, byte[]>();
         foreach (var resource in supplied)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             Require(!result.ContainsKey(resource.ResourceId), "IR_RESOURCE", "resources", "Duplicate resource");
             result.Add(resource.ResourceId, resource.Bytes.ToArray());
         }
         long pixels = 0;
         foreach (var descriptor in ir.A("resources"))
         {
+            cancellationToken.ThrowIfCancellationRequested();
             string id = descriptor.S("id");
             Require(result.TryGetValue(id, out var bytes), "IR_RESOURCE", id, "Missing resource");
             bool font = descriptor.S("kind") == "font";
             Require(!font || descriptor.Has("subsetDigest"), "IR_RESOURCE", id, "Worker subset required");
             Require(IrValidation.Digest(bytes) == descriptor.S(font ? "subsetDigest" : "digest"), "IR_RESOURCE", id, "Resource digest mismatch");
-            if (font) Font(descriptor, bytes!, ir);
+            if (font) Font(descriptor, bytes!, ir,cancellationToken);
             else
             {
                 pixels += (long)descriptor.I("pixelWidth") * descriptor.I("pixelHeight");
                 Require(pixels <= 16_000_000, "RESOURCE_LIMIT", id, "Decoded pixel budget exceeded");
-                Image(descriptor, bytes!);
+                Image(descriptor, bytes!,cancellationToken);
             }
         }
+        cancellationToken.ThrowIfCancellationRequested();
         return result;
     }
-    private static void Font(JsonElement descriptor, byte[] bytes, JsonElement ir)
+    private static void Font(JsonElement descriptor, byte[] bytes, JsonElement ir,CancellationToken cancellationToken)
     {
         var span = bytes.AsSpan();
         Require(span.Length >= 12 && (span[..4].SequenceEqual("OTTO"u8) || BinaryPrimitives.ReadUInt32BigEndian(span) == 0x00010000), "IR_RESOURCE", descriptor.S("id"), "Static SFNT subset required");
@@ -79,23 +90,30 @@ internal static class ResourceValidation
         Require(BinaryPrimitives.ReadUInt16BigEndian(span[(os2.Offset+4)..])==descriptor.N("weight"),"IR_RESOURCE","font","Subset weight mismatch");
         ushort selection=BinaryPrimitives.ReadUInt16BigEndian(span[(os2.Offset+62)..]);
         Require(descriptor.S("style") switch { "normal" => (selection&0x201)==0, "italic" => (selection&1)!=0, "oblique" => (selection&0x200)!=0, _=>false },"IR_RESOURCE","font","Subset style mismatch");
-        FontStructure.Validate(bytes, tables, glyphCount);
-        var map = descriptor.Has("glyphIdMap") ? descriptor.A("glyphIdMap").ToDictionary(g => g.N("original"), g => g.N("subset")) : null;
-        if (map is not null) foreach (var glyph in map.Values) Require(glyph < glyphCount, "IR_RESOURCE", "font", "Subset glyph out of bounds");
+        FontStructure.Validate(bytes, tables, glyphCount,cancellationToken);
+        var map = descriptor.Has("glyphIdMap") ? descriptor.A("glyphIdMap").ToDictionary(g => {cancellationToken.ThrowIfCancellationRequested();return g.N("original");}, g => g.N("subset")) : null;
+        if (map is not null) foreach (var glyph in map.Values){cancellationToken.ThrowIfCancellationRequested();Require(glyph < glyphCount, "IR_RESOURCE", "font", "Subset glyph out of bounds");}
         foreach (var page in ir.A("pages")) foreach (var obj in page.A("objects"))
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             if (obj.S("kind") == "text" && obj.S("fontId") == descriptor.S("id")) foreach (var glyph in obj.A("glyphs"))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
                 Require((map is null ? glyph.N("glyphId") : map[glyph.N("glyphId")]) < glyphCount, "IR_RESOURCE", obj.S("id"), "Glyph absent from subset");
+            }
+        }
     }
-    private static void Image(JsonElement descriptor, byte[] bytes)
+    private static void Image(JsonElement descriptor, byte[] bytes,CancellationToken cancellationToken)
     {
         bool png = descriptor.S("mimeType") == "image/png";
         Require(png ? bytes.AsSpan().StartsWith(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }) : bytes.Length >= 4 && bytes[0] == 255 && bytes[1] == 216 && bytes[^2] == 255 && bytes[^1] == 217, "IR_RESOURCE", "image", "Image MIME/signature mismatch");
         if (png)
         {
             int at = 8, chunks = 0; bool end = false, hasData = false;
-            using var compressed = new MemoryStream();
+            using var compressed = new CancellationMemoryStream(cancellationToken);
             while (at < bytes.Length)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 Require(bytes.Length - at >= 12, "IR_RESOURCE", "image", "Truncated PNG chunk");
                 uint size = BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(at));
                 Require(size <= bytes.Length - at - 12, "IR_RESOURCE", "image", "Invalid PNG chunk length");
@@ -107,9 +125,10 @@ internal static class ResourceValidation
                 Require(!type.SequenceEqual("acTL"u8) && !type.SequenceEqual("fcTL"u8) && !type.SequenceEqual("fdAT"u8),"UNSUPPORTED_FEATURE","image","Animated PNG requires normalization");
                 if(type.SequenceEqual("IDAT"u8) && length>0)hasData=true;
                 if(type.SequenceEqual("IEND"u8))Require(length==0 && hasData,"IR_RESOURCE","image","Invalid PNG IEND");
-                uint crc = 0xffffffff;
+                uint crc = 0xffffffff;int crcIndex=0;
                 foreach (byte b in bytes.AsSpan(at + 4, length + 4))
                 {
+                    if((crcIndex++&4095)==0)cancellationToken.ThrowIfCancellationRequested();
                     crc ^= b;
                     for (int bit = 0; bit < 8; bit++) crc = (crc >> 1) ^ ((crc & 1) != 0 ? 0xedb88320u : 0);
                 }
@@ -126,6 +145,7 @@ internal static class ResourceValidation
             long expandedLimit=(long)descriptor.I("pixelWidth")*descriptor.I("pixelHeight")*8 + descriptor.I("pixelHeight")*16L + 1024;
             int read;while((read=inflate.Read(block))!=0)
             {
+                cancellationToken.ThrowIfCancellationRequested();
                 expanded+=read;Require(expanded<=expandedLimit,"RESOURCE_LIMIT","image","PNG inflated byte budget exceeded");
             }
         }
@@ -133,28 +153,30 @@ internal static class ResourceValidation
         {
             Require(bytes.Length>=33 && BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(16))==descriptor.I("pixelWidth") && BinaryPrimitives.ReadUInt32BigEndian(bytes.AsSpan(20))==descriptor.I("pixelHeight"),"IR_RESOURCE","image","PNG dimension mismatch");
             Require(bytes[24]==8 && bytes[28]==0,"UNSUPPORTED_FEATURE","image","PNG writer profile requires 8-bit noninterlaced pixels");
-            using var stream=new MemoryStream(bytes,false);
-            var decoded=Png.Open(stream);
+            using var stream=new CancellationMemoryStream(bytes,cancellationToken);
+            cancellationToken.ThrowIfCancellationRequested();
+            var decoded=Png.Open(stream);cancellationToken.ThrowIfCancellationRequested();
             Require(decoded.Width==descriptor.I("pixelWidth") && decoded.Height==descriptor.I("pixelHeight"),"IR_RESOURCE","image","PNG decode mismatch");
             // Force pixel access, including palette indices, for the full bounded image.
-            for(int y=0;y<decoded.Height;y++)for(int x=0;x<decoded.Width;x++)_ = decoded.GetPixel(x,y);
+            for(int y=0;y<decoded.Height;y++)for(int x=0;x<decoded.Width;x++){if(((y*decoded.Width+x)&1023)==0)cancellationToken.ThrowIfCancellationRequested();_ = decoded.GetPixel(x,y);}
         }
         else
         {
-            JpegProfile.Validate(bytes);
-            using var pool=new BoundedDecodePool();
+            JpegProfile.Validate(bytes,cancellationToken);
+            using var pool=new BoundedDecodePool(cancellationToken);
             var decoder=new JpegDecoder { MemoryPool=pool };decoder.SetInput(bytes);decoder.Identify();
             Require(decoder.Width==descriptor.I("pixelWidth") && decoder.Height==descriptor.I("pixelHeight"),"IR_RESOURCE","image","JPEG dimension mismatch");
             Require(decoder.Precision==8 && decoder.NumberOfComponents is 1 or 3,"UNSUPPORTED_FEATURE","image","JPEG writer profile requires 8-bit grayscale or RGB components");
-            decoder.SetOutputWriter(new CheckedJpegOutput(decoder.Width,decoder.Height,decoder.NumberOfComponents));decoder.Decode();
+            decoder.SetOutputWriter(new CheckedJpegOutput(decoder.Width,decoder.Height,decoder.NumberOfComponents,cancellationToken));decoder.Decode();
         }
     }
-    private sealed class BoundedDecodePool:MemoryPool<byte>
+    private sealed class BoundedDecodePool(CancellationToken cancellationToken):MemoryPool<byte>
     {
         private int reserved;
         public override int MaxBufferSize => 128*1024*1024;
         public override IMemoryOwner<byte> Rent(int minBufferSize=-1)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             int size=minBufferSize<0?4096:minBufferSize;
             Require(size<=MaxBufferSize-reserved,"RESOURCE_LIMIT","image","JPEG decoded memory budget exceeded");
             reserved+=size;return new Owner(new byte[size],()=>reserved-=size);
@@ -167,11 +189,12 @@ internal static class ResourceValidation
             public void Dispose(){if(data is not null){data=null;release();}}
         }
     }
-    private sealed class CheckedJpegOutput(int width,int height,int components):JpegBlockOutputWriter
+    private sealed class CheckedJpegOutput(int width,int height,int components,CancellationToken cancellationToken):JpegBlockOutputWriter
     {
         private int count;
         public override void WriteBlock(ref short block,int componentIndex,int x,int y)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             Require(componentIndex>=0&&componentIndex<components&&x>=0&&y>=0&&x<width+8&&y<height+8,"IR_RESOURCE","image","JPEG decoded block out of bounds");
             Require(++count<=((width+7L)/8)*((height+7L)/8)*components*4,"RESOURCE_LIMIT","image","JPEG block budget exceeded");
         }
