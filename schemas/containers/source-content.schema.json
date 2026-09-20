@@ -3696,7 +3696,7 @@
           "items": {
             "additionalProperties": false,
             "type": "object",
-            "required": ["family", "weight", "italic", "sha256", "byteLength"],
+            "required": ["family", "weight", "italic", "sha256"],
             "properties": {
               "family": {
                 "minLength": 1,
@@ -3714,11 +3714,6 @@
               "sha256": {
                 "pattern": "^[a-f0-9]{64}$",
                 "type": "string"
-              },
-              "byteLength": {
-                "minimum": 1,
-                "maximum": 33554432,
-                "type": "integer"
               }
             }
           }

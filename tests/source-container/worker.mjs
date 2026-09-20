@@ -152,6 +152,7 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
   mode === "links" ||
   mode === "table-links" ||
   mode === "empty-bands" ||
+  mode === "empty-bands-link" ||
   mode === "private-repeat" ||
   mode === "empty-control" ||
   mode === "path" ||
@@ -281,14 +282,20 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
       },
     ];
   }
-  if (mode === "empty-bands")
+  if (mode === "empty-bands" || mode === "empty-bands-link")
     source.settings.page = {
       paper: "A4",
       orientation: "portrait",
       margins: { top: 20, bottom: 20, left: 20, right: 20 },
       header: { height: 10, parts: [{ kind: "text", text: "" }] },
-      footer: { height: 10, hiddenPages: [1], parts: [{ kind: "text", text: "hidden" }] },
+      footer: {
+        height: 10,
+        hiddenPages: [1],
+        parts: [{ kind: "text", text: "UNRENDERED_BAND_SECRET" }],
+      },
     };
+  if (mode === "empty-bands-link")
+    profile.layout.defaultStyle.link = "https://example.invalid/?token=HIDDEN_LINK";
   if (mode === "private-repeat")
     source.body = [
       {
@@ -565,8 +572,7 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
           new URL(`../../packages/typography-core/fonts/${authorized.file}`, import.meta.url),
         ),
       );
-      assert.equal(identity.byteLength, bytes.length);
-      pack.fonts.push({ ...identity, bytes });
+      pack.fonts.push({ ...identity, byteLength: bytes.length, bytes });
     }
     const ownedAssets = JSON.parse(await readFile(assetsFile, "utf8"));
     pack.images = await Promise.all(
@@ -584,7 +590,6 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
         font.sha256,
         "Host has no authorized full font with requested digest",
       );
-      assert.equal(identity.byteLength, full.length);
     }
     content.resolvedDocument.body[0].fragments[0].text = "edited office 中文新";
     content.resolvedDocument.revisionId = "revision-2";

@@ -276,8 +276,7 @@ async function run(
           throw new RenderError("FONT_MISSING", "Authorized full font is unavailable");
         if (
           candidates.length !== 1 ||
-          (candidates[0]?.metadata as LayoutFont | undefined)?.sha256 !== expected.sha256 ||
-          candidates[0]?.length !== expected.byteLength
+          (candidates[0]?.metadata as LayoutFont | undefined)?.sha256 !== expected.sha256
         )
           throw new RenderError(
             "FONT_DIGEST_MISMATCH",
@@ -508,10 +507,10 @@ async function run(
           settings,
           loaded
             .filter((item) => item.kind === "font")
-            .map((item) => ({
-              ...(item.metadata as Omit<LayoutFont, "bytes">),
-              byteLength: item.length,
-            })),
+            .map((item) => {
+              const { family, weight, italic, sha256 } = item.metadata as LayoutFont;
+              return { family, weight, italic, sha256 };
+            }),
           loaded
             .filter((item) => item.kind === "image")
             .map((item) => ({

@@ -161,3 +161,9 @@ is unchanged and sealing adds this envelope metadata.
 header relationships and actual generated page-band text. .NET compares those results
 instead of implementing page-number formatting or visibility rules. Tables/page bands
 therefore require the explicit authorized render host, even without path decorations.
+
+Never-rendered header/footer bands retain geometry/visibility but no parts, style or
+alignment. The authorized render host identifies actual rendered band pointers;
+extraction rejects retained hidden content. Editing-font identity is family/weight/italic
+plus full-font SHA-256. Length belongs to the authorized host resource pack, where
+actual bytes are checked, and is not retained as an unverified attachment requirement.

@@ -947,10 +947,12 @@ public sealed class ContainerTests
         });
         Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
-    [Fact]
-    public async Task Empty_and_hidden_page_bands_do_not_require_output_witnesses()
+    [Theory]
+    [InlineData("empty-bands")]
+    [InlineData("empty-bands-link")]
+    public async Task Empty_and_hidden_page_bands_do_not_require_output_witnesses(string mode)
     {
-        var fixture=await Build("empty-bands");Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        var fixture=await Build(mode);Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
     [Theory]
     [InlineData("style")]
@@ -1092,6 +1094,27 @@ public sealed class ContainerTests
         var fixture=await Build("section-pages");
         Assert.Equal("SOURCE_RENDER_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Error);
         Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
+    }
+
+    [Fact]
+    public async Task Unrendered_page_band_text_is_removed_and_cannot_be_reintroduced()
+    {
+        var fixture=await Build("empty-bands");Assert.DoesNotContain("UNRENDERED_BAND_SECRET",Encoding.UTF8.GetString(fixture.Source));
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            source["settings"]!["page"]!["footer"]!["parts"]!.AsArray().Add(new JsonObject{["kind"]="text",["text"]="UNRENDERED_BAND_SECRET"});string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Editing_font_identity_does_not_accept_an_unverifiable_length()
+    {
+        var fixture=await Initial.Value;var source=JsonNode.Parse(fixture.Source)!;Assert.Null(source["resources"]!["fonts"]![0]!["byteLength"]);
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resources")!;var resources=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            resources["fonts"]![0]!["byteLength"]=12345;string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SCHEMA_INVALID",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
 }

@@ -341,6 +341,63 @@ it("retains filled control identity and displayed fallback without unused form m
   );
 });
 
+it.each([false, true])(
+  "removes never-rendered page-band content but keeps reserved geometry (default link %s)",
+  async (defaultLink) => {
+    const pack = await resources(),
+      source = textSource();
+    source.settings.page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      header: {
+        height: 10,
+        hideFirstPage: true,
+        parts: [{ kind: "text", text: "HIDDEN_HEADER_SECRET" }],
+        style: { fontFamily: "Noto" },
+      },
+      footer: {
+        height: 8,
+        hiddenPages: [1],
+        parts: [{ kind: "text", text: "HIDDEN_FOOTER_SECRET" }],
+        alignment: "right",
+      },
+    };
+    const selected = {
+      ...profile,
+      layout: {
+        ...profile.layout,
+        defaultStyle: {
+          ...profile.layout.defaultStyle,
+          ...(defaultLink ? { link: "https://example.invalid/?token=HIDDEN_LINK" } : {}),
+        },
+      },
+    };
+    const first = await render(source, {}, pack, selected, { sourceAttachment: true });
+    if (!first.ok || !first.editingSource) throw new Error(JSON.stringify(first.diagnostics));
+    expect(first.editingSource.json).not.toContain("HIDDEN_");
+    const content = JSON.parse(first.editingSource.json) as SourceContent;
+    expect(content.resolvedDocument.settings.page?.header).toEqual({
+      height: 10,
+      hideFirstPage: true,
+      parts: [],
+    });
+    expect(content.resolvedDocument.settings.page?.footer).toEqual({
+      height: 8,
+      hiddenPages: [1],
+      parts: [],
+    });
+    const plain = await render(source, {}, pack, selected);
+    if (!plain.ok) throw new Error("fixture");
+    expect(plain.ir).toEqual(first.ir);
+    const reopened = await finalizeSource(content, pack);
+    if (!reopened.ok) throw new Error(JSON.stringify(reopened.diagnostics));
+    expect(reopened.ir.pages).toEqual(first.ir.pages);
+    expect(reopened.ir.graphicsStates).toEqual(first.ir.graphicsStates);
+    expect(content.resources.fonts[0]).not.toHaveProperty("byteLength");
+  },
+);
+
 it("bounds source snapshots, repeated identities, full resource bytes and cancellation before output", async () => {
   const pack = await resources();
   const first = await render(textSource(), {}, pack, profile, { sourceAttachment: true });

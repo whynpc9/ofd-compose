@@ -32,9 +32,8 @@ an application observation. No actual desktop extraction, visual display, licens
 entitlement or supported-OFD claim follows from those observations. ADR-0005 remains
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
-Local validation snapshot after review fixes: fresh Node 613, fresh Chromium 403,
-full .NET 317 (123 container cases plus the unchanged 194 baseline cases). The final
-schema-work precharge received an additional four-case Node/Chromium targeted rerun.
+Local validation snapshot after review fixes: fresh Node 615, fresh Chromium 405,
+full .NET 320 (126 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -144,3 +143,10 @@ is unchanged and sealing adds this envelope metadata.
 header relationships and actual generated page-band text. .NET compares those results
 instead of implementing page-number formatting or visibility rules. Tables/page bands
 therefore require the explicit authorized render host, even without path decorations.
+
+Header/footer bands never rendered on any page retain only geometry and visibility;
+their parts and text styling are removed after link normalization. Capture-on/off and
+reopened geometry tests cover default links both enabled and absent. Extraction rejects
+rehashing hidden text back into those bands. Editing-font identities retain family,
+weight, italic and SHA-256 without an unverifiable byteLength; host resource packs still
+validate actual lengths and digests, and attachment length reintroduction is rejected.

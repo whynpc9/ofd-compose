@@ -14,7 +14,6 @@ export const EditingFontSchema = Type.Object(
     weight: Type.Integer({ minimum: 1, maximum: 1000 }),
     italic: Type.Boolean(),
     sha256: digest,
-    byteLength: bytes,
   },
   { additionalProperties: false },
 );

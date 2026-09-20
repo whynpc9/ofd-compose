@@ -134,6 +134,30 @@ function normalizeSourceLinks(
   walk(document.settings, defaults);
 }
 
+function removeUnrenderedBands(
+  document: ResolvedDocument,
+  rendered: ReadonlySet<string>,
+  budget: RenderBudget,
+) {
+  const walk = (value: unknown, pointer: string): void => {
+    budget.charge("render", 32 + pointer.length * 2);
+    if (!value || typeof value !== "object") return;
+    const node = value as Record<string, unknown>;
+    for (const name of ["header", "footer"] as const) {
+      const band = node[name] as Record<string, unknown> | undefined;
+      if (band && Array.isArray(band.parts) && !rendered.has(`${pointer}/${name}`)) {
+        band.parts = [];
+        delete band.style;
+        delete band.alignment;
+      }
+    }
+    for (const [key, child] of Object.entries(node))
+      walk(child, `${pointer}/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
+  };
+  walk(document.body, "/body");
+  walk(document.settings, "/settings");
+}
+
 /** Remove nonprinted evaluation/provenance while retaining node/binding and opaque repeat relationships.
  * Display text (including sensitive text deliberately printed by the caller) is preserved. */
 export function minimizeResolved(
@@ -141,6 +165,7 @@ export function minimizeResolved(
   budget: RenderBudget,
   repeats = new EditingRepeatIdentities(budget),
   defaults: TextStyle = {},
+  renderedBands?: ReadonlySet<string>,
 ): ResolvedDocument {
   const result = snapshot(document, budget);
   if (!isResolvedDocument(result)) throw new RenderError("MODEL_INVALID", "Invalid editing source");
@@ -152,6 +177,7 @@ export function minimizeResolved(
   };
   result.structure = { conditionals: [], repeats: [] };
   normalizeSourceLinks(result, defaults, budget);
+  if (renderedBands) removeUnrenderedBands(result, renderedBands, budget);
   const styles = new Set<string>();
   const visit = (value: unknown): void => {
     budget.charge("render", 32);
@@ -197,7 +223,18 @@ export function createSourceContent(
   pageDecorationSources: { objectId: string; pointer: string; sectionPage: number }[] = [],
 ) {
   const repeats = new EditingRepeatIdentities(budget);
-  const minimal = minimizeResolved(document, budget, repeats, profile.layout.defaultStyle);
+  const renderedBands = new Set<string>();
+  for (const origin of pageDecorationSources) {
+    budget.charge("render", 64 + origin.pointer.length * 2);
+    renderedBands.add(origin.pointer);
+  }
+  const minimal = minimizeResolved(
+    document,
+    budget,
+    repeats,
+    profile.layout.defaultStyle,
+    renderedBands,
+  );
   const editingProfile = snapshot(profile, budget);
   if (editingProfile.layout.defaultStyle.link) editingProfile.layout.defaultStyle.underline = true;
   delete editingProfile.layout.defaultStyle.link;

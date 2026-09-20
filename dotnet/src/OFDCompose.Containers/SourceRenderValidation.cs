@@ -87,7 +87,23 @@ internal static class SourceRenderValidation
             budget.Charge(band.Pointer.Length*2L+band.Text.Length*2L);
             Need(bands.TryAdd((band.PageIndex,band.Pointer),band.Text),"PAGE_BAND_MISMATCH");
         }
+        var renderedBandPointers=bands.Keys.Select(key=>key.Item2).ToHashSet();
+        CheckUnusedBands(source.GetProperty("resolvedDocument").GetProperty("body"),"/body",renderedBandPointers,budget);
+        CheckUnusedBands(source.GetProperty("resolvedDocument").GetProperty("settings"),"/settings",renderedBandPointers,budget);
         return bands;
+    }
+    private static void CheckUnusedBands(JsonElement value,string pointer,HashSet<string> rendered,ContainerBudget budget)
+    {
+        budget.Charge(64+pointer.Length*2L);
+        if(value.ValueKind==JsonValueKind.Array){int i=0;foreach(var child in value.EnumerateArray())CheckUnusedBands(child,pointer+"/"+i++,rendered,budget);return;}
+        if(value.ValueKind!=JsonValueKind.Object)return;
+        foreach(var property in value.EnumerateObject())
+        {
+            string childPointer=pointer+"/"+property.Name.Replace("~","~0",StringComparison.Ordinal).Replace("/","~1",StringComparison.Ordinal);
+            if(property.Name is "header" or "footer"&&property.Value.ValueKind==JsonValueKind.Object&&property.Value.TryGetProperty("parts",out var parts)&&!rendered.Contains(childPointer))
+                Need(parts.GetArrayLength()==0&&!property.Value.TryGetProperty("style",out _)&&!property.Value.TryGetProperty("alignment",out _),"SOURCE_NOT_MINIMAL");
+            CheckUnusedBands(property.Value,childPointer,rendered,budget);
+        }
     }
     private static bool MayGenerate(JsonElement value,ContainerBudget budget)
     {
