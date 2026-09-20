@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-09-20",
-  "sourceCommitBeforeFinalEvidence": "e99b8f095588f56ce7119050b3e94a6ae8c403e4",
+  "sourceCommitBeforeFinalEvidence": "ed3c97e61414690a5fe1d5a5604ef1b510c76f0f",
   "data": "owned synthetic fixture only",
   "libraryReaders": {
     "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
@@ -25,15 +25,15 @@
   "artifacts": [
     {
       "name": "initial",
-      "sha256": "089bf303086fa0ac8732934bbeb1351ea379964942c46c0f50281e1a98cd429d",
-      "bytes": 709056,
+      "sha256": "b15faba36bd2175f3f49a0548525761a21c9c2974b3d74036eb24c63abb81df8",
+      "bytes": 709082,
       "revisionId": "revision-1",
       "irDigest": "5787d5e2eba56ec8bea958f0dd8a70170e9d9e946f623b6a6ce6f91bdedb5489",
       "parts": {
         "resolvedDocument": "18c8ae2bac74bbf5642adc20e8d2b14522565b19f1c5657533cbbd004130cd52",
         "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
         "resources": "07676760ae9a9c59bb470a71176c2c111033cb53ba41ab751eb79362fb294c76",
-        "semanticMap": "8389fd6da617a44fe07b89a04e88304e6f1ab6635a4beb47e8a2ba4f01ff3568",
+        "semanticMap": "6a0099f91bfae96f08cb861120b0dde6a7b0954894f93a8ff6774c1ed8d24307",
         "irDigest": "7147d2d4d821a496e295ff0f3c5099f36ba1e3c8daac252bc5f62a72d624ebae"
       },
       "fullFonts": [
@@ -52,15 +52,15 @@
     },
     {
       "name": "edited",
-      "sha256": "81622a8f954fbca468fc5dc942c947bd1c1b07310b99d6683f81f1535ec4124b",
-      "bytes": 711889,
+      "sha256": "b5903f655425b3a4fab0b75ce6f1db56088463aa77206bd16116df00a6aa1fc7",
+      "bytes": 711915,
       "revisionId": "revision-2",
       "irDigest": "319d72691f86690d952e629fc02f0407945f3c1c10c0ebc8261376fa3a21c583",
       "parts": {
         "resolvedDocument": "f6a45595673b792162d98bb97f3b342996ad2c9c28e20f140cf0b46e905a64f8",
         "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
         "resources": "6e2417ff724875982580aa6ad8ee8a9b9951e92dbee2235911c32c788411dee3",
-        "semanticMap": "46410a981d4f7bb0f313373f5b8dfe972b35d6eb46e8011ea9f441c7815cf635",
+        "semanticMap": "a64af0a1bf1081997e805c34d40ac46de949f638714a497de7e2ac1c4f7ccc19",
         "irDigest": "eea1037efa39dea561ed12d215ac3dd09244f23fdbf9c64a06b3e9466f8ea63a"
       },
       "fullFonts": [
