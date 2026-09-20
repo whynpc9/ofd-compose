@@ -26,6 +26,7 @@ public static partial class SourceContainer
         {
             var budget = new ContainerBudget(limits ?? new(), cancellationToken);
             Need(IsDigest(irDigest) && (parentArtifactDigest is null || IsDigest(parentArtifactDigest)), "SCHEMA_INVALID");
+            objectMap = OwnObjectMap(objectMap, budget);
             var entries = SafePackage.Read(ofd, budget);
             Need(!Signed(entries, budget), "SIGNED_INPUT_UNSUPPORTED");
             Need(entries.ContainsKey("OFD.xml") && entries.ContainsKey("Doc_0/Document.xml"), "PROTOCOL_INVALID");
@@ -34,6 +35,10 @@ public static partial class SourceContainer
             ValidateWriterPackage(entries, irDigest, budget);
             var doc = SafePackage.Xml(entries["Doc_0/Document.xml"], budget);
             Need(!doc.Descendants(SafePackage.Ns + "Attachments").Any() && !doc.Descendants(SafePackage.Ns + "Extensions").Any(), "UNEXPECTED_ENTRY");
+            var maxUnit=doc.Descendants(SafePackage.Ns+"MaxUnitID").Single();
+            Need(uint.TryParse(maxUnit.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint maxId) && maxId<uint.MaxValue,"RESOURCE_INVALID");
+            string attachmentId=(maxId+1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            maxUnit.Value=attachmentId;
             doc.Root!.Add(new XElement(SafePackage.Ns + "Attachments", "Attachs/Attachments.xml"));
             entries["Doc_0/Document.xml"] = SafePackage.Encode(doc);
             var parts = new List<SourcePart>();
@@ -70,7 +75,7 @@ public static partial class SourceContainer
             entries.Add(ManifestPath, JsonSerializer.SerializeToUtf8Bytes(manifest, ContainerJsonContext.Default.SourceManifest));
             Need(entries[ManifestPath].Length <= budget.Limits.JsonBytes, "SIZE_LIMIT");
             entries.Add(AttachmentsPath, SafePackage.Encode(new XDocument(new XElement(SafePackage.Ns + "Attachments",
-                new XElement(SafePackage.Ns + "Attachment", new XAttribute("ID", "ofd-compose-source"), new XAttribute("Name", "ofd-compose.json"),
+                new XElement(SafePackage.Ns + "Attachment", new XAttribute("ID", attachmentId), new XAttribute("Name", "ofd-compose.json"),
                     new XAttribute("Format", "application/json"), new XAttribute("Visible", "true"), new XAttribute("Usage", "ofd-compose"),
                     new XElement(SafePackage.Ns + "FileLoc", "ofd-compose.json"))))));
             return new(SafePackage.Write(entries, budget), null);

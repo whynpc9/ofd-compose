@@ -138,6 +138,7 @@ internal static class SafePackage
     {
         Need(bytes.Length <= budget.Limits.JsonBytes, "SIZE_LIMIT");
         budget.Charge(bytes.Length * 8L);
+        bytes = bytes.ToArray();
         var scan = new Utf8JsonReader(bytes.Span, new JsonReaderOptions { MaxDepth = 64 });
         int tokens = 0, strings = 0;
         var scopes = new Stack<HashSet<string>>();

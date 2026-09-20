@@ -26,7 +26,7 @@ internal static class SemanticValidation
             if(id is not null)
             {
                 string? text=kind=="text"?Text(value,"text"):null;
-                if(kind=="input-control")text=value.TryGetProperty("defaultValue",out var v) ? v.ValueKind==JsonValueKind.String?v.GetString():v.GetRawText() : Optional(value,"placeholder")??"";
+                if(kind=="input-control")text=value.TryGetProperty("defaultValue",out var v) ? v.ValueKind==JsonValueKind.String?v.GetString():v.GetBoolean()?"[x]":"[ ]" : Optional(value,"placeholder")??"";
                 var key=(id,Optional(origin,"bindingId"),repeat);
                 if(!index.TryGetValue(key,out var list)) index[key]=list=[];
                 list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat));

@@ -43,5 +43,5 @@ internal sealed class ContainerBudget(ContainerLimits limits, CancellationToken 
         Need(count >= 0 && count <= Limits.WorkBytes - work, "SIZE_LIMIT");
         work += count;
     }
-    internal static void Need(bool valid, string code) { if (!valid) throw new ContainerFailure(code); }
+    internal static void Need([System.Diagnostics.CodeAnalysis.DoesNotReturnIf(false)] bool valid, string code) { if (!valid) throw new ContainerFailure(code); }
 }

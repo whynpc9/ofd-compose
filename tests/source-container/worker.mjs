@@ -70,7 +70,7 @@ if (mode === "combined") {
   result = await render(fixture.source, fixture.data, pack, fixture.profile, {
     sourceAttachment: true,
   });
-} else if (mode === "initial") {
+} else if (mode === "initial" || mode.startsWith("checkbox-")) {
   const source = {
     schemaVersion: "ofd-compose/document-model@0",
     documentId: "source-roundtrip",
@@ -93,6 +93,16 @@ if (mode === "combined") {
       },
     ],
   };
+  if (mode.startsWith("checkbox-"))
+    source.body[0].inlines = [
+      {
+        kind: "input-control",
+        nodeId: "check",
+        controlId: "check-control",
+        controlType: "checkbox",
+        defaultValue: mode === "checkbox-true",
+      },
+    ];
   result = await render(
     source,
     {

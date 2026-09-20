@@ -79,6 +79,7 @@ public sealed class ContainerTests
         var firstRead = await new OfdReader().ReadAsync(new MemoryStream(first.Sealed), TestContext.Current.CancellationToken);
         var attachment = Assert.Single(firstRead.Attachments);
         Assert.Equal("application/json", attachment.MediaType);
+        Assert.True(uint.TryParse(attachment.Id,out uint attachmentId)&&attachmentId>0);
         Assert.Equal(Zip(first.Sealed)["Doc_0/Attachs/ofd-compose.json"], attachment.Data);
         string input = Path.Combine(first.Directory,"extracted.json"); await File.WriteAllBytesAsync(input,extracted.SourceJson!, TestContext.Current.CancellationToken);
         var second = await Build("edit",input);
@@ -226,6 +227,91 @@ public sealed class ContainerTests
         entries[path]=Encoding.UTF8.GetBytes("{\"namespace\":\"ofd-compose\","+Encoding.UTF8.GetString(entries[path])[1..]);
         Assert.Equal("SCHEMA_INVALID",SourceContainer.Extract(Pack(entries),cancellationToken:TestContext.Current.CancellationToken).Error);
         Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){WorkBytes=100},cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    private sealed class ChangingMap(IReadOnlyDictionary<string,string[]> original) : IReadOnlyDictionary<string,string[]>
+    {
+        private readonly Dictionary<string,string[]> data=original.ToDictionary(p=>p.Key,p=>p.Value.ToArray());
+        private bool changed;
+        public string[] this[string key]=>data[key];
+        public IEnumerable<string> Keys=>data.Keys;
+        public IEnumerable<string[]> Values=>data.Values;
+        public int Count=>data.Count;
+        public bool ContainsKey(string key)=>data.ContainsKey(key);
+        public bool TryGetValue(string key,out string[] value)=>data.TryGetValue(key,out value!);
+        public IEnumerator<KeyValuePair<string,string[]>> GetEnumerator()
+        {
+            foreach(var pair in data)yield return pair;
+            if(!changed){changed=true;data.First().Value[0]="caller-mutated";}
+        }
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()=>GetEnumerator();
+    }
+    private sealed class ChangingMemory(byte[] initial) : System.Buffers.MemoryManager<byte>
+    {
+        private int reads;
+        private readonly byte[] later=new byte[initial.Length];
+        public ReadOnlyMemory<byte> Input=>CreateMemory(initial.Length);
+        public override Span<byte> GetSpan()=>reads++==0?initial:later;
+        public override System.Buffers.MemoryHandle Pin(int elementIndex=0)=>throw new NotSupportedException();
+        public override void Unpin() { }
+        protected override void Dispose(bool disposing) { }
+    }
+    [Fact]
+    public async Task Owns_caller_JSON_and_object_map_before_validation_and_serialization()
+    {
+        var first=await Initial.Value;
+        using var source=new ChangingMemory(first.Source);
+        var created=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),new ChangingMap(first.Ofd.ObjectMap!),ContainerProfile.NativeEditable,source.Input,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(created.Ok,created.Error);
+        var extracted=SourceContainer.Extract(created.Bytes!,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(extracted.Ok,extracted.Error);
+        Assert.DoesNotContain("caller-mutated",Encoding.UTF8.GetString(created.Bytes!));
+    }
+
+    [Theory]
+    [InlineData("checkbox-true","[x]")]
+    [InlineData("checkbox-false","[ ]")]
+    public async Task Boolean_controls_keep_the_layout_display_representation(string mode,string expected)
+    {
+        var fixture=await Build(mode);
+        var extracted=SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.True(extracted.Ok,extracted.Error);
+        var read=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
+        Assert.Equal(expected,string.Concat(read.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text)));
+    }
+    [Fact]
+    public async Task Replacing_source_image_and_recomputing_hashes_cannot_change_the_rendered_asset()
+    {
+        var fixture=await Build("combined");
+        var corpus=JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(Root,"packages/media-core/tests/fixtures.json"),TestContext.Current.CancellationToken))!;
+        byte[] replacement=Convert.FromBase64String(corpus["jpeg"]!.GetValue<string>());
+        string digest=Hash(replacement);
+        var bytes=Mutate(fixture.Sealed,(manifest,entries)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resources")!;
+            var resources=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            var image=resources["images"]![0]!;string oldDigest=image["sha256"]!.GetValue<string>();Assert.NotEqual(oldDigest,digest);
+            string oldPath="Doc_0/Attachs/Assets/"+oldDigest+".bin",newPath="Doc_0/Attachs/Assets/"+digest+".bin";
+            entries.Remove(oldPath);entries.Add(newPath,replacement);
+            image["sha256"]=digest;image["byteLength"]=replacement.Length;image["mimeType"]="image/jpeg";
+            string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            var entry=manifest["entries"]!.AsArray().Single(e=>e!["path"]!.GetValue<string>()==oldPath)!;
+            entry["path"]=newPath;entry["sha256"]=digest;entry["byteLength"]=replacement.Length;
+        });
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+        byte[] Inline(byte[] imageBytes)=>Mutate(fixture.Sealed,(manifest,entries)=> {
+            foreach(var part in manifest["parts"]!.AsArray())
+            {
+                string name=part!["name"]!.GetValue<string>();var content=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+                if(name=="resolvedDocument")content["body"]!.AsArray().Single(b=>b!["kind"]!.GetValue<string>()=="image-binding")!["sources"]=new JsonArray(Convert.ToBase64String(imageBytes));
+                if(name=="resources")content["images"]=new JsonArray();
+                string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            }
+            var inventory=manifest["entries"]!.AsArray();
+            foreach(var entry in inventory.ToArray())if(entry!["path"]!.GetValue<string>().StartsWith("Doc_0/Attachs/Assets/",StringComparison.Ordinal)){entries.Remove(entry["path"]!.GetValue<string>());inventory.Remove(entry);}
+        });
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(Inline(replacement),cancellationToken:TestContext.Current.CancellationToken).Error);
+        byte[] originalImage=Zip(fixture.Sealed).First(e=>e.Key.StartsWith("Doc_0/Attachs/Assets/",StringComparison.Ordinal)).Value;
+        var sameImage=SourceContainer.Extract(Inline(originalImage),cancellationToken:TestContext.Current.CancellationToken);Assert.True(sameImage.Ok,sameImage.Error);
     }
 
 }

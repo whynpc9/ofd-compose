@@ -18,7 +18,7 @@ internal static class SourceValidation
         try
         {
             budget.Charge(bytes.Length * 8L);
-            Need(Schema.Value.Evaluate(JsonNode.Parse(bytes.Span), new EvaluationOptions { OutputFormat = OutputFormat.Flag }).IsValid, "SCHEMA_INVALID");
+            Need(Schema.Value.Evaluate(JsonNode.Parse(document.RootElement.GetRawText()), new EvaluationOptions { OutputFormat = OutputFormat.Flag }).IsValid, "SCHEMA_INVALID");
             budget.Charge(0);
             var resolved = document.RootElement.GetProperty("resolvedDocument");
             Need(!resolved.TryGetProperty("provenance", out _) && resolved.GetProperty("structure").GetProperty("conditionals").GetArrayLength() == 0

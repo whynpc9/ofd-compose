@@ -1,11 +1,25 @@
 using System.Text.Json;
 using System.Xml;
+using System.Xml.Linq;
 using static OFDCompose.Containers.ContainerBudget;
 using static OFDCompose.Containers.SourceValidation;
 
 namespace OFDCompose.Containers;
 public static partial class SourceContainer
 {
+    private static IReadOnlyDictionary<string,string[]> OwnObjectMap(IReadOnlyDictionary<string,string[]> input,ContainerBudget budget)
+    {
+        Need(input.Count is >=0 and <=200_000,"SIZE_LIMIT");
+        var owned=new Dictionary<string,string[]>();
+        foreach(var (id,targets) in input)
+        {
+            Need(owned.Count<200_000 && id.Length is >0 and <=256 && targets.Length is >0 and <=32,"SIZE_LIMIT");
+            budget.Charge(128L+id.Length*6L+targets.Length*16L);
+            foreach(var target in targets){Need(target is not null && target.Length is >0 and <=256,"SEMANTIC_REFERENCE");budget.Charge(target.Length*6L);}
+            Need(owned.TryAdd(id,targets.ToArray()),"SEMANTIC_REFERENCE");
+        }
+        return owned;
+    }
     private static void ValidateWriterPackage(Dictionary<string, byte[]> entries, string irDigest, ContainerBudget budget)
     {
         string[] elementNames = ["OFD","DocBody","DocInfo","DocID","Creator","DocRoot","Document","CommonData","MaxUnitID","PageArea","PhysicalBox","PublicRes","DocumentRes","Pages","Page","Res","Fonts","Font","FontFile","MultiMedias","MultiMedia","MediaFile","Content","Layer","TextObject","PathObject","ImageObject","FillColor","StrokeColor","CGTransform","Glyphs","TextCode","Clips","Clip","Area","Path","AbbreviatedData"];
@@ -57,6 +71,10 @@ public static partial class SourceContainer
         var nodes = attachment.Root!.Elements().ToArray();
         Need(nodes.Length == 1 && nodes[0].Name == SafePackage.Ns + "Attachment", "ATTACHMENT_INVALID");
         var node = nodes[0];
+        Need(uint.TryParse((string?)node.Attribute("ID"),System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint attachmentId) && attachmentId>0,"ATTACHMENT_INVALID");
+        Need(doc.Descendants(SafePackage.Ns+"MaxUnitID").Select(e=>e.Value).SequenceEqual([attachmentId.ToString(System.Globalization.CultureInfo.InvariantCulture)]),"ATTACHMENT_INVALID");
+        foreach(var entry in entries.Where(e=>IsWriterEntry(e.Key)&&e.Key.EndsWith(".xml",StringComparison.Ordinal)))
+            Need(!SafePackage.Xml(entry.Value,budget).Descendants().Attributes("ID").Any(a=>a.Value==attachmentId.ToString(System.Globalization.CultureInfo.InvariantCulture)),"ATTACHMENT_INVALID");
         Need((string?)node.Attribute("Name") == "ofd-compose.json" && (string?)node.Attribute("Format") == "application/json"
             && (string?)node.Attribute("Usage") == "ofd-compose" && node.Attribute("External") is null
             && node.Elements().Select(e => (e.Name, e.Value)).SequenceEqual([(SafePackage.Ns + "FileLoc", "ofd-compose.json")]), "ATTACHMENT_INVALID");
@@ -87,8 +105,10 @@ public static partial class SourceContainer
         Need(assets.Count <= 64, "SIZE_LIMIT");
         var declared = resources.GetProperty("images").EnumerateArray().GroupBy(r => Text(r, "sha256")).ToDictionary(g => g.Key, g => g.First().GetProperty("byteLength").GetInt32());
         var seen = new HashSet<string>();
+        int count=0;
         foreach (var asset in assets)
         {
+            Need(++count<=64,"SIZE_LIMIT");
             Need(IsDigest(asset.Sha256) && declared.TryGetValue(asset.Sha256, out int size) && size == asset.Bytes.Length, "RESOURCE_INVALID");
             Need(asset.Bytes.Length <= budget.Limits.EntryBytes, "SIZE_LIMIT");
             budget.Charge(asset.Bytes.Length * 2L);
@@ -103,6 +123,7 @@ public static partial class SourceContainer
         var fonts = resources.GetProperty("fonts").EnumerateArray().ToArray();
         var images = resources.GetProperty("images").EnumerateArray().ToArray();
         var layout = resources.GetProperty("layout").EnumerateArray().ToArray();
+        var renderedImageDigests=layout.Where(r=>Text(r,"kind")=="image").Select(r=>Text(r,"digest")).ToHashSet();
         Need(fonts.Length <= 64 && images.Length <= 64 && layout.Length <= 128, "SIZE_LIMIT");
         Need(fonts.Select(f => f.GetRawText()).Distinct().Count() == fonts.Length && images.Select(f => Text(f, "id")).Distinct().Count() == images.Length, "RESOURCE_INVALID");
         var resourceEntries = entries.Where(e => e.Key.StartsWith("Doc_0/Res/", StringComparison.Ordinal)).Select(e => (e.Key, Bytes: e.Value, Hash: SafePackage.Hash(e.Value, budget))).ToArray();
@@ -138,6 +159,9 @@ public static partial class SourceContainer
             if(value.ValueKind==JsonValueKind.Array)foreach(var child in value.EnumerateArray())ImageReferences(child);
             if(value.ValueKind!=JsonValueKind.Object)return;
             if(value.TryGetProperty("resourceId",out var id))sourceImageIds.Add(id.GetString()!);
+            if(value.TryGetProperty("kind",out var kind) && kind.GetString()=="image-binding")
+                foreach(var source in value.GetProperty("sources").EnumerateArray())
+                    if(source.ValueKind==JsonValueKind.String)Need(renderedImageDigests.Contains(InlineImageDigest(source.GetString()!,budget)),"RESOURCE_IMAGE_MISMATCH");
             foreach(var property in value.EnumerateObject())ImageReferences(property.Value);
         }
         ImageReferences(resolved);
@@ -159,6 +183,7 @@ public static partial class SourceContainer
         Need(fonts.All(f => layout.Any(r => Text(r, "kind") == "font" && Text(r, "originalDigest") == Text(f, "sha256"))), "RESOURCE_INVALID");
         foreach (var image in images)
         {
+            Need(renderedImageDigests.Contains(Text(image,"sha256")),"RESOURCE_IMAGE_MISMATCH");
             Need(entries.TryGetValue(AssetPath(Text(image, "sha256")), out var bytes), "RESOURCE_MISSING");
             Need(bytes!.Length == image.GetProperty("byteLength").GetInt32() && SafePackage.Hash(bytes, budget) == Text(image, "sha256"), "DIGEST_MISMATCH");
             bool png=bytes.AsSpan().StartsWith(new byte[] {137,80,78,71,13,10,26,10});
@@ -166,6 +191,27 @@ public static partial class SourceContainer
             Need(png||jpeg,"RESOURCE_INVALID");
             if(image.TryGetProperty("mimeType",out var mime))Need(mime.GetString()==(png?"image/png":"image/jpeg"),"RESOURCE_INVALID");
         }
+    }
+    private static string InlineImageDigest(string text,ContainerBudget budget)
+    {
+        budget.Charge(text.Length*4L);
+        string encoded=text;string? mime=null;
+        if(text.StartsWith("data:",StringComparison.Ordinal))
+        {
+            int comma=text.IndexOf(',');Need(comma is >0 and <=64,"RESOURCE_INVALID");
+            string header=text[..comma];
+            Need(header is "data:image/png;base64" or "data:image/jpeg;base64","RESOURCE_INVALID");
+            mime=header[5..^7];encoded=text[(comma+1)..];
+        }
+        Need(encoded.Length>0 && encoded.Length%4==0 && encoded.Length/4L*3<=8_000_002,"SIZE_LIMIT");
+        budget.Charge(encoded.Length*4L);
+        byte[] bytes=Convert.FromBase64String(encoded);
+        Need(bytes.Length<=8_000_000 && Convert.ToBase64String(bytes)==encoded,"RESOURCE_INVALID");
+        bool png=bytes.AsSpan().StartsWith(new byte[]{137,80,78,71,13,10,26,10});
+        bool jpeg=bytes.AsSpan().StartsWith(new byte[]{255,216,255});
+        Need(png||jpeg,"RESOURCE_INVALID");
+        Need(mime is null || mime==(png?"image/png":"image/jpeg"),"RESOURCE_INVALID");
+        return SafePackage.Hash(bytes,budget);
     }
     private static Dictionary<string, string[]> ReadObjectMap(JsonElement value, ContainerBudget budget)
     {
