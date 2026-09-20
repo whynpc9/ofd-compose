@@ -15,8 +15,8 @@ file, account credential, license purchase or EULA acceptance is part of this te
    independently pinned Java 2.3.7 Reader's text, glyph, cluster, resource and geometry
    checks, plus `getAttachmentList/getAttachmentFile` for actual attachment extraction.
    CI runs this in a network-disabled container after the ordinary 11 OFD fixtures.
-4. Regenerate the source schema with `python3 tools/containers/generate-schema.py`.
-   It derives the structural contracts from the checked-in document/IR schemas;
+4. Regenerate the source schema with `node tools/containers/generate-schema.mjs`.
+   It derives the structural contracts from the TypeBox document/IR schemas;
    version strings remain structurally strings so version rejection follows resource
    validation. The Worker still uses the original strict versioned schemas.
 

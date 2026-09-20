@@ -10,7 +10,7 @@ The experimental format has one `application/json` attachment named
 `namespace=ofd-compose`, `protocol=ofd-compose/source@0`, and
 `containerProfileVersion=ofd-compose/container-experimental@0` are explicit.
 Four parts carry minimal ResolvedDocument, exact RenderProfile, resource inventory,
-and Semantic Map. Each part's `content` is a **JSON string containing JSON text**;
+and Semantic Map (entries plus an explicit decoration-object partition). Each part's `content` is a **JSON string containing JSON text**;
 its SHA-256 covers the UTF-8 bytes of that string's decoded value, so re-escaping
 or indenting the outer manifest cannot change an inner digest. This is not nested
 ZIP and not an executable format. The manifest also records versions, required
@@ -50,3 +50,10 @@ able to replace content and recompute hashes can create an internally consistent
 See ADR-0005. Single versus multiple attachments is **not frozen** until extraction
 through at least one named desktop target reader is actually verified. The .NET and
 Java Reader tests are independent library evidence, not desktop viewer acceptance.
+
+Contracts live in `packages/source-protocol` as TypeBox; TypeScript types and the embedded
+wire schema are derived from them. .NET manifest DTOs use a generated System.Text.Json
+context. Extraction cross-checks declared layout resources against real OFD resource
+XML and page references, then validates semantic node/binding/repeat/text ranges and
+page links against the filled source and physical objects. Removing a whole resource
+or semantic list and recomputing its digest does not satisfy these checks.

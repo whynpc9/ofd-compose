@@ -16,7 +16,6 @@ public static partial class SourceContainer
     private const string ManifestPath = "Doc_0/Attachs/ofd-compose.json";
     private const string AttachmentsPath = "Doc_0/Attachs/Attachments.xml";
     private static readonly string[] PartNames = ["resolvedDocument", "renderProfile", "resources", "semanticMap"];
-    private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 
     public static ContainerResult Create(ReadOnlyMemory<byte> ofd, string irDigest,
         IReadOnlyDictionary<string, string[]> objectMap, ContainerProfile profile,
@@ -37,7 +36,7 @@ public static partial class SourceContainer
             Need(!doc.Descendants(SafePackage.Ns + "Attachments").Any() && !doc.Descendants(SafePackage.Ns + "Extensions").Any(), "UNEXPECTED_ENTRY");
             doc.Root!.Add(new XElement(SafePackage.Ns + "Attachments", "Attachs/Attachments.xml"));
             entries["Doc_0/Document.xml"] = SafePackage.Encode(doc);
-            var parts = new List<object>();
+            var parts = new List<SourcePart>();
             string modelVersion = "0";
             if (profile == ContainerProfile.NativeEditable)
             {
@@ -48,30 +47,27 @@ public static partial class SourceContainer
                 foreach (string name in PartNames)
                 {
                     var content = root.GetProperty(name);
-                    parts.Add(new { name, mimeType = "application/json", sha256 = SafePackage.Hash(Bytes(content, budget), budget), content = content.GetRawText() });
+                    parts.Add(new(name, "application/json", SafePackage.Hash(Bytes(content, budget), budget), content.GetRawText()));
                 }
                 AddAssets(root.GetProperty("resources"), assets ?? [], entries, budget);
-                Resources(root.GetProperty("resources"), entries, budget);
-                SemanticMap(root.GetProperty("semanticMap"), objectMap, entries, budget);
+                Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), entries, budget);
+                SemanticMap(root.GetProperty("semanticMap"), root.GetProperty("resolvedDocument"), objectMap, entries, budget);
                 SourceVersions(root);
             }
             else Need(profile == ContainerProfile.Distribution && sourceJson.IsEmpty && (assets?.Count ?? 0) == 0, "DISTRIBUTION_SOURCE_FORBIDDEN");
-            var inventory = entries.OrderBy(e => e.Key, StringComparer.Ordinal).Select(e => new { path = e.Key, byteLength = e.Value.Length, sha256 = SafePackage.Hash(e.Value, budget) }).ToArray();
+            var inventory = entries.OrderBy(e => e.Key, StringComparer.Ordinal).Select(e => new EntryIdentity(e.Key, e.Value.Length, SafePackage.Hash(e.Value, budget))).ToArray();
             long manifestReservation = 4096 + inventory.Length * 1024L + sourceJson.Length * 6L;
             if(profile == ContainerProfile.NativeEditable) foreach(var (id, targets) in objectMap)
                 manifestReservation += 128L + id.Length * 6L + targets.Sum(t => 16L + t.Length * 6L);
             Need(manifestReservation <= budget.Limits.JsonBytes, "SIZE_LIMIT");
             budget.Charge(manifestReservation * 4L);
-            var manifest = new {
-                @namespace = "ofd-compose", protocol = Protocol,
-                profile = profile == ContainerProfile.NativeEditable ? "native-editable" : "distribution",
-                containerProfileVersion = ProfileVersion, modelVersion, irVersion = "ofd-compose/layout-ir@0", irDigest,
-                capabilities = profile == ContainerProfile.NativeEditable ? new[] { "resolved-document", "semantic-map", "authorized-full-fonts" } : new[] { "derived-no-source" },
-                provenance = new { producer = "OFDCompose.Containers/0", parentArtifactDigest },
-                signaturePolicy = "unsigned-or-unverified", parts, entries = inventory,
-                objectMap = profile == ContainerProfile.NativeEditable ? objectMap : new Dictionary<string, string[]>()
-            };
-            entries.Add(ManifestPath, JsonSerializer.SerializeToUtf8Bytes(manifest, JsonOptions));
+            var manifest = new SourceManifest("ofd-compose", Protocol,
+                profile == ContainerProfile.NativeEditable ? "native-editable" : "distribution",
+                ProfileVersion, modelVersion, "ofd-compose/layout-ir@0", irDigest,
+                profile == ContainerProfile.NativeEditable ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"],
+                new("OFDCompose.Containers/0", parentArtifactDigest), "unsigned-or-unverified", parts, inventory,
+                profile == ContainerProfile.NativeEditable ? objectMap : new Dictionary<string, string[]>());
+            entries.Add(ManifestPath, JsonSerializer.SerializeToUtf8Bytes(manifest, ContainerJsonContext.Default.SourceManifest));
             Need(entries[ManifestPath].Length <= budget.Limits.JsonBytes, "SIZE_LIMIT");
             entries.Add(AttachmentsPath, SafePackage.Encode(new XDocument(new XElement(SafePackage.Ns + "Attachments",
                 new XElement(SafePackage.Ns + "Attachment", new XAttribute("ID", "ofd-compose-source"), new XAttribute("Name", "ofd-compose.json"),
@@ -119,7 +115,7 @@ public static partial class SourceContainer
                 if (profile == "native-editable")
                 {
                     budget.Charge(manifestBytes!.Length * 4L);
-                    sourceJson = Encoding.UTF8.GetBytes("{" + string.Join(",", PartNames.Select(name => JsonSerializer.Serialize(name) + ":" + sourceParts[name])) + ",\"irDigest\":" + JsonSerializer.Serialize(Text(manifest, "irDigest")) + "}");
+                    sourceJson = Encoding.UTF8.GetBytes("{" + string.Join(",", PartNames.Select(name => JsonSerializer.Serialize(name, ContainerJsonContext.Default.String) + ":" + sourceParts[name])) + ",\"irDigest\":" + JsonSerializer.Serialize(Text(manifest, "irDigest"), ContainerJsonContext.Default.String) + "}");
                     source = Parse(sourceJson, budget);
                 }
                 var objectMap = ReadObjectMap(manifest.GetProperty("objectMap"), budget);
@@ -132,8 +128,8 @@ public static partial class SourceContainer
                 if (source is not null)
                 {
                     var root = source.RootElement;
-                    Resources(root.GetProperty("resources"), entries, budget);
-                    SemanticMap(root.GetProperty("semanticMap"), objectMap, entries, budget);
+                    Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), entries, budget);
+                    SemanticMap(root.GetProperty("semanticMap"), root.GetProperty("resolvedDocument"), objectMap, entries, budget);
                 SourceVersions(root);
                     foreach (var image in root.GetProperty("resources").GetProperty("images").EnumerateArray())
                     {

@@ -98,7 +98,7 @@ public static partial class SourceContainer
         }
         Need(seen.Count == declared.Count, "RESOURCE_MISSING");
     }
-    private static void Resources(JsonElement resources, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    private static void Resources(JsonElement resources, JsonElement resolved, Dictionary<string, byte[]> entries, ContainerBudget budget)
     {
         var fonts = resources.GetProperty("fonts").EnumerateArray().ToArray();
         var images = resources.GetProperty("images").EnumerateArray().ToArray();
@@ -106,6 +106,42 @@ public static partial class SourceContainer
         Need(fonts.Length <= 64 && images.Length <= 64 && layout.Length <= 128, "SIZE_LIMIT");
         Need(fonts.Select(f => f.GetRawText()).Distinct().Count() == fonts.Length && images.Select(f => Text(f, "id")).Distinct().Count() == images.Length, "RESOURCE_INVALID");
         var resourceEntries = entries.Where(e => e.Key.StartsWith("Doc_0/Res/", StringComparison.Ordinal)).Select(e => (e.Key, Bytes: e.Value, Hash: SafePackage.Hash(e.Value, budget))).ToArray();
+        var declared = new Dictionary<string, (string Kind, string Digest)>();
+        foreach(var resourceXml in entries.Where(e=>e.Key is "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml"))
+        {
+            var xml=SafePackage.Xml(resourceXml.Value,budget);
+            Need((string?)xml.Root!.Attribute("BaseLoc")=="Res","RESOURCE_INVALID");
+            foreach(var node in xml.Descendants().Where(e=>e.Name.LocalName is "Font" or "MultiMedia"))
+            {
+                var location=node.Element(SafePackage.Ns+(node.Name.LocalName=="Font"?"FontFile":"MediaFile"));
+                Need(location is not null,"RESOURCE_MISSING");
+                string path="Doc_0/Res/"+location!.Value;SafePackage.Path(path);
+                Need(entries.TryGetValue(path,out var bytes),"RESOURCE_MISSING");
+                string id=(string?)node.Attribute("ID")??"";
+                Need(declared.TryAdd(id,(node.Name.LocalName=="Font"?"font":"image",SafePackage.Hash(bytes!,budget))),"RESOURCE_INVALID");
+            }
+        }
+        var declaredSet=declared.Values.ToHashSet();
+        var layoutSet=layout.Select(r=>(Text(r,"kind"),Text(r,Text(r,"kind")=="font"?"subsetDigest":"digest"))).ToHashSet();
+        Need(declaredSet.SetEquals(layoutSet),"RESOURCE_INCOMPLETE");
+        foreach(var page in entries.Where(e=>e.Key.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)))
+            foreach(var node in SafePackage.Xml(page.Value,budget).Descendants().Where(e=>e.Name.LocalName is "TextObject" or "ImageObject"))
+            {
+                bool font=node.Name.LocalName=="TextObject";
+                string id=(string?)node.Attribute(font?"Font":"ResourceID")??"";
+                Need(declared.TryGetValue(id,out var resource) && resource.Kind==(font?"font":"image"),"RESOURCE_MISSING");
+            }
+        var sourceImageIds=new HashSet<string>();
+        void ImageReferences(JsonElement value)
+        {
+            budget.Charge(32);
+            if(value.ValueKind==JsonValueKind.Array)foreach(var child in value.EnumerateArray())ImageReferences(child);
+            if(value.ValueKind!=JsonValueKind.Object)return;
+            if(value.TryGetProperty("resourceId",out var id))sourceImageIds.Add(id.GetString()!);
+            foreach(var property in value.EnumerateObject())ImageReferences(property.Value);
+        }
+        ImageReferences(resolved);
+        Need(sourceImageIds.SetEquals(images.Select(i=>Text(i,"id"))),"RESOURCE_INCOMPLETE");
         var ids = new HashSet<string>();
         foreach (var resource in layout)
         {
@@ -125,7 +161,10 @@ public static partial class SourceContainer
         {
             Need(entries.TryGetValue(AssetPath(Text(image, "sha256")), out var bytes), "RESOURCE_MISSING");
             Need(bytes!.Length == image.GetProperty("byteLength").GetInt32() && SafePackage.Hash(bytes, budget) == Text(image, "sha256"), "DIGEST_MISMATCH");
-            Need(bytes.AsSpan().StartsWith(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }) || bytes.AsSpan().StartsWith(new byte[] { 255, 216, 255 }), "RESOURCE_INVALID");
+            bool png=bytes.AsSpan().StartsWith(new byte[] {137,80,78,71,13,10,26,10});
+            bool jpeg=bytes.AsSpan().StartsWith(new byte[] {255,216,255});
+            Need(png||jpeg,"RESOURCE_INVALID");
+            if(image.TryGetProperty("mimeType",out var mime))Need(mime.GetString()==(png?"image/png":"image/jpeg"),"RESOURCE_INVALID");
         }
     }
     private static Dictionary<string, string[]> ReadObjectMap(JsonElement value, ContainerBudget budget)
@@ -142,15 +181,21 @@ public static partial class SourceContainer
         }
         return result;
     }
-    private static void SemanticMap(JsonElement semantics, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    private static void SemanticMap(JsonElement semantics, JsonElement resolved, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, ContainerBudget budget)
     {
         Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
         var physical = new HashSet<string>();
+        var objects = new Dictionary<string,(int Page,string? Text)>();
         foreach (var entry in entries.Where(e => e.Key.StartsWith("Doc_0/Pages/", StringComparison.Ordinal) && e.Key.EndsWith("/Content.xml", StringComparison.Ordinal)))
         {
             var xml = SafePackage.Xml(entry.Value, budget);
+            int pageIndex=int.Parse(entry.Key.Split('/')[2][5..],System.Globalization.CultureInfo.InvariantCulture);
             foreach (var element in xml.Descendants().Where(e => e.Name.LocalName is "TextObject" or "ImageObject" or "PathObject"))
-                Need(physical.Add((string?)element.Attribute("ID") ?? ""), "SEMANTIC_REFERENCE");
+            {
+                string id=(string?)element.Attribute("ID")??"";
+                Need(physical.Add(id), "SEMANTIC_REFERENCE");
+                objects.Add(id,(pageIndex,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null));
+            }
         }
         var mapped = new HashSet<string>();
         foreach (var (id, targets) in objectMap)
@@ -160,7 +205,6 @@ public static partial class SourceContainer
             foreach (var target in targets) Need(physical.Contains(target) && mapped.Add(target), "SEMANTIC_REFERENCE");
         }
         Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
-        foreach (var semantic in semantics.EnumerateArray())
-        { budget.Charge(32); Need(objectMap.ContainsKey(Text(semantic, "objectId")), "SEMANTIC_REFERENCE"); }
+        SemanticValidation.Validate(semantics,resolved,objectMap,objects,budget);
     }
 }

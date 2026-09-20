@@ -184,4 +184,32 @@ public sealed class ContainerTests
         Assert.Contains(read.Pages.SelectMany(p=>p.Elements),e=>e is Ofdrw.Net.Core.Models.OfdImageElement);
     }
 
+    [Theory]
+    [InlineData("resources", "RESOURCE_INCOMPLETE")]
+    [InlineData("semantics", "SEMANTIC_INCOMPLETE")]
+    [InlineData("partial-semantics", "SEMANTIC_INCOMPLETE")]
+    [InlineData("source-node", "SEMANTIC_SOURCE")]
+    [InlineData("source-range", "SEMANTIC_SOURCE")]
+    [InlineData("page", "SEMANTIC_REFERENCE")]
+    public async Task Recomputed_hashes_do_not_bypass_cross_part_consistency(string mutation,string expected)
+    {
+        var first=await Initial.Value;
+        var bytes=Mutate(first.Sealed,(manifest,_)=> {
+            string name=mutation=="resources"?"resources":"semanticMap";
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()==name)!;
+            var content=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            switch(mutation)
+            {
+                case "resources":content=JsonNode.Parse("{\"fonts\":[],\"images\":[],\"layout\":[]}")!;break;
+                case "semantics":content["entries"]=new JsonArray();break;
+                case "partial-semantics":content["entries"]!.AsArray().RemoveAt(0);content["entries"]![0]!["readingOrder"]=0;break;
+                case "source-node":content["entries"]![0]!["nodeId"]="nonexistent-node";break;
+                case "source-range":content["entries"]![0]!["sourceRanges"]![0]!["sourceText"]!["range"]!["end"]=1;break;
+                case "page":content["entries"]![0]!["pageIndex"]=99;break;
+            }
+            string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal(expected,SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }

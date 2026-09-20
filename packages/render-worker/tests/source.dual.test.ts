@@ -87,7 +87,7 @@ it("keeps visible values and source relationships while excluding unused busines
   const source = JSON.parse(result.editingSource.json) as SourceContent;
   expect(result.editingSource.json).not.toContain("SECRET_TOKEN");
   expect(result.editingSource.json).toContain("winner-binding");
-  expect(source.semanticMap).toEqual(result.semanticMap);
+  expect(source.semanticMap.entries).toEqual(result.semanticMap);
   const edited = await finalizeSource(source, fixture.pack);
   if (!edited.ok) throw new Error(JSON.stringify(edited.diagnostics));
   const text = (r: typeof result) =>

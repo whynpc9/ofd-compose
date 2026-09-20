@@ -1,8 +1,15 @@
 import { isResolvedDocument, type ResolvedDocument } from "@ofd-compose/binding-core";
 import type { CanonicalLayoutIR } from "@ofd-compose/layout-ir";
 import { canonicalSerialize, digestCanonical } from "@ofd-compose/layout-ir";
+import type {
+  EditingFont,
+  EditingImage,
+  RenderProfile,
+  SourceContent,
+} from "@ofd-compose/source-protocol";
 import { prepayCanonical, type RenderBudget, RenderError, snapshot } from "./budget.js";
-import type { RenderProfile } from "./index.js";
+
+export type { EditingFont, EditingImage, SourceContent } from "@ofd-compose/source-protocol";
 
 /** Remove nonprinted evaluation/provenance while retaining node, binding and repeat identities.
  * Display text (including sensitive text deliberately printed by the caller) is preserved. */
@@ -34,30 +41,6 @@ export function minimizeResolved(
   return result;
 }
 
-export interface EditingFont {
-  family: string;
-  weight: number;
-  italic: boolean;
-  sha256: string;
-  byteLength: number;
-}
-export interface EditingImage {
-  id: string;
-  sha256: string;
-  byteLength: number;
-  mimeType?: string;
-}
-export interface SourceContent {
-  resolvedDocument: ResolvedDocument;
-  renderProfile: RenderProfile;
-  resources: {
-    fonts: EditingFont[];
-    images: EditingImage[];
-    layout: CanonicalLayoutIR["resources"];
-  };
-  semanticMap: CanonicalLayoutIR["semantics"];
-  irDigest: string;
-}
 export function createSourceContent(
   document: ResolvedDocument,
   ir: CanonicalLayoutIR,
@@ -79,6 +62,7 @@ export function createSourceContent(
   };
   visit(minimal);
   const assets = images.filter((image) => imageIds.has(image.id));
+  const semanticIds = new Set(ir.semantics.map((s) => s.objectId));
   const content: SourceContent = {
     resolvedDocument: minimal,
     renderProfile: snapshot(profile, budget),
@@ -90,7 +74,13 @@ export function createSourceContent(
       images: assets.map(({ bytes: _bytes, ...identity }) => identity),
       layout: ir.resources,
     },
-    semanticMap: ir.semantics,
+    semanticMap: {
+      entries: ir.semantics,
+      decorations: ir.pages
+        .flatMap((page) => page.objects)
+        .filter((object) => !semanticIds.has(object.id))
+        .map((object) => object.id),
+    },
     irDigest: digestCanonical(ir),
   };
   prepayCanonical(content, budget, "render", 8);

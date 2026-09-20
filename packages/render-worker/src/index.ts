@@ -33,7 +33,15 @@ import {
   mediaVersion,
   prepareMedia,
 } from "@ofd-compose/media-core";
+import {
+  type EditingImage,
+  isSourceContent,
+  type RenderProfile,
+} from "@ofd-compose/source-protocol";
 import { compile } from "@ofd-compose/template-compiler";
+
+export type { RenderProfile } from "@ofd-compose/source-protocol";
+
 import { fontDigest, shapingAndLineBreakVersions } from "@ofd-compose/typography-core";
 import {
   prepayCanonical,
@@ -62,10 +70,6 @@ export interface ResourcePack {
   images?: readonly (Omit<AuthorizedImage, "bytes"> & ResourceBytes & { sha256: string })[];
   /** Host loads the exact pinned harfbuzzjs/dist/harfbuzz-subset.wasm; core does no I/O. */
   subsetWasm: ResourceBytes;
-}
-export interface RenderProfile {
-  version: "ofd-compose/render@0";
-  layout: Omit<LayoutOptions, "images" | "resourcePackDigest">;
 }
 const byteLengthGetter = Object.getOwnPropertyDescriptor(
   Object.getPrototypeOf(Uint8Array.prototype),
@@ -157,6 +161,8 @@ async function run(
     const template = source === undefined ? undefined : snapshot(source, budget);
     const input = data === undefined ? null : snapshot(data, budget);
     const reopened = attachment === undefined ? undefined : snapshot(attachment, budget);
+    if (reopened && !isSourceContent(reopened))
+      throw new RenderError("MODEL_INVALID", "Invalid source protocol content");
     const filled =
       reopened?.resolvedDocument ??
       (resolved === undefined ? undefined : snapshot(resolved, budget));
@@ -439,6 +445,9 @@ async function run(
     const ir = withFontSubsets(laid.ir, subsets);
     const identity = {
       modelVersion: document.modelVersion,
+      ...(templateIdentity.compiledTemplateFormat
+        ? { compiledTemplateFormat: templateIdentity.compiledTemplateFormat }
+        : {}),
       irVersion: ir.irVersion,
       canonicalizationVersion,
       renderProfileVersion: settings.version,
@@ -447,9 +456,18 @@ async function run(
       lineBreakVersion,
       layoutProfile: ir.identity.layoutProfile,
       resourcePackDigest,
-      ...templateIdentity,
+      ...(templateIdentity.templateVersion
+        ? { templateVersion: templateIdentity.templateVersion }
+        : {}),
       expressionLanguageVersion: document.expressionLanguageVersion,
       bindingPolicyVersion: document.bindingPolicyVersion,
+      ...(templateIdentity.templateDigest
+        ? {
+            templateDigest: templateIdentity.templateDigest,
+            dataDigest: templateIdentity.dataDigest,
+            compiledDigest: templateIdentity.compiledDigest,
+          }
+        : {}),
       resolvedDocumentDigest: digestSemanticDocument(document),
       mediaVersion,
       barcodeGeneratorVersion,
@@ -492,7 +510,7 @@ async function run(
           loaded
             .filter((item) => item.kind === "image")
             .map((item) => ({
-              ...(item.metadata as { id: string; sha256: string; mimeType?: string }),
+              ...(item.metadata as Omit<EditingImage, "byteLength">),
               byteLength: item.length,
               bytes: item.bytes,
             })),
