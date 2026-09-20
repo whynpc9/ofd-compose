@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-09-20",
-  "sourceCommitBeforeFinalEvidence": "5487288986ad01434cb8566fd6456c732c4842e1",
+  "sourceCommitBeforeFinalEvidence": "c14e649aa03815ffd9811aa8865b0ff8354fee84",
   "data": "owned synthetic fixture only",
   "libraryReaders": {
     "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
@@ -25,8 +25,8 @@
   "artifacts": [
     {
       "name": "initial",
-      "sha256": "3f2dbd940622bd94982b86a9e571b5e2ee0e31c6ec9297221dce004d8353d638",
-      "bytes": 709091,
+      "sha256": "bd6d1b0921fcbff1b014970f0fcb5fd4a668b9442f6a7384203d63483a38932c",
+      "bytes": 709235,
       "revisionId": "revision-1",
       "irDigest": "5787d5e2eba56ec8bea958f0dd8a70170e9d9e946f623b6a6ce6f91bdedb5489",
       "parts": {
@@ -47,12 +47,17 @@
       "subsetDigests": ["a0ef7f47511c97f08a7113a7bc429da209968efe679f15469fed28c2360608cc"],
       "resourceMap": {
         "r0": "1"
+      },
+      "containerProfileVersion": "ofd-compose/container-experimental@1",
+      "replayIdentity": {
+        "version": "ofd-compose/filled-source-replay@0",
+        "irDigest": "673e8bc8a1369e609585ce7a556035a855778f659f989d56238ef8247460882d"
       }
     },
     {
       "name": "edited",
-      "sha256": "7883761b630e76874fcc83066aef26415fa3b09c528fbdb5b1342034d7957d83",
-      "bytes": 711924,
+      "sha256": "11919c9b666c2737c0c2c91047df2a3bbb17f8f4d64b6469b6c4f7ac1695390e",
+      "bytes": 712068,
       "revisionId": "revision-2",
       "irDigest": "70607ff6a08c27dfdd466ffd9cd1ce222ffa5b8eceb0caf1c5d35afa2b90dd98",
       "parts": {
@@ -73,6 +78,11 @@
       "subsetDigests": ["f902db9d2276077af52ac14995050e43fab4ba70a7c029e333a4b5447b864ad4"],
       "resourceMap": {
         "r0": "1"
+      },
+      "containerProfileVersion": "ofd-compose/container-experimental@1",
+      "replayIdentity": {
+        "version": "ofd-compose/filled-source-replay@0",
+        "irDigest": "0cea49b30884ab398fddcb54a54a316c2588e95acb8fa498bb978da1867da0c6"
       }
     }
   ],
