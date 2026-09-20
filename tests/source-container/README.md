@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
-full .NET 270 (76 container cases plus the unchanged 194 baseline cases). The final
+full .NET 275 (81 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -85,3 +85,9 @@ content checks, not a complete independent re-layout proof (see the container RE
 
 Generated numbering also has paragraph origins: decimal/alpha markers, custom suffixes,
 continuation/restart and repeated list starts are validated without changing the IR.
+
+Effective source font styles are checked against the actual original font digest with
+family, weight and italic together. Same-family regular/bold and regular/italic fixtures
+reject rehashed paragraph/fragment changes. Numbering verification explicitly delegates
+to the same Layout Core function as real layout, with no second .NET numbering algorithm;
+missing, denied or over-budget host requests fail closed.

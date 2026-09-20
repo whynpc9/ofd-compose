@@ -96,3 +96,12 @@ page placement, transforms, declared layout boxes and all layout styles are not 
 by extraction. `internal-consistency-only` does not certify that arbitrary edited source
 will reproduce every original pixel. Editing still goes through the real Worker, and
 this experimental container profile remains unfrozen.
+
+Numbered paragraphs similarly require an explicit `NumberingLabelsResolver`. The host
+executes `numberingLabel` from Layout Core (`ofd-compose/numbering@0`), the same function
+used by real layout; .NET has no independent counters, alpha formatting or repeat-start
+rules. Its owned request includes only node/repeat identities and numbering descriptors,
+not paragraph text or original Data. Request serialization is prepaid before traversal
+and capped at 16 MiB; returned labels are bounded and matched to actual text/font faces.
+Missing or denied capability fails closed. Effective font-face associations include
+family, weight and italic through default, heading, paragraph and fragment overrides.

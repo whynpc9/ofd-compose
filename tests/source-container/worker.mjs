@@ -98,6 +98,8 @@ if (mode === "combined" || mode === "two-images") {
   mode === "whitespace" ||
   mode === "empty-paragraph" ||
   mode === "two-fonts" ||
+  mode === "two-faces" ||
+  mode === "two-italic-faces" ||
   mode === "watermarks" ||
   mode.startsWith("checkbox-")
 ) {
@@ -223,27 +225,40 @@ if (mode === "combined" || mode === "two-images") {
       })),
     };
   }
-  if (mode === "two-fonts") {
-    const other = fontManifest[2];
+  if (["two-fonts", "two-faces", "two-italic-faces"].includes(mode)) {
+    const other = fontManifest[mode === "two-fonts" ? 2 : mode === "two-faces" ? 1 : 3];
     const bytes = new Uint8Array(
       await readFile(
         new URL(`../../packages/typography-core/fonts/${other.file}`, import.meta.url),
       ),
     );
     pack.fonts.push({
-      family: "Second",
-      weight: 400,
-      italic: false,
+      family: mode === "two-fonts" ? "Second" : "Noto",
+      weight: mode === "two-faces" ? 700 : 400,
+      italic: mode === "two-italic-faces",
       sha256: other.sha256,
       byteLength: bytes.length,
       bytes,
     });
-    source.styles.second = { fontFamily: "Second" };
+    source.styles.second =
+      mode === "two-fonts"
+        ? { fontFamily: "Second" }
+        : mode === "two-faces"
+          ? { fontFamily: "Noto", bold: true }
+          : { fontFamily: "Noto", italic: true };
+    source.styles.regular = { bold: false, italic: false };
+    source.body[0].styleId = "regular";
     source.body.push({
       kind: "paragraph",
       nodeId: "second-p",
       styleId: "second",
-      inlines: [{ kind: "text", nodeId: "second-t", text: "second 中文" }],
+      inlines: [
+        {
+          kind: "text",
+          nodeId: "second-t",
+          text: mode === "two-italic-faces" ? "second only" : "second 中文",
+        },
+      ],
     });
   }
   if (mode === "empty-paragraph") source.body[0].inlines = [];

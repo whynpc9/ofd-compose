@@ -15,3 +15,5 @@ export {
   permitsChineseBreak,
   tableProfile,
 } from "./layout.js";
+
+export { type NumberingInput, numberingAlgorithmVersion, numberingLabel } from "./numbering.js";

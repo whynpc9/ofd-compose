@@ -268,7 +268,7 @@ public static partial class SourceContainer
         }
         return result;
     }
-    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver)
+    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, IReadOnlyDictionary<string,string> resourceMap, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver)
     {
         Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
         var physical = new HashSet<string>();
@@ -293,6 +293,6 @@ public static partial class SourceContainer
             foreach (var target in targets) Need(physical.Contains(target) && mapped.Add(target), "SEMANTIC_REFERENCE");
         }
         Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
-        SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,budget,barcodeGeometryResolver);
+        SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,budget,barcodeGeometryResolver,numberingLabelsResolver);
     }
 }

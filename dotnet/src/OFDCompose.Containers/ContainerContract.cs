@@ -4,6 +4,10 @@ namespace OFDCompose.Containers;
 public sealed record BarcodeGeometryRequest(string GeneratorVersion,string Value,ReadOnlyMemory<byte> OptionsJson);
 /// <summary>Returns UTF-8 JSON for the generated local millimetre command array, or empty memory to deny verification.</summary>
 public delegate ReadOnlyMemory<byte> BarcodeGeometryResolver(BarcodeGeometryRequest request,CancellationToken cancellationToken);
+/// <summary>Owned minimal paragraph numbering descriptors; no paragraph text or business Data.</summary>
+public sealed record NumberingLabelsRequest(string AlgorithmVersion,ReadOnlyMemory<byte> ParagraphsJson);
+/// <summary>Trusted host executes Layout Core numbering rules and returns a JSON string array in request order.</summary>
+public delegate ReadOnlyMemory<byte> NumberingLabelsResolver(NumberingLabelsRequest request,CancellationToken cancellationToken);
 public enum ContainerProfile { NativeEditable, Distribution }
 public sealed record SourceAsset(string Sha256, ReadOnlyMemory<byte> Bytes);
 public sealed record ContainerResult(byte[]? Bytes, string? Error)

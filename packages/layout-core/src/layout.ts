@@ -47,6 +47,7 @@ import {
   transformedBox,
   validateBorderFits,
 } from "./graphics.js";
+import { numberingLabel } from "./numbering.js";
 import { type PageGeometry, pageGeometry } from "./page.js";
 
 // Layout IR construction coordinates are bounded to one million millimetres.
@@ -433,13 +434,6 @@ function color(value = "#000000") {
     b: Number.parseInt(value.slice(5, 7), 16) / 255,
   };
 }
-function alpha(value: number): string {
-  let result = "";
-  for (let n = value; n > 0; n = Math.floor((n - 1) / 26))
-    result = String.fromCharCode(97 + ((n - 1) % 26)) + result;
-  return result;
-}
-
 /** Multi-page layout. Resource I/O belongs to the host; every promise settles before metrics/shaping. */
 export async function layout(
   document: ResolvedDocument,
@@ -2652,33 +2646,7 @@ class ParagraphLayouter {
       text += fragment.text;
     }
     const runs = this.runs(text, spans, base);
-    const number = properties.numbering;
-    let label = "";
-    if (number) {
-      let startValue = number.start;
-      if (startValue !== undefined && paragraph.instancePath?.length) {
-        // The innermost repeat varies item identity; its parent chain identifies the list group.
-        const startKey = canonicalSerialize({
-          listId: number.listId,
-          nodeId: paragraph.nodeId,
-          parents: paragraph.instancePath
-            .slice(0, -1)
-            .map((instance) => ({ nodeId: instance.nodeId, key: instance.key })),
-        });
-        if (this.initializedRepeatStarts.has(startKey)) startValue = undefined;
-        else this.initializedRepeatStarts.add(startKey);
-      }
-      const count = startValue ?? (this.counts.get(number.listId) ?? 0) + 1;
-      this.counts.set(number.listId, count);
-      label =
-        (number.format === "decimal"
-          ? String(count)
-          : number.format === "bullet"
-            ? "·"
-            : number.format === "upper-alpha"
-              ? alpha(count).toUpperCase()
-              : alpha(count)) + (number.suffix ?? (number.format === "bullet" ? " " : ". "));
-    }
+    const label = numberingLabel(paragraph, this.counts, this.initializedRepeatStarts);
     const baseRun = (): Run => ({
       start: 0,
       end: label.length,
