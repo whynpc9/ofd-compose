@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
-full .NET 250 (56 container cases plus the unchanged 194 baseline cases). The final
+full .NET 258 (64 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -66,3 +66,10 @@ objects carry bounded JSON pointers to their actual page/section source settings
 swapping watermark assets is rejected. Source capture is opt-in and tests require exactly
 the same IR with or without it. Fixed-writer XML uses contextual element/attribute rules,
 and MaxUnitID must cover actual package IDs before adding the attachment.
+
+Coverage is checked per source occurrence and per UTF-16 interval, including whitespace
+and line breaks; changing a fragment and rehashing its semantic text cannot hide an
+unmapped prefix, suffix or middle range. Image occurrences require all source items.
+The XML grammar also validates single-value cardinality, finite numeric values,
+glyph integers and fixed-writer path command syntax, preventing hidden source text in
+otherwise valid XML contexts.

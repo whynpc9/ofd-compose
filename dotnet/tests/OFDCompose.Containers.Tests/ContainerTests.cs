@@ -498,16 +498,80 @@ public sealed class ContainerTests
         });
         Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
+    [Fact]
+    public async Task Every_image_in_a_source_occurrence_requires_a_rendered_mapping()
+    {
+        var fixture=await Build("two-images");
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;
+            var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            source["body"]![0]!["sources"]!.AsArray().Add(source["body"]![1]!["sources"]![0]!.DeepClone());
+            string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Source_text_ranges_cover_whitespace_and_line_breaks()
+    {
+        var fixture=await Build("whitespace");
+        Assert.True(SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Ok);
+    }
+    [Theory]
+    [InlineData("suffix")]
+    [InlineData("prefix")]
+    [InlineData("gap")]
+    public async Task Unmapped_text_within_an_existing_source_occurrence_is_rejected(string position)
+    {
+        var first=await Initial.Value;
+        var bytes=Mutate(first.Sealed,(manifest,_)=> {
+            const string secret="SECRET_UNRENDERED";
+            foreach(var part in manifest["parts"]!.AsArray())
+            {
+                string name=part!["name"]!.GetValue<string>();
+                if(name is not "resolvedDocument" and not "semanticMap")continue;
+                var content=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+                int insertion=position=="prefix"?0:position=="gap"?7:9;
+                if(name=="resolvedDocument")
+                {
+                    var fragment=content["body"]![0]!["fragments"]![0]!;
+                    fragment["text"]=fragment["text"]!.GetValue<string>().Insert(insertion,secret);
+                }
+                else
+                {
+                    void Insert(JsonNode text)
+                    {
+                        text["text"]=text["text"]!.GetValue<string>().Insert(insertion,secret);
+                        var range=text["range"]!;int start=range["start"]!.GetValue<int>(),end=range["end"]!.GetValue<int>();
+                        if(start>=insertion){range["start"]=start+secret.Length;range["end"]=end+secret.Length;}
+                    }
+                    foreach(var entry in content["entries"]!.AsArray())
+                    {
+                        if(entry!["sourceText"] is {} text)Insert(text);
+                        foreach(var range in entry["sourceRanges"]!.AsArray())Insert(range!["sourceText"]!);
+                    }
+                }
+                string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            }
+        });
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
     [Theory]
     [InlineData("element")]
     [InlineData("attribute")]
     [InlineData("text")]
+    [InlineData("duplicate-scalar")]
+    [InlineData("scalar-value")]
+    [InlineData("missing-scalar")]
     public async Task XML_metadata_must_obey_the_fixed_writer_context(string mutation)
     {
         var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));
         if(mutation=="element")xml.Root!.Add(new XElement(xml.Root.Name.Namespace+"Creator","FULL_SOURCE_SECRET"));
         if(mutation=="attribute")xml.Root!.SetAttributeValue("Value","FULL_SOURCE_SECRET");
         if(mutation=="text")xml.Root!.Add(new XText("FULL_SOURCE_SECRET"));
+        var box=xml.Descendants().Single(e=>e.Name.LocalName=="PhysicalBox");
+        if(mutation=="duplicate-scalar")box.Parent!.Add(new XElement(box.Name,"{\"source\":\"FULL_SOURCE_SECRET\"}"));
+        if(mutation=="scalar-value")box.Value="{\"source\":\"FULL_SOURCE_SECRET\"}";
+        if(mutation=="missing-scalar")box.Remove();
         entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
         var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("UNEXPECTED_METADATA",result.Error);

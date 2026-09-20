@@ -52,6 +52,7 @@ internal static class SemanticValidation
         Walk(document.GetProperty("body"),"",defaultFamily);
         foreach(var candidates in index.Values)Need(candidates.Count(c=>c.Renderable)<=1,"SEMANTIC_SOURCE_AMBIGUOUS");
         var sourceCovered=new HashSet<SourceNode>();
+        var textCoverage=new Dictionary<SourceNode,List<(int Start,int End)>>();
         var covered=new HashSet<string>();
         var semantics=map.GetProperty("entries");
         foreach(var decoration in map.GetProperty("decorations").EnumerateArray())
@@ -68,7 +69,7 @@ internal static class SemanticValidation
             Need(semantic.GetProperty("readingOrder").GetInt32()==order++,"SEMANTIC_REFERENCE");
             Need(semantic.TryGetProperty("pageIndex",out var page) && targets!.All(t=>objects[t].Page==page.GetInt32()),"SEMANTIC_REFERENCE");
             string repeat=Repeat(semantic,"repeatInstance");
-            bool Source(JsonElement reference,bool checkText,string? originalFont=null)
+            bool Source(JsonElement reference,bool checkText,string? originalFont=null,int? start=null,int? end=null)
             {
                 string? binding=Optional(reference,"bindingId"),control=Optional(reference,"controlId");
                 if(!index.TryGetValue((Text(reference,"nodeId"),binding,repeat),out var candidates))return false;
@@ -76,7 +77,16 @@ internal static class SemanticValidation
                 var matches=candidates.Where(c=>c.Repeat==repeat && c.Binding==binding && (control is null||control==c.Control)
                     && (!checkText || c.Text==Text(reference.GetProperty("sourceText"),"text"))
                     && (originalFont is null || sourceFonts.Any(f=>Text(f,"family")==c.Family&&Text(f,"sha256")==originalFont))).ToArray();
-                foreach(var candidate in matches)if(checkText||candidate.Text is null)sourceCovered.Add(candidate);
+                foreach(var candidate in matches)
+                {
+                    if(candidate.Text is null)sourceCovered.Add(candidate);
+                    if(start is not null && end is not null)
+                    {
+                        if(!textCoverage.TryGetValue(candidate,out var intervals))textCoverage[candidate]=intervals=[];
+                        intervals.Add((start.Value,end.Value));
+                        sourceCovered.Add(candidate);
+                    }
+                }
                 return matches.Length>0;
             }
             Need(Source(semantic,semantic.TryGetProperty("sourceText",out _)),"SEMANTIC_SOURCE");
@@ -109,6 +119,7 @@ internal static class SemanticValidation
                     Need(a>=0 && b>=a && b<=text.Length && x==end && y>=x && y<=logical.Length && b-a==y-x,"SEMANTIC_SOURCE");
                     Need(Boundary(text,a)&&Boundary(text,b)&&Boundary(logical,x)&&Boundary(logical,y),"SEMANTIC_SOURCE");
                     budget.Charge(b-a);Need(text.AsSpan(a,b-a).SequenceEqual(logical.AsSpan(x,y-x)),"SEMANTIC_SOURCE");end=y;
+                    Need(Source(range,true,objects[targets![0]].OriginalFont,a,b),"SEMANTIC_SOURCE");
                 }
                 Need(end==logical.Length,"SEMANTIC_SOURCE");
             }
@@ -119,6 +130,18 @@ internal static class SemanticValidation
         }
         Need(covered.SetEquals(objectMap.Keys),"SEMANTIC_INCOMPLETE");
         Need(index.Values.SelectMany(c=>c).Where(c=>c.Renderable).All(sourceCovered.Contains),"SEMANTIC_INCOMPLETE");
+        foreach(var (key,candidates) in index)
+            foreach(var node in candidates.Where(c=>c.Images is {Length:>0}))
+                Need(imagePositions.GetValueOrDefault(key)>0 && imagePositions[key]%node.Images!.Length==0,"SEMANTIC_INCOMPLETE");
+        foreach(var node in index.Values.SelectMany(c=>c).Where(c=>c.Renderable && c.Text is not null))
+        {
+            Need(textCoverage.TryGetValue(node,out var intervals),"SEMANTIC_INCOMPLETE");
+            budget.Charge(intervals!.Count*32L*(1+(int)Math.Log2(Math.Max(1,intervals.Count))));
+            intervals.Sort((a,b)=>a.Start.CompareTo(b.Start));
+            int end=0;
+            foreach(var interval in intervals){Need(interval.Start<=end,"SEMANTIC_INCOMPLETE");end=Math.Max(end,interval.End);}
+            Need(end==node.Text!.Length,"SEMANTIC_INCOMPLETE");
+        }
         var decorationIds=map.GetProperty("decorations").EnumerateArray().Select(e=>e.GetString()!).ToHashSet();
         var watermarkIds=new HashSet<string>();
         foreach(var watermark in map.GetProperty("watermarks").EnumerateArray())

@@ -92,6 +92,7 @@ if (mode === "combined" || mode === "two-images") {
   });
 } else if (
   mode === "initial" ||
+  mode === "whitespace" ||
   mode === "empty-paragraph" ||
   mode === "two-fonts" ||
   mode === "watermarks" ||
@@ -199,7 +200,7 @@ if (mode === "combined" || mode === "two-images") {
   result = await render(
     source,
     {
-      visible: "office 中文",
+      visible: mode === "whitespace" ? "  office\t中文\r\n尾部  \n" : "office 中文",
       unused: "UNUSED_SECRET",
       debug: "DEBUG_SECRET",
       token: "TOKEN_SECRET",
