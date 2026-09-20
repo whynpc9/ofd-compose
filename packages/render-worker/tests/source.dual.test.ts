@@ -1,7 +1,7 @@
 import { fontDigest } from "@ofd-compose/typography-core";
 import { expect, it } from "vitest";
 import type { SourceContent } from "../src/index.js";
-import { finalizeSource, render } from "../src/index.js";
+import { finalizeResolved, finalizeSource, render } from "../src/index.js";
 import { combined, profile, resources, textSource } from "./fixtures.js";
 
 it("reopens filled source with inert expressions and genuinely new subset glyphs", async () => {
@@ -196,6 +196,99 @@ it("normalizes unused dynamic evaluation state without rebinding", async () => {
     ).toBe(true);
   }
 });
+
+it.each([false, true])(
+  "removes link targets while preserving effective underlines (default link %s)",
+  async (defaultLink) => {
+    const pack = await resources();
+    const source = textSource();
+    source.styles = {
+      linked: { link: "https://example.invalid/?token=LINK_SECRET", underline: false },
+      off: { underline: false },
+      otherTarget: { link: "https://example.invalid/?token=OTHER_LINK_SECRET" },
+      sameTarget: { link: "https://example.invalid/?token=LINK_SECRET" },
+    };
+    source.body = [
+      {
+        kind: "paragraph",
+        nodeId: "p",
+        styleId: "linked",
+        inlines: [
+          { kind: "text", nodeId: "a", text: "inherited", styleId: "off" },
+          {
+            kind: "text",
+            nodeId: "b",
+            text: " explicit",
+            styleId: "off",
+          },
+          { kind: "text", nodeId: "c", text: "of", styleId: "linked" },
+          { kind: "text", nodeId: "d", text: "fice", styleId: "otherTarget" },
+          { kind: "text", nodeId: "e", text: "of", styleId: "linked" },
+          { kind: "text", nodeId: "f", text: "fice", styleId: "sameTarget" },
+        ],
+      },
+    ];
+    source.settings.page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      header: {
+        height: 10,
+        parts: [{ kind: "text", text: "header" }],
+        style: { underline: false },
+      },
+      watermarks: [
+        {
+          kind: "text",
+          text: "watermark",
+          style: { link: "https://example.invalid/?token=LINK_SECRET", underline: false },
+          x: 30,
+          y: 60,
+          layer: "behind",
+          opacity: 1,
+          transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+        },
+      ],
+    };
+    const selected = {
+      ...profile,
+      layout: {
+        ...profile.layout,
+        defaultStyle: {
+          ...profile.layout.defaultStyle,
+          ...(defaultLink ? { link: "https://example.invalid/?token=LINK_SECRET" } : {}),
+        },
+      },
+    };
+    const bound = await render(source, {}, pack, selected);
+    if (!bound.ok) throw new Error(JSON.stringify(bound.diagnostics));
+    const document = structuredClone(bound.resolvedDocument);
+    const paragraph = document.body[0];
+    if (
+      paragraph?.kind !== "paragraph" ||
+      paragraph.fragments[0]?.kind !== "text" ||
+      paragraph.fragments[1]?.kind !== "text"
+    )
+      throw new Error("fixture");
+    paragraph.fragments[0].styleInheritance = "inherit-paragraph";
+    paragraph.fragments[1].styleInheritance = "explicit";
+    const first = await finalizeResolved(document, pack, selected, { sourceAttachment: true });
+    if (!first.ok || !first.editingSource) throw new Error(JSON.stringify(first.diagnostics));
+    expect(first.editingSource.json).not.toContain("LINK_SECRET");
+    expect(first.editingSource.json).not.toContain('"link"');
+    const without = await finalizeResolved(document, pack, selected);
+    if (!without.ok) throw new Error("fixture");
+    expect(first.ir).toEqual(without.ir);
+    const second = await finalizeSource(
+      JSON.parse(first.editingSource.json) as SourceContent,
+      pack,
+    );
+    if (!second.ok) throw new Error(JSON.stringify(second.diagnostics));
+    expect(second.ir.pages).toEqual(first.ir.pages);
+    expect(second.ir.graphicsStates).toEqual(first.ir.graphicsStates);
+    expect(second.ir.resources).toEqual(first.ir.resources);
+  },
+);
 
 it("bounds source snapshots, repeated identities, full resource bytes and cancellation before output", async () => {
   const pack = await resources();

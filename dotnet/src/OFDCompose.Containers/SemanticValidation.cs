@@ -261,6 +261,32 @@ internal static class SemanticValidation
             Need(start<end&&end<=pageCount&&sections[i].Pages.All(p=>p>=start&&p<end),"SEMANTIC_SOURCE");
             for(int p=start;p<end;p++)pageSections[p]=i;
         }
+        var bandHasContent=new Dictionary<(int Section,string Name),bool>();
+        for(int actualPage=0;actualPage<pageCount;actualPage++)
+        {
+            budget.Charge(64);
+            int section=pageSections[actualPage],sectionPage=actualPage-sectionStarts[section]+1;
+            string pointer=sections[section].Pointer;
+            if(pointer=="/settings/page"&&!document.GetProperty("settings").TryGetProperty("page",out _))continue;
+            var settings=Pointer(document,pointer,budget);
+            if(settings.TryGetProperty("watermarks",out var watermarks))
+                for(int i=0;i<watermarks.GetArrayLength();i++)
+                {budget.Charge(pointer.Length*2L+64);Need(generated.ContainsKey((actualPage,pointer+"/watermarks/"+i)),"SEMANTIC_INCOMPLETE");}
+            foreach(string bandName in new[]{"header","footer"})
+            {
+                if(!settings.TryGetProperty(bandName,out var band))continue;
+                bool hidden=band.TryGetProperty("hideFirstPage",out var first)&&first.GetBoolean()&&sectionPage==1;
+                if(band.TryGetProperty("hiddenPages",out var hiddenPages))
+                    foreach(var number in hiddenPages.EnumerateArray()){budget.Charge(16);hidden|=number.GetInt32()==sectionPage;}
+                if(!bandHasContent.TryGetValue((section,bandName),out bool content))
+                {
+                    foreach(var part in band.GetProperty("parts").EnumerateArray())
+                    {budget.Charge(32);if(!part.GetProperty("kind").ValueEquals("text")||!part.GetProperty("text").ValueEquals("")){content=true;break;}}
+                    bandHasContent[(section,bandName)]=content;
+                }
+                Need(generated.ContainsKey((actualPage,pointer+"/"+bandName))==(!hidden&&content),"SEMANTIC_INCOMPLETE");
+            }
+        }
         foreach(var (key,list) in generated)
         {
             budget.Charge(list.Count*32L*(1+(int)Math.Log2(Math.Max(1,list.Count))));

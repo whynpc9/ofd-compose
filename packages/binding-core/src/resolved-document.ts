@@ -61,6 +61,8 @@ export const ResolvedTextFragmentSchema = Type.Object(
     text: Type.String(),
     styleId: Type.Optional(identifier),
     origin: Type.Union([StaticOriginSchema, DynamicTextOriginSchema]),
+    /** Opaque run equivalence retained when editing-source projection removes unprinted style metadata. */
+    shapingGroup: Type.Optional(Type.String({ pattern: "^editing-run-[0-9]+$", maxLength: 32 })),
     styleInheritance: Type.Optional(
       Type.Union([Type.Literal("inherit-paragraph"), Type.Literal("explicit")]),
     ),

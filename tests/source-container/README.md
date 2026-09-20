@@ -32,8 +32,8 @@ an application observation. No actual desktop extraction, visual display, licens
 entitlement or supported-OFD claim follows from those observations. ADR-0005 remains
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
-Local validation snapshot after review fixes: fresh Node 610, fresh Chromium 400,
-full .NET 287 (93 container cases plus the unchanged 194 baseline cases). The final
+Local validation snapshot after review fixes: fresh Node 612, fresh Chromium 402,
+full .NET 294 (100 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -110,3 +110,11 @@ text remains unchanged; captured and ordinary IR remain identical. Nested path-k
 fixtures confirm no raw account/child key is attached. Dynamic valueState is normalized
 to the fixed filled-source value placeholder; missing/null input state is not retained
 and cannot be reintroduced by rehashing.
+
+Every applicable page must have witnesses for retained watermarks and nonempty visible
+header/footer bands; removing both physical objects and maps is rejected. Empty and
+hidden bands remain valid. Link targets are omitted from styles/settings/default
+profile/semantics, including table/cell styles. Visible underlines are materialized,
+and opaque shaping groups preserve original run boundaries so URL removal cannot
+change ligatures. Shared paragraph-style rules and actual re-finalization tests require
+identical pages, graphics states and resources after this projection.

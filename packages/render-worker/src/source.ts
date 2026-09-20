@@ -1,4 +1,6 @@
 import { isResolvedDocument, type ResolvedDocument } from "@ofd-compose/binding-core";
+import type { ParagraphLayout, TextStyle } from "@ofd-compose/document-model";
+import { effectiveParagraphStyle } from "@ofd-compose/layout-core";
 import type { CanonicalLayoutIR } from "@ofd-compose/layout-ir";
 import { canonicalSerialize, digestCanonical } from "@ofd-compose/layout-ir";
 import type {
@@ -48,12 +50,97 @@ class EditingRepeatIdentities {
   }
 }
 
+function normalizeSourceLinks(
+  document: ResolvedDocument,
+  defaults: TextStyle,
+  budget: RenderBudget,
+) {
+  const original = document.styles;
+  const replacements = new Map<string | undefined, string>();
+  const groups = new Map<string, string>(),
+    reservedGroups = new Set<string>();
+  let nextGroup = 0;
+  const reserveGroups = (value: unknown): void => {
+    budget.charge("render", 32);
+    if (!value || typeof value !== "object") return;
+    const node = value as Record<string, unknown>;
+    if (typeof node.shapingGroup === "string") reservedGroups.add(node.shapingGroup);
+    for (const child of Object.values(node)) reserveGroups(child);
+  };
+  reserveGroups(document.body);
+  let next = 0;
+  const effective = (node: { styleId?: string }, inherited: TextStyle): TextStyle => {
+    const own = node.styleId ? original[node.styleId] : undefined;
+    budget.charge("render", 128 + (node.styleId?.length ?? 0) * 4);
+    const style = { ...inherited, ...own };
+    if (style.link) {
+      let id = replacements.get(node.styleId);
+      if (!id) {
+        do {
+          budget.charge("render", 32);
+          id = `editing-underline-${next++}`;
+        } while (Object.hasOwn(document.styles, id));
+        replacements.set(node.styleId, id);
+        const normalized = { ...own, underline: true };
+        delete normalized.link;
+        document.styles[id] = normalized;
+      }
+      node.styleId = id;
+    }
+    return style;
+  };
+  const inline = (node: { style?: TextStyle }) => {
+    budget.charge("render", 128);
+    if (node.style?.link || defaults.link) node.style = { ...node.style, underline: true };
+    if (node.style) delete node.style.link;
+  };
+  const walk = (value: unknown, inherited: TextStyle): void => {
+    budget.charge("render", 32);
+    if (!value || typeof value !== "object") return;
+    const node = value as Record<string, unknown>;
+    let style = inherited;
+    if (node.kind === "paragraph")
+      style = effective(
+        node,
+        effectiveParagraphStyle(defaults, undefined, node.layout as ParagraphLayout | undefined),
+      );
+    else if ((node.kind === "text" && "origin" in node) || node.kind === "input-control") {
+      const originalStyle = effective(
+        node,
+        node.styleInheritance === "explicit" ? defaults : inherited,
+      );
+      if (node.kind === "text" && originalStyle.link) {
+        const identity = [node.shapingGroup ?? null, originalStyle];
+        prepayCanonical(identity, budget, "render", 8);
+        const key = canonicalSerialize(identity);
+        let group = groups.get(key);
+        if (!group) {
+          do {
+            budget.charge("render", 32);
+            group = `editing-run-${nextGroup++}`;
+          } while (reservedGroups.has(group));
+          groups.set(key, group);
+        }
+        node.shapingGroup = group;
+      }
+    }
+    for (const key of ["header", "footer"] as const)
+      if (node[key] && typeof node[key] === "object") inline(node[key] as { style?: TextStyle });
+    if (Array.isArray(node.watermarks))
+      for (const watermark of node.watermarks) if (watermark.kind === "text") inline(watermark);
+    for (const child of Object.values(node)) walk(child, style);
+  };
+  walk(document.body, defaults);
+  walk(document.settings, defaults);
+}
+
 /** Remove nonprinted evaluation/provenance while retaining node/binding and opaque repeat relationships.
  * Display text (including sensitive text deliberately printed by the caller) is preserved. */
 export function minimizeResolved(
   document: ResolvedDocument,
   budget: RenderBudget,
   repeats = new EditingRepeatIdentities(budget),
+  defaults: TextStyle = {},
 ): ResolvedDocument {
   const result = snapshot(document, budget);
   if (!isResolvedDocument(result)) throw new RenderError("MODEL_INVALID", "Invalid editing source");
@@ -64,6 +151,7 @@ export function minimizeResolved(
     tzdataVersion: null,
   };
   result.structure = { conditionals: [], repeats: [] };
+  normalizeSourceLinks(result, defaults, budget);
   const styles = new Set<string>();
   const visit = (value: unknown): void => {
     budget.charge("render", 32);
@@ -80,7 +168,17 @@ export function minimizeResolved(
   };
   visit(result.body);
   visit(result.settings);
-  for (const name of Object.keys(result.styles)) if (!styles.has(name)) delete result.styles[name];
+  for (const name of Object.keys(result.styles)) {
+    budget.charge("render", 32);
+    if (!styles.has(name)) delete result.styles[name];
+    else {
+      const style = result.styles[name];
+      if (style?.link) {
+        style.underline = true;
+        delete style.link;
+      }
+    }
+  }
   return result;
 }
 
@@ -94,7 +192,10 @@ export function createSourceContent(
   pageDecorationSources: { objectId: string; pointer: string; sectionPage: number }[] = [],
 ) {
   const repeats = new EditingRepeatIdentities(budget);
-  const minimal = minimizeResolved(document, budget, repeats);
+  const minimal = minimizeResolved(document, budget, repeats, profile.layout.defaultStyle);
+  const editingProfile = snapshot(profile, budget);
+  if (editingProfile.layout.defaultStyle.link) editingProfile.layout.defaultStyle.underline = true;
+  delete editingProfile.layout.defaultStyle.link;
   const semantics = snapshot(ir.semantics, budget);
   const sectionNames = new Set(ir.semantics.map((semantic) => semantic.sectionId));
   const privateSections = new Map<string, string>();
@@ -102,6 +203,7 @@ export function createSourceContent(
   for (const semantic of semantics) {
     budget.charge("render", 32);
     if (semantic.repeatInstance) repeats.remap(semantic.repeatInstance, true);
+    delete semantic.link;
     if (
       semantic.sectionId?.startsWith("@section:") ||
       semantic.sectionId?.startsWith("@@section:")
@@ -137,7 +239,7 @@ export function createSourceContent(
   const semanticIds = new Set(ir.semantics.map((s) => s.objectId));
   const content: SourceContent = {
     resolvedDocument: minimal,
-    renderProfile: snapshot(profile, budget),
+    renderProfile: editingProfile,
     resources: {
       // Full font identity is authorization input, never the identity of embedded subset bytes.
       fonts: fonts.filter(

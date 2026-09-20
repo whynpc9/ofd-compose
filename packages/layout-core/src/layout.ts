@@ -49,6 +49,7 @@ import {
 } from "./graphics.js";
 import { numberingLabel } from "./numbering.js";
 import { type PageGeometry, pageGeometry } from "./page.js";
+import { effectiveParagraphStyle } from "./styles.js";
 
 // Layout IR construction coordinates are bounded to one million millimetres.
 const maxLayoutCoordinate = 1_000_000;
@@ -323,6 +324,7 @@ interface Span {
   fragment: ResolvedTextFragment;
 }
 interface Run {
+  shapingGroup?: string;
   separateAfter?: boolean;
   start: number;
   end: number;
@@ -2506,10 +2508,20 @@ class ParagraphLayouter {
           !control &&
           !previous.control &&
           previous.script === script &&
-          previous.style === style
+          previous.style === style &&
+          previous.shapingGroup === span.fragment.shapingGroup
         )
           previous.end += char.length;
-        else runs.push({ start: i, end: i + char.length, style, face, script, control });
+        else
+          runs.push({
+            start: i,
+            end: i + char.length,
+            style,
+            face,
+            script,
+            control,
+            ...(span.fragment.shapingGroup ? { shapingGroup: span.fragment.shapingGroup } : {}),
+          });
         i += char.length;
       }
     }
@@ -2603,16 +2615,12 @@ class ParagraphLayouter {
     const properties = paragraph.layout ?? {};
     if (properties.tabStops?.some((value, i, values) => i > 0 && value <= (values[i - 1] ?? 0)))
       throw new LayoutError("LAYOUT_INPUT", "Tab stops must increase", paragraph.nodeId);
-    const heading =
-      properties.role === "heading"
-        ? { fontSize: [24, 20, 18, 16, 14, 12][(properties.headingLevel ?? 1) - 1], bold: true }
-        : {};
-    const base = {
-      ...this.options.defaultStyle,
-      ...heading,
-      ...this.style(paragraph.styleId),
-      ...generatedStyle,
-    };
+    const base = effectiveParagraphStyle(
+      this.options.defaultStyle,
+      this.style(paragraph.styleId),
+      properties,
+      generatedStyle,
+    );
     let text = "";
     const spans: Span[] = [];
     for (const input of paragraph.fragments) {

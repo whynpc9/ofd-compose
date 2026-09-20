@@ -146,6 +146,9 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
   });
 } else if (
   mode === "initial" ||
+  mode === "links" ||
+  mode === "table-links" ||
+  mode === "empty-bands" ||
   mode === "private-repeat" ||
   mode === "empty-control" ||
   mode === "path" ||
@@ -182,6 +185,46 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
       },
     ],
   };
+  if (mode === "links") {
+    source.styles.linked = {
+      link: "https://example.invalid/?token=LINK_SECRET_STYLE",
+      underline: false,
+    };
+    source.body[0].styleId = "linked";
+    profile.layout.defaultStyle.link = "https://example.invalid/?token=LINK_SECRET_DEFAULT";
+  }
+  if (mode === "table-links") {
+    source.styles.tableLink = { link: "https://example.invalid/?token=LINK_SECRET_TABLE" };
+    source.body = [
+      {
+        kind: "table",
+        nodeId: "table-links",
+        styleId: "tableLink",
+        rows: [
+          {
+            kind: "table-row",
+            nodeId: "link-row",
+            cells: [
+              {
+                kind: "table-cell",
+                nodeId: "link-cell",
+                styleId: "tableLink",
+                blocks: source.body,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+  }
+  if (mode === "empty-bands")
+    source.settings.page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      header: { height: 10, parts: [{ kind: "text", text: "" }] },
+      footer: { height: 10, hiddenPages: [1], parts: [{ kind: "text", text: "hidden" }] },
+    };
   if (mode === "private-repeat")
     source.body = [
       {

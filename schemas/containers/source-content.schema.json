@@ -1788,6 +1788,11 @@
                                 }
                               ]
                             },
+                            "shapingGroup": {
+                              "pattern": "^editing-run-[0-9]+$",
+                              "maxLength": 32,
+                              "type": "string"
+                            },
                             "styleInheritance": {
                               "anyOf": [
                                 {

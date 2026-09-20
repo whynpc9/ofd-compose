@@ -29,9 +29,12 @@ internal static class SourceValidation
             Visit(resolved.GetProperty("body"), styleIds, budget);
             Visit(resolved.GetProperty("settings"), styleIds, budget);
             Need(resolved.GetProperty("styles").EnumerateObject().All(p => styleIds.Contains(p.Name)), "SOURCE_NOT_MINIMAL");
+            foreach(var style in resolved.GetProperty("styles").EnumerateObject())Visit(style.Value,styleIds,budget);
+            Visit(document.RootElement.GetProperty("renderProfile").GetProperty("layout").GetProperty("defaultStyle"),styleIds,budget);
             foreach(var entry in document.RootElement.GetProperty("semanticMap").GetProperty("entries").EnumerateArray())
             {
                 budget.Charge(64);
+                Need(!entry.TryGetProperty("link",out _),"SOURCE_NOT_MINIMAL");
                 if(entry.TryGetProperty("repeatInstance",out var instances))foreach(var frame in instances.EnumerateArray()){budget.Charge(64);Need(OpaqueRepeatKey(Text(frame,"key")),"SOURCE_NOT_MINIMAL");}
                 if(entry.TryGetProperty("sectionId",out var section))Need(!section.GetString()!.StartsWith("@section:",StringComparison.Ordinal)&&!section.GetString()!.StartsWith("@@section:",StringComparison.Ordinal),"SOURCE_NOT_MINIMAL");
             }
@@ -56,7 +59,7 @@ internal static class SourceValidation
                     Need(OpaqueRepeatKey(key)&&Text(frame,"keyKind")=="ordinal","SOURCE_NOT_MINIMAL");
                 }
             if (property.Name == "expression") Need(property.Value.GetString() == "", "SOURCE_NOT_MINIMAL");
-            Need(property.Name != "dataPath", "SOURCE_NOT_MINIMAL");
+            Need(property.Name is not "dataPath" and not "link", "SOURCE_NOT_MINIMAL");
             Need(property.Name != "path", "RESOURCE_FORBIDDEN");
             Visit(property.Value, styles, budget);
         }

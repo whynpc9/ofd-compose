@@ -866,4 +866,56 @@ public sealed class ContainerTests
         Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
+    [Theory]
+    [InlineData("/settings/page/watermarks/0")]
+    [InlineData("/settings/page/header")]
+    public async Task Removing_a_physical_page_decoration_and_all_its_maps_is_rejected(string pointer)
+    {
+        var fixture=await Build("text-watermarks");
+        var bytes=Mutate(fixture.Sealed,(manifest,entries)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="semanticMap")!;var map=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            var witnesses=map["pageDecorations"]!.AsArray();var removed=witnesses.Where(w=>w!["pointer"]!.GetValue<string>()==pointer).ToArray();Assert.NotEmpty(removed);
+            var physical=new HashSet<string>();
+            foreach(var witness in removed)
+            {
+                string id=witness!["objectId"]!.GetValue<string>();foreach(var target in manifest["objectMap"]![id]!.AsArray())physical.Add(target!.GetValue<string>());
+                manifest["objectMap"]!.AsObject().Remove(id);var decorations=map["decorations"]!.AsArray();decorations.Remove(decorations.Single(d=>d!.GetValue<string>()==id));witnesses.Remove(witness);
+            }
+            foreach(string path in entries.Keys.Where(p=>p.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)).ToArray())
+            {var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));xml.Descendants().Where(e=>physical.Contains((string?)e.Attribute("ID")??"")).Remove();entries[path]=Encoding.UTF8.GetBytes(xml.ToString());}
+            string json=map.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            foreach(var entry in manifest["entries"]!.AsArray()){byte[] value=entries[entry!["path"]!.GetValue<string>()];entry["sha256"]=Hash(value);entry["byteLength"]=value.Length;}
+        });
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Empty_and_hidden_page_bands_do_not_require_output_witnesses()
+    {
+        var fixture=await Build("empty-bands");Assert.True(SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Ok);
+    }
+    [Theory]
+    [InlineData("style")]
+    [InlineData("semantic")]
+    [InlineData("profile")]
+    public async Task Unprinted_link_targets_are_removed_and_cannot_be_reintroduced(string location)
+    {
+        var fixture=await Build("links");Assert.DoesNotContain("LINK_SECRET",Encoding.UTF8.GetString(fixture.Source));Assert.DoesNotContain("\"link\"",Encoding.UTF8.GetString(fixture.Source));
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            string name=location=="semantic"?"semanticMap":location=="profile"?"renderProfile":"resolvedDocument";
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()==name)!;var content=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            if(location=="semantic")content["entries"]![0]!["link"]="https://example.invalid/?token=LINK_SECRET";
+            else if(location=="profile")content["layout"]!["defaultStyle"]!["link"]="https://example.invalid/?token=LINK_SECRET";
+            else content["styles"]!.AsObject().First().Value!["link"]="https://example.invalid/?token=LINK_SECRET";
+            string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Fact]
+    public async Task Unused_table_and_cell_link_targets_are_not_retained_in_referenced_styles()
+    {
+        var fixture=await Build("table-links");Assert.DoesNotContain("LINK_SECRET",Encoding.UTF8.GetString(fixture.Source));Assert.DoesNotContain("\"link\"",Encoding.UTF8.GetString(fixture.Source));
+        Assert.True(SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Ok);
+    }
+
 }

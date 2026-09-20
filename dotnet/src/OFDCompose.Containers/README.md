@@ -121,3 +121,8 @@ mapping; keyKind/ordinal describe the editing instances, not the original Data. 
 repeat-section IDs are likewise replaced in the attachment. Only attachment snapshots
 are changed, preserving the original IR. Dynamic valueState is the constant `value`
 placeholder for filled text and conveys no original missing/null/value evaluation state.
+
+Page-decoration completeness is derived for each source section/page, respecting hidden
+and empty bands. Editing sources omit all unprinted link targets. Underline appearance
+and opaque shaping equivalence groups retain original text geometry, using the same
+paragraph-style rules as Layout Core; original capture-on/off IR remains identical.
