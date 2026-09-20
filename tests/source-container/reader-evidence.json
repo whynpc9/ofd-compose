@@ -1,0 +1,86 @@
+{
+  "measuredAt": "2026-09-20",
+  "sourceCommitBeforeFinalEvidence": "f3e276ff2c1826080d3519945a3607727c0800f4",
+  "data": "owned synthetic fixture only",
+  "libraryReaders": {
+    "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
+    "java": "ofdrw 2.3.7; all runtime JAR SHA256 compared with tests/ofd-writer/java/dependency-sha256.txt"
+  },
+  "javaResults": [
+    {
+      "fixture": "initial",
+      "textObjects": 2,
+      "glyphs": 7,
+      "pathAndClipCommands": 0,
+      "maxGeometryErrorMm": 0.0
+    },
+    {
+      "fixture": "edited",
+      "textObjects": 2,
+      "glyphs": 15,
+      "pathAndClipCommands": 0,
+      "maxGeometryErrorMm": 0.0
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "initial",
+      "sha256": "de6e2dba54faeab6f5840f8eaa2b6d860648cef271c0a6b27ca6404876cb24d5",
+      "bytes": 708833,
+      "revisionId": "revision-1",
+      "irDigest": "5787d5e2eba56ec8bea958f0dd8a70170e9d9e946f623b6a6ce6f91bdedb5489",
+      "parts": {
+        "resolvedDocument": "18c8ae2bac74bbf5642adc20e8d2b14522565b19f1c5657533cbbd004130cd52",
+        "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
+        "resources": "07676760ae9a9c59bb470a71176c2c111033cb53ba41ab751eb79362fb294c76",
+        "semanticMap": "8389fd6da617a44fe07b89a04e88304e6f1ab6635a4beb47e8a2ba4f01ff3568"
+      },
+      "fullFonts": [
+        {
+          "byteLength": 16437364,
+          "family": "Noto",
+          "italic": false,
+          "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+          "weight": 400
+        }
+      ],
+      "subsetDigests": ["a0ef7f47511c97f08a7113a7bc429da209968efe679f15469fed28c2360608cc"]
+    },
+    {
+      "name": "edited",
+      "sha256": "42f563a5212e19f522a2c4b40e73ff4b1ee585ca52bd218727c0643a26527850",
+      "bytes": 711666,
+      "revisionId": "revision-2",
+      "irDigest": "319d72691f86690d952e629fc02f0407945f3c1c10c0ebc8261376fa3a21c583",
+      "parts": {
+        "resolvedDocument": "f6a45595673b792162d98bb97f3b342996ad2c9c28e20f140cf0b46e905a64f8",
+        "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
+        "resources": "6e2417ff724875982580aa6ad8ee8a9b9951e92dbee2235911c32c788411dee3",
+        "semanticMap": "46410a981d4f7bb0f313373f5b8dfe972b35d6eb46e8011ea9f441c7815cf635"
+      },
+      "fullFonts": [
+        {
+          "byteLength": 16437364,
+          "family": "Noto",
+          "italic": false,
+          "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+          "weight": 400
+        }
+      ],
+      "subsetDigests": ["f902db9d2276077af52ac14995050e43fab4ba70a7c029e333a4b5447b864ad4"]
+    }
+  ],
+  "signatureStatus": "unsigned; signed presence test reports present-unverified, never valid",
+  "hashMeaning": "internal-consistency-only; not source authenticity",
+  "targetDesktopReader": {
+    "status": "Not verified",
+    "candidate": "Foxit Phantom",
+    "version": "11.3.2009",
+    "bundleBuild": "11320090424",
+    "declaredTypes": ["pdf", "ppdf", "fdf", "wildcard"],
+    "attempt": "Computer Use getApp timed out (-10005) with no AX state or screenshot; no actual OFD support inferred",
+    "otherCandidates": "No 数科/WPS app found in /Applications or user Applications inventory",
+    "license": "No license entitlement established; no purchase or EULA acceptance"
+  },
+  "attachmentChoice": "experimental single JSON; not frozen pending desktop target-reader extraction"
+}

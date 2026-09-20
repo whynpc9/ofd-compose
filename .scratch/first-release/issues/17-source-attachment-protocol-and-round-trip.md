@@ -4,15 +4,15 @@
 
 **Blocked by:** 15 OfdIrWriter
 
-**Status:** ready-for-agent
+**Status:** needs-info
 
-- [ ] manifest 内容：协议版本、各部分摘要、`modelVersion/irVersion/containerProfileVersion`、能力、来源；JSON MIME `application/json`
+- [x] manifest 内容：协议版本、各部分摘要、`modelVersion/irVersion/containerProfileVersion`、能力、来源；JSON MIME `application/json`
 - [ ] 单附件包 vs 多附件：用 ofdrw.net 与至少一个目标阅读器做提取验证后决定并记录（供 WP0.10）
-- [ ] 源最小化：不含整份输入 JSON、未使用字段、调试信息、令牌、凭证；有测试断言
-- [ ] 提取与校验顺序实现；伪造附件名、篡改摘要、缺资源分别返回可辨识状态；自计算哈希只报告"内部一致"
-- [ ] round-trip：提取 → 加载 ResolvedDocument → 修改文字 → 插入子集外新字符（需完整字体身份可取回）→ render → 新 OFD；新 revisionId 与摘要不同，旧文件字节不变
-- [ ] 非回编辑分发 profile 的最小实现：不带编辑源，manifest 声明为派生物
-- [ ] 签名状态字段在 WP1 固定为"未签/未验证"，接口边界记录
+- [x] 源最小化：不含整份输入 JSON、未使用字段、调试信息、令牌、凭证；有测试断言
+- [x] 提取与校验顺序实现；伪造附件名、篡改摘要、缺资源分别返回可辨识状态；自计算哈希只报告"内部一致"
+- [x] round-trip：提取 → 加载 ResolvedDocument → 修改文字 → 插入子集外新字符（需完整字体身份可取回）→ render → 新 OFD；新 revisionId 与摘要不同，旧文件字节不变
+- [x] 非回编辑分发 profile 的最小实现：不带编辑源，manifest 声明为派生物
+- [x] 签名状态字段在 WP1 固定为"未签/未验证"，接口边界记录
 
 ## Comments
 
@@ -22,3 +22,8 @@ seams and library round-trip tests are implemented; see ADR-0005 and
 `tests/source-container/README.md`. Desktop target-reader extraction is **Not verified**.
 The single-JSON attachment remains experimental; do not mark this issue fully accepted
 or freeze the issue 19 structure from .NET/Java library evidence alone.
+
+Code/library checks are implemented and verified; status remains `needs-info` solely
+for an available licensed desktop target-reader extraction environment. This is not
+full issue acceptance. Local pre-review Standards 2/2 and Spec 2/2 findings were fixed
+and independently rechecked at `f3e276ff2c1826080d3519945a3607727c0800f4`.

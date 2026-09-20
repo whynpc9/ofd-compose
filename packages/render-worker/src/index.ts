@@ -161,6 +161,7 @@ async function run(
     const template = source === undefined ? undefined : snapshot(source, budget);
     const input = data === undefined ? null : snapshot(data, budget);
     const reopened = attachment === undefined ? undefined : snapshot(attachment, budget);
+    if (reopened) budget.charge("render", budget.used.jsonNodes * 32);
     if (reopened && !isSourceContent(reopened))
       throw new RenderError("MODEL_INVALID", "Invalid source protocol content");
     const filled =

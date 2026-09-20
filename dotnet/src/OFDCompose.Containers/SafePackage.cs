@@ -103,7 +103,11 @@ internal static class SafePackage
             Need(payloadEnd <= offset && !ranges.Any(r => start < r.End && payloadEnd > r.Start), "PACKAGE_INVALID");
             ranges.Add((start, payloadEnd));
             Need((BinaryPrimitives.ReadUInt16LittleEndian(bytes[(position + 8)..]) & 1) == 0, "PACKAGE_INVALID");
+            ushort flags=BinaryPrimitives.ReadUInt16LittleEndian(bytes[(position+8)..]);
+            Need(flags==BinaryPrimitives.ReadUInt16LittleEndian(bytes[(start+6)..]),"PACKAGE_INVALID");
             int method = BinaryPrimitives.ReadUInt16LittleEndian(bytes[(position + 10)..]);
+            Need(method==BinaryPrimitives.ReadUInt16LittleEndian(bytes[(start+8)..]),"PACKAGE_INVALID");
+            if((flags&8)==0)Need(bytes.Slice(start+14,12).SequenceEqual(bytes.Slice(position+16,12)),"PACKAGE_SIZE");
             Need(method is 0 or 8, "PACKAGE_INVALID");
             uint expanded = BinaryPrimitives.ReadUInt32LittleEndian(bytes[(position + 24)..]);
             Need(expanded <= budget.Limits.EntryBytes, "SIZE_LIMIT");

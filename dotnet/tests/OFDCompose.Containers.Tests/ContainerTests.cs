@@ -212,4 +212,20 @@ public sealed class ContainerTests
         Assert.Equal(expected,SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
+    [Fact]
+    public async Task Rejects_compression_bombs_nested_archives_header_lies_and_duplicate_JSON_keys()
+    {
+        var first=await Initial.Value;
+        var entries=Zip(first.Sealed);entries.Add("Doc_0/Res/bomb.otf",new byte[2*1024*1024]);
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(Pack(entries),cancellationToken:TestContext.Current.CancellationToken).Error);
+        entries=Zip(first.Sealed);entries.Add("Doc_0/Res/nested.zip",[80,75,3,4]);
+        Assert.Equal("UNEXPECTED_ENTRY",SourceContainer.Extract(Pack(entries),cancellationToken:TestContext.Current.CancellationToken).Error);
+        var header=(byte[])first.Sealed.Clone();header[14]^=1;
+        Assert.Equal("PACKAGE_SIZE",SourceContainer.Extract(header,cancellationToken:TestContext.Current.CancellationToken).Error);
+        entries=Zip(first.Sealed);const string path="Doc_0/Attachs/ofd-compose.json";
+        entries[path]=Encoding.UTF8.GetBytes("{\"namespace\":\"ofd-compose\","+Encoding.UTF8.GetString(entries[path])[1..]);
+        Assert.Equal("SCHEMA_INVALID",SourceContainer.Extract(Pack(entries),cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){WorkBytes=100},cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }
