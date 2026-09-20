@@ -29,6 +29,12 @@ internal static class SourceValidation
             Visit(resolved.GetProperty("body"), styleIds, budget);
             Visit(resolved.GetProperty("settings"), styleIds, budget);
             Need(resolved.GetProperty("styles").EnumerateObject().All(p => styleIds.Contains(p.Name)), "SOURCE_NOT_MINIMAL");
+            foreach(var entry in document.RootElement.GetProperty("semanticMap").GetProperty("entries").EnumerateArray())
+            {
+                budget.Charge(64);
+                if(entry.TryGetProperty("repeatInstance",out var instances))foreach(var frame in instances.EnumerateArray()){budget.Charge(64);Need(OpaqueRepeatKey(Text(frame,"key")),"SOURCE_NOT_MINIMAL");}
+                if(entry.TryGetProperty("sectionId",out var section))Need(!section.GetString()!.StartsWith("@section:",StringComparison.Ordinal)&&!section.GetString()!.StartsWith("@@section:",StringComparison.Ordinal),"SOURCE_NOT_MINIMAL");
+            }
             return document;
         }
         catch { document.Dispose(); throw; }
@@ -41,12 +47,21 @@ internal static class SourceValidation
         foreach (var property in value.EnumerateObject())
         {
             if (property.Name == "styleId") styles.Add(property.Value.GetString()!);
+            if (property.Name == "valueState") Need(property.Value.GetString() == "value", "SOURCE_NOT_MINIMAL");
+            if (property.Name == "instancePath")
+                foreach(var frame in property.Value.EnumerateArray())
+                {
+                    budget.Charge(64);
+                    string key=Text(frame,"key");
+                    Need(OpaqueRepeatKey(key)&&Text(frame,"keyKind")=="ordinal","SOURCE_NOT_MINIMAL");
+                }
             if (property.Name == "expression") Need(property.Value.GetString() == "", "SOURCE_NOT_MINIMAL");
             Need(property.Name != "dataPath", "SOURCE_NOT_MINIMAL");
             Need(property.Name != "path", "RESOURCE_FORBIDDEN");
             Visit(property.Value, styles, budget);
         }
     }
+    private static bool OpaqueRepeatKey(string key)=>key.StartsWith("instance-",StringComparison.Ordinal)&&uint.TryParse(key.AsSpan(9),System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint ordinal)&&key=="instance-"+ordinal.ToString(System.Globalization.CultureInfo.InvariantCulture);
     internal static byte[] Bytes(JsonElement value, ContainerBudget budget)
     {
         budget.Charge(value.GetRawText().Length * 6L);

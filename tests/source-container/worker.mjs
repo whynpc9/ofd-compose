@@ -146,6 +146,7 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
   });
 } else if (
   mode === "initial" ||
+  mode === "private-repeat" ||
   mode === "empty-control" ||
   mode === "path" ||
   mode === "list" ||
@@ -181,6 +182,61 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
       },
     ],
   };
+  if (mode === "private-repeat")
+    source.body = [
+      {
+        kind: "repeat-block",
+        nodeId: "accounts",
+        bindingId: "accounts-binding",
+        expression: { kind: "legacy", text: "accounts" },
+        repeatKey: { kind: "path", path: "account" },
+        children: [
+          {
+            kind: "paragraph",
+            nodeId: "account-p",
+            layout: {
+              section: {
+                id: "account-section",
+                page: {
+                  paper: "A4",
+                  orientation: "portrait",
+                  margins: { top: 20, bottom: 20, left: 20, right: 20 },
+                },
+              },
+            },
+            inlines: [
+              {
+                kind: "dynamic-text",
+                nodeId: "account-name",
+                bindingId: "account-name-binding",
+                expression: { kind: "legacy", text: "name" },
+              },
+            ],
+          },
+          {
+            kind: "repeat-block",
+            nodeId: "items",
+            bindingId: "items-binding",
+            expression: { kind: "legacy", text: "items" },
+            repeatKey: { kind: "path", path: "id" },
+            children: [
+              {
+                kind: "paragraph",
+                nodeId: "item-p",
+                inlines: [
+                  {
+                    kind: "dynamic-text",
+                    nodeId: "item-label",
+                    bindingId: "item-label-binding",
+                    expression: { kind: "legacy", text: "label" },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ];
   if (mode === "empty-control")
     source.body[0].inlines = [
       { kind: "text", nodeId: "before-empty", text: "a" },
@@ -204,7 +260,7 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
       kind: "paragraph",
       nodeId,
       layout,
-      inlines: [{ kind: "text", nodeId: nodeId + "-text", text: "section body" }],
+      inlines: [{ kind: "text", nodeId: `${nodeId}-text`, text: "section body" }],
     });
     source.body.push(
       paragraph("page-two", { pageBreakBefore: true }),
@@ -369,6 +425,18 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
     {
       visible: mode === "whitespace" ? "  office\t中文\r\n尾部  \n" : "office 中文",
       items: [{}, {}],
+      ...(mode === "private-repeat"
+        ? {
+            accounts: ["A", "B"].map((suffix) => ({
+              account: `PRIVATE_ACCOUNT_${suffix}`,
+              name: `Public ${suffix}`,
+              items: [
+                { id: "PRIVATE_CHILD_SHARED", label: "visible child" },
+                { id: "PRIVATE_CHILD_TWO", label: "other child" },
+              ],
+            })),
+          }
+        : {}),
       unused: "UNUSED_SECRET",
       debug: "DEBUG_SECRET",
       token: "TOKEN_SECRET",

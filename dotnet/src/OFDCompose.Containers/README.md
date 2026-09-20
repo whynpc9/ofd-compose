@@ -30,7 +30,7 @@ cancellation bound copies, hashes, parsing, and output; failure returns no artif
 `render(..., {sourceAttachment:true})` returns minimized source and needed original
 image bytes. It omits original Data, expression bodies, conditional/repeat evaluation
 logs, optional business-data paths, provenance and unused styles; it retains printed text, active input-control
-semantics, stable node/binding/repeat identities and source ranges. It does not
+semantics, stable node/binding identities and opaque repeat relationships and source ranges. It does not
 redact values deliberately displayed in the document. Embedded image data is needed
 content, not business-input retention. Full font metadata and byte lengths are
 separate from Layout IR `originalDigest` / `subsetDigest`; full fonts are not embedded
@@ -114,3 +114,10 @@ Occurrence cardinality is checked against source structure. Repeated table heade
 content is validated on each mapped table-body page; ordinary atomic nodes and text
 ranges cannot gain duplicates. Section page numbers are derived from source section
 boundaries and validated physical body pages; mutable page witnesses must agree.
+
+Editing repeat identities use per-file opaque instance labels rather than raw business
+keys. Parent scopes remain distinct and both source and semantic parts use the same
+mapping; keyKind/ordinal describe the editing instances, not the original Data. Generated
+repeat-section IDs are likewise replaced in the attachment. Only attachment snapshots
+are changed, preserving the original IR. Dynamic valueState is the constant `value`
+placeholder for filled text and conveys no original missing/null/value evaluation state.

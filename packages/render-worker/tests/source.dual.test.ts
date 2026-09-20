@@ -76,6 +76,15 @@ it("requires the explicitly authorized full font and never treats a subset as th
 
 it("keeps visible values and source relationships while excluding unused business input", async () => {
   const fixture = await combined();
+  const table = fixture.source.body.find((block) => block.kind === "table");
+  const repeated =
+    table?.kind === "table" ? table.rows.find((row) => row.kind === "repeat-row-group") : undefined;
+  if (repeated?.kind !== "repeat-row-group") throw new Error("fixture");
+  repeated.repeatKey = { kind: "path", path: "account" };
+  fixture.data.institutions = fixture.data.institutions.map((item, index) => ({
+    ...item,
+    account: `PRIVATE_ACCOUNT_${index}`,
+  }));
   fixture.source.settings.page = {
     paper: "A4",
     orientation: "portrait",
@@ -122,10 +131,18 @@ it("keeps visible values and source relationships while excluding unused busines
   if (!withoutCapture.ok) throw new Error(JSON.stringify(withoutCapture.diagnostics));
   expect(withoutCapture.ir).toEqual(result.ir);
   expect(result.editingSource.json).not.toContain("SECRET_TOKEN");
+  expect(result.editingSource.json).not.toContain("PRIVATE_ACCOUNT_");
   expect(result.editingSource.json).not.toContain("dataPath");
   expect(result.editingSource.json).not.toContain("UNUSED_ALIAS_SECRET");
   expect(result.editingSource.json).toContain("winner-binding");
-  expect(source.semanticMap.entries).toEqual(result.semanticMap);
+  expect(source.semanticMap.entries.map(({ repeatInstance: _repeat, ...entry }) => entry)).toEqual(
+    result.semanticMap.map(({ repeatInstance: _repeat, ...entry }) => entry),
+  );
+  expect(
+    source.semanticMap.entries
+      .flatMap((entry) => entry.repeatInstance ?? [])
+      .every((frame) => /^instance-\d+$/u.test(frame.key)),
+  ).toBe(true);
   const edited = await finalizeSource(source, fixture.pack);
   if (!edited.ok) throw new Error(JSON.stringify(edited.diagnostics));
   const text = (r: typeof result) =>
@@ -144,6 +161,40 @@ it("keeps visible values and source relationships while excluding unused busines
   );
   expect(invalid).toMatchObject({ ok: false, diagnostics: [{ code: "MODEL_INVALID" }] });
   expect(invalid).not.toHaveProperty("editingSource");
+});
+
+it("normalizes unused dynamic evaluation state without rebinding", async () => {
+  const pack = await resources();
+  const initial = await render(textSource(), {}, pack, profile, { sourceAttachment: true });
+  if (!initial.ok || !initial.editingSource) throw new Error("fixture");
+  for (const state of ["missing", "null"] as const) {
+    const content = JSON.parse(initial.editingSource.json) as SourceContent;
+    const paragraph = content.resolvedDocument.body[0];
+    if (paragraph?.kind !== "paragraph" || paragraph.fragments[0]?.kind !== "text")
+      throw new Error("fixture");
+    paragraph.fragments[0].text = "";
+    paragraph.fragments[0].origin = {
+      kind: "dynamic-text",
+      nodeId: "t",
+      bindingId: "hidden-state",
+      expression: "",
+      valueState: state,
+    };
+    const finalized = await finalizeSource(content, pack, { sourceAttachment: true });
+    if (!finalized.ok || !finalized.editingSource)
+      throw new Error(JSON.stringify(finalized.diagnostics));
+    const source = JSON.parse(finalized.editingSource.json) as SourceContent;
+    const output = source.resolvedDocument.body[0];
+    if (output?.kind !== "paragraph" || output.fragments[0]?.kind !== "text")
+      throw new Error("fixture");
+    expect(output.fragments[0].origin).toMatchObject({ valueState: "value" });
+    expect(
+      finalized.ir.pages
+        .flatMap((page) => page.objects)
+        .filter((object) => object.kind === "text")
+        .every((object) => object.logicalText === ""),
+    ).toBe(true);
+  }
 });
 
 it("bounds source snapshots, repeated identities, full resource bytes and cancellation before output", async () => {

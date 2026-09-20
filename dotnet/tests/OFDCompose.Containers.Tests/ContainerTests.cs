@@ -833,4 +833,37 @@ public sealed class ContainerTests
         Assert.True(SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
 
+    [Fact]
+    public async Task Repeat_business_keys_are_opaque_in_source_semantics_and_generated_sections()
+    {
+        var fixture=await Build("private-repeat");string source=Encoding.UTF8.GetString(fixture.Source);
+        Assert.DoesNotContain("PRIVATE_ACCOUNT",source);Assert.DoesNotContain("PRIVATE_CHILD",source);Assert.Contains("instance-",source);Assert.Contains("@editing-section:",source);
+        var extracted=SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
+        var reader=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
+        string visible=string.Concat(reader.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text));Assert.Contains("Public A",visible);Assert.Contains("Public B",visible);Assert.Contains("visible child",visible);
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            foreach(var part in manifest["parts"]!.AsArray())
+            {
+                string name=part!["name"]!.GetValue<string>();if(name is not "resolvedDocument" and not "semanticMap")continue;
+                var content=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+                if(name=="resolvedDocument")content["body"]![0]!["instancePath"]![0]!["key"]="PRIVATE_ACCOUNT_REINTRODUCED";
+                else content["entries"]![0]!["repeatInstance"]![0]!["key"]="PRIVATE_ACCOUNT_REINTRODUCED";
+                string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            }
+        });
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("null")]
+    public async Task Binding_evaluation_state_cannot_be_reintroduced(string state)
+    {
+        var fixture=await Initial.Value;
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            source["body"]![0]!["fragments"]![0]!["origin"]!["valueState"]=state;string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }
