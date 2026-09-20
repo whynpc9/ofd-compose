@@ -63,6 +63,49 @@ internal static class SafePackage
         }
         return result;
     }
+    internal static void References(Dictionary<string,byte[]> entries,ContainerBudget budget)
+    {
+        Need(entries.TryGetValue("OFD.xml",out var rootBytes) && entries.TryGetValue("Doc_0/Document.xml",out _),"PACKAGE_REFERENCE");
+        var root=Xml(rootBytes!,budget,"OFD");
+        Need(root.Descendants(Ns+"DocRoot").Select(e=>e.Value).SequenceEqual(["Doc_0/Document.xml"]),"PACKAGE_REFERENCE");
+        var document=Xml(entries["Doc_0/Document.xml"],budget,"Document");
+        foreach(string resourceName in new[]{"PublicRes","DocumentRes"})
+        {
+            string path="Doc_0/"+resourceName+".xml";
+            Need(document.Descendants(Ns+resourceName).Select(e=>e.Value).SequenceEqual(entries.ContainsKey(path)?[resourceName+".xml"]:Array.Empty<string>()),"PACKAGE_REFERENCE");
+        }
+        var pages=document.Descendants(Ns+"Page").ToArray();
+        Need(pages.Length is >0 and <=1000,"PACKAGE_REFERENCE");
+        var pageEntries=entries.Keys.Where(p=>p.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)).ToHashSet();
+        for(int i=0;i<pages.Length;i++)
+        {
+            string path=$"Pages/Page_{i}/Content.xml";
+            Need((string?)pages[i].Attribute("BaseLoc")==path && pageEntries.Remove("Doc_0/"+path),"PACKAGE_REFERENCE");
+        }
+        Need(pageEntries.Count==0,"PACKAGE_REFERENCE");
+        var ids=new HashSet<string>();var resources=new HashSet<string>();var references=new List<string>();
+        var resourcePaths=new HashSet<string>();
+        foreach(var (path,bytes) in entries.Where(e=>e.Key.EndsWith(".xml",StringComparison.Ordinal)&&!e.Key.StartsWith("Doc_0/Signs/",StringComparison.Ordinal)))
+        {
+            var xml=Xml(bytes,budget);
+            foreach(var id in xml.Descendants().Attributes("ID"))
+            {
+                budget.Charge(32);Need(uint.TryParse(id.Value,System.Globalization.NumberStyles.None,System.Globalization.CultureInfo.InvariantCulture,out uint value)&&value>0&&ids.Add(id.Value),"PACKAGE_REFERENCE");
+            }
+            if(path is "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml")
+            {
+                Need((string?)xml.Root!.Attribute("BaseLoc")=="Res","PACKAGE_REFERENCE");
+                foreach(var location in xml.Descendants().Where(e=>e.Name.LocalName is "FontFile" or "MediaFile"))
+                { Path(location.Value);Need(!location.Value.Contains('/') && entries.ContainsKey("Doc_0/Res/"+location.Value),"RESOURCE_MISSING");resourcePaths.Add("Doc_0/Res/"+location.Value); }
+                foreach(var resource in xml.Descendants().Where(e=>e.Name.LocalName is "Font" or "MultiMedia"))resources.Add((string?)resource.Attribute("ID")??"");
+            }
+            if(path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal))
+                foreach(var element in xml.Root!.Elements(Ns+"Content").Elements(Ns+"Layer").Elements().Where(e=>e.Name.LocalName is "TextObject" or "ImageObject"))
+                    references.Add((string?)element.Attribute(element.Name.LocalName=="TextObject"?"Font":"ResourceID")??"");
+        }
+        Need(references.All(resources.Contains),"RESOURCE_MISSING");
+        Need(resourcePaths.SetEquals(entries.Keys.Where(p=>p.StartsWith("Doc_0/Res/",StringComparison.Ordinal))),"RESOURCE_ORPHAN");
+    }
     private static void PreflightDirectory(ReadOnlySpan<byte> bytes, ContainerBudget budget)
     {
         // Locate the non-ZIP64 EOCD before BCL can allocate central-directory objects.

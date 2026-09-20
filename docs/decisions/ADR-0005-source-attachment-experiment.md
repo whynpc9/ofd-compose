@@ -5,7 +5,7 @@ Status: Proposed — desktop target-reader extraction gate remains open
 Issue: `.scratch/first-release/issues/17-source-attachment-protocol-and-round-trip.md`
 
 The implementation uses one standard OFD JSON attachment as an experiment, with
-four individually hashed JSON-text parts, content-addressed source-image assets,
+five individually hashed JSON-text parts (including the full IR identity), content-addressed source-image assets,
 full-font identity locks and a Semantic Map linked to fixed-writer object IDs.
 This avoids nested archive inflation and allows independent readers to extract the
 entire manifest. It is not the WP0.10 choice between single and multiple attachments.

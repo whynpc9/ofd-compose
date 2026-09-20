@@ -76,16 +76,23 @@ it("requires the explicitly authorized full font and never treats a subset as th
 
 it("keeps visible values and source relationships while excluding unused business input", async () => {
   const fixture = await combined();
+  const font = fixture.pack.fonts[0];
+  if (!font) throw new Error("fixture");
+  const pack = {
+    ...fixture.pack,
+    fonts: [...fixture.pack.fonts, { ...font, family: "UNUSED_ALIAS_SECRET" }],
+  };
   const result = await render(
     fixture.source,
     { ...fixture.data, neverUsed: "SECRET_TOKEN" },
-    fixture.pack,
+    pack,
     profile,
     { sourceAttachment: true },
   );
   if (!result.ok || !result.editingSource) throw new Error(JSON.stringify(result.diagnostics));
   const source = JSON.parse(result.editingSource.json) as SourceContent;
   expect(result.editingSource.json).not.toContain("SECRET_TOKEN");
+  expect(result.editingSource.json).not.toContain("UNUSED_ALIAS_SECRET");
   expect(result.editingSource.json).toContain("winner-binding");
   expect(source.semanticMap.entries).toEqual(result.semanticMap);
   const edited = await finalizeSource(source, fixture.pack);
@@ -97,6 +104,15 @@ it("keeps visible values and source relationships while excluding unused busines
       .map((o) => o.logicalText);
   expect(text(edited)).toEqual(text(result));
   expect(edited.images.map((i) => i.digest)).toEqual(result.images.map((i) => i.digest));
+  const invalid = await render(
+    fixture.source,
+    fixture.data,
+    fixture.pack,
+    { ...profile, debug: "DEBUG_SECRET" } as typeof profile,
+    { sourceAttachment: true },
+  );
+  expect(invalid).toMatchObject({ ok: false, diagnostics: [{ code: "MODEL_INVALID" }] });
+  expect(invalid).not.toHaveProperty("editingSource");
 });
 
 it("bounds source snapshots, repeated identities, full resource bytes and cancellation before output", async () => {

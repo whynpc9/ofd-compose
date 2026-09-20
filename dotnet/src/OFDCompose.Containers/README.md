@@ -9,8 +9,8 @@ The experimental format has one `application/json` attachment named
 `ofd-compose.json`, registered through standard OFD `Attachments.xml`. Its
 `namespace=ofd-compose`, `protocol=ofd-compose/source@0`, and
 `containerProfileVersion=ofd-compose/container-experimental@0` are explicit.
-Four parts carry minimal ResolvedDocument, exact RenderProfile, resource inventory,
-and Semantic Map (entries plus an explicit decoration-object partition). Each part's `content` is a **JSON string containing JSON text**;
+Five parts carry minimal ResolvedDocument, exact RenderProfile, resource inventory,
+Semantic Map (entries plus an explicit decoration-object partition), and full IR identity. Each part's `content` is a **JSON string containing JSON text**;
 its SHA-256 covers the UTF-8 bytes of that string's decoded value, so re-escaping
 or indenting the outer manifest cannot change an inner digest. This is not nested
 ZIP and not an executable format. The manifest also records versions, required
@@ -41,7 +41,7 @@ font fails; there is no system-font or URL fallback. `finalizeResolved` is the l
 level filled-document seam; neither seam compiles or rebinds. Callers assign a new
 revision ID when editing. Re-rendered documents omit synthetic template/data hashes.
 
-Distribution accepts no editing source/assets and emits an empty parts/object map,
+Distribution accepts no editing source/assets and emits only the hashed IR-identity part and an empty object map,
 `derived-no-source` capability and `distribution` profile. Sealing an already-signed
 input is rejected. Extraction reports `unsigned` or `present-unverified` only.
 `internal-consistency-only` **does not mean authentic or signature-verified**; a party
@@ -57,3 +57,10 @@ context. Extraction cross-checks declared layout resources against real OFD reso
 XML and page references, then validates semantic node/binding/repeat/text ranges and
 page links against the filled source and physical objects. Removing a whole resource
 or semantic list and recomputing its digest does not satisfy these checks.
+
+The full manifest IR digest must equal the hashed `irDigest` JSON-string part; its first
+32 hex characters must also match the OFD DocID. This detects changing either half of
+the manifest digest without updating protected parts, while remaining an internal
+consistency check, not authentication. Resource XML/page references and resource-file
+reachability are checked for both profiles. Font weight/italic/face and requested family
+metadata are checked against the layout/source; unused family aliases are minimized.

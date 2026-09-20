@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
-full .NET 224 (30 container cases plus the unchanged 194 baseline cases). The final
+full .NET 234 (40 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -47,3 +47,7 @@ of caller-controlled JSON/object maps, and standard numeric attachment IDs/MaxUn
 Further review regressions preserve valid empty paragraphs without source ranges, reject
 wrong XML root names at all five native package entry kinds, and reject two source-image
 IDs being swapped while the overall image digest set remains unchanged.
+
+IR identity tests change both the leading and trailing digest halves and mutate DocID
+with a recomputed inventory hash. Font family/weight/italic mutations and orphaned
+resource blobs are rejected. Distribution has one identity-only part; native has five.

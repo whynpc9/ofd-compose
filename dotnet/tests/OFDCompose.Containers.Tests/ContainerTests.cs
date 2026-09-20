@@ -353,4 +353,64 @@ public sealed class ContainerTests
         if(Zip(first.Ofd.Bytes!).ContainsKey(path))Assert.Equal("PACKAGE_XML",SourceContainer.Create(Change(first.Ofd.Bytes!),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.NativeEditable,first.Source,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
+    [Theory]
+    [InlineData("resource-location")]
+    [InlineData("page-location")]
+    [InlineData("font-location")]
+    public async Task Rejects_dangling_internal_XML_references(string mutation)
+    {
+        var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);
+        string path=mutation=="font-location"?"Doc_0/PublicRes.xml":"Doc_0/Document.xml";
+        var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));
+        if(mutation=="resource-location")xml.Descendants().Single(e=>e.Name.LocalName=="PublicRes").Value="Missing.xml";
+        if(mutation=="page-location")xml.Descendants().Single(e=>e.Name.LocalName=="Page").SetAttributeValue("BaseLoc","Pages/Page_99/Content.xml");
+        if(mutation=="font-location")xml.Descendants().Single(e=>e.Name.LocalName=="FontFile").Value="missing.otf";
+        entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.Equal(mutation=="font-location"?"RESOURCE_MISSING":"PACKAGE_REFERENCE",result.Error);
+    }
+
+    [Theory]
+    [InlineData("head")]
+    [InlineData("tail")]
+    public async Task Manifest_IR_digest_is_checked_against_the_hashed_identity_and_DocID(string half)
+    {
+        var first=await Initial.Value;
+        var bytes=Mutate(first.Sealed,(manifest,_)=> {
+            string digest=manifest["irDigest"]!.GetValue<string>();int at=half=="head"?0:63;
+            manifest["irDigest"]=digest[..at]+(digest[at]=='0'?'1':'0')+digest[(at+1)..];
+        });
+        Assert.Equal("DIGEST_MISMATCH",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+        var mismatchedDoc=Mutate(first.Sealed,(manifest,entries)=> {
+            var xml=XDocument.Parse(Encoding.UTF8.GetString(entries["OFD.xml"]));xml.Descendants().Single(e=>e.Name.LocalName=="DocID").Value=new string('0',32);
+            entries["OFD.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
+            var record=manifest["entries"]!.AsArray().Single(e=>e!["path"]!.GetValue<string>()=="OFD.xml")!;record["sha256"]=Hash(entries["OFD.xml"]);record["byteLength"]=entries["OFD.xml"].Length;
+        });
+        Assert.Equal("DIGEST_MISMATCH",SourceContainer.Extract(mismatchedDoc,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Theory]
+    [InlineData("weight")]
+    [InlineData("italic")]
+    [InlineData("family")]
+    public async Task Recomputed_font_metadata_cannot_change_the_rendered_face(string field)
+    {
+        var first=await Initial.Value;
+        var bytes=Mutate(first.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resources")!;
+            var resources=JsonNode.Parse(part["content"]!.GetValue<string>())!;var font=resources["fonts"]![0]!;
+            if(field=="weight")font[field]=700;else if(field=="italic")font[field]=true;else font[field]="unrequested-family";
+            string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("FONT_FACE_MISMATCH",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable)]
+    [InlineData(ContainerProfile.Distribution)]
+    public async Task Orphan_resource_bytes_cannot_carry_hidden_source(ContainerProfile profile)
+    {
+        var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);entries.Add("Doc_0/Res/leak.png",Encoding.UTF8.GetBytes("FULL_SOURCE_SECRET"));
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?first.Source:default,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.Equal("RESOURCE_ORPHAN",result.Error);Assert.Null(result.Bytes);
+    }
+
 }

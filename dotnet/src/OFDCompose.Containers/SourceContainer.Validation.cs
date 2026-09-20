@@ -118,8 +118,9 @@ public static partial class SourceContainer
         }
         Need(seen.Count == declared.Count, "RESOURCE_MISSING");
     }
-    private static Dictionary<string,(string Kind,string Digest)> Resources(JsonElement resources, JsonElement resolved, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    private static Dictionary<string,(string Kind,string Digest)> Resources(JsonElement resources, JsonElement resolved, JsonElement renderProfile, Dictionary<string, byte[]> entries, ContainerBudget budget)
     {
+        SafePackage.References(entries,budget);
         var fonts = resources.GetProperty("fonts").EnumerateArray().ToArray();
         var images = resources.GetProperty("images").EnumerateArray().ToArray();
         var layout = resources.GetProperty("layout").EnumerateArray().ToArray();
@@ -153,18 +154,22 @@ public static partial class SourceContainer
                 Need(declared.TryGetValue(id,out var resource) && resource.Kind==(font?"font":"image"),"RESOURCE_MISSING");
             }
         var sourceImageIds=new HashSet<string>();
+        var families=new HashSet<string>();
         void ImageReferences(JsonElement value)
         {
             budget.Charge(32);
             if(value.ValueKind==JsonValueKind.Array)foreach(var child in value.EnumerateArray())ImageReferences(child);
             if(value.ValueKind!=JsonValueKind.Object)return;
             if(value.TryGetProperty("resourceId",out var id))sourceImageIds.Add(id.GetString()!);
+            if(value.TryGetProperty("fontFamily",out var family))families.Add(family.GetString()!);
             if(value.TryGetProperty("kind",out var kind) && kind.GetString()=="image-binding")
                 foreach(var source in value.GetProperty("sources").EnumerateArray())
                     if(source.ValueKind==JsonValueKind.String)Need(renderedImageDigests.Contains(InlineImageDigest(source.GetString()!,budget)),"RESOURCE_IMAGE_MISMATCH");
             foreach(var property in value.EnumerateObject())ImageReferences(property.Value);
         }
         ImageReferences(resolved);
+        ImageReferences(renderProfile);
+        Need(fonts.All(f=>families.Contains(Text(f,"family"))),"FONT_FACE_MISMATCH");
         Need(sourceImageIds.SetEquals(images.Select(i=>Text(i,"id"))),"RESOURCE_INCOMPLETE");
         var ids = new HashSet<string>();
         foreach (var resource in layout)
@@ -177,10 +182,11 @@ public static partial class SourceContainer
             if (kind == "font")
             {
                 Need(fonts.Any(f => Text(f, "sha256") == Text(resource, "originalDigest")), "FONT_IDENTITY_MISSING");
+                Need(resource.GetProperty("faceIndex").GetInt32()==0 && fonts.Any(f=>FaceMatches(f,resource)),"FONT_FACE_MISMATCH");
                 Need(Text(resource, "originalDigest") != digest, "FONT_SUBSET_IS_NOT_FULL");
             }
         }
-        Need(fonts.All(f => layout.Any(r => Text(r, "kind") == "font" && Text(r, "originalDigest") == Text(f, "sha256"))), "RESOURCE_INVALID");
+        Need(fonts.All(f => layout.Any(r => Text(r, "kind") == "font" && FaceMatches(f,r))), "RESOURCE_INVALID");
         foreach (var image in images)
         {
             Need(renderedImageDigests.Contains(Text(image,"sha256")),"RESOURCE_IMAGE_MISMATCH");
@@ -193,6 +199,9 @@ public static partial class SourceContainer
         }
         return declared;
     }
+    private static bool FaceMatches(JsonElement font,JsonElement layout)=>Text(font,"sha256")==Text(layout,"originalDigest")
+        && font.GetProperty("weight").GetInt32()==layout.GetProperty("weight").GetDouble()
+        && Text(layout,"style")== (font.GetProperty("italic").GetBoolean()?"italic":"normal");
     internal static string InlineImageDigest(string text,ContainerBudget budget)
     {
         budget.Charge(text.Length*4L);
