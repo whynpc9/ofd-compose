@@ -150,7 +150,7 @@ public static partial class SourceContainer
         var layout = resources.GetProperty("layout").EnumerateArray().ToArray();
         var renderedImageDigests=layout.Where(r=>Text(r,"kind")=="image").Select(r=>Text(r,"digest")).ToHashSet();
         Need(fonts.Length <= 64 && images.Length <= 64 && layout.Length <= 128, "SIZE_LIMIT");
-        Need(fonts.Select(f => f.GetRawText()).Distinct().Count() == fonts.Length && images.Select(f => Text(f, "id")).Distinct().Count() == images.Length, "RESOURCE_INVALID");
+        Need(fonts.Select(f => (Text(f,"family"),f.GetProperty("weight").GetInt32(),f.GetProperty("italic").GetBoolean())).Distinct().Count() == fonts.Length && images.Select(f => Text(f, "id")).Distinct().Count() == images.Length, "RESOURCE_INVALID");
         var resourceEntries = entries.Where(e => e.Key.StartsWith("Doc_0/Res/", StringComparison.Ordinal)).Select(e => (e.Key, Bytes: e.Value, Hash: SafePackage.Hash(e.Value, budget))).ToArray();
         var declared = new Dictionary<string, (string Kind, string Digest)>();
         foreach(var resourceXml in entries.Where(e=>e.Key is "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml"))
@@ -294,8 +294,9 @@ public static partial class SourceContainer
         }
         Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
         SourceVersions(root);
-        var bands=SourceRenderValidation.Validate(root,objectMap,objects,entries,sourceRenderResolver,budget);
+        var bands=SourceRenderValidation.Validate(root,objectMap,objects,entries,sourceRenderResolver,budget,out var renderProof);
         SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),root.GetProperty("renderProfile"),objectMap,objects,entries.Keys.Count(path=>path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)&&path.EndsWith("/Content.xml",StringComparison.Ordinal)),budget,barcodeGeometryResolver,numberingLabelsResolver,bands);
+        SourceRenderValidation.ValidatePages(root,entries,links.ToDictionary(item=>item.Key,item=>item.Value.Digest),sourceRenderResolver,renderProof,budget);
         return objects;
     }
 }

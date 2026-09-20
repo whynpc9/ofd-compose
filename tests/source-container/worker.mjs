@@ -48,7 +48,12 @@ const profile = {
   },
 };
 let result;
-if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
+if (
+  mode === "combined" ||
+  mode === "two-images" ||
+  mode === "cropped-images" ||
+  mode === "header-atomics"
+) {
   const fixture = JSON.parse(
     await readFile(new URL("../ofd-writer/fixtures/combined-input.json", import.meta.url)),
   );
@@ -67,7 +72,7 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
       bytes,
     },
   ];
-  if (mode === "two-images") {
+  if (mode === "two-images" || mode === "cropped-images") {
     const corpus = JSON.parse(
       await readFile(new URL("../../packages/media-core/tests/fixtures.json", import.meta.url)),
     );
@@ -87,6 +92,8 @@ if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
     });
     fixture.data.secondImage = { resourceId: "second" };
   }
+  if (mode === "cropped-images")
+    fixture.source.body[0].placement = { crop: { x: 0, y: 0, width: 1, height: 1 } };
   if (mode === "header-atomics") {
     const table = fixture.source.body.find((b) => b.kind === "table");
     const image = structuredClone(fixture.source.body.find((b) => b.kind === "image-binding"));

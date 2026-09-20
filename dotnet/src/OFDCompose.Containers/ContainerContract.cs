@@ -11,10 +11,13 @@ public delegate ReadOnlyMemory<byte> NumberingLabelsResolver(NumberingLabelsRequ
 /// <summary>Owned filled source and source-image bytes for an explicitly trusted real Worker/fixed-writer verification host.</summary>
 public sealed record SourceRenderRequest(string AlgorithmVersion,ReadOnlyMemory<byte> SourceJson,IReadOnlyList<SourceAsset> Assets);
 public sealed record GeneratedPathPayload(string ObjectId,int PageIndex,int ObjectIndex,ReadOnlyMemory<byte> Xml);
-/// <summary>Recomputes fixed paths, table relationships and page-band text through the authoritative renderer; null denies verification. Attachment data never selects an implementation.</summary>
+/// <summary>Table relationships recomputed by the authoritative renderer.</summary>
 public sealed record RenderedTableRelation(string ObjectId,ReadOnlyMemory<byte> TableJson,ReadOnlyMemory<byte> RepeatedHeaderJson);
 public sealed record RenderedPageBand(int PageIndex,string Pointer,string Text);
-public sealed record SourceRenderEvidence(IReadOnlyList<GeneratedPathPayload> Paths,IReadOnlyList<RenderedTableRelation> Tables,IReadOnlyList<RenderedPageBand> Bands);
+/// <summary>Complete fixed-writer page with dimensions, ordered objects, geometry, text, paint and clips.</summary>
+public sealed record RenderedPagePayload(int PageIndex,ReadOnlyMemory<byte> Xml);
+public sealed record SourceRenderEvidence(IReadOnlyList<GeneratedPathPayload> Paths,IReadOnlyList<RenderedTableRelation> Tables,IReadOnlyList<RenderedPageBand> Bands,IReadOnlyList<RenderedPagePayload> Pages,IReadOnlyDictionary<string,string> ResourceDigests);
+/// <summary>One explicit trusted replay of the pinned renderer with authorized resources per native operation; null denies verification.</summary>
 public delegate SourceRenderEvidence? SourceRenderResolver(SourceRenderRequest request,CancellationToken cancellationToken);
 public enum ContainerProfile { NativeEditable, Distribution }
 public sealed record SourceAsset(string Sha256, ReadOnlyMemory<byte> Bytes);

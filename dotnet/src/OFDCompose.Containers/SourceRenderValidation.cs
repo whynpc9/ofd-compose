@@ -12,8 +12,9 @@ internal static class SourceRenderValidation
 {
     internal static IReadOnlyDictionary<(int Page,string Pointer),string> Validate(JsonElement source,IReadOnlyDictionary<string,string[]> objectMap,
         IReadOnlyDictionary<string,RenderedObject> objects,Dictionary<string,byte[]> entries,
-        SourceRenderResolver? resolver,ContainerBudget budget)
+        SourceRenderResolver? resolver,ContainerBudget budget,out SourceRenderEvidence? proof)
     {
+        proof=null;
         var actual=new Dictionary<string,RenderedObject>();
         foreach(var value in source.GetProperty("semanticMap").GetProperty("decorations").EnumerateArray())
         {
@@ -34,23 +35,7 @@ internal static class SourceRenderValidation
             tableMetadata|=semantic.TryGetProperty("table",out _)||semantic.TryGetProperty("repeatedHeader",out _);
         }
         if(actual.Count==0&&!potential&&!tableMetadata)return new Dictionary<(int,string),string>();
-        Need(resolver is not null,"SOURCE_RENDER_VERIFIER_REQUIRED");
-        // Bound serialization/copy expansion before materializing the trusted-host request.
-        budget.Charge(budget.Limits.JsonBytes*8L);
-        byte[] json=Encoding.UTF8.GetBytes(source.GetRawText());Need(json.Length<=budget.Limits.JsonBytes,"SIZE_LIMIT");
-        var assets=new List<SourceAsset>();var seenAssets=new HashSet<string>();
-        foreach(var image in source.GetProperty("resources").GetProperty("images").EnumerateArray())
-        {
-            string digest=Text(image,"sha256");if(!seenAssets.Add(digest))continue;
-            var bytes=entries["Doc_0/Attachs/Assets/"+digest+".bin"];budget.Charge(bytes.Length*2L+128);
-            assets.Add(new(digest,bytes.ToArray()));
-        }
-        SourceRenderEvidence? proof;
-        try { proof=resolver!(new("ofd-compose/source-render@0",json,assets),budget.Token); }
-        catch(OperationCanceledException) { throw; }
-        catch(Exception) { throw new ContainerFailure("SOURCE_RENDER_VERIFICATION_FAILED"); }
-        budget.Charge(0);
-        Need(proof is not null&&proof.Paths is not null&&proof.Tables is not null&&proof.Bands is not null&&proof.Paths.Count<=200000&&proof.Tables.Count<=200000&&proof.Bands.Count<=2000,"SOURCE_RENDER_VERIFICATION_FAILED");
+        proof=Request(source,entries,resolver,budget);
         var expected=proof!.Paths;
         var seen=new HashSet<string>();int count=0;
         foreach(var payload in expected)
@@ -91,6 +76,56 @@ internal static class SourceRenderValidation
         CheckUnusedBands(source.GetProperty("resolvedDocument").GetProperty("body"),"/body",renderedBandPointers,budget);
         CheckUnusedBands(source.GetProperty("resolvedDocument").GetProperty("settings"),"/settings",renderedBandPointers,budget);
         return bands;
+    }
+    private static SourceRenderEvidence Request(JsonElement source,Dictionary<string,byte[]> entries,SourceRenderResolver? resolver,ContainerBudget budget)
+    {
+        Need(resolver is not null,"SOURCE_RENDER_VERIFIER_REQUIRED");
+        // Bound serialization/copy expansion before materializing the trusted-host request.
+        budget.Charge(budget.Limits.JsonBytes*8L);
+        byte[] json=Encoding.UTF8.GetBytes(source.GetRawText());Need(json.Length<=budget.Limits.JsonBytes,"SIZE_LIMIT");
+        var assets=new List<SourceAsset>();var seenAssets=new HashSet<string>();
+        foreach(var image in source.GetProperty("resources").GetProperty("images").EnumerateArray())
+        {
+            string digest=Text(image,"sha256");if(!seenAssets.Add(digest))continue;
+            var bytes=entries["Doc_0/Attachs/Assets/"+digest+".bin"];budget.Charge(bytes.Length*2L+128);
+            assets.Add(new(digest,bytes.ToArray()));
+        }
+        SourceRenderEvidence? proof;
+        try { proof=resolver!(new("ofd-compose/source-render@0",json,assets),budget.Token); }
+        catch(OperationCanceledException) { throw; }
+        catch(Exception) { throw new ContainerFailure("SOURCE_RENDER_VERIFICATION_FAILED"); }
+        budget.Charge(0);
+        Need(proof is not null&&proof.Paths is not null&&proof.Tables is not null&&proof.Bands is not null&&proof.Paths.Count<=200000&&proof.Tables.Count<=200000&&proof.Bands.Count<=2000,"SOURCE_RENDER_VERIFICATION_FAILED");
+        return proof!;
+    }
+    internal static void ValidatePages(JsonElement source,Dictionary<string,byte[]> entries,IReadOnlyDictionary<string,string> resourceDigests,SourceRenderResolver? resolver,SourceRenderEvidence? proof,ContainerBudget budget)
+    {
+        proof??=Request(source,entries,resolver,budget);
+        Need(proof.Pages is not null&&proof.Pages.Count is >0 and <=1000&&proof.ResourceDigests is not null&&proof.ResourceDigests.Count<=128,"SOURCE_RENDER_VERIFICATION_FAILED");
+        var expectedDigests=new Dictionary<string,string>();
+        foreach(var (id,digest) in proof.ResourceDigests!)
+        {
+            budget.Charge(128);Need(id.Length is >0 and <=256&&IsDigest(digest)&&expectedDigests.TryAdd(id,digest),"SOURCE_RENDER_VERIFICATION_FAILED");
+        }
+        var seen=new HashSet<int>();
+        foreach(var page in proof.Pages!)
+        {
+            budget.Charge(128);Need(page.PageIndex is >=0 and <1000&&seen.Add(page.PageIndex),"SOURCE_RENDER_MISMATCH");
+            string path=$"Doc_0/Pages/Page_{page.PageIndex}/Content.xml";
+            Need(entries.TryGetValue(path,out var bytes),"SOURCE_RENDER_MISMATCH");
+            Need(page.Xml.Length is >0&&page.Xml.Length<=budget.Limits.EntryBytes,"SIZE_LIMIT");budget.Charge(page.Xml.Length*2L);
+            var expected=SafePackage.Xml(page.Xml.ToArray(),budget,"Page");WriterXmlGrammar.Validate(expected,path,budget);
+            var actual=SafePackage.Xml(bytes!,budget,"Page");
+            Need(XNode.DeepEquals(PageCanonical(expected.Root!,expectedDigests,budget),PageCanonical(actual.Root!,resourceDigests,budget)),"SOURCE_RENDER_MISMATCH");
+        }
+        Need(seen.Count==entries.Keys.Count(path=>path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)&&path.EndsWith("/Content.xml",StringComparison.Ordinal)),"SOURCE_RENDER_MISMATCH");
+    }
+    private static XElement PageCanonical(XElement element,IReadOnlyDictionary<string,string> resources,ContainerBudget budget)
+    {
+        budget.Charge(128+element.Attributes().Sum(a=>a.Value.Length*2L));
+        return new(element.Name,
+            element.Attributes().Where(a=>!a.IsNamespaceDeclaration&&a.Name!="ID").OrderBy(a=>a.Name.ToString(),StringComparer.Ordinal).Select(a=>new XAttribute(a.Name,a.Name.NamespaceName==""&&a.Name.LocalName is "Font" or "ResourceID"?resources.TryGetValue(a.Value,out var digest)?digest:throw new ContainerFailure("SOURCE_RENDER_MISMATCH"):a.Value)),
+            element.Nodes().Where(node=>!element.HasElements||node is not XText text||!string.IsNullOrWhiteSpace(text.Value)).Select(node=>node is XElement child?(object)PageCanonical(child,resources,budget):node is XText text?new XText(text.Value):throw new ContainerFailure("SOURCE_RENDER_MISMATCH")));
     }
     private static void CheckUnusedBands(JsonElement value,string pointer,HashSet<string> rendered,ContainerBudget budget)
     {

@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 615, fresh Chromium 405,
-full .NET 324 (130 container cases plus the unchanged 194 baseline cases).
+full .NET 339 (145 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -79,8 +79,7 @@ removing the witness or changing visible text after rehashing is rejected. Optio
 canonical decimal spelling. Path local commands/paint are compared directly; barcode
 value/options use an explicit trusted host resolver running the existing pinned
 media-core encoder. The actual combined fixture verifies Code128 and EAN13 through
-that bridge. Missing/denied/incorrect resolver results fail closed. These are local
-content checks, not a complete independent re-layout proof (see the container README).
+that bridge. Missing/denied/incorrect resolver results fail closed. These checks supplement the unified trusted-render page comparison below.
 
 Generated numbering also has paragraph origins: decimal/alpha markers, custom suffixes,
 continuation/restart and repeated list starts are validated without changing the IR.
@@ -155,3 +154,22 @@ Signature presence is limited to the actual `Doc_0/Signs/` hierarchy or the OFD
 `Signatures` declaration. A referenced resource named `Design.otf` stays unsigned
 for both native and distribution profiles; declaration-only and sidecar-only signature
 presence stays unverified and cannot be resealed.
+
+Every native document now requires one trusted Worker/fixed-writer replay. Full page XML
+is compared after explicit identifier/reference normalization: object/layer IDs are
+serialization identities, while font/image references map to actual subset/image digests.
+All geometry, text, paint, clips and order remain compared. This is source-to-page
+internal consistency under the same renderer/profile/authorized resources, not source
+authenticity, signature verification or a second independent layout implementation.
+Regressions cover font size/color, alignment/indent/page breaks, image width/scale/crop,
+and native path matrices; existing nested-repeat/link/multifont/table/header fixtures
+must still create and extract. Conflicting full-font digests for one face are rejected
+according to the real Worker's unique-face authorization rule.
+
+Local red/green observation: all 11 schema-valid geometry/font-conflict counterexamples
+were accepted under the previous validation boundary (11 failed assertions, 0 test
+errors); the unified boundary passed all 339 .NET cases, including the original 324.
+The full suite took 94.2 s versus the prior 324-case run at 72.5 s; these include different
+test counts and are not an isolated performance benchmark. No dependency was added.
+Full-font authorization and one real renderer replay are now required even for ordinary
+native text/images. Desktop Reader remains Not verified.

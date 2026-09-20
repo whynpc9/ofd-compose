@@ -91,13 +91,10 @@ The host is responsible for execution time/cancellation and output limits. The t
 bridge `tests/source-container/verify-barcode.mjs` uses the existing encoder with bounded
 stdin/stdout and a 15-second cancellable host process; the library never launches it.
 
-These checks validate local content/paint relationships; generated paths additionally use
-the explicit real-render host described below. This is not a complete re-layout proof
-for every object:
-page placement, transforms, declared layout boxes and all layout styles are not rebuilt
-by extraction. `internal-consistency-only` does not certify that arbitrary edited source
-will reproduce every original pixel. Editing still goes through the real Worker, and
-this experimental container profile remains unfrozen.
+Native creation and extraction additionally require the explicit real-render host below.
+Its guarantee is internal source-to-page consistency for the same pinned renderer,
+profile and authorized resources. This is neither source authenticity, signature
+verification nor an independent rendering-engine proof; the profile remains experimental.
 
 Numbered paragraphs similarly require an explicit `NumberingLabelsResolver`. The host
 executes `numberingLabel` from Layout Core (`ofd-compose/numbering@0`), the same function
@@ -137,14 +134,13 @@ canonical object ID and physical page/index. The library compares the entire exp
 set and fixed XML payload (including geometry, paint and clips); it neither implements
 a second layout engine nor accepts a self-rehashed source digest as verification.
 
-This capability is required whenever actual path decorations or retained settings that
-can generate them exist. Without it, native Create/Extract returns
+This capability is required for every native document, including ordinary text and images. Without it, native Create/Extract returns
 `SOURCE_RENDER_VERIFIER_REQUIRED`; denial or failed recomputation returns no successful
 source/artifact. Full-font availability is therefore needed at this host verification
-boundary for those native documents. The library never launches a process or resolves
+boundary for all native documents. The library never launches a process or resolves
 attachment-chosen paths/URLs. The test host uses known font-manifest hashes, owned temp
 files, a cancellable 45-second process and bounded output. This does not close the desktop
-reader gate or certify every text/image placement or signature.
+reader gate or verify authenticity/signatures.
 
 Filled input controls retain identity, type, style and their displayed value/fallback.
 Choice catalogs (`options`), `required` flags and shadowed placeholders are not retained
@@ -167,3 +163,19 @@ alignment. The authorized render host identifies actual rendered band pointers;
 extraction rejects retained hidden content. Editing-font identity is family/weight/italic
 plus full-font SHA-256. Length belongs to the authorized host resource pack, where
 actual bytes are checked, and is not retained as an unverified attachment requirement.
+
+The host also returns each full fixed-writer page XML and a physical-resource-ID to
+actual subset/image blob SHA-256 map. The library compares all page dimensions, ordered
+text and graphics, geometry, transforms, clips, glyph mappings and paint. It normalizes
+only numeric object/layer IDs, namespace serialization and non-leaf formatting whitespace;
+font/image references are compared by actual blob digest, never by a discarded reference.
+Existing full-font identity, subset mapping, semantic/object-map coverage and resource
+reachability checks remain. Capture and extraction use the same contract, at most one
+host replay per operation; earlier generated-path/table/band evidence is reused.
+Missing/denied host capabilities fail closed. Geometry mismatch is SOURCE_RENDER_MISMATCH.
+Owned input/output copying, shared budgets and cancellation remain enforced; the library
+never launches processes or obtains resources from attachment URLs or paths.
+
+Editing full fonts must be unique by family/weight/italic. This matches finalizeSource,
+which selects exactly one authorized face before comparing its full-font SHA-256; the
+current Worker does not resolve multiple digests for one face as version alternatives.
