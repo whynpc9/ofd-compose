@@ -8,11 +8,11 @@ namespace OFDCompose.Containers;
 
 // Geometry is recomputed by the existing TS Worker and fixed writer in an explicit host.
 // .NET only compares bounded fixed XML payloads; a mutable attachment hash is never a proof.
-internal static class GeneratedPathValidation
+internal static class SourceRenderValidation
 {
-    internal static void Validate(JsonElement source,IReadOnlyDictionary<string,string[]> objectMap,
+    internal static IReadOnlyDictionary<(int Page,string Pointer),string> Validate(JsonElement source,IReadOnlyDictionary<string,string[]> objectMap,
         IReadOnlyDictionary<string,RenderedObject> objects,Dictionary<string,byte[]> entries,
-        GeneratedPathResolver? resolver,ContainerBudget budget)
+        SourceRenderResolver? resolver,ContainerBudget budget)
     {
         var actual=new Dictionary<string,RenderedObject>();
         foreach(var value in source.GetProperty("semanticMap").GetProperty("decorations").EnumerateArray())
@@ -22,8 +22,19 @@ internal static class GeneratedPathValidation
             if(paths.Length>0){Need(paths.Length==1&&objectMap[id].Length==1,"SEMANTIC_REFERENCE");actual.Add(id,objects[paths[0]]);}
         }
         bool potential=MayGenerate(source.GetProperty("resolvedDocument"),budget)||MayGenerate(source.GetProperty("renderProfile").GetProperty("layout").GetProperty("defaultStyle"),budget);
-        if(actual.Count==0&&!potential)return;
-        Need(resolver is not null,"GENERATED_PATH_VERIFIER_REQUIRED");
+        var semanticEntries=source.GetProperty("semanticMap").GetProperty("entries");
+        Need(semanticEntries.GetArrayLength()<=200000,"SIZE_LIMIT");
+        // The input string ceiling bounds all ID decoding; reserve it before any GetString allocation.
+        budget.Charge(budget.Limits.StringBytes*2L);
+        var semantics=new Dictionary<string,JsonElement>();bool tableMetadata=false;
+        foreach(var semantic in semanticEntries.EnumerateArray())
+        {
+            budget.Charge(128);string id=Text(semantic,"objectId");
+            Need(id.Length is >0 and <=256&&semantics.TryAdd(id,semantic),"SEMANTIC_REFERENCE");
+            tableMetadata|=semantic.TryGetProperty("table",out _)||semantic.TryGetProperty("repeatedHeader",out _);
+        }
+        if(actual.Count==0&&!potential&&!tableMetadata)return new Dictionary<(int,string),string>();
+        Need(resolver is not null,"SOURCE_RENDER_VERIFIER_REQUIRED");
         // Bound serialization/copy expansion before materializing the trusted-host request.
         budget.Charge(budget.Limits.JsonBytes*8L);
         byte[] json=Encoding.UTF8.GetBytes(source.GetRawText());Need(json.Length<=budget.Limits.JsonBytes,"SIZE_LIMIT");
@@ -34,14 +45,15 @@ internal static class GeneratedPathValidation
             var bytes=entries["Doc_0/Attachs/Assets/"+digest+".bin"];budget.Charge(bytes.Length*2L+128);
             assets.Add(new(digest,bytes.ToArray()));
         }
-        IReadOnlyList<GeneratedPathPayload>? expected;
-        try { expected=resolver!(new("ofd-compose/generated-paths@0",json,assets),budget.Token); }
+        SourceRenderEvidence? proof;
+        try { proof=resolver!(new("ofd-compose/source-render@0",json,assets),budget.Token); }
         catch(OperationCanceledException) { throw; }
-        catch(Exception) { throw new ContainerFailure("GENERATED_PATH_VERIFICATION_FAILED"); }
+        catch(Exception) { throw new ContainerFailure("SOURCE_RENDER_VERIFICATION_FAILED"); }
         budget.Charge(0);
-        Need(expected is not null&&expected.Count<=200000,"GENERATED_PATH_VERIFICATION_FAILED");
+        Need(proof is not null&&proof.Paths is not null&&proof.Tables is not null&&proof.Bands is not null&&proof.Paths.Count<=200000&&proof.Tables.Count<=200000&&proof.Bands.Count<=2000,"SOURCE_RENDER_VERIFICATION_FAILED");
+        var expected=proof!.Paths;
         var seen=new HashSet<string>();int count=0;
-        foreach(var payload in expected!)
+        foreach(var payload in expected)
         {
             budget.Charge(128);
             Need(++count<=200000&&payload.ObjectId.Length is >0 and <=256&&seen.Add(payload.ObjectId),"GENERATED_PATH_MISMATCH");
@@ -53,6 +65,29 @@ internal static class GeneratedPathValidation
             Need(XNode.DeepEquals(Canonical(document.Root!,budget,true),Canonical(physical!.Xml,budget,true)),"GENERATED_PATH_MISMATCH");
         }
         Need(seen.SetEquals(actual.Keys),"GENERATED_PATH_MISMATCH");
+        var tableIds=new HashSet<string>();count=0;
+        foreach(var relation in proof.Tables)
+        {
+            budget.Charge(128);
+            Need(++count<=200000&&relation.ObjectId.Length is >0 and <=256&&tableIds.Add(relation.ObjectId)&&semantics.TryGetValue(relation.ObjectId,out _),"TABLE_RELATION_MISMATCH");
+            var semantic=semantics[relation.ObjectId];
+            Need(relation.TableJson.Length is >0 and <=8192&&relation.RepeatedHeaderJson.Length<=8192,"SIZE_LIMIT");
+            using var table=SafePackage.Json(relation.TableJson,budget);
+            Need(semantic.TryGetProperty("table",out var actualTable)&&JsonElement.DeepEquals(actualTable,table.RootElement),"TABLE_RELATION_MISMATCH");
+            bool repeated=semantic.TryGetProperty("repeatedHeader",out var header);
+            Need(repeated==!relation.RepeatedHeaderJson.IsEmpty,"TABLE_RELATION_MISMATCH");
+            if(repeated){using var expectedHeader=SafePackage.Json(relation.RepeatedHeaderJson,budget);Need(JsonElement.DeepEquals(header,expectedHeader.RootElement),"TABLE_RELATION_MISMATCH");}
+        }
+        Need(tableIds.SetEquals(semantics.Values.Where(e=>e.TryGetProperty("table",out _)).Select(e=>Text(e,"objectId")))&&semantics.Values.All(e=>!e.TryGetProperty("repeatedHeader",out _)||e.TryGetProperty("table",out _)),"TABLE_RELATION_MISMATCH");
+        var bands=new Dictionary<(int,string),string>();count=0;
+        foreach(var band in proof.Bands)
+        {
+            budget.Charge(128);
+            Need(++count<=2000&&band.PageIndex is >=0 and <1000&&band.Pointer.Length is >0 and <=2048&&band.Text.Length is >0 and <=100000,"SIZE_LIMIT");
+            budget.Charge(band.Pointer.Length*2L+band.Text.Length*2L);
+            Need(bands.TryAdd((band.PageIndex,band.Pointer),band.Text),"PAGE_BAND_MISMATCH");
+        }
+        return bands;
     }
     private static bool MayGenerate(JsonElement value,ContainerBudget budget)
     {
@@ -61,7 +96,8 @@ internal static class GeneratedPathValidation
         if(value.ValueKind!=JsonValueKind.Object)return false;
         foreach(var property in value.EnumerateObject())
         {
-            if(property.Name is "border" or "background" or "highlight")return true;
+            if(property.Name is "border" or "background" or "highlight" or "header" or "footer")return true;
+            if(property.Name=="kind"&&property.Value.ValueKind==JsonValueKind.String&&property.Value.ValueEquals("table"))return true;
             if(property.Name is "underline" or "strikethrough"&&property.Value.ValueKind==JsonValueKind.True)return true;
             if(MayGenerate(property.Value,budget))return true;
         }

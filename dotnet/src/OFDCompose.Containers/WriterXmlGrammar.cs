@@ -14,7 +14,7 @@ internal static class WriterXmlGrammar
             budget.Charge(64);
             string name=node.Name.LocalName;
             string children=name switch {
-                "OFD"=>"DocBody", "DocBody"=>"DocInfo DocRoot Signatures", "DocInfo"=>"DocID Creator",
+                "OFD"=>"DocBody", "DocBody"=>"DocInfo DocRoot Signatures", "DocInfo"=>"DocID Creator Keywords",
                 "Document"=>"CommonData Pages Attachments", "CommonData"=>"MaxUnitID PageArea PublicRes DocumentRes",
                 "PageArea"=>"PhysicalBox", "Pages"=>"Page", "Page" when node==root=>"Area Content", "Page"=>"",
                 "Area" when node.Parent?.Name.LocalName=="Clip"=>"Path", "Area"=>"PhysicalBox",
@@ -23,7 +23,7 @@ internal static class WriterXmlGrammar
                 "TextObject"=>"FillColor StrokeColor Clips CGTransform TextCode", "PathObject"=>"FillColor StrokeColor Clips AbbreviatedData",
                 "ImageObject"=>"Clips", "Clips"=>"Clip", "Clip"=>"Area", "Path"=>"AbbreviatedData", "CGTransform"=>"Glyphs",
                 "Attachments" when node==root=>"Attachment", "Attachment"=>"FileLoc",
-                "DocID" or "Creator" or "DocRoot" or "MaxUnitID" or "PhysicalBox" or "PublicRes" or "DocumentRes" or "FontFile" or "MediaFile" or "Glyphs" or "TextCode" or "AbbreviatedData" or "FillColor" or "StrokeColor" or "FileLoc" or "Attachments" or "Signatures"=>"",
+                "Keywords" or "DocID" or "Creator" or "DocRoot" or "MaxUnitID" or "PhysicalBox" or "PublicRes" or "DocumentRes" or "FontFile" or "MediaFile" or "Glyphs" or "TextCode" or "AbbreviatedData" or "FillColor" or "StrokeColor" or "FileLoc" or "Attachments" or "Signatures"=>"",
                 _=>throw new ContainerFailure("UNEXPECTED_METADATA")
             };
             string attributes=name switch {
@@ -45,7 +45,7 @@ internal static class WriterXmlGrammar
                     : attribute.Name.Namespace==XNamespace.Xml && attribute.Name.LocalName=="space" && name=="TextCode" ? attribute.Value=="preserve"
                     : attribute.Name.NamespaceName=="" && allowedAttributes.Contains(attribute.Name.LocalName),"UNEXPECTED_METADATA");
             ValidateValues(node,budget);
-            bool text=name is "DocID" or "Creator" or "DocRoot" or "MaxUnitID" or "PhysicalBox" or "PublicRes" or "DocumentRes" or "FontFile" or "MediaFile" or "Glyphs" or "TextCode" or "AbbreviatedData" or "FileLoc" or "Signatures" || name=="Attachments"&&node!=root;
+            bool text=name is "Keywords" or "DocID" or "Creator" or "DocRoot" or "MaxUnitID" or "PhysicalBox" or "PublicRes" or "DocumentRes" or "FontFile" or "MediaFile" or "Glyphs" or "TextCode" or "AbbreviatedData" or "FileLoc" or "Signatures" || name=="Attachments"&&node!=root;
             Need(text||node.Nodes().OfType<XText>().All(t=>string.IsNullOrWhiteSpace(t.Value)),"UNEXPECTED_METADATA");
         }
         Need(!document.DescendantNodes().Any(n=>n is XComment or XProcessingInstruction),"UNEXPECTED_METADATA");
@@ -101,7 +101,7 @@ internal static class WriterXmlGrammar
             return true;
         }
         bool scalar=name switch {
-            "DocID"=>Hex(value,32), "Creator"=>value=="OFDCompose.OfdIrWriter/0", "MaxUnitID"=>Integer(value),
+            "Keywords"=>value.StartsWith("ofd-compose:ir-sha256:",StringComparison.Ordinal)&&Hex(value["ofd-compose:ir-sha256:".Length..],64), "DocID"=>Hex(value,32), "Creator"=>value=="OFDCompose.OfdIrWriter/0", "MaxUnitID"=>Integer(value),
             "PhysicalBox"=>Numbers(value,4), "Glyphs"=>Numbers(value,integers:true), "AbbreviatedData"=>PathCommands(value), _=>true
         };
         Need(scalar,"UNEXPECTED_METADATA");

@@ -9,10 +9,13 @@ public sealed record NumberingLabelsRequest(string AlgorithmVersion,ReadOnlyMemo
 /// <summary>Trusted host executes Layout Core numbering rules and returns a JSON string array in request order.</summary>
 public delegate ReadOnlyMemory<byte> NumberingLabelsResolver(NumberingLabelsRequest request,CancellationToken cancellationToken);
 /// <summary>Owned filled source and source-image bytes for an explicitly trusted real Worker/fixed-writer verification host.</summary>
-public sealed record GeneratedPathRequest(string AlgorithmVersion,ReadOnlyMemory<byte> SourceJson,IReadOnlyList<SourceAsset> Assets);
+public sealed record SourceRenderRequest(string AlgorithmVersion,ReadOnlyMemory<byte> SourceJson,IReadOnlyList<SourceAsset> Assets);
 public sealed record GeneratedPathPayload(string ObjectId,int PageIndex,int ObjectIndex,ReadOnlyMemory<byte> Xml);
-/// <summary>Recomputes generated path objects from source; null denies verification. Attachment data never selects an implementation.</summary>
-public delegate IReadOnlyList<GeneratedPathPayload>? GeneratedPathResolver(GeneratedPathRequest request,CancellationToken cancellationToken);
+/// <summary>Recomputes fixed paths, table relationships and page-band text through the authoritative renderer; null denies verification. Attachment data never selects an implementation.</summary>
+public sealed record RenderedTableRelation(string ObjectId,ReadOnlyMemory<byte> TableJson,ReadOnlyMemory<byte> RepeatedHeaderJson);
+public sealed record RenderedPageBand(int PageIndex,string Pointer,string Text);
+public sealed record SourceRenderEvidence(IReadOnlyList<GeneratedPathPayload> Paths,IReadOnlyList<RenderedTableRelation> Tables,IReadOnlyList<RenderedPageBand> Bands);
+public delegate SourceRenderEvidence? SourceRenderResolver(SourceRenderRequest request,CancellationToken cancellationToken);
 public enum ContainerProfile { NativeEditable, Distribution }
 public sealed record SourceAsset(string Sha256, ReadOnlyMemory<byte> Bytes);
 public sealed record ContainerResult(byte[]? Bytes, string? Error)

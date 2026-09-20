@@ -15,7 +15,7 @@ internal static class SemanticValidation
     private static string Repeat(JsonElement value, string key) => value.TryGetProperty(key,out var array)
         ? string.Join("",array.EnumerateArray().Select(e=> { string id=Text(e,"nodeId"), k=Text(e,"key"); return id.Length+":"+id+k.Length+":"+k; })) : "";
     internal static void Validate(JsonElement map, JsonElement document, JsonElement resources, JsonElement renderProfile, IReadOnlyDictionary<string,string[]> objectMap,
-        IReadOnlyDictionary<string,RenderedObject> objects, int pageCount, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver)
+        IReadOnlyDictionary<string,RenderedObject> objects, int pageCount, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver,IReadOnlyDictionary<(int Page,string Pointer),string> bandLabels)
     {
         var defaultStyle=renderProfile.GetProperty("layout").GetProperty("defaultStyle");
         var defaultFace=ApplyStyle(defaultStyle,new(Text(defaultStyle,"fontFamily"),400,false));
@@ -293,31 +293,15 @@ internal static class SemanticValidation
             Need(start<end&&end<=pageCount&&sections[i].Pages.All(p=>p>=start&&p<end),"SEMANTIC_SOURCE");
             for(int p=start;p<end;p++)pageSections[p]=i;
         }
-        var bandHasContent=new Dictionary<(int Section,string Name),bool>();
+        var actualBands=generated.Keys.Where(key=>key.Pointer.EndsWith("/header",StringComparison.Ordinal)||key.Pointer.EndsWith("/footer",StringComparison.Ordinal)).ToHashSet();
+        Need(actualBands.SetEquals(bandLabels.Keys),"SEMANTIC_INCOMPLETE");
         for(int actualPage=0;actualPage<pageCount;actualPage++)
         {
-            budget.Charge(64);
-            int section=pageSections[actualPage],sectionPage=actualPage-sectionStarts[section]+1;
-            string pointer=sections[section].Pointer;
+            budget.Charge(64);string pointer=sections[pageSections[actualPage]].Pointer;
             if(pointer=="/settings/page"&&!document.GetProperty("settings").TryGetProperty("page",out _))continue;
             var settings=Pointer(document,pointer,budget);
             if(settings.TryGetProperty("watermarks",out var watermarks))
-                for(int i=0;i<watermarks.GetArrayLength();i++)
-                {budget.Charge(pointer.Length*2L+64);Need(generated.ContainsKey((actualPage,pointer+"/watermarks/"+i)),"SEMANTIC_INCOMPLETE");}
-            foreach(string bandName in new[]{"header","footer"})
-            {
-                if(!settings.TryGetProperty(bandName,out var band))continue;
-                bool hidden=band.TryGetProperty("hideFirstPage",out var first)&&first.GetBoolean()&&sectionPage==1;
-                if(band.TryGetProperty("hiddenPages",out var hiddenPages))
-                    foreach(var number in hiddenPages.EnumerateArray()){budget.Charge(16);hidden|=number.GetInt32()==sectionPage;}
-                if(!bandHasContent.TryGetValue((section,bandName),out bool content))
-                {
-                    foreach(var part in band.GetProperty("parts").EnumerateArray())
-                    {budget.Charge(32);if(!part.GetProperty("kind").ValueEquals("text")||!part.GetProperty("text").ValueEquals("")){content=true;break;}}
-                    bandHasContent[(section,bandName)]=content;
-                }
-                Need(generated.ContainsKey((actualPage,pointer+"/"+bandName))==(!hidden&&content),"SEMANTIC_INCOMPLETE");
-            }
+                for(int i=0;i<watermarks.GetArrayLength();i++){budget.Charge(pointer.Length*2L+64);Need(generated.ContainsKey((actualPage,pointer+"/watermarks/"+i)),"SEMANTIC_INCOMPLETE");}
         }
         foreach(var (key,list) in generated)
         {
@@ -351,13 +335,8 @@ internal static class SemanticValidation
             else
             {
                 Need(key.Pointer.EndsWith("/header",StringComparison.Ordinal)||key.Pointer.EndsWith("/footer",StringComparison.Ordinal),"SEMANTIC_SOURCE");
-                var settings=Pointer(document,key.Pointer[..key.Pointer.LastIndexOf('/')],budget);
-                int sectionPage=derivedSectionPage;
-                Need(list.All(item=>item.SectionPage==sectionPage),"SEMANTIC_SOURCE");
-                int number=(settings.TryGetProperty("startPageNumber",out var start)?start.GetInt32():1)+sectionPage-1;
-                int total=pageCount;
-                budget.Charge(origin.GetProperty("parts").EnumerateArray().Sum(part=>Text(part,"kind")=="text"?Text(part,"text").Length*4L:32L));
-                expected=string.Concat(origin.GetProperty("parts").EnumerateArray().Select(part=>Text(part,"kind") switch {"text"=>Text(part,"text"),"total-pages"=>total.ToString(System.Globalization.CultureInfo.InvariantCulture),_=>number.ToString(System.Globalization.CultureInfo.InvariantCulture)}));
+                Need(bandLabels.TryGetValue(key,out _),"SEMANTIC_INCOMPLETE");
+                expected=bandLabels[key];
             }
             budget.Charge(expected.Length*4L);
             Need(string.Concat(list.OrderBy(item=>item.Object.Order).Select(item=>item.Object.Text))==expected,"SEMANTIC_SOURCE");

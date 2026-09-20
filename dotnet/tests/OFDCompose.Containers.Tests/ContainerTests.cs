@@ -42,15 +42,15 @@ public sealed class ContainerTests
         }
         finally {if(!child.HasExited)child.Kill(entireProcessTree:true);}
     }
-    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string,GeneratedPathPayload[]> GeneratedCache=new();
-    private static IReadOnlyList<GeneratedPathPayload>? ResolveGeneratedPaths(GeneratedPathRequest request,CancellationToken token)
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string,SourceRenderEvidence> GeneratedCache=new();
+    private static SourceRenderEvidence? ResolveSourceRender(SourceRenderRequest request,CancellationToken token)
     {
-        token.ThrowIfCancellationRequested();Assert.Equal("ofd-compose/generated-paths@0",request.AlgorithmVersion);
+        token.ThrowIfCancellationRequested();Assert.Equal("ofd-compose/source-render@0",request.AlgorithmVersion);
         string key=Hash(request.SourceJson.ToArray());
         if(GeneratedCache.TryGetValue(key,out var cached))return cached;
-        var result=ResolveGeneratedPathsAsync(request,token).GetAwaiter().GetResult();GeneratedCache.TryAdd(key,result);return result;
+        var result=ResolveSourceRenderAsync(request,token).GetAwaiter().GetResult();GeneratedCache.TryAdd(key,result);return result;
     }
-    private static async Task<GeneratedPathPayload[]> ResolveGeneratedPathsAsync(GeneratedPathRequest request,CancellationToken token)
+    private static async Task<SourceRenderEvidence> ResolveSourceRenderAsync(SourceRenderRequest request,CancellationToken token)
     {
         using var timeout=CancellationTokenSource.CreateLinkedTokenSource(token);timeout.CancelAfter(TimeSpan.FromSeconds(45));
         string directory=Path.Combine(Path.GetTempPath(),"ofd17-generated-"+Guid.NewGuid().ToString("N"));Directory.CreateDirectory(directory);
@@ -95,7 +95,11 @@ public sealed class ContainerTests
                 order++;
             }
         }
-        return result.ToArray();
+        var tables=root.GetProperty("semantics").EnumerateArray().Where(entry=>entry.TryGetProperty("table",out _)).Select(entry=>new RenderedTableRelation(entry.GetProperty("objectId").GetString()!,Encoding.UTF8.GetBytes(entry.GetProperty("table").GetRawText()),entry.TryGetProperty("repeatedHeader",out var repeated)?Encoding.UTF8.GetBytes(repeated.GetRawText()):ReadOnlyMemory<byte>.Empty)).ToArray();
+        using var captured=JsonDocument.Parse(await File.ReadAllBytesAsync(Path.Combine(directory,"source.json"),timeout.Token));
+        var irObjects=root.GetProperty("pages").EnumerateArray().SelectMany(page=>page.GetProperty("objects").EnumerateArray().Select((item,index)=>(Page:page.GetProperty("pageIndex").GetInt32(),Index:index,Item:item))).ToDictionary(item=>item.Item.GetProperty("id").GetString()!);
+        var bands=captured.RootElement.GetProperty("semanticMap").GetProperty("pageDecorations").EnumerateArray().Where(entry=>entry.GetProperty("pointer").GetString()!.EndsWith("/header",StringComparison.Ordinal)||entry.GetProperty("pointer").GetString()!.EndsWith("/footer",StringComparison.Ordinal)).GroupBy(entry=>(irObjects[entry.GetProperty("objectId").GetString()!].Page,Pointer:entry.GetProperty("pointer").GetString()!)).Select(group=>new RenderedPageBand(group.Key.Page,group.Key.Pointer,string.Concat(group.Select(entry=>irObjects[entry.GetProperty("objectId").GetString()!]).OrderBy(item=>item.Index).Where(item=>item.Item.GetProperty("kind").GetString()=="text").Select(item=>item.Item.GetProperty("logicalText").GetString())))).ToArray();
+        return new(result.ToArray(),tables,bands);
     }
     private static string Hash(byte[] value) => Convert.ToHexStringLower(SHA256.HashData(value));
     private sealed record Fixture(string Directory, byte[] Source, OfdWriteResult Ofd, byte[] Sealed, JsonNode Identity);
@@ -122,7 +126,7 @@ public sealed class ContainerTests
         var sourceBytes = await File.ReadAllBytesAsync(Path.Combine(directory, "source.json"));
         var assets = new List<SourceAsset>();
         foreach (var asset in manifest["sourceAssets"]!.AsArray()) assets.Add(new(asset!["sha256"]!.GetValue<string>(), await File.ReadAllBytesAsync(Path.Combine(directory, asset["file"]!.GetValue<string>()))));
-        var sealedResult = SourceContainer.Create(ofd.Bytes!, Hash(ir), ofd.ObjectMap!, ContainerProfile.NativeEditable, sourceBytes, assets, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:ofd.ResourceMap);
+        var sealedResult = SourceContainer.Create(ofd.Bytes!, Hash(ir), ofd.ObjectMap!, ContainerProfile.NativeEditable, sourceBytes, assets, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:ofd.ResourceMap);
         Assert.True(sealedResult.Ok, sealedResult.Error + ": " + string.Join(",", Zip(ofd.Bytes!).Keys));
         await File.WriteAllBytesAsync(Path.Combine(directory, "native.ofd"), sealedResult.Bytes!, TestContext.Current.CancellationToken);
         return new(directory, sourceBytes, ofd, sealedResult.Bytes!, manifest["identity"]!);
@@ -153,7 +157,7 @@ public sealed class ContainerTests
     {
         var first = await Initial.Value;
         string originalHash = Hash(first.Sealed);
-        var extracted = SourceContainer.Extract(first.Sealed, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);
+        var extracted = SourceContainer.Extract(first.Sealed, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(extracted.Ok, extracted.Error);
         Assert.Equal("internal-consistency-only", extracted.Integrity); Assert.Equal("unsigned", extracted.Signature);
         var firstRead = await new OfdReader().ReadAsync(new MemoryStream(first.Sealed), TestContext.Current.CancellationToken);
@@ -163,7 +167,7 @@ public sealed class ContainerTests
         Assert.Equal(Zip(first.Sealed)["Doc_0/Attachs/ofd-compose.json"], attachment.Data);
         string input = Path.Combine(first.Directory,"extracted.json"); await File.WriteAllBytesAsync(input,extracted.SourceJson!, TestContext.Current.CancellationToken);
         var second = await Build("edit",input);
-        var secondExtract = SourceContainer.Extract(second.Sealed, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken); Assert.True(secondExtract.Ok,secondExtract.Error);
+        var secondExtract = SourceContainer.Extract(second.Sealed, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken); Assert.True(secondExtract.Ok,secondExtract.Error);
         var secondRead = await new OfdReader().ReadAsync(new MemoryStream(second.Sealed), TestContext.Current.CancellationToken);
         Assert.Equal("office 中文",string.Concat(firstRead.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text)));
         Assert.Equal("edited office 中文新",string.Concat(secondRead.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text)));
@@ -207,34 +211,34 @@ public sealed class ContainerTests
                 case "schema": var content=JsonNode.Parse(manifest["parts"]![0]!["content"]!.GetValue<string>())!; content["credentials"]="SECRET"; manifest["parts"]![0]!["content"]=content.ToJsonString(); break;
             }
         });
-        Assert.Equal(expected,SourceContainer.Extract(bytes, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal(expected,SourceContainer.Extract(bytes, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Distribution_has_no_source_or_semantics_anywhere()
     {
         var first=await Initial.Value;
-        var result=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
+        var result=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.True(result.Ok,result.Error);
-        var extracted=SourceContainer.Extract(result.Bytes!, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken); Assert.True(extracted.Ok,extracted.Error);
+        var extracted=SourceContainer.Extract(result.Bytes!, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken); Assert.True(extracted.Ok,extracted.Error);
         Assert.Equal("distribution",extracted.Profile); Assert.Null(extracted.SourceJson);
         foreach(var bytes in Zip(result.Bytes!).Values)
         { var text=Encoding.UTF8.GetString(bytes); Assert.DoesNotContain("resolved-document@",text); Assert.DoesNotContain("printed",text); Assert.DoesNotContain("revision-1",text); }
-        Assert.Equal("DISTRIBUTION_SOURCE_FORBIDDEN",SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,first.Source, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
+        Assert.Equal("DISTRIBUTION_SOURCE_FORBIDDEN",SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,first.Source, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
     }
     [Fact]
     public async Task Budget_cancellation_path_duplicates_DTD_and_forged_name_fail_closed()
     {
         var first=await Initial.Value;
-        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){PackageBytes=100}, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
-        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){Entries=1}, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){PackageBytes=100}, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){Entries=1}, barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         Assert.Equal("CANCELLED",SourceContainer.Extract(first.Sealed,cancellationToken:new(true)).Error);
         foreach(string alias in new[]{"../escape","Doc_0/Res/é.bin","Doc_0\\escape","/absolute","a//b","a/./b"})
-        { var entries=Zip(first.Sealed);entries.Add(alias,[1]);Assert.Equal("PACKAGE_PATH",SourceContainer.Extract(Pack(entries), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error); }
-        Assert.Equal("PACKAGE_DUPLICATE",SourceContainer.Extract(Pack(Zip(first.Sealed),"ofd.XML"), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        { var entries=Zip(first.Sealed);entries.Add(alias,[1]);Assert.Equal("PACKAGE_PATH",SourceContainer.Extract(Pack(entries), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error); }
+        Assert.Equal("PACKAGE_DUPLICATE",SourceContainer.Extract(Pack(Zip(first.Sealed),"ofd.XML"), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         var dtd=Zip(first.Sealed);dtd["OFD.xml"]=Encoding.UTF8.GetBytes("<!DOCTYPE OFD [<!ENTITY x SYSTEM 'file:///etc/passwd'>]><OFD xmlns='http://www.ofdspec.org/2016'>&x;</OFD>");
-        Assert.False(SourceContainer.Extract(Pack(dtd), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        Assert.False(SourceContainer.Extract(Pack(dtd), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
         var forged=Zip(first.Sealed);forged["Doc_0/Attachs/Attachments.xml"]=Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(forged["Doc_0/Attachs/Attachments.xml"]).Replace("ofd-compose.json","forged.json"));
-        Assert.Equal("ATTACHMENT_INVALID",SourceContainer.Extract(Pack(forged), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("ATTACHMENT_INVALID",SourceContainer.Extract(Pack(forged), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Signed_presence_is_unverified_and_signed_input_cannot_be_resealed()
@@ -248,19 +252,19 @@ public sealed class ContainerTests
             var record=manifest["entries"]!.AsArray().Single(e=>e!["path"]!.GetValue<string>()=="OFD.xml")!;
             record["byteLength"]=entries["OFD.xml"].Length;record["sha256"]=Hash(entries["OFD.xml"]);
         });
-        var result=SourceContainer.Extract(signed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);
+        var result=SourceContainer.Extract(signed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(result.Ok,result.Error);Assert.Equal("present-unverified",result.Signature);Assert.Equal("internal-consistency-only",result.Integrity);
-        Assert.Equal("SIGNED_INPUT_UNSUPPORTED",SourceContainer.Create(signed,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
+        Assert.Equal("SIGNED_INPUT_UNSUPPORTED",SourceContainer.Create(signed,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
     }
 
     [Fact]
     public async Task Combined_media_assets_are_preserved_and_missing_source_image_is_rejected()
     {
         var fixture=await Build("combined");
-        var extracted=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);
+        var extracted=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(extracted.Ok,extracted.Error);Assert.NotEmpty(extracted.Assets!);
         var bytes=Mutate(fixture.Sealed,(_,entries)=>entries.Remove(entries.Keys.First(p=>p.StartsWith("Doc_0/Attachs/Assets/"))));
-        Assert.Equal("RESOURCE_MISSING",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("RESOURCE_MISSING",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         var read=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
         Assert.Contains(read.Pages.SelectMany(p=>p.Elements),e=>e is Ofdrw.Net.Core.Models.OfdImageElement);
     }
@@ -290,7 +294,7 @@ public sealed class ContainerTests
             }
             string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal(expected,SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal(expected,SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
@@ -298,15 +302,15 @@ public sealed class ContainerTests
     {
         var first=await Initial.Value;
         var entries=Zip(first.Sealed);entries.Add("Doc_0/Res/bomb.otf",new byte[2*1024*1024]);
-        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(Pack(entries),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(Pack(entries),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         entries=Zip(first.Sealed);entries.Add("Doc_0/Res/nested.zip",[80,75,3,4]);
-        Assert.Equal("UNEXPECTED_ENTRY",SourceContainer.Extract(Pack(entries),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("UNEXPECTED_ENTRY",SourceContainer.Extract(Pack(entries),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         var header=(byte[])first.Sealed.Clone();header[14]^=1;
-        Assert.Equal("PACKAGE_SIZE",SourceContainer.Extract(header,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("PACKAGE_SIZE",SourceContainer.Extract(header,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         entries=Zip(first.Sealed);const string path="Doc_0/Attachs/ofd-compose.json";
         entries[path]=Encoding.UTF8.GetBytes("{\"namespace\":\"ofd-compose\","+Encoding.UTF8.GetString(entries[path])[1..]);
-        Assert.Equal("SCHEMA_INVALID",SourceContainer.Extract(Pack(entries),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
-        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){WorkBytes=100},barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SCHEMA_INVALID",SourceContainer.Extract(Pack(entries),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SIZE_LIMIT",SourceContainer.Extract(first.Sealed,new(){WorkBytes=100},barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     private sealed class ChangingMap(IReadOnlyDictionary<string,string[]> original) : IReadOnlyDictionary<string,string[]>
@@ -341,9 +345,9 @@ public sealed class ContainerTests
     {
         var first=await Initial.Value;
         using var source=new ChangingMemory(first.Source);
-        var created=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),new ChangingMap(first.Ofd.ObjectMap!),ContainerProfile.NativeEditable,source.Input,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
+        var created=SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),new ChangingMap(first.Ofd.ObjectMap!),ContainerProfile.NativeEditable,source.Input,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.True(created.Ok,created.Error);
-        var extracted=SourceContainer.Extract(created.Bytes!,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);
+        var extracted=SourceContainer.Extract(created.Bytes!,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(extracted.Ok,extracted.Error);
         Assert.DoesNotContain("caller-mutated",Encoding.UTF8.GetString(created.Bytes!));
     }
@@ -354,7 +358,7 @@ public sealed class ContainerTests
     public async Task Boolean_controls_keep_the_layout_display_representation(string mode,string expected)
     {
         var fixture=await Build(mode);
-        var extracted=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);
+        var extracted=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.True(extracted.Ok,extracted.Error);
         var read=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
         Assert.Equal(expected,string.Concat(read.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text)));
@@ -377,7 +381,7 @@ public sealed class ContainerTests
             var entry=manifest["entries"]!.AsArray().Single(e=>e!["path"]!.GetValue<string>()==oldPath)!;
             entry["path"]=newPath;entry["sha256"]=digest;entry["byteLength"]=replacement.Length;
         });
-        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         byte[] Inline(byte[] imageBytes)=>Mutate(fixture.Sealed,(manifest,entries)=> {
             foreach(var part in manifest["parts"]!.AsArray())
             {
@@ -389,9 +393,9 @@ public sealed class ContainerTests
             var inventory=manifest["entries"]!.AsArray();
             foreach(var entry in inventory.ToArray())if(entry!["path"]!.GetValue<string>().StartsWith("Doc_0/Attachs/Assets/",StringComparison.Ordinal)){entries.Remove(entry["path"]!.GetValue<string>());inventory.Remove(entry);}
         });
-        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(Inline(replacement),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(Inline(replacement),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         byte[] originalImage=Zip(fixture.Sealed).First(e=>e.Key.StartsWith("Doc_0/Attachs/Assets/",StringComparison.Ordinal)).Value;
-        var sameImage=SourceContainer.Extract(Inline(originalImage),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);Assert.True(sameImage.Ok,sameImage.Error);
+        var sameImage=SourceContainer.Extract(Inline(originalImage),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(sameImage.Ok,sameImage.Error);
     }
 
     [Fact]
@@ -404,14 +408,14 @@ public sealed class ContainerTests
             foreach(string key in new[]{"sha256","byteLength"}){var first=images[0]![key]!.DeepClone();images[0]![key]=images[1]![key]!.DeepClone();images[1]![key]=first;}
             string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
     public async Task Empty_paragraph_without_source_ranges_roundtrips_as_empty_text()
     {
         var fixture=await Build("empty-paragraph");
-        var extracted=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
+        var extracted=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
         var read=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
         Assert.All(read.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>(),t=>Assert.Equal("",t.Text));
     }
@@ -429,8 +433,8 @@ public sealed class ContainerTests
             var entries=Zip(bytes);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));xml.Root!.Name=xml.Root.Name.Namespace+"Font";
             entries[path]=Encoding.UTF8.GetBytes(xml.ToString());return Pack(entries);
         }
-        Assert.Equal("PACKAGE_XML",SourceContainer.Extract(Change(first.Sealed),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
-        if(Zip(first.Ofd.Bytes!).ContainsKey(path))Assert.Equal("PACKAGE_XML",SourceContainer.Create(Change(first.Ofd.Bytes!),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.NativeEditable,first.Source,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
+        Assert.Equal("PACKAGE_XML",SourceContainer.Extract(Change(first.Sealed),barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        if(Zip(first.Ofd.Bytes!).ContainsKey(path))Assert.Equal("PACKAGE_XML",SourceContainer.Create(Change(first.Ofd.Bytes!),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.NativeEditable,first.Source,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap).Error);
     }
 
     [Theory]
@@ -446,7 +450,7 @@ public sealed class ContainerTests
         if(mutation=="page-location")xml.Descendants().Single(e=>e.Name.LocalName=="Page").SetAttributeValue("BaseLoc","Pages/Page_99/Content.xml");
         if(mutation=="font-location")xml.Descendants().Single(e=>e.Name.LocalName=="FontFile").Value="missing.otf";
         entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.Equal(mutation=="font-location"?"RESOURCE_MISSING":"PACKAGE_REFERENCE",result.Error);
     }
 
@@ -460,13 +464,13 @@ public sealed class ContainerTests
             string digest=manifest["irDigest"]!.GetValue<string>();int at=half=="head"?0:63;
             manifest["irDigest"]=digest[..at]+(digest[at]=='0'?'1':'0')+digest[(at+1)..];
         });
-        Assert.Equal("DIGEST_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("DIGEST_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         var mismatchedDoc=Mutate(first.Sealed,(manifest,entries)=> {
             var xml=XDocument.Parse(Encoding.UTF8.GetString(entries["OFD.xml"]));xml.Descendants().Single(e=>e.Name.LocalName=="DocID").Value=new string('0',32);
             entries["OFD.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
             var record=manifest["entries"]!.AsArray().Single(e=>e!["path"]!.GetValue<string>()=="OFD.xml")!;record["sha256"]=Hash(entries["OFD.xml"]);record["byteLength"]=entries["OFD.xml"].Length;
         });
-        Assert.Equal("DIGEST_MISMATCH",SourceContainer.Extract(mismatchedDoc,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("DIGEST_MISMATCH",SourceContainer.Extract(mismatchedDoc,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Theory]
     [InlineData("weight")]
@@ -481,7 +485,7 @@ public sealed class ContainerTests
             if(field=="weight")font[field]=700;else if(field=="italic")font[field]=true;else font[field]="unrequested-family";
             string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("FONT_FACE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("FONT_FACE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Theory]
     [InlineData(ContainerProfile.NativeEditable)]
@@ -489,7 +493,7 @@ public sealed class ContainerTests
     public async Task Orphan_resource_bytes_cannot_carry_hidden_source(ContainerProfile profile)
     {
         var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);entries.Add("Doc_0/Res/leak.png",Encoding.UTF8.GetBytes("FULL_SOURCE_SECRET"));
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?first.Source:default,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,profile,profile==ContainerProfile.NativeEditable?first.Source:default,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("RESOURCE_ORPHAN",result.Error);Assert.Null(result.Bytes);
     }
 
@@ -501,7 +505,7 @@ public sealed class ContainerTests
         resource.Root.Add(new XElement(ns+"MultiMedias",new XElement(ns+"MultiMedia",new XAttribute("ID","777"),new XAttribute("Type","Image"),new XAttribute("Format","PNG"),new XElement(ns+"MediaFile","leak.png"))));
         entries["Doc_0/PublicRes.xml"]=Encoding.UTF8.GetBytes(resource.ToString());
         var doc=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));doc.Descendants(ns+"MaxUnitID").Single().Value="777";entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(doc.ToString());
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("RESOURCE_ORPHAN",result.Error);Assert.Null(result.Bytes);
     }
     [Fact]
@@ -512,9 +516,9 @@ public sealed class ContainerTests
         string content=part["content"]!.GetValue<string>().Replace("revision-1","revision-2",StringComparison.Ordinal);part["content"]=content;part["sha256"]=Hash(Encoding.UTF8.GetBytes(content));
         entries[path]=Encoding.UTF8.GetBytes(manifest.ToJsonString());var changed=Pack(entries,level:CompressionLevel.NoCompression);Assert.Equal(first.Sealed.Length,changed.Length);
         changed[14]^=1; // The second version also lies in the local-header CRC; BCL alone ignores it.
-        Assert.Equal("PACKAGE_SIZE",SourceContainer.Extract(changed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("PACKAGE_SIZE",SourceContainer.Extract(changed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
         using var input=new ChangingMemory(first.Sealed,changed);
-        var result=SourceContainer.Extract(input.Input,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,result.Error);
+        var result=SourceContainer.Extract(input.Input,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,result.Error);
         Assert.Equal("revision-1",JsonNode.Parse(result.SourceJson!)!["resolvedDocument"]!["revisionId"]!.GetValue<string>());
     }
 
@@ -527,7 +531,7 @@ public sealed class ContainerTests
     {
         var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));
         xml.Root!.SetAttributeValue("leak","FULL_SOURCE_SECRET");entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken, resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("UNEXPECTED_METADATA",result.Error);
     }
 
@@ -539,8 +543,8 @@ public sealed class ContainerTests
         entries["Doc_0/Pages/Page_0/Content.xml"]=Encoding.UTF8.GetBytes(page.ToString());
         var source=JsonNode.Parse(fixture.Source)!;var semantics=source["semanticMap"]!["entries"]!.AsArray();semantics.Remove(semantics.Single(e=>e!["objectId"]!.GetValue<string>()==removed.Key));
         var map=fixture.Ofd.ObjectMap!.Where(p=>p.Key!=removed.Key).ToDictionary(p=>p.Key,p=>p.Value);
-        var assets=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Assets!;
-        var result=SourceContainer.Create(Pack(entries),fixture.Identity["irDigest"]!.GetValue<string>(),map,ContainerProfile.NativeEditable,Encoding.UTF8.GetBytes(source.ToJsonString()),assets,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken,resourceMap:fixture.Ofd.ResourceMap);
+        var assets=SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Assets!;
+        var result=SourceContainer.Create(Pack(entries),fixture.Identity["irDigest"]!.GetValue<string>(),map,ContainerProfile.NativeEditable,Encoding.UTF8.GetBytes(source.ToJsonString()),assets,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken,resourceMap:fixture.Ofd.ResourceMap);
         Assert.Equal("RESOURCE_ORPHAN",result.Error);
     }
     [Fact]
@@ -553,7 +557,7 @@ public sealed class ContainerTests
             string first=fonts[0]!["family"]!.GetValue<string>();fonts[0]!["family"]=fonts[1]!["family"]!.DeepClone();fonts[1]!["family"]=first;
             string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("FONT_FAMILY_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("FONT_FAMILY_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
@@ -564,7 +568,7 @@ public sealed class ContainerTests
             var map=manifest["resourceMap"]!.AsObject();var keys=map.Select(p=>p.Key).ToArray();Assert.Equal(2,keys.Length);
             string first=map[keys[0]]!.GetValue<string>();map[keys[0]]=map[keys[1]]!.DeepClone();map[keys[1]]=first;
         });
-        Assert.Equal("RESOURCE_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("RESOURCE_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
@@ -576,7 +580,7 @@ public sealed class ContainerTests
             source["body"]!.AsArray().Add(JsonNode.Parse("{\"kind\":\"paragraph\",\"nodeId\":\"extra-p\",\"fragments\":[{\"kind\":\"text\",\"text\":\"EXTRA_UNRENDERED_TEXT\",\"origin\":{\"kind\":\"static\",\"nodeId\":\"extra-t\"}}]}"));
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Every_image_in_a_source_occurrence_requires_a_rendered_mapping()
@@ -588,13 +592,13 @@ public sealed class ContainerTests
             source["body"]![0]!["sources"]!.AsArray().Add(source["body"]![1]!["sources"]![0]!.DeepClone());
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Source_text_ranges_cover_whitespace_and_line_breaks()
     {
         var fixture=await Build("whitespace");
-        Assert.True(SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        Assert.True(SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
     [Theory]
     [InlineData("suffix")]
@@ -633,7 +637,7 @@ public sealed class ContainerTests
                 string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
             }
         });
-        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Theory]
     [InlineData("element")]
@@ -653,7 +657,7 @@ public sealed class ContainerTests
         if(mutation=="scalar-value")box.Value="{\"source\":\"FULL_SOURCE_SECRET\"}";
         if(mutation=="missing-scalar")box.Remove();
         entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("UNEXPECTED_METADATA",result.Error);
     }
     [Theory]
@@ -662,7 +666,7 @@ public sealed class ContainerTests
     public async Task Stale_MaxUnitID_cannot_create_duplicate_attachment_IDs(string maximum)
     {
         var first=await Initial.Value;var entries=Zip(first.Ofd.Bytes!);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));xml.Descendants().Single(e=>e.Name.LocalName=="MaxUnitID").Value=maximum;entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
-        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
+        var result=SourceContainer.Create(Pack(entries),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken,resourceMap:first.Ofd.ResourceMap);
         Assert.Equal("RESOURCE_INVALID",result.Error);Assert.Null(result.Bytes);
     }
     [Fact]
@@ -674,7 +678,7 @@ public sealed class ContainerTests
             foreach(string key in new[]{"sha256","byteLength"}){var first=images[0]![key]!.DeepClone();images[0]![key]=images[1]![key]!.DeepClone();images[1]![key]=first;}
             string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Theory]
@@ -693,7 +697,7 @@ public sealed class ContainerTests
             else source["settings"]!["page"]!["watermarks"]![0]!["text"]="FORGED_WATERMARK";
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal(mutation=="remove-witness"?"SEMANTIC_INCOMPLETE":"SEMANTIC_SOURCE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal(mutation=="remove-witness"?"SEMANTIC_INCOMPLETE":"SEMANTIC_SOURCE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Theory]
     [InlineData("path")]
@@ -717,15 +721,15 @@ public sealed class ContainerTests
             Walk(source["body"]);
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Barcode_verification_is_an_explicit_host_capability_and_fails_closed()
     {
         var fixture=await Build("combined");
-        Assert.Equal("BARCODE_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
-        Assert.Equal("BARCODE_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:(_,_)=>ReadOnlyMemory<byte>.Empty,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
-        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:(_,_)=>"[]"u8.ToArray(),numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("BARCODE_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("BARCODE_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:(_,_)=>ReadOnlyMemory<byte>.Empty,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:(_,_)=>"[]"u8.ToArray(),numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Data_paths_are_removed_and_cannot_be_reintroduced_by_rehashing()
@@ -736,21 +740,21 @@ public sealed class ContainerTests
             source["body"]![0]!["fragments"]![0]!["origin"]!["dataPath"]="SECRET_BUSINESS_SCHEMA";
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Numerically_duplicate_ID_spellings_are_rejected()
     {
         var fixture=await Initial.Value;var entries=Zip(fixture.Ofd.Bytes!);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));
         xml.Descendants().Single(e=>e.Name.LocalName=="Page").SetAttributeValue("ID","01");entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(xml.ToString());
-        var result=SourceContainer.Create(Pack(entries),fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.Distribution,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);
+        var result=SourceContainer.Create(Pack(entries),fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.Distribution,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.Equal("PACKAGE_REFERENCE",result.Error);Assert.Null(result.Bytes);
     }
 
     [Fact]
     public async Task Numbering_origins_preserve_continuation_restart_and_repeat_source()
     {
-        var fixture=await Build("list");var extracted=SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
+        var fixture=await Build("list");var extracted=SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
         var reader=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
         string text=string.Concat(reader.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text));
         Assert.Contains("1. ",text);Assert.Contains("AA",text);Assert.Contains("5. ",text);Assert.Contains("6. ",text);
@@ -758,7 +762,7 @@ public sealed class ContainerTests
             var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
             source["body"]![0]!["layout"]!["numbering"]!["suffix"]="SECRET_SUFFIX";string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
@@ -769,7 +773,7 @@ public sealed class ContainerTests
             var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
             source["body"]![0]!["layout"]=JsonNode.Parse("{\"numbering\":{\"listId\":\"forged\",\"format\":\"decimal\"}}");string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,numberingLabelsResolver:ResolveNumbering,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Theory]
@@ -785,22 +789,22 @@ public sealed class ContainerTests
             else source["styles"]!["regular"]![mutation=="paragraph-italic"?"italic":"bold"]=true;
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("FONT_FAMILY_MISMATCH",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("FONT_FAMILY_MISMATCH",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Numbering_rules_require_the_explicit_authoritative_host_resolver()
     {
         var fixture=await Build("list");
-        Assert.Equal("NUMBERING_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
-        Assert.Equal("NUMBERING_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:(_,_)=>ReadOnlyMemory<byte>.Empty,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
-        Assert.Equal("NUMBERING_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:(_,_)=>"[]"u8.ToArray(),generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("NUMBERING_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("NUMBERING_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:(_,_)=>ReadOnlyMemory<byte>.Empty,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("NUMBERING_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,numberingLabelsResolver:(_,_)=>"[]"u8.ToArray(),sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
     public async Task Numbering_request_budget_is_reserved_before_calling_the_host()
     {
         var fixture=await Build("list");bool called=false;
-        var result=SourceContainer.Extract(fixture.Sealed,limits:new(){WorkBytes=64*1024*1024},numberingLabelsResolver:(request,token)=>{called=true;return ResolveNumbering(request,token);},generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);
+        var result=SourceContainer.Extract(fixture.Sealed,limits:new(){WorkBytes=64*1024*1024},numberingLabelsResolver:(request,token)=>{called=true;return ResolveNumbering(request,token);},sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
         Assert.Equal("SIZE_LIMIT",result.Error);Assert.False(called);
     }
 
@@ -829,7 +833,7 @@ public sealed class ContainerTests
                 string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
             }
         });
-        Assert.Equal("SEMANTIC_ORDER",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_ORDER",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Theory]
@@ -854,20 +858,20 @@ public sealed class ContainerTests
             string json=semantic.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
             foreach(var entry in manifest["entries"]!.AsArray()){byte[] value=entries[entry!["path"]!.GetValue<string>()];entry["sha256"]=Hash(value);entry["byteLength"]=value.Length;}
         });
-        Assert.Equal("SEMANTIC_CARDINALITY",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_CARDINALITY",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Repeated_header_atomic_nodes_have_one_instance_per_table_body_page()
     {
         var fixture=await Build("header-atomics");
-        Assert.True(SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        Assert.True(SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
         var source=JsonNode.Parse(fixture.Source)!;Assert.True(source["semanticMap"]!["entries"]!.AsArray().Count(e=>e!["nodeId"]!.GetValue<string>()=="header-image")>1);
     }
     [Fact]
     public async Task Section_page_numbers_are_derived_from_source_sections_and_physical_pages()
     {
         var fixture=await Build("section-pages");
-        Assert.True(SourceContainer.Extract(fixture.Sealed,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
         var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
             foreach(var part in manifest["parts"]!.AsArray())
             {
@@ -878,14 +882,14 @@ public sealed class ContainerTests
                 string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
             }
         });
-        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
     public async Task An_empty_control_between_text_fragments_preserves_its_single_anchor()
     {
         var fixture=await Build("empty-control");
-        Assert.True(SourceContainer.Extract(fixture.Sealed,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
 
     [Fact]
@@ -893,7 +897,7 @@ public sealed class ContainerTests
     {
         var fixture=await Build("private-repeat");string source=Encoding.UTF8.GetString(fixture.Source);
         Assert.DoesNotContain("PRIVATE_ACCOUNT",source);Assert.DoesNotContain("PRIVATE_CHILD",source);Assert.Contains("instance-",source);Assert.Contains("@editing-section:",source);
-        var extracted=SourceContainer.Extract(fixture.Sealed,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
+        var extracted=SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
         var reader=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
         string visible=string.Concat(reader.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>().Select(t=>t.Text));Assert.Contains("Public A",visible);Assert.Contains("Public B",visible);Assert.Contains("visible child",visible);
         var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
@@ -906,7 +910,7 @@ public sealed class ContainerTests
                 string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
             }
         });
-        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Theory]
     [InlineData("missing")]
@@ -918,7 +922,7 @@ public sealed class ContainerTests
             var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
             source["body"]![0]!["fragments"]![0]!["origin"]!["valueState"]=state;string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Theory]
@@ -941,12 +945,12 @@ public sealed class ContainerTests
             string json=map.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
             foreach(var entry in manifest["entries"]!.AsArray()){byte[] value=entries[entry!["path"]!.GetValue<string>()];entry["sha256"]=Hash(value);entry["byteLength"]=value.Length;}
         });
-        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SEMANTIC_INCOMPLETE",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Empty_and_hidden_page_bands_do_not_require_output_witnesses()
     {
-        var fixture=await Build("empty-bands");Assert.True(SourceContainer.Extract(fixture.Sealed,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        var fixture=await Build("empty-bands");Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
     [Theory]
     [InlineData("style")]
@@ -963,14 +967,14 @@ public sealed class ContainerTests
             else content["styles"]!.AsObject().First().Value!["link"]="https://example.invalid/?token=LINK_SECRET";
             string json=content.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
     [Fact]
     public async Task Unused_table_and_cell_link_targets_are_not_retained_in_referenced_styles()
     {
         var fixture=await Build("table-links");Assert.DoesNotContain("LINK_SECRET",Encoding.UTF8.GetString(fixture.Source));Assert.DoesNotContain("\"link\"",Encoding.UTF8.GetString(fixture.Source));
-        Assert.True(SourceContainer.Extract(fixture.Sealed,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
 
     [Theory]
@@ -1000,14 +1004,14 @@ public sealed class ContainerTests
             }
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
-        Assert.Equal("GENERATED_PATH_MISMATCH",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("GENERATED_PATH_MISMATCH",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Generated_paths_require_explicit_recomputation_and_cannot_be_omitted()
     {
         var fixture=await Build("page-border");
-        Assert.Equal("GENERATED_PATH_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Error);
-        Assert.Equal("GENERATED_PATH_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,generatedPathResolver:(_,_)=>null,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SOURCE_RENDER_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("SOURCE_RENDER_VERIFICATION_FAILED",SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:(_,_)=>null,cancellationToken:TestContext.Current.CancellationToken).Error);
         var bytes=Mutate(fixture.Sealed,(manifest,entries)=> {
             var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="semanticMap")!;var map=JsonNode.Parse(part["content"]!.GetValue<string>())!;string id=map["decorations"]![0]!.GetValue<string>(),physical=manifest["objectMap"]![id]![0]!.GetValue<string>();
             map["decorations"]!.AsArray().RemoveAt(0);manifest["objectMap"]!.AsObject().Remove(id);
@@ -1015,7 +1019,7 @@ public sealed class ContainerTests
             string json=map.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
             foreach(var entry in manifest["entries"]!.AsArray()){byte[] value=entries[entry!["path"]!.GetValue<string>()];entry["sha256"]=Hash(value);entry["byteLength"]=value.Length;}
         });
-        Assert.Equal("GENERATED_PATH_MISMATCH",SourceContainer.Extract(bytes,generatedPathResolver:ResolveGeneratedPaths,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.Equal("GENERATED_PATH_MISMATCH",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Fact]
     public async Task Generated_paths_cannot_be_disguised_as_paragraph_semantics()
@@ -1046,6 +1050,48 @@ public sealed class ContainerTests
             string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
         Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Complete_IR_identity_is_anchored_in_OFD_metadata(bool distribution)
+    {
+        var fixture=await Initial.Value;
+        byte[] original=distribution?SourceContainer.Create(fixture.Ofd.Bytes!,fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Bytes!:fixture.Sealed;
+        var root=XDocument.Parse(Encoding.UTF8.GetString(Zip(original)["OFD.xml"]));
+        Assert.Equal("ofd-compose:ir-sha256:"+fixture.Identity["irDigest"]!.GetValue<string>(),root.Descendants().Single(e=>e.Name.LocalName=="Keywords").Value);
+        var bytes=Mutate(original,(manifest,_)=> {
+            string digest=manifest["irDigest"]!.GetValue<string>();string replacement=digest[..32]+new string(digest[32]=='0'?'1':'0',32);manifest["irDigest"]=replacement;
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="irDigest")!;string content=JsonSerializer.Serialize(replacement);part["content"]=content;part["sha256"]=Hash(Encoding.UTF8.GetBytes(content));
+        });
+        Assert.Equal("DIGEST_MISMATCH",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Theory]
+    [InlineData("row")]
+    [InlineData("column")]
+    [InlineData("rowSpan")]
+    [InlineData("columnSpan")]
+    [InlineData("tableId")]
+    [InlineData("remove")]
+    [InlineData("repeatedHeader")]
+    public async Task Table_relationships_match_authoritative_source_layout(string mutation)
+    {
+        var fixture=await Build("header-atomics");
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="semanticMap")!;var map=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            var entry=map["entries"]!.AsArray().First(e=>e![mutation=="repeatedHeader"?"repeatedHeader":"table"] is not null)!;
+            if(mutation=="remove")entry.AsObject().Remove("table");else if(mutation=="tableId")entry["table"]![mutation]="wrong-table";else if(mutation=="repeatedHeader")entry[mutation]!["instanceIndex"]=entry[mutation]!["instanceIndex"]!.GetValue<int>()+1;else entry["table"]![mutation]=entry["table"]![mutation]!.GetValue<int>()+1;
+            string json=map.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("TABLE_RELATION_MISMATCH",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Page_bands_use_the_authoritative_render_host()
+    {
+        var fixture=await Build("section-pages");
+        Assert.Equal("SOURCE_RENDER_VERIFIER_REQUIRED",SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Error);
+        Assert.True(SourceContainer.Extract(fixture.Sealed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Ok);
     }
 
 }

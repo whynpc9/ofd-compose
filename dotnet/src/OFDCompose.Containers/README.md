@@ -130,7 +130,7 @@ and opaque shaping equivalence groups retain original text geometry, using the s
 paragraph-style rules as Layout Core; original capture-on/off IR remains identical.
 
 Generated borders, backgrounds, highlights, underlines and other path decorations use an
-explicit `GeneratedPathResolver`. The request contains owned minimal source JSON and
+explicit `SourceRenderResolver`. The request contains owned minimal source JSON and
 owned source-image bytes. An authorized host supplies the locked full fonts, runs the
 existing Worker/fixed-writer chain, and returns each generated PathObject XML with its
 canonical object ID and physical page/index. The library compares the entire expected
@@ -139,7 +139,7 @@ a second layout engine nor accepts a self-rehashed source digest as verification
 
 This capability is required whenever actual path decorations or retained settings that
 can generate them exist. Without it, native Create/Extract returns
-`GENERATED_PATH_VERIFIER_REQUIRED`; denial or failed recomputation returns no successful
+`SOURCE_RENDER_VERIFIER_REQUIRED`; denial or failed recomputation returns no successful
 source/artifact. Full-font availability is therefore needed at this host verification
 boundary for those native documents. The library never launches a process or resolves
 attachment-chosen paths/URLs. The test host uses known font-manifest hashes, owned temp
@@ -150,3 +150,14 @@ Filled input controls retain identity, type, style and their displayed value/fal
 Choice catalogs (`options`), `required` flags and shadowed placeholders are not retained
 in this minimal filled-source profile. Extraction rejects their reintroduction; any
 editor choice or validation policy must be provided explicitly by its host.
+
+The complete IR SHA-256 is anchored in the sealed OFD DocInfo Keywords as the single
+fixed `ofd-compose:ir-sha256:` value and must equal both manifest/part identities.
+Changing the suffix in the attachment while keeping OFD bytes unchanged is rejected.
+This remains internal consistency rather than authenticity; the fixed writer itself
+is unchanged and sealing adds this envelope metadata.
+
+`SourceRenderResolver` now also supplies real Worker table coordinates/spans/repeated
+header relationships and actual generated page-band text. .NET compares those results
+instead of implementing page-number formatting or visibility rules. Tables/page bands
+therefore require the explicit authorized render host, even without path decorations.

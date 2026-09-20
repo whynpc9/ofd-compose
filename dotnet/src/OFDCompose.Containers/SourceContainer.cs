@@ -20,7 +20,7 @@ public static partial class SourceContainer
     public static ContainerResult Create(ReadOnlyMemory<byte> ofd, string irDigest,
         IReadOnlyDictionary<string, string[]> objectMap, ContainerProfile profile,
         ReadOnlyMemory<byte> sourceJson = default, IReadOnlyList<SourceAsset>? assets = null,
-        string? parentArtifactDigest = null, ContainerLimits? limits = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string,string>? resourceMap = null, BarcodeGeometryResolver? barcodeGeometryResolver = null, NumberingLabelsResolver? numberingLabelsResolver = null, GeneratedPathResolver? generatedPathResolver = null)
+        string? parentArtifactDigest = null, ContainerLimits? limits = null, CancellationToken cancellationToken = default, IReadOnlyDictionary<string,string>? resourceMap = null, BarcodeGeometryResolver? barcodeGeometryResolver = null, NumberingLabelsResolver? numberingLabelsResolver = null, SourceRenderResolver? sourceRenderResolver = null)
     {
         try
         {
@@ -34,6 +34,11 @@ public static partial class SourceContainer
             // Only a fresh fixed-writer package can be sealed. This prevents hidden sources in distribution output.
             Need(entries.Keys.All(IsWriterEntry), "UNEXPECTED_ENTRY");
             uint actualMax=ValidateWriterPackage(entries, irDigest, budget);
+            var rootXml=SafePackage.Xml(entries["OFD.xml"],budget);
+            var info=rootXml.Descendants(SafePackage.Ns+"DocInfo").Single();
+            Need(!info.Elements(SafePackage.Ns+"Keywords").Any(),"UNEXPECTED_METADATA");
+            info.Add(new XElement(SafePackage.Ns+"Keywords","ofd-compose:ir-sha256:"+irDigest));
+            entries["OFD.xml"]=SafePackage.Encode(rootXml);
             var doc = SafePackage.Xml(entries["Doc_0/Document.xml"], budget);
             Need(!doc.Descendants(SafePackage.Ns + "Attachments").Any() && !doc.Descendants(SafePackage.Ns + "Extensions").Any(), "UNEXPECTED_ENTRY");
             var maxUnit=doc.Descendants(SafePackage.Ns+"MaxUnitID").Single();
@@ -57,9 +62,8 @@ public static partial class SourceContainer
                 }
                 AddAssets(root.GetProperty("resources"), assets ?? [], entries, budget);
                 var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, ownedResources, budget);
-                var objects=SemanticMap(root, objectMap, entries, links, ownedResources, budget, barcodeGeometryResolver, numberingLabelsResolver);
+                var objects=SemanticMap(root, objectMap, entries, links, ownedResources, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver);
                 SourceVersions(root);
-                GeneratedPathValidation.Validate(root,objectMap,objects,entries,generatedPathResolver,budget);
             }
             else {
                 Need(profile == ContainerProfile.Distribution && sourceJson.IsEmpty && (assets?.Count ?? 0) == 0, "DISTRIBUTION_SOURCE_FORBIDDEN");
@@ -94,7 +98,7 @@ public static partial class SourceContainer
         catch (Exception error) when (Malformed(error)) { return new(null, "SCHEMA_INVALID"); }
     }
 
-    public static ExtractionResult Extract(ReadOnlyMemory<byte> ofd, ContainerLimits? limits = null, CancellationToken cancellationToken = default, BarcodeGeometryResolver? barcodeGeometryResolver = null, NumberingLabelsResolver? numberingLabelsResolver = null, GeneratedPathResolver? generatedPathResolver = null)
+    public static ExtractionResult Extract(ReadOnlyMemory<byte> ofd, ContainerLimits? limits = null, CancellationToken cancellationToken = default, BarcodeGeometryResolver? barcodeGeometryResolver = null, NumberingLabelsResolver? numberingLabelsResolver = null, SourceRenderResolver? sourceRenderResolver = null)
     {
         try
         {
@@ -144,13 +148,14 @@ public static partial class SourceContainer
                 ValidateInventory(manifest.GetProperty("entries"), entries, budget);
                 var ofdXml=SafePackage.Xml(entries["OFD.xml"],budget);
                 Need(ofdXml.Descendants(SafePackage.Ns+"DocID").Select(e=>e.Value).SequenceEqual([Text(manifest,"irDigest")[..32]]),"DIGEST_MISMATCH");
+                Need(ofdXml.Descendants(SafePackage.Ns+"Keywords").Select(e=>e.Value).SequenceEqual(["ofd-compose:ir-sha256:"+Text(manifest,"irDigest")]),"DIGEST_MISMATCH");
                 var assets = new List<SourceAsset>();
                 Dictionary<string,RenderedObject>? objects=null;
                 if (source is not null)
                 {
                     var root = source.RootElement;
                     var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, resourceMap, budget);
-                    objects=SemanticMap(root, objectMap, entries, links, resourceMap, budget, barcodeGeometryResolver, numberingLabelsResolver);
+                    objects=SemanticMap(root, objectMap, entries, links, resourceMap, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver);
                     SourceVersions(root);
                     foreach (var image in root.GetProperty("resources").GetProperty("images").EnumerateArray())
                     {
@@ -164,7 +169,6 @@ public static partial class SourceContainer
                 string[] expected = profile == "native-editable" ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"];
                 Need(manifest.GetProperty("capabilities").EnumerateArray().Select(e => e.GetString()).SequenceEqual(expected), "VERSION_UNSUPPORTED");
                 Need(Text(manifest, "signaturePolicy") == "unsigned-or-unverified", "SIGNATURE_POLICY_UNSUPPORTED");
-                if(source is not null)GeneratedPathValidation.Validate(source.RootElement,objectMap,objects!,entries,generatedPathResolver,budget);
                 return new(null, profile, sourceJson, assets, "internal-consistency-only", Signed(entries, budget) ? "present-unverified" : "unsigned");
             }
             finally { source?.Dispose(); }

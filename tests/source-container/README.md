@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 613, fresh Chromium 403,
-full .NET 307 (113 container cases plus the unchanged 194 baseline cases). The final
+full .NET 317 (123 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -119,7 +119,7 @@ and opaque shaping groups preserve original run boundaries so URL removal cannot
 change ligatures. Shared paragraph-style rules and actual re-finalization tests require
 identical pages, graphics states and resources after this projection.
 
-Generated path decorations require a trusted `GeneratedPathResolver` when present or
+Generated path decorations require a trusted `SourceRenderResolver` when present or
 potentially requested by retained source paint settings. The host uses the real Worker
 and fixed writer to recompute path XML, with explicit full-font authorization and owned
 source-image assets. The container compares the complete generated-path set, page/object
@@ -133,3 +133,14 @@ currently displayed default value or visible placeholder. Omit option catalogs,
 required-validation flags and placeholders shadowed by a default value. Rehashed
 reintroduction is rejected; capture-on/off IR, reopened geometry and control IDs remain
 unchanged. A host needing editing choices/validation must supply its own policy.
+
+The complete IR SHA-256 is anchored in the sealed OFD DocInfo Keywords as the single
+fixed `ofd-compose:ir-sha256:` value and must equal both manifest/part identities.
+Changing the suffix in the attachment while keeping OFD bytes unchanged is rejected.
+This remains internal consistency rather than authenticity; the fixed writer itself
+is unchanged and sealing adds this envelope metadata.
+
+`SourceRenderResolver` now also supplies real Worker table coordinates/spans/repeated
+header relationships and actual generated page-band text. .NET compares those results
+instead of implementing page-number formatting or visibility rules. Tables/page bands
+therefore require the explicit authorized render host, even without path decorations.
