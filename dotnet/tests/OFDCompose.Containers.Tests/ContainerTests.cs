@@ -777,4 +777,60 @@ public sealed class ContainerTests
         Assert.Equal("SEMANTIC_ORDER",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
+    [Theory]
+    [InlineData("image")]
+    [InlineData("path")]
+    [InlineData("barcode")]
+    [InlineData("text")]
+    public async Task Source_occurrences_cannot_gain_duplicate_physical_objects(string kind)
+    {
+        var fixture=await Build(kind=="image"?"two-images":kind=="path"?"path":kind=="text"?"initial":"combined");
+        var bytes=Mutate(fixture.Sealed,(manifest,entries)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="semanticMap")!;var semantic=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            var original=semantic["entries"]!.AsArray().First(e=>e!["nodeId"]!.GetValue<string>()==(kind=="image"?"image":kind=="path"?"path":kind=="text"?"t":"code128"))!;
+            string target=manifest["objectMap"]![original["objectId"]!.GetValue<string>()]![0]!.GetValue<string>();
+            var doc=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Document.xml"]));var maximum=doc.Descendants().Single(e=>e.Name.LocalName=="MaxUnitID");int next=int.Parse(maximum.Value,System.Globalization.CultureInfo.InvariantCulture);maximum.Value=(next+1).ToString(System.Globalization.CultureInfo.InvariantCulture);
+            var pages=entries.Where(e=>e.Key.StartsWith("Doc_0/Pages/",StringComparison.Ordinal)).OrderBy(e=>int.Parse(e.Key.Split('/')[2][5..],System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            XElement? copied=null;foreach(var p in pages){var xml=XDocument.Parse(Encoding.UTF8.GetString(p.Value));var found=xml.Descendants().FirstOrDefault(e=>(string?)e.Attribute("ID")==target);if(found is not null)copied=new XElement(found);}
+            Assert.NotNull(copied);copied.SetAttributeValue("ID",next);var page=XDocument.Parse(Encoding.UTF8.GetString(pages[^1].Value));page.Descendants().Single(e=>e.Name.LocalName=="Layer").Add(copied);entries[pages[^1].Key]=Encoding.UTF8.GetBytes(page.ToString());
+            entries["Doc_0/Document.xml"]=Encoding.UTF8.GetBytes(doc.ToString());
+            var attachments=XDocument.Parse(Encoding.UTF8.GetString(entries["Doc_0/Attachs/Attachments.xml"]));attachments.Descendants().Single(e=>e.Name.LocalName=="Attachment").SetAttributeValue("ID",next+1);entries["Doc_0/Attachs/Attachments.xml"]=Encoding.UTF8.GetBytes(attachments.ToString());
+            var duplicate=original.DeepClone();duplicate["objectId"]="duplicate-atomic";duplicate["readingOrder"]=semantic["entries"]!.AsArray().Count;duplicate["pageIndex"]=pages.Length-1;semantic["entries"]!.AsArray().Add(duplicate);manifest["objectMap"]!["duplicate-atomic"]=new JsonArray(next.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            string json=semantic.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            foreach(var entry in manifest["entries"]!.AsArray()){byte[] value=entries[entry!["path"]!.GetValue<string>()];entry["sha256"]=Hash(value);entry["byteLength"]=value.Length;}
+        });
+        Assert.Equal("SEMANTIC_CARDINALITY",SourceContainer.Extract(bytes,barcodeGeometryResolver:ResolveBarcode,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Fact]
+    public async Task Repeated_header_atomic_nodes_have_one_instance_per_table_body_page()
+    {
+        var fixture=await Build("header-atomics");
+        Assert.True(SourceContainer.Extract(fixture.Sealed,barcodeGeometryResolver:ResolveBarcode,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        var source=JsonNode.Parse(fixture.Source)!;Assert.True(source["semanticMap"]!["entries"]!.AsArray().Count(e=>e!["nodeId"]!.GetValue<string>()=="header-image")>1);
+    }
+    [Fact]
+    public async Task Section_page_numbers_are_derived_from_source_sections_and_physical_pages()
+    {
+        var fixture=await Build("section-pages");
+        Assert.True(SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Ok);
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            foreach(var part in manifest["parts"]!.AsArray())
+            {
+                string name=part!["name"]!.GetValue<string>();if(name is not "resolvedDocument" and not "semanticMap")continue;
+                var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+                if(name=="resolvedDocument")source["settings"]!["page"]!["startPageNumber"]=2;
+                else foreach(var witness in source["pageDecorations"]!.AsArray().Where(w=>w!["pointer"]!.GetValue<string>()=="/settings/page/header"))witness!["sectionPage"]=1;
+                string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+            }
+        });
+        Assert.Equal("SEMANTIC_SOURCE",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Fact]
+    public async Task An_empty_control_between_text_fragments_preserves_its_single_anchor()
+    {
+        var fixture=await Build("empty-control");
+        Assert.True(SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken).Ok);
+    }
+
 }

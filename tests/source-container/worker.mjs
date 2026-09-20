@@ -48,7 +48,7 @@ const profile = {
   },
 };
 let result;
-if (mode === "combined" || mode === "two-images") {
+if (mode === "combined" || mode === "two-images" || mode === "header-atomics") {
   const fixture = JSON.parse(
     await readFile(new URL("../ofd-writer/fixtures/combined-input.json", import.meta.url)),
   );
@@ -87,14 +87,70 @@ if (mode === "combined" || mode === "two-images") {
     });
     fixture.data.secondImage = { resourceId: "second" };
   }
+  if (mode === "header-atomics") {
+    const table = fixture.source.body.find((b) => b.kind === "table");
+    const image = structuredClone(fixture.source.body.find((b) => b.kind === "image-binding"));
+    Object.assign(image, {
+      nodeId: "header-image",
+      bindingId: "header-image-binding",
+      options: { width: 5, height: 5 },
+    });
+    const barcode = structuredClone(fixture.source.body.find((b) => b.kind === "barcode-binding"));
+    Object.assign(barcode, {
+      nodeId: "header-barcode",
+      bindingId: "header-barcode-binding",
+      options: { ...barcode.options, width: 45, height: 2 },
+    });
+    table.layout = { ...table.layout, headerRows: 1, repeatHeader: true };
+    table.rows.unshift({
+      kind: "table-row",
+      nodeId: "header",
+      cells: [
+        {
+          kind: "table-cell",
+          nodeId: "header-cell",
+          blocks: [
+            image,
+            barcode,
+            {
+              kind: "path",
+              nodeId: "header-path",
+              width: 2,
+              height: 1,
+              fill: "#000000",
+              commands: [
+                { op: "move", x: 0, y: 0 },
+                { op: "line", x: 2, y: 0 },
+                { op: "line", x: 0, y: 1 },
+                { op: "close" },
+              ],
+            },
+          ],
+        },
+        {
+          kind: "table-cell",
+          nodeId: "header-title",
+          blocks: [
+            {
+              kind: "paragraph",
+              nodeId: "header-p",
+              inlines: [{ kind: "text", nodeId: "header-t", text: "header" }],
+            },
+          ],
+        },
+      ],
+    });
+  }
   result = await render(fixture.source, fixture.data, pack, fixture.profile, {
     sourceAttachment: true,
   });
 } else if (
   mode === "initial" ||
+  mode === "empty-control" ||
   mode === "path" ||
   mode === "list" ||
   mode === "text-watermarks" ||
+  mode === "section-pages" ||
   mode === "whitespace" ||
   mode === "empty-paragraph" ||
   mode === "two-fonts" ||
@@ -125,6 +181,42 @@ if (mode === "combined" || mode === "two-images") {
       },
     ],
   };
+  if (mode === "empty-control")
+    source.body[0].inlines = [
+      { kind: "text", nodeId: "before-empty", text: "a" },
+      {
+        kind: "input-control",
+        nodeId: "empty",
+        controlId: "empty-control",
+        controlType: "text",
+        defaultValue: "",
+      },
+      { kind: "text", nodeId: "after-empty", text: "b" },
+    ];
+  if (mode === "section-pages") {
+    source.settings.page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+      header: { height: 10, hideFirstPage: true, parts: [{ kind: "page-number" }] },
+    };
+    const paragraph = (nodeId, layout) => ({
+      kind: "paragraph",
+      nodeId,
+      layout,
+      inlines: [{ kind: "text", nodeId: nodeId + "-text", text: "section body" }],
+    });
+    source.body.push(
+      paragraph("page-two", { pageBreakBefore: true }),
+      paragraph("section-two", {
+        section: {
+          id: "next-section",
+          page: { ...structuredClone(source.settings.page), startPageNumber: 11 },
+        },
+      }),
+      paragraph("section-page-two", { pageBreakBefore: true }),
+    );
+  }
   if (mode === "list") {
     source.body[0].layout = {
       role: "list-item",

@@ -109,3 +109,8 @@ family, weight and italic through default, heading, paragraph and fragment overr
 Semantic reading order is checked against physical page/object order and the first
 appearance of each renderable source occurrence in source traversal. Repeated header
 occurrences and later text fragments do not create new first appearances.
+
+Occurrence cardinality is checked against source structure. Repeated table header
+content is validated on each mapped table-body page; ordinary atomic nodes and text
+ranges cannot gain duplicates. Section page numbers are derived from source section
+boundaries and validated physical body pages; mutable page witnesses must agree.

@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 609, fresh Chromium 399,
-full .NET 277 (83 container cases plus the unchanged 194 baseline cases). The final
+full .NET 284 (90 container cases plus the unchanged 194 baseline cases). The final
 schema-work precharge received an additional four-case Node/Chromium targeted rerun.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
@@ -96,3 +96,10 @@ The first mapped appearance of each renderable source occurrence must follow sou
 traversal order, and semantic targets must follow physical page/object order. Rehashed
 source-only swaps and combined source/semantic swaps fail; repeated table headers and
 later fragments of an existing occurrence remain supported.
+
+Source cardinality is exact: atomic nodes appear once (images cover their source array),
+and text intervals do not overlap. Repeated table headers must reproduce their complete
+content once on each independently mapped table-body page. Duplicated physical image,
+path, barcode and text objects with rehashed manifests are rejected. Section starts are
+derived from ordered source sections and actual body pages; header/footer witnesses
+must agree with the derived section page, including hidden first pages and blank pages.

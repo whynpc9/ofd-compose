@@ -8,12 +8,14 @@ internal sealed record RenderedObject(int Page,int Order,string? Text,string? Im
 internal static class SemanticValidation
 {
     private sealed record SourceFace(string Family,int Weight,bool Italic);
-    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, SourceFace Face, bool Renderable, JsonElement Value, int Ordinal);
+    private sealed record TableMembership(string Pointer,bool Header,bool Repeat);
+    private sealed record SourceSection(string Pointer,HashSet<int> Pages);
+    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images, SourceFace Face, bool Renderable, JsonElement Value, int Ordinal, int Section, TableMembership[] Tables);
     private static string? Optional(JsonElement value, string key) => value.TryGetProperty(key,out var field)?field.GetString():null;
     private static string Repeat(JsonElement value, string key) => value.TryGetProperty(key,out var array)
         ? string.Join("",array.EnumerateArray().Select(e=> { string id=Text(e,"nodeId"), k=Text(e,"key"); return id.Length+":"+id+k.Length+":"+k; })) : "";
     internal static void Validate(JsonElement map, JsonElement document, JsonElement resources, JsonElement renderProfile, IReadOnlyDictionary<string,string[]> objectMap,
-        IReadOnlyDictionary<string,RenderedObject> objects, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver)
+        IReadOnlyDictionary<string,RenderedObject> objects, int pageCount, ContainerBudget budget, BarcodeGeometryResolver? barcodeGeometryResolver, NumberingLabelsResolver? numberingLabelsResolver)
     {
         var defaultStyle=renderProfile.GetProperty("layout").GetProperty("defaultStyle");
         var defaultFace=ApplyStyle(defaultStyle,new(Text(defaultStyle,"fontFamily"),400,false));
@@ -28,11 +30,15 @@ internal static class SemanticValidation
         var imagePositions=new Dictionary<(string Id,string? Binding,string Repeat),int>();
         var index=new Dictionary<(string Id,string? Binding,string Repeat),List<SourceNode>>();
         int sourceOrdinal=0;
+        var sections=new List<SourceSection>{new("/settings/page",[])};
+        var tablePages=new Dictionary<string,HashSet<int>>();
+        var tableBodyPages=new Dictionary<string,HashSet<int>>();
+        var atomicCounts=new Dictionary<SourceNode,Dictionary<int,int>>();
         var numbered=new List<(string Pointer,JsonElement Source,SourceFace Face)>();
-        void Walk(JsonElement value,string repeat,SourceFace face,string pointer)
+        void Walk(JsonElement value,string repeat,SourceFace face,string pointer,int section,TableMembership[] tables)
         {
             budget.Charge(32);
-            if(value.ValueKind==JsonValueKind.Array) { int i=0;foreach(var child in value.EnumerateArray())Walk(child,repeat,face,pointer+"/"+i++);return; }
+            if(value.ValueKind==JsonValueKind.Array) { int i=0;foreach(var child in value.EnumerateArray())Walk(child,repeat,face,pointer+"/"+i++,section,tables);return; }
             if(value.ValueKind!=JsonValueKind.Object)return;
             if(value.TryGetProperty("instancePath",out _)) repeat=Repeat(value,"instancePath");
             string? kind=Optional(value,"kind"), id=Optional(value,"nodeId");
@@ -55,11 +61,32 @@ internal static class SemanticValidation
                 bool renderable=kind is "path" or "barcode-binding" or "input-control" || kind=="text" && !string.IsNullOrEmpty(text)
                     || kind=="image-binding" && images!.Length>0
                     || kind=="paragraph" && value.GetProperty("fragments").EnumerateArray().All(f=>Text(f,"kind")=="text"&&Text(f,"text").Length==0);
-                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,face,renderable,value,sourceOrdinal++));
+                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images,face,renderable,value,sourceOrdinal++,section,tables));
             }
-            foreach(var property in value.EnumerateObject())if(property.Name is not "origin" and not "instancePath")Walk(property.Value,repeat,face,pointer+"/"+property.Name.Replace("~","~0",StringComparison.Ordinal).Replace("/","~1",StringComparison.Ordinal));
+            foreach(var property in value.EnumerateObject())if(property.Name is not "origin" and not "instancePath")
+            {
+                string childPointer=pointer+"/"+property.Name.Replace("~","~0",StringComparison.Ordinal).Replace("/","~1",StringComparison.Ordinal);
+                if(kind=="table"&&property.Name=="rows")
+                {
+                    int headers=value.TryGetProperty("layout",out var tableLayout)&&tableLayout.TryGetProperty("headerRows",out var h)?h.GetInt32():0;
+                    bool replay=value.TryGetProperty("layout",out tableLayout)&&tableLayout.TryGetProperty("repeatHeader",out var r)&&r.GetBoolean();
+                    int row=0;foreach(var child in property.Value.EnumerateArray())
+                    {budget.Charge(tables.Length*32L+64);Walk(child,repeat,face,childPointer+"/"+row,section,[..tables,new(pointer,row<headers,replay)]);row++;}
+                }
+                else Walk(property.Value,repeat,face,childPointer,section,tables);
+            }
         }
-        Walk(document.GetProperty("body"),"",defaultFace,"/body");
+        int blockIndex=0,currentSection=0;
+        foreach(var block in document.GetProperty("body").EnumerateArray())
+        {
+            string pointer="/body/"+blockIndex;
+            if(Optional(block,"kind")=="paragraph"&&block.TryGetProperty("layout",out var layout)&&layout.TryGetProperty("section",out _))
+            {
+                var section=new SourceSection(pointer+"/layout/section/page",[]);
+                if(blockIndex==0)sections[0]=section;else {currentSection=sections.Count;sections.Add(section);}
+            }
+            Walk(block,"",defaultFace,pointer,currentSection,[]);blockIndex++;
+        }
         var labels=SourceNumberingValidation.Resolve(numbered.Select(n=>n.Source).ToArray(),numberingLabelsResolver,budget);
         var listLabels=numbered.Select((n,i)=>(n.Pointer,Label:labels[i],n.Face)).ToDictionary(n=>n.Pointer,n=>(Text:n.Label,n.Face));
         foreach(var candidates in index.Values)Need(candidates.Count(c=>c.Renderable)<=1,"SEMANTIC_SOURCE_AMBIGUOUS");
@@ -73,7 +100,7 @@ internal static class SemanticValidation
                 lastSourceOrdinal=node.Ordinal;
             }
         }
-        var textCoverage=new Dictionary<SourceNode,List<(int Start,int End)>>();
+        var textCoverage=new Dictionary<SourceNode,List<(int Start,int End,int Page)>>();
         var covered=new HashSet<string>();
         var semantics=map.GetProperty("entries");
         foreach(var decoration in map.GetProperty("decorations").EnumerateArray())
@@ -106,11 +133,20 @@ internal static class SemanticValidation
                     && (originalFont is null || MatchesFace(c.Face,originalFont))).ToArray();
                 foreach(var candidate in matches)
                 {
+                    int actualPage=page.GetInt32();sections[candidate.Section].Pages.Add(actualPage);
+                    foreach(var membership in candidate.Tables)
+                    {
+                        budget.Charge(32);
+                        if(!tablePages.TryGetValue(membership.Pointer,out var pages))tablePages[membership.Pointer]=pages=[];
+                        pages.Add(actualPage);
+                        if(!membership.Header)
+                        {if(!tableBodyPages.TryGetValue(membership.Pointer,out var bodyPages))tableBodyPages[membership.Pointer]=bodyPages=[];bodyPages.Add(actualPage);}
+                    }
                     if(candidate.Text is null)Cover(candidate);
                     if(start is not null && end is not null)
                     {
                         if(!textCoverage.TryGetValue(candidate,out var intervals))textCoverage[candidate]=intervals=[];
-                        intervals.Add((start.Value,end.Value));
+                        intervals.Add((start.Value,end.Value,page.GetInt32()));
                         Cover(candidate);
                     }
                 }
@@ -118,6 +154,11 @@ internal static class SemanticValidation
             }
             Need(Source(semantic,semantic.TryGetProperty("sourceText",out _)),"SEMANTIC_SOURCE");
             var sourceKey=(Text(semantic,"nodeId"),Optional(semantic,"bindingId"),repeat);
+            foreach(var atomic in index[sourceKey].Where(n=>Optional(n.Value,"kind") is "image-binding" or "path" or "barcode-binding"))
+            {
+                if(!atomicCounts.TryGetValue(atomic,out var counts))atomicCounts[atomic]=counts=[];
+                counts[page.GetInt32()]=counts.GetValueOrDefault(page.GetInt32())+1;
+            }
             var imageNodes=index[sourceKey].Where(n=>n.Images is not null).ToArray();
             if(imageNodes.Length>0)
             {
@@ -162,17 +203,37 @@ internal static class SemanticValidation
         }
         Need(covered.SetEquals(objectMap.Keys),"SEMANTIC_INCOMPLETE");
         Need(index.Values.SelectMany(c=>c).Where(c=>c.Renderable).All(sourceCovered.Contains),"SEMANTIC_INCOMPLETE");
-        foreach(var (key,candidates) in index)
-            foreach(var node in candidates.Where(c=>c.Images is {Length:>0}))
-                Need(imagePositions.GetValueOrDefault(key)>0 && imagePositions[key]%node.Images!.Length==0,"SEMANTIC_INCOMPLETE");
+        HashSet<int>? ReplayPages(SourceNode node)
+        {
+            var replay=node.Tables.FirstOrDefault(t=>t.Header&&t.Repeat);
+            if(replay is null)return null;
+            var pages=tableBodyPages.GetValueOrDefault(replay.Pointer);
+            if(pages is null||pages.Count==0){pages=tablePages[replay.Pointer];Need(pages.Count==1,"SEMANTIC_CARDINALITY");}
+            return pages;
+        }
+        foreach(var (node,counts) in atomicCounts)
+        {
+            int expected=node.Images?.Length??1;
+            var pages=ReplayPages(node);
+            if(pages is null){Need(counts.Values.Sum()>=expected,"SEMANTIC_INCOMPLETE");Need(counts.Values.Sum()==expected,"SEMANTIC_CARDINALITY");}
+            else Need(counts.Keys.ToHashSet().SetEquals(pages)&&counts.Values.All(count=>count==expected),"SEMANTIC_CARDINALITY");
+        }
         foreach(var node in index.Values.SelectMany(c=>c).Where(c=>c.Renderable && c.Text is not null))
         {
             Need(textCoverage.TryGetValue(node,out var intervals),"SEMANTIC_INCOMPLETE");
             budget.Charge(intervals!.Count*32L*(1+(int)Math.Log2(Math.Max(1,intervals.Count))));
-            intervals.Sort((a,b)=>a.Start.CompareTo(b.Start));
-            int end=0;
-            foreach(var interval in intervals){Need(interval.Start<=end,"SEMANTIC_INCOMPLETE");end=Math.Max(end,interval.End);}
-            Need(end==node.Text!.Length,"SEMANTIC_INCOMPLETE");
+            var pages=ReplayPages(node);
+            if(pages is not null)Need(intervals.Select(i=>i.Page).ToHashSet().SetEquals(pages),"SEMANTIC_CARDINALITY");
+            var groups=pages is null?[intervals]:intervals.GroupBy(i=>i.Page).Select(g=>g.ToList()).ToArray();
+            foreach(var group in groups)
+            {
+                group.Sort((a,b)=>a.Start!=b.Start?a.Start.CompareTo(b.Start):a.End.CompareTo(b.End));
+                int end=0;
+                foreach(var interval in group)
+                {Need(interval.Start>=end,"SEMANTIC_CARDINALITY");Need(interval.Start==end,"SEMANTIC_INCOMPLETE");end=interval.End;}
+                Need(end==node.Text!.Length,"SEMANTIC_INCOMPLETE");
+                if(node.Text.Length==0)Need(group.Count==1,"SEMANTIC_CARDINALITY");
+            }
         }
         var decorationIds=map.GetProperty("decorations").EnumerateArray().Select(e=>e.GetString()!).ToHashSet();
         var generatedIds=new HashSet<string>();
@@ -190,12 +251,27 @@ internal static class SemanticValidation
         }
         var generatedPointers=generated.Keys.Select(key=>key.Pointer).ToHashSet();
         Need(listLabels.Keys.All(generatedPointers.Contains),"SEMANTIC_INCOMPLETE");
-        int pageCount=objects.Values.Select(o=>o.Page).DefaultIfEmpty(0).Max()+1;
+        var sectionStarts=new int[sections.Count];
+        for(int i=1;i<sections.Count;i++)
+        {Need(sections[i-1].Pages.Count>0,"SEMANTIC_SOURCE");sectionStarts[i]=sections[i-1].Pages.Max()+1;}
+        var pageSections=new int[pageCount];
+        for(int i=0;i<sections.Count;i++)
+        {
+            int start=sectionStarts[i],end=i+1<sections.Count?sectionStarts[i+1]:pageCount;
+            Need(start<end&&end<=pageCount&&sections[i].Pages.All(p=>p>=start&&p<end),"SEMANTIC_SOURCE");
+            for(int p=start;p<end;p++)pageSections[p]=i;
+        }
         foreach(var (key,list) in generated)
         {
             budget.Charge(list.Count*32L*(1+(int)Math.Log2(Math.Max(1,list.Count))));
             var origin=Pointer(document,key.Pointer,budget);
             string? kind=Optional(origin,"kind");
+            int actualSection=pageSections[key.Page],derivedSectionPage=key.Page-sectionStarts[actualSection]+1;
+            if(kind!="paragraph")
+            {
+                string settingPointer=kind is "image" or "text"?key.Pointer[..Math.Max(0,key.Pointer.LastIndexOf("/watermarks/",StringComparison.Ordinal))]:key.Pointer[..key.Pointer.LastIndexOf('/')];
+                Need(settingPointer==sections[actualSection].Pointer&&list.All(item=>item.SectionPage==derivedSectionPage),"SEMANTIC_SOURCE");
+            }
             if(kind is "image" or "text")
             {
                 int separator=key.Pointer.LastIndexOf("/watermarks/",StringComparison.Ordinal);
@@ -218,7 +294,7 @@ internal static class SemanticValidation
             {
                 Need(key.Pointer.EndsWith("/header",StringComparison.Ordinal)||key.Pointer.EndsWith("/footer",StringComparison.Ordinal),"SEMANTIC_SOURCE");
                 var settings=Pointer(document,key.Pointer[..key.Pointer.LastIndexOf('/')],budget);
-                int sectionPage=list[0].SectionPage;
+                int sectionPage=derivedSectionPage;
                 Need(list.All(item=>item.SectionPage==sectionPage),"SEMANTIC_SOURCE");
                 int number=(settings.TryGetProperty("startPageNumber",out var start)?start.GetInt32():1)+sectionPage-1;
                 int total=pageCount;
