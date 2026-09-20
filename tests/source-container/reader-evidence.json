@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-09-20",
-  "sourceCommitBeforeFinalEvidence": "9864f6032393879b4e3682493b3da6eb70f2aeef",
+  "sourceCommitBeforeFinalEvidence": "e5413a8111cb103d057f789c12e45e731732cb9e",
   "data": "owned synthetic fixture only",
   "libraryReaders": {
     "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
@@ -25,20 +25,19 @@
   "artifacts": [
     {
       "name": "initial",
-      "sha256": "0f3ad172111a4aa73e5f631cb52d89b28c46fe1bc9cc5dae14f765dbcf0da57d",
-      "bytes": 709123,
+      "sha256": "3f2dbd940622bd94982b86a9e571b5e2ee0e31c6ec9297221dce004d8353d638",
+      "bytes": 709091,
       "revisionId": "revision-1",
       "irDigest": "5787d5e2eba56ec8bea958f0dd8a70170e9d9e946f623b6a6ce6f91bdedb5489",
       "parts": {
         "resolvedDocument": "925b4715ba1f333d4f1be3e3c50e6b3b31471aa13807b7470c53dc596193ad99",
         "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
-        "resources": "07676760ae9a9c59bb470a71176c2c111033cb53ba41ab751eb79362fb294c76",
+        "resources": "cbbf0360b8beddef3c47c03871f9eb880908a8264e034653a5ed017c00cf4e24",
         "semanticMap": "89c8792809c17f2921ef7c993899bc1df3c59a838fca05d13168d7c4dd495b64",
         "irDigest": "7147d2d4d821a496e295ff0f3c5099f36ba1e3c8daac252bc5f62a72d624ebae"
       },
       "fullFonts": [
         {
-          "byteLength": 16437364,
           "family": "Noto",
           "italic": false,
           "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
@@ -52,20 +51,19 @@
     },
     {
       "name": "edited",
-      "sha256": "28670dbee1d761aae3e7c0f24cdaf4bb77352fbe76e482641fac0da46d06d21e",
-      "bytes": 711956,
+      "sha256": "7883761b630e76874fcc83066aef26415fa3b09c528fbdb5b1342034d7957d83",
+      "bytes": 711924,
       "revisionId": "revision-2",
       "irDigest": "70607ff6a08c27dfdd466ffd9cd1ce222ffa5b8eceb0caf1c5d35afa2b90dd98",
       "parts": {
         "resolvedDocument": "cfde44041b61fa9bcb2dfed57223df78b5bc926555dd7b73280327be8f9aec3e",
         "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
-        "resources": "6e2417ff724875982580aa6ad8ee8a9b9951e92dbee2235911c32c788411dee3",
+        "resources": "52dbcf01124bfafea36377f7b51d762d3a5a9a423b38dc90c5b17d78b08db1ee",
         "semanticMap": "02c0d841e82bef59fcd142a656592d18db6190530524196942d49387944182b6",
         "irDigest": "e95f0713ac5dcf0888a6f4e80a8aff8819ed06fc240971bbe9ed3dfbe9e67d4a"
       },
       "fullFonts": [
         {
-          "byteLength": 16437364,
           "family": "Noto",
           "italic": false,
           "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
