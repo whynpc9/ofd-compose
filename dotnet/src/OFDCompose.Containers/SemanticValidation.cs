@@ -6,13 +6,15 @@ using static OFDCompose.Containers.SourceValidation;
 namespace OFDCompose.Containers;
 internal static class SemanticValidation
 {
-    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat);
+    private sealed record SourceNode(string Id, string? Binding, string? Control, string? Text, string Repeat, string[]? Images);
     private static string? Optional(JsonElement value, string key) => value.TryGetProperty(key,out var field)?field.GetString():null;
     private static string Repeat(JsonElement value, string key) => value.TryGetProperty(key,out var array)
         ? string.Join("",array.EnumerateArray().Select(e=> { string id=Text(e,"nodeId"), k=Text(e,"key"); return id.Length+":"+id+k.Length+":"+k; })) : "";
-    internal static void Validate(JsonElement map, JsonElement document, IReadOnlyDictionary<string,string[]> objectMap,
-        IReadOnlyDictionary<string,(int Page,string? Text)> objects, ContainerBudget budget)
+    internal static void Validate(JsonElement map, JsonElement document, JsonElement resources, IReadOnlyDictionary<string,string[]> objectMap,
+        IReadOnlyDictionary<string,(int Page,string? Text,string? ImageDigest)> objects, ContainerBudget budget)
     {
+        var sourceImages=resources.GetProperty("images").EnumerateArray().ToDictionary(i=>Text(i,"id"),i=>Text(i,"sha256"));
+        var imagePositions=new Dictionary<(string Id,string? Binding,string Repeat),int>();
         var index=new Dictionary<(string Id,string? Binding,string Repeat),List<SourceNode>>();
         void Walk(JsonElement value,string repeat)
         {
@@ -29,7 +31,8 @@ internal static class SemanticValidation
                 if(kind=="input-control")text=value.TryGetProperty("defaultValue",out var v) ? v.ValueKind==JsonValueKind.String?v.GetString():v.GetBoolean()?"[x]":"[ ]" : Optional(value,"placeholder")??"";
                 var key=(id,Optional(origin,"bindingId"),repeat);
                 if(!index.TryGetValue(key,out var list)) index[key]=list=[];
-                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat));
+                string[]? images=kind=="image-binding"?value.GetProperty("sources").EnumerateArray().Select(source=>source.ValueKind==JsonValueKind.String?SourceContainer.InlineImageDigest(source.GetString()!,budget):sourceImages[Text(source,"resourceId")]).ToArray():null;
+                list.Add(new(id,Optional(origin,"bindingId"),Optional(value,"controlId"),text,repeat,images));
             }
             foreach(var property in value.EnumerateObject())if(property.Name is not "origin" and not "instancePath")Walk(property.Value,repeat);
         }
@@ -59,6 +62,16 @@ internal static class SemanticValidation
                     && (!checkText || c.Text==Text(reference.GetProperty("sourceText"),"text")));
             }
             Need(Source(semantic,semantic.TryGetProperty("sourceText",out _)),"SEMANTIC_SOURCE");
+            var sourceKey=(Text(semantic,"nodeId"),Optional(semantic,"bindingId"),repeat);
+            var imageNodes=index[sourceKey].Where(n=>n.Images is not null).ToArray();
+            if(imageNodes.Length>0)
+            {
+                Need(imageNodes.Length==1 && imageNodes[0].Images!.Length>0 && targets!.Length==1,"SEMANTIC_SOURCE");
+                var expected=imageNodes[0].Images!;
+                int position=imagePositions.GetValueOrDefault(sourceKey);
+                Need(objects[targets![0]].ImageDigest==expected[position%expected.Length],"RESOURCE_IMAGE_MISMATCH");
+                imagePositions[sourceKey]=position+1;
+            }
             if(semantic.TryGetProperty("sourceRanges",out var ranges))
             {
                 Need(targets!.Length==1 && objects[targets[0]].Text is not null,"SEMANTIC_SOURCE");
@@ -80,7 +93,7 @@ internal static class SemanticValidation
                 }
                 Need(end==logical.Length,"SEMANTIC_SOURCE");
             }
-            else Need(targets!.All(t=>objects[t].Text is null),"SEMANTIC_SOURCE");
+            else Need(targets!.All(t=>objects[t].Text is null or ""),"SEMANTIC_SOURCE");
         }
         Need(covered.SetEquals(objectMap.Keys),"SEMANTIC_INCOMPLETE");
         // A source-bearing document cannot relabel all output as decoration.

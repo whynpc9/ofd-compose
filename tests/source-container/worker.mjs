@@ -48,7 +48,7 @@ const profile = {
   },
 };
 let result;
-if (mode === "combined") {
+if (mode === "combined" || mode === "two-images") {
   const fixture = JSON.parse(
     await readFile(new URL("../ofd-writer/fixtures/combined-input.json", import.meta.url)),
   );
@@ -67,10 +67,30 @@ if (mode === "combined") {
       bytes,
     },
   ];
+  if (mode === "two-images") {
+    const corpus = JSON.parse(
+      await readFile(new URL("../../packages/media-core/tests/fixtures.json", import.meta.url)),
+    );
+    const second = new Uint8Array(Buffer.from(corpus.jpeg, "base64"));
+    pack.images.push({
+      id: "second",
+      sha256: createHash("sha256").update(second).digest("hex"),
+      byteLength: second.length,
+      bytes: second,
+    });
+    fixture.source.body = fixture.source.body.filter((b) => b.kind === "image-binding");
+    fixture.source.body.push({
+      ...fixture.source.body[0],
+      nodeId: "second-image",
+      bindingId: "second-binding",
+      expression: { kind: "legacy", text: "secondImage" },
+    });
+    fixture.data.secondImage = { resourceId: "second" };
+  }
   result = await render(fixture.source, fixture.data, pack, fixture.profile, {
     sourceAttachment: true,
   });
-} else if (mode === "initial" || mode.startsWith("checkbox-")) {
+} else if (mode === "initial" || mode === "empty-paragraph" || mode.startsWith("checkbox-")) {
   const source = {
     schemaVersion: "ofd-compose/document-model@0",
     documentId: "source-roundtrip",
@@ -93,6 +113,7 @@ if (mode === "combined") {
       },
     ],
   };
+  if (mode === "empty-paragraph") source.body[0].inlines = [];
   if (mode.startsWith("checkbox-"))
     source.body[0].inlines = [
       {

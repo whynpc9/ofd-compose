@@ -118,7 +118,7 @@ public static partial class SourceContainer
         }
         Need(seen.Count == declared.Count, "RESOURCE_MISSING");
     }
-    private static void Resources(JsonElement resources, JsonElement resolved, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    private static Dictionary<string,(string Kind,string Digest)> Resources(JsonElement resources, JsonElement resolved, Dictionary<string, byte[]> entries, ContainerBudget budget)
     {
         var fonts = resources.GetProperty("fonts").EnumerateArray().ToArray();
         var images = resources.GetProperty("images").EnumerateArray().ToArray();
@@ -191,8 +191,9 @@ public static partial class SourceContainer
             Need(png||jpeg,"RESOURCE_INVALID");
             if(image.TryGetProperty("mimeType",out var mime))Need(mime.GetString()==(png?"image/png":"image/jpeg"),"RESOURCE_INVALID");
         }
+        return declared;
     }
-    private static string InlineImageDigest(string text,ContainerBudget budget)
+    internal static string InlineImageDigest(string text,ContainerBudget budget)
     {
         budget.Charge(text.Length*4L);
         string encoded=text;string? mime=null;
@@ -227,11 +228,11 @@ public static partial class SourceContainer
         }
         return result;
     }
-    private static void SemanticMap(JsonElement semantics, JsonElement resolved, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, ContainerBudget budget)
+    private static void SemanticMap(JsonElement root, IReadOnlyDictionary<string, string[]> objectMap, Dictionary<string, byte[]> entries, Dictionary<string,(string Kind,string Digest)> links, ContainerBudget budget)
     {
         Need(objectMap.Count <= 200_000, "SIZE_LIMIT");
         var physical = new HashSet<string>();
-        var objects = new Dictionary<string,(int Page,string? Text)>();
+        var objects = new Dictionary<string,(int Page,string? Text,string? ImageDigest)>();
         foreach (var entry in entries.Where(e => e.Key.StartsWith("Doc_0/Pages/", StringComparison.Ordinal) && e.Key.EndsWith("/Content.xml", StringComparison.Ordinal)))
         {
             var xml = SafePackage.Xml(entry.Value, budget);
@@ -240,7 +241,7 @@ public static partial class SourceContainer
             {
                 string id=(string?)element.Attribute("ID")??"";
                 Need(physical.Add(id), "SEMANTIC_REFERENCE");
-                objects.Add(id,(pageIndex,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null));
+                objects.Add(id,(pageIndex,element.Name.LocalName=="TextObject"?string.Concat(element.Elements(SafePackage.Ns+"TextCode").Select(e=>e.Value)):null,element.Name.LocalName=="ImageObject"?links[(string)element.Attribute("ResourceID")!].Digest:null));
             }
         }
         var mapped = new HashSet<string>();
@@ -251,6 +252,6 @@ public static partial class SourceContainer
             foreach (var target in targets) Need(physical.Contains(target) && mapped.Add(target), "SEMANTIC_REFERENCE");
         }
         Need(mapped.SetEquals(physical), "SEMANTIC_REFERENCE");
-        SemanticValidation.Validate(semantics,resolved,objectMap,objects,budget);
+        SemanticValidation.Validate(root.GetProperty("semanticMap"),root.GetProperty("resolvedDocument"),root.GetProperty("resources"),objectMap,objects,budget);
     }
 }

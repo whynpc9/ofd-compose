@@ -55,8 +55,8 @@ public static partial class SourceContainer
                     parts.Add(new(name, "application/json", SafePackage.Hash(Bytes(content, budget), budget), content.GetRawText()));
                 }
                 AddAssets(root.GetProperty("resources"), assets ?? [], entries, budget);
-                Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), entries, budget);
-                SemanticMap(root.GetProperty("semanticMap"), root.GetProperty("resolvedDocument"), objectMap, entries, budget);
+                var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), entries, budget);
+                SemanticMap(root, objectMap, entries, links, budget);
                 SourceVersions(root);
             }
             else Need(profile == ContainerProfile.Distribution && sourceJson.IsEmpty && (assets?.Count ?? 0) == 0, "DISTRIBUTION_SOURCE_FORBIDDEN");
@@ -133,8 +133,8 @@ public static partial class SourceContainer
                 if (source is not null)
                 {
                     var root = source.RootElement;
-                    Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), entries, budget);
-                    SemanticMap(root.GetProperty("semanticMap"), root.GetProperty("resolvedDocument"), objectMap, entries, budget);
+                    var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), entries, budget);
+                    SemanticMap(root, objectMap, entries, links, budget);
                 SourceVersions(root);
                     foreach (var image in root.GetProperty("resources").GetProperty("images").EnumerateArray())
                     {

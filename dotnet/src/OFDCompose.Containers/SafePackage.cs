@@ -58,7 +58,7 @@ internal static class SafePackage
                 Need(count > 0, "PACKAGE_SIZE"); read += count;
             }
             Need(source.ReadByte() == -1, "PACKAGE_SIZE");
-            if (entry.FullName.EndsWith(".xml", StringComparison.Ordinal)) Xml(bytes, budget);
+            if (entry.FullName.EndsWith(".xml", StringComparison.Ordinal)) Xml(bytes, budget, ExpectedRoot(entry.FullName));
             result.Add(entry.FullName, bytes);
         }
         return result;
@@ -115,7 +115,15 @@ internal static class SafePackage
         }
         Need(position == end, "PACKAGE_INVALID");
     }
-    internal static XDocument Xml(byte[] bytes, ContainerBudget budget)
+    private static string? ExpectedRoot(string path) => path switch
+    {
+        "OFD.xml" => "OFD", "Doc_0/Document.xml" => "Document",
+        "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml" => "Res",
+        "Doc_0/Attachs/Attachments.xml" => "Attachments",
+        _ when path.StartsWith("Doc_0/Pages/",StringComparison.Ordinal) && path.EndsWith("/Content.xml",StringComparison.Ordinal) => "Page",
+        _ => null
+    };
+    internal static XDocument Xml(byte[] bytes, ContainerBudget budget, string? expectedRoot = null)
     {
         budget.Charge(bytes.Length * 4L);
         using var stream = new MemoryStream(bytes, false);
@@ -131,7 +139,7 @@ internal static class SafePackage
         stream.Position = 0;
         using var parsedReader = XmlReader.Create(stream, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null, MaxCharactersInDocument = budget.Limits.EntryBytes });
         var result = XDocument.Load(parsedReader);
-        Need(result.Root?.Name.Namespace == Ns, "PACKAGE_XML");
+        Need(result.Root?.Name.Namespace == Ns && (expectedRoot is null || result.Root.Name.LocalName == expectedRoot), "PACKAGE_XML");
         return result;
     }
     internal static JsonDocument Json(ReadOnlyMemory<byte> bytes, ContainerBudget budget)

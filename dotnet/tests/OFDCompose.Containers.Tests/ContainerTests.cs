@@ -314,4 +314,43 @@ public sealed class ContainerTests
         var sameImage=SourceContainer.Extract(Inline(originalImage),cancellationToken:TestContext.Current.CancellationToken);Assert.True(sameImage.Ok,sameImage.Error);
     }
 
+    [Fact]
+    public async Task Source_image_ID_swap_is_rejected_even_when_the_digest_set_is_unchanged()
+    {
+        var fixture=await Build("two-images");
+        var bytes=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resources")!;
+            var resources=JsonNode.Parse(part["content"]!.GetValue<string>())!;var images=resources["images"]!.AsArray();Assert.Equal(2,images.Count);
+            foreach(string key in new[]{"sha256","byteLength"}){var first=images[0]![key]!.DeepClone();images[0]![key]=images[1]![key]!.DeepClone();images[1]![key]=first;}
+            string json=resources.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("RESOURCE_IMAGE_MISMATCH",SourceContainer.Extract(bytes,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Fact]
+    public async Task Empty_paragraph_without_source_ranges_roundtrips_as_empty_text()
+    {
+        var fixture=await Build("empty-paragraph");
+        var extracted=SourceContainer.Extract(fixture.Sealed,cancellationToken:TestContext.Current.CancellationToken);Assert.True(extracted.Ok,extracted.Error);
+        var read=await new OfdReader().ReadAsync(new MemoryStream(fixture.Sealed),TestContext.Current.CancellationToken);
+        Assert.All(read.Pages.SelectMany(p=>p.Elements).OfType<Ofdrw.Net.Core.Models.OfdTextElement>(),t=>Assert.Equal("",t.Text));
+    }
+    [Theory]
+    [InlineData("OFD.xml")]
+    [InlineData("Doc_0/Document.xml")]
+    [InlineData("Doc_0/PublicRes.xml")]
+    [InlineData("Doc_0/Pages/Page_0/Content.xml")]
+    [InlineData("Doc_0/Attachs/Attachments.xml")]
+    public async Task Rejects_wrong_XML_root_in_each_fixed_writer_entry(string path)
+    {
+        var first=await Initial.Value;
+        byte[] Change(byte[] bytes)
+        {
+            var entries=Zip(bytes);var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));xml.Root!.Name=xml.Root.Name.Namespace+"Font";
+            entries[path]=Encoding.UTF8.GetBytes(xml.ToString());return Pack(entries);
+        }
+        Assert.Equal("PACKAGE_XML",SourceContainer.Extract(Change(first.Sealed),cancellationToken:TestContext.Current.CancellationToken).Error);
+        if(Zip(first.Ofd.Bytes!).ContainsKey(path))Assert.Equal("PACKAGE_XML",SourceContainer.Create(Change(first.Ofd.Bytes!),first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.NativeEditable,first.Source,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }
