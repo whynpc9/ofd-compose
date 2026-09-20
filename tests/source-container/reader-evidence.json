@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-09-20",
-  "sourceCommitBeforeFinalEvidence": "4332f041080a2bf0c5f5ef969d6e6e1876a66619",
+  "sourceCommitBeforeFinalEvidence": "9864f6032393879b4e3682493b3da6eb70f2aeef",
   "data": "owned synthetic fixture only",
   "libraryReaders": {
     "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
@@ -25,8 +25,8 @@
   "artifacts": [
     {
       "name": "initial",
-      "sha256": "49d71260af194063f2bcc856b90ebebdaddd7bcb59da8812a060c0aecbec860e",
-      "bytes": 709046,
+      "sha256": "0f3ad172111a4aa73e5f631cb52d89b28c46fe1bc9cc5dae14f765dbcf0da57d",
+      "bytes": 709123,
       "revisionId": "revision-1",
       "irDigest": "5787d5e2eba56ec8bea958f0dd8a70170e9d9e946f623b6a6ce6f91bdedb5489",
       "parts": {
@@ -52,8 +52,8 @@
     },
     {
       "name": "edited",
-      "sha256": "00ec0ad35c939a4ae0b94d5611650c1219d4adf175e1d1550089021b4fa164b5",
-      "bytes": 711879,
+      "sha256": "28670dbee1d761aae3e7c0f24cdaf4bb77352fbe76e482641fac0da46d06d21e",
+      "bytes": 711956,
       "revisionId": "revision-2",
       "irDigest": "70607ff6a08c27dfdd466ffd9cd1ce222ffa5b8eceb0caf1c5d35afa2b90dd98",
       "parts": {
