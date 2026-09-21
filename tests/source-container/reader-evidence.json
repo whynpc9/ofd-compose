@@ -1,6 +1,6 @@
 {
   "measuredAt": "2026-09-20",
-  "sourceCommitBeforeFinalEvidence": "c14e649aa03815ffd9811aa8865b0ff8354fee84",
+  "sourceCommitBeforeFinalEvidence": "f3578e71aff9a15562c6678425f0c018de743e0f",
   "data": "owned synthetic fixture only",
   "libraryReaders": {
     "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
