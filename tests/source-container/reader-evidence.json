@@ -1,0 +1,102 @@
+{
+  "measuredAt": "2026-09-20",
+  "sourceCommitBeforeFinalEvidence": "59bc4084856eb2a0f092c7faa46f0cf3bfa789ec",
+  "data": "owned synthetic fixture only",
+  "libraryReaders": {
+    "dotnet": "vendored ofdrw.net Reader; actual attachment MIME and bytes verified in ContainerTests",
+    "java": "ofdrw 2.3.7; all runtime JAR SHA256 compared with tests/ofd-writer/java/dependency-sha256.txt"
+  },
+  "javaResults": [
+    {
+      "fixture": "initial",
+      "textObjects": 2,
+      "glyphs": 7,
+      "pathAndClipCommands": 0,
+      "maxGeometryErrorMm": 0.0
+    },
+    {
+      "fixture": "edited",
+      "textObjects": 2,
+      "glyphs": 15,
+      "pathAndClipCommands": 0,
+      "maxGeometryErrorMm": 0.0
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "initial",
+      "sha256": "bd6d1b0921fcbff1b014970f0fcb5fd4a668b9442f6a7384203d63483a38932c",
+      "bytes": 709235,
+      "revisionId": "revision-1",
+      "irDigest": "5787d5e2eba56ec8bea958f0dd8a70170e9d9e946f623b6a6ce6f91bdedb5489",
+      "parts": {
+        "resolvedDocument": "925b4715ba1f333d4f1be3e3c50e6b3b31471aa13807b7470c53dc596193ad99",
+        "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
+        "resources": "cbbf0360b8beddef3c47c03871f9eb880908a8264e034653a5ed017c00cf4e24",
+        "semanticMap": "89c8792809c17f2921ef7c993899bc1df3c59a838fca05d13168d7c4dd495b64",
+        "irDigest": "7147d2d4d821a496e295ff0f3c5099f36ba1e3c8daac252bc5f62a72d624ebae"
+      },
+      "fullFonts": [
+        {
+          "family": "Noto",
+          "italic": false,
+          "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+          "weight": 400
+        }
+      ],
+      "subsetDigests": ["a0ef7f47511c97f08a7113a7bc429da209968efe679f15469fed28c2360608cc"],
+      "resourceMap": {
+        "r0": "1"
+      },
+      "containerProfileVersion": "ofd-compose/container-experimental@1",
+      "replayIdentity": {
+        "version": "ofd-compose/filled-source-replay@0",
+        "irDigest": "673e8bc8a1369e609585ce7a556035a855778f659f989d56238ef8247460882d"
+      }
+    },
+    {
+      "name": "edited",
+      "sha256": "11919c9b666c2737c0c2c91047df2a3bbb17f8f4d64b6469b6c4f7ac1695390e",
+      "bytes": 712068,
+      "revisionId": "revision-2",
+      "irDigest": "70607ff6a08c27dfdd466ffd9cd1ce222ffa5b8eceb0caf1c5d35afa2b90dd98",
+      "parts": {
+        "resolvedDocument": "cfde44041b61fa9bcb2dfed57223df78b5bc926555dd7b73280327be8f9aec3e",
+        "renderProfile": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182",
+        "resources": "52dbcf01124bfafea36377f7b51d762d3a5a9a423b38dc90c5b17d78b08db1ee",
+        "semanticMap": "02c0d841e82bef59fcd142a656592d18db6190530524196942d49387944182b6",
+        "irDigest": "e95f0713ac5dcf0888a6f4e80a8aff8819ed06fc240971bbe9ed3dfbe9e67d4a"
+      },
+      "fullFonts": [
+        {
+          "family": "Noto",
+          "italic": false,
+          "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+          "weight": 400
+        }
+      ],
+      "subsetDigests": ["f902db9d2276077af52ac14995050e43fab4ba70a7c029e333a4b5447b864ad4"],
+      "resourceMap": {
+        "r0": "1"
+      },
+      "containerProfileVersion": "ofd-compose/container-experimental@1",
+      "replayIdentity": {
+        "version": "ofd-compose/filled-source-replay@0",
+        "irDigest": "0cea49b30884ab398fddcb54a54a316c2588e95acb8fa498bb978da1867da0c6"
+      }
+    }
+  ],
+  "signatureStatus": "unsigned; signed presence test reports present-unverified, never valid",
+  "hashMeaning": "internal-consistency-only; not source authenticity",
+  "targetDesktopReader": {
+    "status": "Not verified",
+    "candidate": "Foxit Phantom",
+    "version": "11.3.2009",
+    "bundleBuild": "11320090424",
+    "declaredTypes": ["pdf", "ppdf", "fdf", "wildcard"],
+    "attempt": "Computer Use getApp timed out (-10005) with no AX state or screenshot; no actual OFD support inferred",
+    "otherCandidates": "No 数科/WPS app found in /Applications or user Applications inventory",
+    "license": "No license entitlement established; no purchase or EULA acceptance"
+  },
+  "attachmentChoice": "experimental single JSON; not frozen pending desktop target-reader extraction"
+}

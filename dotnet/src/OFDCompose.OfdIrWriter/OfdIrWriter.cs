@@ -78,7 +78,7 @@ public sealed class OfdIrWriter
             }
             using var destination = new LimitedStream(limits.OutputBytes);
             await new OfdPackageWriter().WriteAsync(package, destination, cancellationToken);
-            return new(PackageFinalizer.Complete(destination.ToArray(), irDigest, map, preciseMatrices, logicalTexts, limits), map, []);
+            return new(PackageFinalizer.Complete(destination.ToArray(), irDigest, map, preciseMatrices, logicalTexts, limits), map, []) { ResourceMap=resourceIds };
         }
         catch (WriterFailure failure) { return new(null, null, [failure.Diagnostic]); }
         catch (NotSupportedException) { return new(null, null, [new("UNSUPPORTED_FEATURE", "resource", "Resource decoder does not support this variant")]); }

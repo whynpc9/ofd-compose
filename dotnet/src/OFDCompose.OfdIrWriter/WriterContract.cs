@@ -9,6 +9,7 @@ public sealed record WriterDiagnostic(string Code, string Path, string Message);
 public sealed record OfdWriteResult(byte[]? Bytes, IReadOnlyDictionary<string, string[]>? ObjectMap,
     IReadOnlyList<WriterDiagnostic> Diagnostics)
 {
+    public IReadOnlyDictionary<string,string>? ResourceMap { get; init; }
     public bool Ok => Bytes is not null;
     public string? Sha256 => Bytes is null ? null : IrValidation.Digest(Bytes);
 }

@@ -1,2 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" />
+    <EmbeddedResource Include="../../../schemas/containers/source-content.schema.json" LogicalName="source-content.schema.json" />
+    <EmbeddedResource Include="../../../schemas/containers/replay-identity.schema.json" LogicalName="replay-identity.schema.json" />
+  </ItemGroup>
 </Project>

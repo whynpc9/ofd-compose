@@ -22,6 +22,8 @@ export const renderLimits = Object.freeze({
   subsetBytes: 128 * 1024 * 1024,
 });
 export interface RenderControl {
+  /** Explicit opt-in to minimized native editing source; distribution omits it. */
+  sourceAttachment?: boolean;
   limits?: Partial<Record<keyof typeof renderLimits, number>>;
   signal?: Cancellation;
 }
@@ -39,6 +41,7 @@ export class RenderBudget implements JobContext {
   constructor(
     readonly signal?: Cancellation,
     limits: RenderControl["limits"] = {},
+    readonly captureSource = false,
   ) {
     this.limits = { ...renderLimits };
     for (const key of Object.keys(renderLimits) as (keyof typeof renderLimits)[]) {
