@@ -100,7 +100,7 @@ public static partial class SourceContainer
         foreach(var entry in entries.Where(e=>IsWriterEntry(e.Key)&&e.Key.EndsWith(".xml",StringComparison.Ordinal)))
             Need(!SafePackage.Xml(entry.Value,budget).Descendants().Attributes("ID").Any(a=>a.Value==attachmentId.ToString(System.Globalization.CultureInfo.InvariantCulture)),"ATTACHMENT_INVALID");
         Need((string?)node.Attribute("Name") == "ofd-compose.json" && (string?)node.Attribute("Format") == "application/json"
-            && (string?)node.Attribute("Usage") == "ofd-compose" && node.Attribute("External") is null
+            && (string?)node.Attribute("Usage") == "ofd-compose" && (string?)node.Attribute("Visible") == "true" && node.Attribute("External") is null
             && node.Elements().Select(e => (e.Name, e.Value)).SequenceEqual([(SafePackage.Ns + "FileLoc", "ofd-compose.json")]), "ATTACHMENT_INVALID");
     }
     private static void ValidateInventory(JsonElement inventory, Dictionary<string, byte[]> entries, ContainerBudget budget, bool schemaOnly = false)

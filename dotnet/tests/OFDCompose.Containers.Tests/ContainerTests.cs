@@ -1377,4 +1377,18 @@ public sealed class ContainerTests
         Assert.Equal(expected,SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable,null)]
+    [InlineData(ContainerProfile.NativeEditable,"false")]
+    [InlineData(ContainerProfile.Distribution,null)]
+    [InlineData(ContainerProfile.Distribution,"false")]
+    public async Task Source_attachment_registration_must_remain_visible(ContainerProfile profile,string? visible)
+    {
+        var fixture=await Initial.Value;
+        var bytes=profile==ContainerProfile.NativeEditable?fixture.Sealed:SourceContainer.Create(fixture.Ofd.Bytes!,fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Bytes!;
+        var entries=Zip(bytes);const string path="Doc_0/Attachs/Attachments.xml";
+        var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));xml.Root!.Elements().Single().SetAttributeValue("Visible",visible);entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
+        Assert.Equal("ATTACHMENT_INVALID",SourceContainer.Extract(Pack(entries),sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }
