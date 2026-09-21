@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 618, fresh Chromium 408,
-full .NET 396 (202 container cases plus the unchanged 194 baseline cases).
+full .NET 408 (214 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -207,3 +207,8 @@ Signature declaration/sidecar combinations cover both profiles. Malformed manife
 capability containers/elements and version/policy scalar types are rejected as
 SCHEMA_INVALID before even a corrupted part digest is checked and before any replay
 callback is invoked. Exact version and capability values keep their later validation.
+
+Both profiles reject changed/missing font descriptor names and mismatched extensions
+for real OTF and TTF subsets. Names bind to the embedded subset bytes, not the full
+editing font; legal basename changes such as Design.otf remain supported. The regression
+uses the same static SFNT flavors admitted by the existing fixed-writer validator.

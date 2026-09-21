@@ -216,3 +216,8 @@ extraction and reports signature presence only as present-unverified; signed inp
 still cannot be resealed. Manifest metadata scalar types and capability-array element
 types are checked before digest/resource validation or any host replay. Exact supported
 version/capability/signature-policy values remain checked at the version-policy stage.
+
+The fixed-writer profile binds both FontName and FamilyName to `Subset-` plus the
+actual embedded subset digest. FontFile may use a different safe basename, but its
+extension must follow the admitted static SFNT flavor (OTTO/.otf or 0x00010000/.ttf),
+in native and distribution packages. These checks follow reachability validation.

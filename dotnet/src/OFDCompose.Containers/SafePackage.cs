@@ -86,6 +86,7 @@ internal static class SafePackage
         Need(pageEntries.Count==0,"PACKAGE_REFERENCE");
         var ids=new HashSet<string>();var resources=new HashSet<string>();var references=new List<string>();
         var resourcePaths=new HashSet<string>();var mediaFormats=new List<(string Format,byte[] Bytes)>();
+        var fontDescriptors=new List<(string File,string? Name,string? Family,byte[] Bytes)>();
         foreach(var (path,bytes) in entries.Where(e=>e.Key.EndsWith(".xml",StringComparison.Ordinal)&&!e.Key.StartsWith("Doc_0/Signs/",StringComparison.Ordinal)))
         {
             var xml=Xml(bytes,budget);
@@ -104,6 +105,10 @@ internal static class SafePackage
                     {
                         budget.Charge(64);mediaFormats.Add(((string?)location.Parent!.Attribute("Format")??"",entries["Doc_0/Res/"+location.Value]));
                     }
+                    else
+                    {
+                        budget.Charge(256);fontDescriptors.Add((location.Value,(string?)location.Parent!.Attribute("FontName"),(string?)location.Parent!.Attribute("FamilyName"),entries["Doc_0/Res/"+location.Value]));
+                    }
                 }
                 foreach(var resource in xml.Descendants().Where(e=>e.Name.LocalName is "Font" or "MultiMedia"))resources.Add((string?)resource.Attribute("ID")??"");
             }
@@ -116,6 +121,14 @@ internal static class SafePackage
         Need(references.All(resources.Contains),"RESOURCE_MISSING");
         if(requirePageReachability)Need(resources.SetEquals(references),"RESOURCE_ORPHAN");
         Need(resourcePaths.SetEquals(entries.Keys.Where(p=>p.StartsWith("Doc_0/Res/",StringComparison.Ordinal))),"RESOURCE_ORPHAN");
+        foreach(var (file,name,family,font) in fontDescriptors)
+        {
+            budget.Charge(256);bool cff=font.AsSpan().StartsWith("OTTO"u8);
+            // Match the fixed writer's admitted static SFNT flavors and naming convention.
+            Need(font.Length>=12&&(cff||BinaryPrimitives.ReadUInt32BigEndian(font)==0x00010000),"RESOURCE_FONT_DESCRIPTOR_MISMATCH");
+            string expected="Subset-"+Hash(font,budget);
+            Need(name==expected&&family==expected&&file.EndsWith(cff?".otf":".ttf",StringComparison.Ordinal),"RESOURCE_FONT_DESCRIPTOR_MISMATCH");
+        }
         foreach(var (format,image) in mediaFormats)
         {
             budget.Charge(32);

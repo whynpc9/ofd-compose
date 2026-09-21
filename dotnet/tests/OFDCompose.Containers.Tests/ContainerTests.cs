@@ -1442,4 +1442,41 @@ public sealed class ContainerTests
         Assert.Equal("SCHEMA_INVALID",result.Error);Assert.Equal(0,calls);
     }
 
+    public static IEnumerable<object[]> FontDescriptorCases()
+    {
+        foreach(var profile in new[]{ContainerProfile.NativeEditable,ContainerProfile.Distribution})
+        {
+            foreach(string field in new[]{"FontName","FamilyName"})foreach(bool remove in new[]{false,true})yield return new object[]{profile,field,"otf",remove};
+            foreach(string extension in new[]{"otf","ttf"})yield return new object[]{profile,"extension",extension,false};
+        }
+    }
+    [Theory]
+    [MemberData(nameof(FontDescriptorCases))]
+    public async Task Font_descriptor_names_and_extension_match_embedded_subset(ContainerProfile profile,string field,string originalExtension,bool remove)
+    {
+        var fixture=originalExtension=="ttf"?await Build("two-italic-faces"):await Initial.Value;
+        var original=profile==ContainerProfile.NativeEditable?fixture.Sealed:SourceContainer.Create(fixture.Ofd.Bytes!,fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Bytes!;
+        var changed=Mutate(original,(manifest,entries)=> {
+            bool found=false;
+            foreach(string resourcePath in entries.Keys.Where(path=>path is "Doc_0/PublicRes.xml" or "Doc_0/DocumentRes.xml").ToArray())
+            {
+                var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[resourcePath]));
+                var font=xml.Descendants().FirstOrDefault(node=>node.Name.LocalName=="Font"&&node.Elements().Any(child=>child.Name.LocalName=="FontFile"&&child.Value.EndsWith("."+originalExtension,StringComparison.Ordinal)));
+                if(font is null)continue;found=true;
+                if(field=="extension")
+                {
+                    var file=font.Elements().Single();string oldPath="Doc_0/Res/"+file.Value;
+                    file.Value="DescriptorResource."+(originalExtension=="otf"?"ttf":"otf");string newPath="Doc_0/Res/"+file.Value;
+                    entries[newPath]=entries[oldPath];entries.Remove(oldPath);
+                    manifest["entries"]!.AsArray().Single(record=>record!["path"]!.GetValue<string>()==oldPath)!["path"]=newPath;
+                }
+                else font.SetAttributeValue(field,remove?null:"Subset-"+new string('0',64));
+                entries[resourcePath]=Encoding.UTF8.GetBytes(xml.ToString());break;
+            }
+            Assert.True(found);
+            foreach(var record in manifest["entries"]!.AsArray()){byte[] bytes=entries[record!["path"]!.GetValue<string>()];record["byteLength"]=bytes.Length;record["sha256"]=Hash(bytes);}
+        });
+        Assert.Equal("RESOURCE_FONT_DESCRIPTOR_MISMATCH",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
 }
