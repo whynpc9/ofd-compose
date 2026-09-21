@@ -98,7 +98,7 @@ internal static class SourceRenderValidation
         Need(proof is not null&&proof.Paths is not null&&proof.Tables is not null&&proof.Bands is not null&&proof.Paths.Count<=200000&&proof.Tables.Count<=200000&&proof.Bands.Count<=2000,"SOURCE_RENDER_VERIFICATION_FAILED");
         return proof!;
     }
-    internal static SourceReplayIdentity ValidatePages(JsonElement source,Dictionary<string,byte[]> entries,IReadOnlyDictionary<string,string> resourceDigests,SourceRenderResolver? resolver,SourceRenderEvidence? proof,ContainerBudget budget)
+    internal static SourceReplayIdentity ValidatePages(JsonElement source,Dictionary<string,byte[]> entries,IReadOnlyDictionary<string,string> resourceDigests,SourceRenderResolver? resolver,SourceRenderEvidence? proof,ContainerBudget budget,SourceReplayIdentity? expectedReplayIdentity)
     {
         proof??=Request(source,entries,resolver,budget);
         Need(proof.Pages is not null&&proof.Pages.Count is >0 and <=1000&&proof.ResourceDigests is not null&&proof.ResourceDigests.Count<=128,"SOURCE_RENDER_VERIFICATION_FAILED");
@@ -122,6 +122,26 @@ internal static class SourceRenderValidation
         Need(!proof.LayoutResourcesJson.IsEmpty&&proof.LayoutResourcesJson.Length<=budget.Limits.JsonBytes&&IsDigest(proof.ReplayIrDigest),"SOURCE_RENDER_VERIFICATION_FAILED");
         using var resources=SafePackage.Json(proof.LayoutResourcesJson,budget);
         Need(JsonElement.DeepEquals(resources.RootElement,source.GetProperty("resources").GetProperty("layout")),"RESOURCE_LAYOUT_MISMATCH");
+        Need(!proof.SemanticMapJson.IsEmpty&&proof.SemanticMapJson.Length<=budget.Limits.JsonBytes,"SOURCE_RENDER_VERIFICATION_FAILED");
+        using var semanticMap=SafePackage.Json(proof.SemanticMapJson,budget);
+        Need(semanticMap.RootElement.ValueKind==JsonValueKind.Object&&semanticMap.RootElement.TryGetProperty("pageDecorations",out _),"SOURCE_RENDER_VERIFICATION_FAILED");
+        var decorations=semanticMap.RootElement.GetProperty("pageDecorations");
+        Need(decorations.ValueKind==JsonValueKind.Array&&decorations.GetArrayLength()<=200000,"SOURCE_RENDER_VERIFICATION_FAILED");
+        budget.Charge(budget.Limits.StringBytes*2L);
+        var pointers=new HashSet<string>();
+        foreach(var decoration in decorations.EnumerateArray())
+        {
+            budget.Charge(128);string pointer=Text(decoration,"pointer");Need(pointer.Length is >0 and <=2048,"SOURCE_RENDER_VERIFICATION_FAILED");
+            budget.Charge(pointer.Length*2L);pointers.Add(pointer);
+        }
+        CheckUnusedBands(source.GetProperty("resolvedDocument").GetProperty("body"),"/body",pointers,budget,true);
+        CheckUnusedBands(source.GetProperty("resolvedDocument").GetProperty("settings"),"/settings",pointers,budget,true);
+        if(expectedReplayIdentity is not null)
+        {
+            Need(expectedReplayIdentity.Version=="ofd-compose/filled-source-replay@0","VERSION_UNSUPPORTED");
+            Need(expectedReplayIdentity.IrDigest==proof.ReplayIrDigest,"SOURCE_REPLAY_IDENTITY_MISMATCH");
+        }
+        Need(JsonElement.DeepEquals(semanticMap.RootElement,source.GetProperty("semanticMap")),"SEMANTIC_RENDER_MISMATCH");
         return new("ofd-compose/filled-source-replay@0",proof.ReplayIrDigest);
     }
     private static XElement PageCanonical(XElement element,IReadOnlyDictionary<string,string> resources,ContainerBudget budget)
@@ -131,17 +151,19 @@ internal static class SourceRenderValidation
             element.Attributes().Where(a=>!a.IsNamespaceDeclaration&&a.Name!="ID").OrderBy(a=>a.Name.ToString(),StringComparer.Ordinal).Select(a=>new XAttribute(a.Name,a.Name.NamespaceName==""&&a.Name.LocalName is "Font" or "ResourceID"?resources.TryGetValue(a.Value,out var digest)?digest:throw new ContainerFailure("SOURCE_RENDER_MISMATCH"):a.Value)),
             element.Nodes().Where(node=>!element.HasElements||node is not XText text||!string.IsNullOrWhiteSpace(text.Value)).Select(node=>node is XElement child?(object)PageCanonical(child,resources,budget):node is XText text?new XText(text.Value):throw new ContainerFailure("SOURCE_RENDER_MISMATCH")));
     }
-    private static void CheckUnusedBands(JsonElement value,string pointer,HashSet<string> rendered,ContainerBudget budget)
+    private static void CheckUnusedBands(JsonElement value,string pointer,HashSet<string> rendered,ContainerBudget budget,bool watermarks=false)
     {
         budget.Charge(64+pointer.Length*2L);
-        if(value.ValueKind==JsonValueKind.Array){int i=0;foreach(var child in value.EnumerateArray())CheckUnusedBands(child,pointer+"/"+i++,rendered,budget);return;}
+        if(value.ValueKind==JsonValueKind.Array){int i=0;foreach(var child in value.EnumerateArray())CheckUnusedBands(child,pointer+"/"+i++,rendered,budget,watermarks);return;}
         if(value.ValueKind!=JsonValueKind.Object)return;
         foreach(var property in value.EnumerateObject())
         {
             string childPointer=pointer+"/"+property.Name.Replace("~","~0",StringComparison.Ordinal).Replace("/","~1",StringComparison.Ordinal);
             if(property.Name is "header" or "footer"&&property.Value.ValueKind==JsonValueKind.Object&&property.Value.TryGetProperty("parts",out var parts)&&!rendered.Contains(childPointer))
                 Need(parts.GetArrayLength()==0&&!property.Value.TryGetProperty("style",out _)&&!property.Value.TryGetProperty("alignment",out _),"SOURCE_NOT_MINIMAL");
-            CheckUnusedBands(property.Value,childPointer,rendered,budget);
+            if(watermarks&&property.Name=="watermarks"&&property.Value.ValueKind==JsonValueKind.Array)
+                for(int i=0;i<property.Value.GetArrayLength();i++){budget.Charge(64+childPointer.Length*2L);Need(rendered.Contains(childPointer+"/"+i),"SOURCE_NOT_MINIMAL");}
+            CheckUnusedBands(property.Value,childPointer,rendered,budget,watermarks);
         }
     }
     private static bool MayGenerate(JsonElement value,ContainerBudget budget)

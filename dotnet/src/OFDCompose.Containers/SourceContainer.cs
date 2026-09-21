@@ -159,10 +159,8 @@ public static partial class SourceContainer
                 {
                     var root = source.RootElement;
                     var links=Resources(root.GetProperty("resources"), root.GetProperty("resolvedDocument"), root.GetProperty("renderProfile"), entries, resourceMap, budget);
-                    objects=SemanticMap(root, objectMap, entries, links, resourceMap, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver,out var computedReplayIdentity);
+                    objects=SemanticMap(root, objectMap, entries, links, resourceMap, budget, barcodeGeometryResolver, numberingLabelsResolver,sourceRenderResolver,out _,replayIdentity);
                     SourceVersions(root);
-                    Need(replayIdentity!.Version==computedReplayIdentity.Version,"VERSION_UNSUPPORTED");
-                    Need(replayIdentity.IrDigest==computedReplayIdentity.IrDigest,"SOURCE_REPLAY_IDENTITY_MISMATCH");
                     foreach (var image in root.GetProperty("resources").GetProperty("images").EnumerateArray())
                     {
                         string digest = Text(image, "sha256");

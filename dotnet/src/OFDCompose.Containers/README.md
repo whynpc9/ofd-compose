@@ -200,3 +200,13 @@ All digests, envelope metadata and replay identities are consistency checks insi
 unsigned/unverified package. A party rewriting source, identities, physical pages and
 resources coherently may create another consistent package. Authenticity requires an
 external trusted expected digest or signature verification, neither supplied here.
+
+The single replay also returns the renderer's freshly captured minimal Semantic Map.
+The container compares that entire map, including section/source section IDs, binding and
+control identities, repeat/table relationships, source ranges and reading order. It does
+not strip or sort semantic fields. Existing Worker capture rules consistently project
+opaque repeat/section identities and omit links; original render IR/semantics stay intact.
+Unwitnessed watermarks are removed from the owned source snapshot, including inactive
+root page settings overridden by a first-paragraph section. Surviving watermark pointers
+are reindexed without merging equal text from different sources; extraction rejects
+unwitnessed watermark reintroduction. The replay remains one host call per operation.

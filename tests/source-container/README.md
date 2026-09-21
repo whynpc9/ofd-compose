@@ -32,8 +32,8 @@ an application observation. No actual desktop extraction, visual display, licens
 entitlement or supported-OFD claim follows from those observations. ADR-0005 remains
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
-Local validation snapshot after review fixes: fresh Node 615, fresh Chromium 405,
-full .NET 368 (174 container cases plus the unchanged 194 baseline cases).
+Local validation snapshot after review fixes: fresh Node 618, fresh Chromium 408,
+full .NET 373 (179 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -193,3 +193,12 @@ These checks do not authenticate a package whose attacker rewrites all associate
 Attachment registration must preserve the emitted Visible="true" in both profiles.
 Missing/false visibility changes were accepted before the check and now fail
 ATTACHMENT_INVALID, even though the registration XML is outside the hashed inventory.
+
+Unused watermark projection is tested through actual first-section override rendering,
+with capture-on/off and reopened page equality. A separate projection unit case supplies
+witnesses for the first/third of three valid equal-text watermarks and checks middle-item
+removal, pointer remapping and snapshot ownership; it is not claimed as a renderer case
+that skips an otherwise valid middle watermark. Root/later-section equal-text watermarks
+and repeated-section watermarks remain distinct and visible. Full captured Semantic Map
+comparison rejects removed/changed sectionId and sectionSourceId while preserving original
+render semantics and existing detailed validation diagnostics.

@@ -166,6 +166,7 @@ if (
   mode === "list" ||
   mode === "text-watermarks" ||
   mode === "section-pages" ||
+  mode === "inactive-watermarks" ||
   mode === "whitespace" ||
   mode === "empty-paragraph" ||
   mode === "two-fonts" ||
@@ -322,6 +323,17 @@ if (
                   paper: "A4",
                   orientation: "portrait",
                   margins: { top: 20, bottom: 20, left: 20, right: 20 },
+                  watermarks: [
+                    {
+                      kind: "text",
+                      text: "repeated section mark",
+                      x: 30,
+                      y: 60,
+                      layer: "behind",
+                      opacity: 1,
+                      transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+                    },
+                  ],
                 },
               },
             },
@@ -370,6 +382,28 @@ if (
       },
       { kind: "text", nodeId: "after-empty", text: "b" },
     ];
+  if (mode === "inactive-watermarks") {
+    const page = {
+      paper: "A4",
+      orientation: "portrait",
+      margins: { top: 20, bottom: 20, left: 20, right: 20 },
+    };
+    source.settings.page = {
+      ...page,
+      watermarks: [
+        {
+          kind: "text",
+          text: "INACTIVE_WATERMARK_SECRET",
+          x: 30,
+          y: 50,
+          layer: "behind",
+          opacity: 1,
+          transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+        },
+      ],
+    };
+    source.body[0].layout = { section: { id: "active", page } };
+  }
   if (mode === "section-pages") {
     source.settings.page = {
       paper: "A4",

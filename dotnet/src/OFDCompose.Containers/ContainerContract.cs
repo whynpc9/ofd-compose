@@ -16,7 +16,7 @@ public sealed record RenderedTableRelation(string ObjectId,ReadOnlyMemory<byte> 
 public sealed record RenderedPageBand(int PageIndex,string Pointer,string Text);
 /// <summary>Complete fixed-writer page with dimensions, ordered objects, geometry, text, paint and clips.</summary>
 public sealed record RenderedPagePayload(int PageIndex,ReadOnlyMemory<byte> Xml);
-public sealed record SourceRenderEvidence(IReadOnlyList<GeneratedPathPayload> Paths,IReadOnlyList<RenderedTableRelation> Tables,IReadOnlyList<RenderedPageBand> Bands,IReadOnlyList<RenderedPagePayload> Pages,IReadOnlyDictionary<string,string> ResourceDigests,ReadOnlyMemory<byte> LayoutResourcesJson,string ReplayIrDigest);
+public sealed record SourceRenderEvidence(IReadOnlyList<GeneratedPathPayload> Paths,IReadOnlyList<RenderedTableRelation> Tables,IReadOnlyList<RenderedPageBand> Bands,IReadOnlyList<RenderedPagePayload> Pages,IReadOnlyDictionary<string,string> ResourceDigests,ReadOnlyMemory<byte> LayoutResourcesJson,string ReplayIrDigest,ReadOnlyMemory<byte> SemanticMapJson);
 /// <summary>One explicit trusted replay of the pinned renderer with authorized resources per native operation; null denies verification.</summary>
 public delegate SourceRenderEvidence? SourceRenderResolver(SourceRenderRequest request,CancellationToken cancellationToken);
 public enum ContainerProfile { NativeEditable, Distribution }

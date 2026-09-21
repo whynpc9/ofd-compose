@@ -99,7 +99,7 @@ public sealed class ContainerTests
         using var captured=JsonDocument.Parse(await File.ReadAllBytesAsync(Path.Combine(directory,"source.json"),timeout.Token));
         var irObjects=root.GetProperty("pages").EnumerateArray().SelectMany(page=>page.GetProperty("objects").EnumerateArray().Select((item,index)=>(Page:page.GetProperty("pageIndex").GetInt32(),Index:index,Item:item))).ToDictionary(item=>item.Item.GetProperty("id").GetString()!);
         var bands=captured.RootElement.GetProperty("semanticMap").GetProperty("pageDecorations").EnumerateArray().Where(entry=>entry.GetProperty("pointer").GetString()!.EndsWith("/header",StringComparison.Ordinal)||entry.GetProperty("pointer").GetString()!.EndsWith("/footer",StringComparison.Ordinal)).GroupBy(entry=>(irObjects[entry.GetProperty("objectId").GetString()!].Page,Pointer:entry.GetProperty("pointer").GetString()!)).Select(group=>new RenderedPageBand(group.Key.Page,group.Key.Pointer,string.Concat(group.Select(entry=>irObjects[entry.GetProperty("objectId").GetString()!]).OrderBy(item=>item.Index).Where(item=>item.Item.GetProperty("kind").GetString()=="text").Select(item=>item.Item.GetProperty("logicalText").GetString())))).ToArray();
-        return new(result.ToArray(),tables,bands,root.GetProperty("pages").EnumerateArray().Select(page=>new RenderedPagePayload(page.GetProperty("pageIndex").GetInt32(),package[$"Doc_0/Pages/Page_{page.GetProperty("pageIndex").GetInt32()}/Content.xml"])).ToArray(),written.ResourceMap!.ToDictionary(item=>item.Value,item=>Hash(resources.Single(resource=>resource.ResourceId==item.Key).Bytes.ToArray())),Encoding.UTF8.GetBytes(root.GetProperty("resources").GetRawText()),Hash(ir));
+        return new(result.ToArray(),tables,bands,root.GetProperty("pages").EnumerateArray().Select(page=>new RenderedPagePayload(page.GetProperty("pageIndex").GetInt32(),package[$"Doc_0/Pages/Page_{page.GetProperty("pageIndex").GetInt32()}/Content.xml"])).ToArray(),written.ResourceMap!.ToDictionary(item=>item.Value,item=>Hash(resources.Single(resource=>resource.ResourceId==item.Key).Bytes.ToArray())),Encoding.UTF8.GetBytes(root.GetProperty("resources").GetRawText()),Hash(ir),Encoding.UTF8.GetBytes(captured.RootElement.GetProperty("semanticMap").GetRawText()));
     }
     private static string Hash(byte[] value) => Convert.ToHexStringLower(SHA256.HashData(value));
     private sealed record Fixture(string Directory, byte[] Source, OfdWriteResult Ofd, byte[] Sealed, JsonNode Identity);
@@ -1389,6 +1389,34 @@ public sealed class ContainerTests
         var entries=Zip(bytes);const string path="Doc_0/Attachs/Attachments.xml";
         var xml=XDocument.Parse(Encoding.UTF8.GetString(entries[path]));xml.Root!.Elements().Single().SetAttributeValue("Visible",visible);entries[path]=Encoding.UTF8.GetBytes(xml.ToString());
         Assert.Equal("ATTACHMENT_INVALID",SourceContainer.Extract(Pack(entries),sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    [Fact]
+    public async Task Inactive_root_watermark_content_is_removed_and_cannot_be_reintroduced()
+    {
+        var fixture=await Build("inactive-watermarks");Assert.DoesNotContain("INACTIVE_WATERMARK_SECRET",Encoding.UTF8.GetString(fixture.Source));
+        var changed=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="resolvedDocument")!;var source=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            source["settings"]!["page"]!["watermarks"]!.AsArray().Add(new JsonObject{["kind"]="text",["text"]="INACTIVE_WATERMARK_SECRET",["x"]=30,["y"]=50,["layer"]="behind",["opacity"]=1,["transform"]=new JsonObject{["a"]=1,["b"]=0,["c"]=0,["d"]=1,["e"]=0,["f"]=0}});
+            string json=source.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SOURCE_NOT_MINIMAL",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    [Theory]
+    [InlineData("sectionId",false)]
+    [InlineData("sectionId",true)]
+    [InlineData("sectionSourceId",false)]
+    [InlineData("sectionSourceId",true)]
+    public async Task Semantic_section_relations_must_match_the_trusted_renderer(string field,bool remove)
+    {
+        var fixture=await Build(field=="sectionSourceId"?"private-repeat":"section-pages");
+        var changed=Mutate(fixture.Sealed,(manifest,_)=> {
+            var part=manifest["parts"]!.AsArray().Single(p=>p!["name"]!.GetValue<string>()=="semanticMap")!;var map=JsonNode.Parse(part["content"]!.GetValue<string>())!;
+            var entry=map["entries"]!.AsArray().First(entry=>entry![field] is not null)!;
+            if(remove)entry.AsObject().Remove(field);else entry[field]="wrong-section";
+            string json=map.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
+        });
+        Assert.Equal("SEMANTIC_RENDER_MISMATCH",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
 }

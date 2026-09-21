@@ -1,7 +1,9 @@
 import { fontDigest } from "@ofd-compose/typography-core";
 import { expect, it } from "vitest";
+import { RenderBudget } from "../src/budget.js";
 import type { SourceContent } from "../src/index.js";
 import { finalizeResolved, finalizeSource, render } from "../src/index.js";
+import { minimizeResolved } from "../src/source.js";
 import { combined, profile, resources, textSource } from "./fixtures.js";
 
 it("reopens filled source with inert expressions and genuinely new subset glyphs", async () => {
@@ -424,4 +426,127 @@ it("bounds source snapshots, repeated identities, full resource bytes and cancel
     ok: false,
     diagnostics: [{ code: "MODEL_INVALID" }],
   });
+});
+
+it("removes inactive root watermarks without changing captured or reopened pages", async () => {
+  const pack = await resources(),
+    source = textSource();
+  const page = {
+    paper: "A4" as const,
+    orientation: "portrait" as const,
+    margins: { top: 20, bottom: 20, left: 20, right: 20 },
+  };
+  source.settings.page = {
+    ...page,
+    watermarks: [
+      {
+        kind: "text",
+        text: "INACTIVE_WATERMARK_SECRET",
+        x: 30,
+        y: 50,
+        layer: "behind",
+        opacity: 1,
+        transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+      },
+    ],
+  };
+  const firstParagraph = source.body[0];
+  if (firstParagraph?.kind !== "paragraph") throw new Error("fixture");
+  firstParagraph.layout = { section: { id: "active", page } };
+  const captured = await render(source, {}, pack, profile, { sourceAttachment: true });
+  if (!captured.ok || !captured.editingSource)
+    throw new Error(JSON.stringify(captured.diagnostics));
+  expect(captured.editingSource.json).not.toContain("INACTIVE_WATERMARK_SECRET");
+  const content = JSON.parse(captured.editingSource.json) as SourceContent;
+  expect(content.resolvedDocument.settings.page?.watermarks).toEqual([]);
+  const ordinary = await render(source, {}, pack, profile);
+  if (!ordinary.ok) throw new Error("fixture");
+  expect(captured.ir).toEqual(ordinary.ir);
+  const reopened = await finalizeSource(content, pack, { sourceAttachment: true });
+  if (!reopened.ok) throw new Error(JSON.stringify(reopened.diagnostics));
+  expect(reopened.ir.pages).toEqual(captured.ir.pages);
+  expect(reopened.ir.graphicsStates).toEqual(captured.ir.graphicsStates);
+});
+
+it("projects supplied watermark witnesses without merging identical sources", async () => {
+  const pack = await resources(),
+    source = textSource();
+  source.settings.page = {
+    paper: "A4",
+    orientation: "portrait",
+    margins: { top: 20, bottom: 20, left: 20, right: 20 },
+    watermarks: [30, 50, 70].map((y) => ({
+      kind: "text" as const,
+      text: "same mark",
+      x: 30,
+      y,
+      layer: "behind" as const,
+      opacity: 1,
+      transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+    })),
+  };
+  const captured = await render(source, {}, pack, profile, { sourceAttachment: true });
+  if (!captured.ok || !captured.editingSource)
+    throw new Error(JSON.stringify(captured.diagnostics));
+  const content = JSON.parse(captured.editingSource.json) as SourceContent;
+  const pointerRemap = new Map<string, string>();
+  const minimal = minimizeResolved(
+    content.resolvedDocument,
+    new RenderBudget(),
+    undefined,
+    {},
+    new Set(["/settings/page/watermarks/0", "/settings/page/watermarks/2"]),
+    pointerRemap,
+  );
+  expect(minimal.settings.page?.watermarks?.map((w) => w.y)).toEqual([30, 70]);
+  expect(content.resolvedDocument.settings.page?.watermarks).toHaveLength(3);
+  expect([...pointerRemap]).toEqual([
+    ["/settings/page/watermarks/0", "/settings/page/watermarks/0"],
+    ["/settings/page/watermarks/2", "/settings/page/watermarks/1"],
+  ]);
+});
+
+it("preserves distinct identical watermarks in root and later section settings", async () => {
+  const pack = await resources(),
+    source = textSource();
+  const page = {
+    paper: "A4" as const,
+    orientation: "portrait" as const,
+    margins: { top: 20, bottom: 20, left: 20, right: 20 },
+    watermarks: [
+      {
+        kind: "text" as const,
+        text: "same mark",
+        x: 30,
+        y: 60,
+        layer: "behind" as const,
+        opacity: 1,
+        transform: { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 },
+      },
+    ],
+  };
+  source.settings.page = page;
+  source.body.push({
+    kind: "paragraph",
+    nodeId: "later",
+    layout: { section: { id: "later-section", page: structuredClone(page) } },
+    inlines: [{ kind: "text", nodeId: "later-text", text: "later body" }],
+  });
+  const captured = await render(source, {}, pack, profile, { sourceAttachment: true });
+  if (!captured.ok || !captured.editingSource)
+    throw new Error(JSON.stringify(captured.diagnostics));
+  const content = JSON.parse(captured.editingSource.json) as SourceContent;
+  expect(content.semanticMap.pageDecorations.map((item) => item.pointer)).toEqual([
+    "/settings/page/watermarks/0",
+    "/body/1/layout/section/page/watermarks/0",
+  ]);
+  const plain = await render(source, {}, pack, profile);
+  if (!plain.ok) throw new Error("fixture");
+  expect(captured.ir).toEqual(plain.ir);
+  expect(captured.semanticMap).toEqual(plain.semanticMap);
+  const reopened = await finalizeSource(content, pack, { sourceAttachment: true });
+  if (!reopened.ok || !reopened.editingSource)
+    throw new Error(JSON.stringify(reopened.diagnostics));
+  expect(reopened.ir.pages).toEqual(captured.ir.pages);
+  expect(JSON.parse(reopened.editingSource.json).semanticMap).toEqual(content.semanticMap);
 });

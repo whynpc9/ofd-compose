@@ -134,10 +134,11 @@ function normalizeSourceLinks(
   walk(document.settings, defaults);
 }
 
-function removeUnrenderedBands(
+function removeUnrenderedDecorations(
   document: ResolvedDocument,
   rendered: ReadonlySet<string>,
   budget: RenderBudget,
+  pointerRemap: Map<string, string>,
 ) {
   const walk = (value: unknown, pointer: string): void => {
     budget.charge("render", 32 + pointer.length * 2);
@@ -150,6 +151,17 @@ function removeUnrenderedBands(
         delete band.style;
         delete band.alignment;
       }
+    }
+    if (Array.isArray(node.watermarks)) {
+      const retained: unknown[] = [];
+      for (const [index, watermark] of node.watermarks.entries()) {
+        budget.charge("render", 128 + pointer.length * 4);
+        const original = `${pointer}/watermarks/${index}`;
+        if (!rendered.has(original)) continue;
+        pointerRemap.set(original, `${pointer}/watermarks/${retained.length}`);
+        retained.push(watermark);
+      }
+      node.watermarks = retained;
     }
     for (const [key, child] of Object.entries(node))
       walk(child, `${pointer}/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
@@ -165,7 +177,8 @@ export function minimizeResolved(
   budget: RenderBudget,
   repeats = new EditingRepeatIdentities(budget),
   defaults: TextStyle = {},
-  renderedBands?: ReadonlySet<string>,
+  renderedDecorations?: ReadonlySet<string>,
+  pointerRemap = new Map<string, string>(),
 ): ResolvedDocument {
   const result = snapshot(document, budget);
   if (!isResolvedDocument(result)) throw new RenderError("MODEL_INVALID", "Invalid editing source");
@@ -177,7 +190,8 @@ export function minimizeResolved(
   };
   result.structure = { conditionals: [], repeats: [] };
   normalizeSourceLinks(result, defaults, budget);
-  if (renderedBands) removeUnrenderedBands(result, renderedBands, budget);
+  if (renderedDecorations)
+    removeUnrenderedDecorations(result, renderedDecorations, budget, pointerRemap);
   const styles = new Set<string>();
   const visit = (value: unknown): void => {
     budget.charge("render", 32);
@@ -223,17 +237,19 @@ export function createSourceContent(
   pageDecorationSources: { objectId: string; pointer: string; sectionPage: number }[] = [],
 ) {
   const repeats = new EditingRepeatIdentities(budget);
-  const renderedBands = new Set<string>();
+  const renderedDecorations = new Set<string>();
+  const pointerRemap = new Map<string, string>();
   for (const origin of pageDecorationSources) {
     budget.charge("render", 64 + origin.pointer.length * 2);
-    renderedBands.add(origin.pointer);
+    renderedDecorations.add(origin.pointer);
   }
   const minimal = minimizeResolved(
     document,
     budget,
     repeats,
     profile.layout.defaultStyle,
-    renderedBands,
+    renderedDecorations,
+    pointerRemap,
   );
   const editingProfile = snapshot(profile, budget);
   if (editingProfile.layout.defaultStyle.link) editingProfile.layout.defaultStyle.underline = true;
@@ -294,7 +310,10 @@ export function createSourceContent(
     },
     semanticMap: {
       entries: semantics,
-      pageDecorations: pageDecorationSources,
+      pageDecorations: pageDecorationSources.map((origin) => {
+        budget.charge("render", 64 + origin.pointer.length * 2);
+        return { ...origin, pointer: pointerRemap.get(origin.pointer) ?? origin.pointer };
+      }),
       decorations: ir.pages
         .flatMap((page) => page.objects)
         .filter((object) => !semanticIds.has(object.id))
