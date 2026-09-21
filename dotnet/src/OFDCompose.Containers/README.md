@@ -210,3 +210,9 @@ Unwitnessed watermarks are removed from the owned source snapshot, including ina
 root page settings overridden by a first-paragraph section. Surviving watermark pointers
 are reindexed without merging equal text from different sources; extraction rejects
 unwitnessed watermark reintroduction. The replay remains one host call per operation.
+
+Distribution extraction admits the same exact Doc_0/Signs/ hierarchy as native
+extraction and reports signature presence only as present-unverified; signed inputs
+still cannot be resealed. Manifest metadata scalar types and capability-array element
+types are checked before digest/resource validation or any host replay. Exact supported
+version/capability/signature-policy values remain checked at the version-policy stage.

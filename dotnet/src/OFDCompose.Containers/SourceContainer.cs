@@ -113,6 +113,13 @@ public static partial class SourceContainer
             Need(Text(manifest, "namespace") == "ofd-compose" && Text(manifest, "protocol") == Protocol, "PROTOCOL_INVALID");
             ValidateAttachment(entries, budget);
             Keys(manifest, "namespace", "protocol", "profile", "containerProfileVersion", "modelVersion", "irVersion", "irDigest", "capabilities", "provenance", "signaturePolicy", "parts", "entries", "objectMap", "resourceMap", "replayIdentity");
+            // Structural metadata checks must precede part digests, resources and trusted replay.
+            foreach(string field in new[]{"containerProfileVersion","modelVersion","irVersion","signaturePolicy"})
+            {budget.Charge(32);Need(manifest.GetProperty(field).ValueKind==JsonValueKind.String,"SCHEMA_INVALID");}
+            var capabilities=manifest.GetProperty("capabilities");
+            Need(capabilities.ValueKind==JsonValueKind.Array,"SCHEMA_INVALID");
+            foreach(var capability in capabilities.EnumerateArray())
+            {budget.Charge(32);Need(capability.ValueKind==JsonValueKind.String,"SCHEMA_INVALID");}
             string profile = Text(manifest, "profile");
             Need(profile is "native-editable" or "distribution" && IsDigest(Text(manifest, "irDigest")), "SCHEMA_INVALID");
             SourceReplayIdentity? replayIdentity=profile=="native-editable"?ParseReplayIdentity(manifest.GetProperty("replayIdentity"),manifestBytes!.Length,budget):null;
@@ -168,7 +175,7 @@ public static partial class SourceContainer
                     }
                     Need(Text(manifest, "modelVersion") == Text(root.GetProperty("resolvedDocument"), "modelVersion"), "VERSION_UNSUPPORTED");
                 }
-                else { Need(objectMap.Count == 0 && resourceMap.Count==0 && entries.Keys.All(p => IsWriterEntry(p) || p is ManifestPath or AttachmentsPath), "DISTRIBUTION_SOURCE_FORBIDDEN"); SafePackage.References(entries,budget,requirePageReachability:true); }
+                else { Need(objectMap.Count == 0 && resourceMap.Count==0 && entries.Keys.All(p => IsWriterEntry(p) || p is ManifestPath or AttachmentsPath || p.StartsWith("Doc_0/Signs/",StringComparison.Ordinal)), "DISTRIBUTION_SOURCE_FORBIDDEN"); SafePackage.References(entries,budget,requirePageReachability:true); }
                 Need(Text(manifest, "containerProfileVersion") == ProfileVersion && Text(manifest, "irVersion") == "ofd-compose/layout-ir@0" && Text(manifest, "modelVersion") == "0", "VERSION_UNSUPPORTED");
                 string[] expected = profile == "native-editable" ? ["resolved-document", "semantic-map", "authorized-full-fonts"] : ["derived-no-source"];
                 Need(manifest.GetProperty("capabilities").EnumerateArray().Select(e => e.GetString()).SequenceEqual(expected), "VERSION_UNSUPPORTED");

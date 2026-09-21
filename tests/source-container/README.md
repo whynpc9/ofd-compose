@@ -33,7 +33,7 @@ entitlement or supported-OFD claim follows from those observations. ADR-0005 rem
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
 Local validation snapshot after review fixes: fresh Node 618, fresh Chromium 408,
-full .NET 373 (179 container cases plus the unchanged 194 baseline cases).
+full .NET 396 (202 container cases plus the unchanged 194 baseline cases).
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -202,3 +202,8 @@ that skips an otherwise valid middle watermark. Root/later-section equal-text wa
 and repeated-section watermarks remain distinct and visible. Full captured Semantic Map
 comparison rejects removed/changed sectionId and sectionSourceId while preserving original
 render semantics and existing detailed validation diagnostics.
+
+Signature declaration/sidecar combinations cover both profiles. Malformed manifest
+capability containers/elements and version/policy scalar types are rejected as
+SCHEMA_INVALID before even a corrupted part digest is checked and before any replay
+callback is invoked. Exact version and capability values keep their later validation.

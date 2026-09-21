@@ -241,13 +241,17 @@ public sealed class ContainerTests
         Assert.Equal("ATTACHMENT_INVALID",SourceContainer.Extract(Pack(forged), barcodeGeometryResolver:ResolveBarcode,numberingLabelsResolver:ResolveNumbering,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
     [Theory]
-    [InlineData(true,true)]
-    [InlineData(true,false)]
-    [InlineData(false,true)]
-    public async Task Signed_presence_is_unverified_and_signed_input_cannot_be_resealed(bool declaration,bool sidecar)
+    [InlineData(ContainerProfile.NativeEditable,true,true)]
+    [InlineData(ContainerProfile.NativeEditable,true,false)]
+    [InlineData(ContainerProfile.NativeEditable,false,true)]
+    [InlineData(ContainerProfile.Distribution,true,true)]
+    [InlineData(ContainerProfile.Distribution,true,false)]
+    [InlineData(ContainerProfile.Distribution,false,true)]
+    public async Task Signed_presence_is_unverified_and_signed_input_cannot_be_resealed(ContainerProfile profile,bool declaration,bool sidecar)
     {
         var first=await Initial.Value;
-        var signed=Mutate(first.Sealed,(manifest,entries)=> {
+        var original=profile==ContainerProfile.NativeEditable?first.Sealed:SourceContainer.Create(first.Ofd.Bytes!,first.Identity["irDigest"]!.GetValue<string>(),first.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Bytes!;
+        var signed=Mutate(original,(manifest,entries)=> {
             var root=XDocument.Parse(Encoding.UTF8.GetString(entries["OFD.xml"]));
             if(declaration)root.Descendants().First(e=>e.Name.LocalName=="DocBody").Add(new XElement(root.Root!.Name.Namespace+"Signatures","Doc_0/Signs/Signatures.xml"));
             entries["OFD.xml"]=Encoding.UTF8.GetBytes(root.ToString());
@@ -1417,6 +1421,25 @@ public sealed class ContainerTests
             string json=map.ToJsonString();part["content"]=json;part["sha256"]=Hash(Encoding.UTF8.GetBytes(json));
         });
         Assert.Equal("SEMANTIC_RENDER_MISMATCH",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    public static IEnumerable<object[]> MalformedManifestMetadataCases()
+    {
+        var cases=new (string Field,string Json)[]{("capabilities","42"),("capabilities","{}"),("capabilities","null"),("capabilities","[1]"),("capabilities","[null]"),("capabilities","[{}]"),("containerProfileVersion","[]"),("irVersion","{}"),("modelVersion","0"),("signaturePolicy","false")};
+        foreach(var item in cases)foreach(bool corruptDigest in new[]{false,true})yield return new object[]{item.Field,item.Json,corruptDigest};
+    }
+    [Theory]
+    [MemberData(nameof(MalformedManifestMetadataCases))]
+    public async Task Manifest_metadata_shape_is_checked_before_digests_and_host_replay(string field,string json,bool corruptDigest)
+    {
+        var fixture=await Initial.Value;int calls=0;
+        var changed=Mutate(fixture.Sealed,(manifest,_)=> {
+            manifest[field]=JsonNode.Parse(json);
+            if(corruptDigest)manifest["parts"]![0]!["sha256"]=new string('0',64);
+        });
+        SourceRenderEvidence? Replay(SourceRenderRequest request,CancellationToken token){calls++;return ResolveSourceRender(request,token);}
+        var result=SourceContainer.Extract(changed,sourceRenderResolver:Replay,cancellationToken:TestContext.Current.CancellationToken);
+        Assert.Equal("SCHEMA_INVALID",result.Error);Assert.Equal(0,calls);
     }
 
 }
