@@ -47,7 +47,9 @@ import {
   transformedBox,
   validateBorderFits,
 } from "./graphics.js";
+import { numberingLabel } from "./numbering.js";
 import { type PageGeometry, pageGeometry } from "./page.js";
+import { effectiveParagraphStyle } from "./styles.js";
 
 // Layout IR construction coordinates are bounded to one million millimetres.
 const maxLayoutCoordinate = 1_000_000;
@@ -322,6 +324,7 @@ interface Span {
   fragment: ResolvedTextFragment;
 }
 interface Run {
+  shapingGroup?: string;
   separateAfter?: boolean;
   start: number;
   end: number;
@@ -433,13 +436,6 @@ function color(value = "#000000") {
     b: Number.parseInt(value.slice(5, 7), 16) / 255,
   };
 }
-function alpha(value: number): string {
-  let result = "";
-  for (let n = value; n > 0; n = Math.floor((n - 1) / 26))
-    result = String.fromCharCode(97 + ((n - 1) % 26)) + result;
-  return result;
-}
-
 /** Multi-page layout. Resource I/O belongs to the host; every promise settles before metrics/shaping. */
 export async function layout(
   document: ResolvedDocument,
@@ -640,6 +636,7 @@ export async function layout(
       work,
       totalPages,
       media,
+      job?.captureSource ? job : undefined,
     ).layout();
     if (!usesTotalPages || result.ir.pages.length === totalPages)
       return { ...result, paginationPasses: iteration };
@@ -761,6 +758,11 @@ class ParagraphLayouter {
   private decorationBox?: PageGeometry["contentBox"];
   private readonly pageSettingsByIndex: (PageSettings | undefined)[] = [];
   private readonly sectionStarts: number[] = [];
+  private readonly pageSettingPaths = new WeakMap<object, string>();
+  private readonly pageDecorationOrigins = new WeakMap<
+    object,
+    { pointer: string; sectionPage: number }
+  >();
   constructor(
     private readonly doc: ResolvedDocument,
     private readonly faces: Face[],
@@ -769,7 +771,20 @@ class ParagraphLayouter {
     private readonly work: LayoutWork,
     private readonly totalPages: number,
     private readonly media?: LayoutMediaSnapshot,
+    private readonly sourceJob?: JobContext,
   ) {
+    if (sourceJob) {
+      const visit = (value: unknown, pointer: string): void => {
+        sourceJob.charge("layout", 32 + pointer.length * 2);
+        if (!value || typeof value !== "object") return;
+        this.pageSettingPaths.set(value, pointer);
+        for (const [key, child] of Object.entries(value)) {
+          sourceJob.charge("layout", pointer.length + key.length + 1);
+          visit(child, `${pointer}/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`);
+        }
+      };
+      visit(doc, "");
+    }
     const { formattingPolicy, defaultStyle } = options;
     this.pageSettings = doc.settings.page;
     const first = doc.body[0];
@@ -871,8 +886,20 @@ class ParagraphLayouter {
       this.pageIndex = index;
       this.decoratePage();
     }
+    const pageDecorationSources: { objectId: string; pointer: string; sectionPage: number }[] = [];
+    if (this.sourceJob)
+      for (const page of this.ir.pages) {
+        for (const [index, object] of page.objects.entries()) {
+          const origin = this.pageDecorationOrigins.get(object);
+          if (origin !== undefined) {
+            this.sourceJob.charge("layout", origin.pointer.length + 64);
+            pageDecorationSources.push({ objectId: `p${page.pageIndex}o${index}`, ...origin });
+          }
+        }
+      }
     const ir = canonicalizeLayoutIR(this.ir);
     return {
+      ...(this.sourceJob ? { pageDecorationSources } : {}),
       ir,
       usesTotalPages: this.usesTotalPages,
       semanticMap: ir.semantics,
@@ -1020,6 +1047,9 @@ class ParagraphLayouter {
           layout: { ...properties, border: undefined, spaceBefore: 0, spaceAfter: 0 },
         },
         index,
+        undefined,
+        undefined,
+        this.pageSettingPaths.get(paragraph),
       );
     } finally {
       this.inRegion = false;
@@ -1515,6 +1545,8 @@ class ParagraphLayouter {
                 table.nodeId,
               );
             const object = structuredClone(original);
+            const decorationOrigin = this.pageDecorationOrigins.get(original);
+            if (decorationOrigin) this.pageDecorationOrigins.set(object, decorationOrigin);
             const state = this.ir.graphicsStates[Number(original.stateId.slice(5))];
             if (!state) throw new Error("Missing state");
             if (state.clip) this.commands(state.clip.commands.length);
@@ -2194,9 +2226,21 @@ class ParagraphLayouter {
     const bodyObjects = page.objects.length;
     const behindIds = new Set<string>();
     this.decoration = true;
-    for (const watermark of settings.watermarks ?? []) {
+    for (const [watermarkIndex, watermark] of (settings.watermarks ?? []).entries()) {
       const before = page.objects.length;
       this.watermark(watermark);
+      if (this.sourceJob) {
+        const settingPath = this.pageSettingPaths.get(settings);
+        if (settingPath === undefined)
+          throw new LayoutError("LAYOUT_INPUT", "Missing watermark source location");
+        const pointer = `${settingPath}/watermarks/${watermarkIndex}`;
+        this.sourceJob.charge("layout", pointer.length + 64);
+        for (const object of page.objects.slice(before))
+          this.pageDecorationOrigins.set(object, {
+            pointer,
+            sectionPage: this.pageIndex - (this.sectionStarts[this.pageIndex] ?? 0) + 1,
+          });
+      }
       if (watermark.layer === "behind")
         for (const object of page.objects.slice(before)) behindIds.add(object.id);
     }
@@ -2264,7 +2308,17 @@ class ParagraphLayouter {
         height: band.height,
       };
       this.y = this.decorationBox.y;
+      const before = page.objects.length;
       this.generatedParagraph(text, band.style, band.alignment);
+      if (this.sourceJob) {
+        const settingPath = this.pageSettingPaths.get(settings);
+        if (settingPath === undefined)
+          throw new LayoutError("LAYOUT_INPUT", "Missing page band source location");
+        const pointer = `${settingPath}/${kind}`;
+        this.sourceJob.charge("layout", pointer.length + 64);
+        for (const object of page.objects.slice(before))
+          this.pageDecorationOrigins.set(object, { pointer, sectionPage });
+      }
     }
     // Paint background watermarks first while preserving body reading order and stable object references.
     page.objects = [
@@ -2454,10 +2508,20 @@ class ParagraphLayouter {
           !control &&
           !previous.control &&
           previous.script === script &&
-          previous.style === style
+          previous.style === style &&
+          previous.shapingGroup === span.fragment.shapingGroup
         )
           previous.end += char.length;
-        else runs.push({ start: i, end: i + char.length, style, face, script, control });
+        else
+          runs.push({
+            start: i,
+            end: i + char.length,
+            style,
+            face,
+            script,
+            control,
+            ...(span.fragment.shapingGroup ? { shapingGroup: span.fragment.shapingGroup } : {}),
+          });
         i += char.length;
       }
     }
@@ -2543,6 +2607,7 @@ class ParagraphLayouter {
     paragraphIndex: number,
     generatedStyle?: TextStyle,
     maxLines?: number,
+    sourcePointer = this.pageSettingPaths.get(paragraph),
   ) {
     if (++this.work.paragraphs > layoutResourceLimits.layoutParagraphs)
       throw new LayoutError("LAYOUT_LIMIT", "Paragraph layout budget exceeded", paragraph.nodeId);
@@ -2550,16 +2615,12 @@ class ParagraphLayouter {
     const properties = paragraph.layout ?? {};
     if (properties.tabStops?.some((value, i, values) => i > 0 && value <= (values[i - 1] ?? 0)))
       throw new LayoutError("LAYOUT_INPUT", "Tab stops must increase", paragraph.nodeId);
-    const heading =
-      properties.role === "heading"
-        ? { fontSize: [24, 20, 18, 16, 14, 12][(properties.headingLevel ?? 1) - 1], bold: true }
-        : {};
-    const base = {
-      ...this.options.defaultStyle,
-      ...heading,
-      ...this.style(paragraph.styleId),
-      ...generatedStyle,
-    };
+    const base = effectiveParagraphStyle(
+      this.options.defaultStyle,
+      this.style(paragraph.styleId),
+      properties,
+      generatedStyle,
+    );
     let text = "";
     const spans: Span[] = [];
     for (const input of paragraph.fragments) {
@@ -2593,33 +2654,7 @@ class ParagraphLayouter {
       text += fragment.text;
     }
     const runs = this.runs(text, spans, base);
-    const number = properties.numbering;
-    let label = "";
-    if (number) {
-      let startValue = number.start;
-      if (startValue !== undefined && paragraph.instancePath?.length) {
-        // The innermost repeat varies item identity; its parent chain identifies the list group.
-        const startKey = canonicalSerialize({
-          listId: number.listId,
-          nodeId: paragraph.nodeId,
-          parents: paragraph.instancePath
-            .slice(0, -1)
-            .map((instance) => ({ nodeId: instance.nodeId, key: instance.key })),
-        });
-        if (this.initializedRepeatStarts.has(startKey)) startValue = undefined;
-        else this.initializedRepeatStarts.add(startKey);
-      }
-      const count = startValue ?? (this.counts.get(number.listId) ?? 0) + 1;
-      this.counts.set(number.listId, count);
-      label =
-        (number.format === "decimal"
-          ? String(count)
-          : number.format === "bullet"
-            ? "·"
-            : number.format === "upper-alpha"
-              ? alpha(count).toUpperCase()
-              : alpha(count)) + (number.suffix ?? (number.format === "bullet" ? " " : ". "));
-    }
+    const label = numberingLabel(paragraph, this.counts, this.initializedRepeatStarts);
     const baseRun = (): Run => ({
       start: 0,
       end: label.length,
@@ -2812,9 +2847,18 @@ class ParagraphLayouter {
         });
       }
       if (lineIndex === 0) {
+        const page = requiredLayoutValue(this.ir.pages[this.pageIndex]);
+        const before = page.objects.length;
         let labelX = box.x + left + indent - labelWidth;
         for (const labelPiece of labelPieces)
           labelX += this.emit(labelPiece, labelX, baseline, paragraph, [], [], 0, true);
+        if (this.sourceJob && labelPieces.length) {
+          if (sourcePointer === undefined)
+            throw new LayoutError("LAYOUT_INPUT", "Missing numbering source location");
+          this.sourceJob.charge("layout", sourcePointer.length + 64);
+          for (const object of page.objects.slice(before))
+            this.pageDecorationOrigins.set(object, { pointer: sourcePointer, sectionPage: 1 });
+        }
       }
       for (const piece of pieces) {
         x += this.emit(piece, x, baseline, paragraph, spans, gaps, extra);

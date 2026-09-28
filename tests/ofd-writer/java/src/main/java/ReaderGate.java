@@ -42,13 +42,31 @@ public final class ReaderGate {
     }
     public static void main(String[] args) throws Exception {
         var report = new JsonArray();
-        for (String name : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical", "duplicate-markers", "multi-glyph", "nonidentity-contract")) {
+        for (String name : args.length > 2 ? Arrays.asList(Arrays.copyOfRange(args, 2, args.length)) : List.of("combined", "cff", "truetype", "glyphless", "geometry", "jpeg", "logical-display", "glyphless-logical", "duplicate-markers", "multi-glyph", "nonidentity-contract")) {
             JsonObject ir = JsonParser.parseString(Files.readString(Path.of(args[0],name,"ir.json"))).getAsJsonObject();
             Map<String,JsonObject> states = new HashMap<>();
             ir.getAsJsonArray("graphicsStates").forEach(e -> states.put(e.getAsJsonObject().get("id").getAsString(),e.getAsJsonObject()));
             int objects = 0, glyphCount = 0; maxError = 0; comparedPathCommands = 0;
             try (var reader = new OFDReader(Path.of(args[1],name+".ofd"))) {
                 var extractor = new ContentExtractor(reader);
+                Path source = Path.of(args[0],name,"source.json");
+                if (Files.exists(source)) {
+                    var attachments = reader.getAttachmentList();
+                    check(attachments.size() == 1, "source attachment count");
+                    var attachment = attachments.getFirst();
+                    check("application/json".equals(attachment.getFormat()), "JSON MIME");
+                    byte[] extracted = Files.readAllBytes(reader.getAttachmentFile(attachment));
+                    var manifest = JsonParser.parseString(new String(extracted, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+                    check(manifest.get("namespace").getAsString().equals("ofd-compose"), "source namespace");
+                    var expected = JsonParser.parseString(Files.readString(source)).getAsJsonObject();
+                    for (var element : manifest.getAsJsonArray("parts")) {
+                        var part = element.getAsJsonObject();
+                        byte[] content = part.get("content").getAsString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                        String digest = HexFormat.of().formatHex(java.security.MessageDigest.getInstance("SHA-256").digest(content));
+                        check(digest.equals(part.get("sha256").getAsString()), "part digest");
+                        check(JsonParser.parseString(part.get("content").getAsString()).equals(expected.get(part.get("name").getAsString())), "attachment source equality");
+                    }
+                }
                 check(reader.getNumberOfPages() == ir.getAsJsonArray("pages").size(), "page count");
                 int p = 1;
                 for (var pageElement : ir.getAsJsonArray("pages")) {

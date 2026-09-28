@@ -1,0 +1,30 @@
+{
+  "name": "@ofd-compose/source-protocol",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "development": "./src/index.ts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ofd-compose/binding-core": "workspace:*",
+    "@ofd-compose/document-model": "workspace:*",
+    "@ofd-compose/layout-ir": "workspace:*",
+    "@sinclair/typebox": "0.34.52"
+  },
+  "devDependencies": {
+    "vitest": "5.0.0"
+  },
+  "tsdown": {
+    "dts": false
+  }
+}

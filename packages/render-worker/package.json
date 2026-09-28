@@ -23,7 +23,8 @@
     "@ofd-compose/typography-core": "workspace:*",
     "@ofd-compose/media-core": "workspace:*",
     "@ofd-compose/layout-core": "workspace:*",
-    "@ofd-compose/layout-ir": "workspace:*"
+    "@ofd-compose/layout-ir": "workspace:*",
+    "@ofd-compose/source-protocol": "workspace:*"
   },
   "devDependencies": {
     "harfbuzzjs": "1.6.0",

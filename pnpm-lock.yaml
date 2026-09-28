@@ -181,6 +181,9 @@ importers:
       '@ofd-compose/media-core':
         specifier: workspace:*
         version: link:../media-core
+      '@ofd-compose/source-protocol':
+        specifier: workspace:*
+        version: link:../source-protocol
       '@ofd-compose/template-compiler':
         specifier: workspace:*
         version: link:../template-compiler
@@ -194,6 +197,25 @@ importers:
       vite:
         specifier: 8.2.2
         version: 8.2.2(@types/node@24.13.3)
+      vitest:
+        specifier: 5.0.0
+        version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
+
+  packages/source-protocol:
+    dependencies:
+      '@ofd-compose/binding-core':
+        specifier: workspace:*
+        version: link:../binding-core
+      '@ofd-compose/document-model':
+        specifier: workspace:*
+        version: link:../document-model
+      '@ofd-compose/layout-ir':
+        specifier: workspace:*
+        version: link:../layout-ir
+      '@sinclair/typebox':
+        specifier: 0.34.52
+        version: 0.34.52
+    devDependencies:
       vitest:
         specifier: 5.0.0
         version: 5.0.0(@types/node@24.13.3)(@vitest/browser-playwright@5.0.0)(@vitest/ui@5.0.0)(vite@8.2.2(@types/node@24.13.3))
