@@ -1,0 +1,13 @@
+  Determining projects to restore...
+  Restored /src/dotnet/src/OFDCompose.ClientSdk/OFDCompose.ClientSdk.csproj (in 60 ms).
+  Restored /src/dotnet/src/OFDCompose.Api/OFDCompose.Api.csproj (in 60 ms).
+  Restored /src/third_party/ofdrw.net/src/Ofdrw.Net.Reader/Ofdrw.Net.Reader.csproj (in 64 ms).
+  Restored /src/dotnet/src/OFDCompose.Containers/OFDCompose.Containers.csproj (in 2.99 sec).
+  Restored /src/dotnet/tools/OFDCompose.DocxScanner/OFDCompose.DocxScanner.csproj (in 4.11 sec).
+  Restored /src/dotnet/tools/OFDCompose.CorpusDocxGenerator/OFDCompose.CorpusDocxGenerator.csproj (in 4.11 sec).
+  Restored /src/dotnet/tests/OFDCompose.DocxScanner.Tests/OFDCompose.DocxScanner.Tests.csproj (in 13.78 sec).
+  Restored /src/dotnet/tests/OFDCompose.OfdIrWriter.Tests/OFDCompose.OfdIrWriter.Tests.csproj (in 13.78 sec).
+  Restored /src/dotnet/tests/OFDCompose.PdfIrWriter.Tests/OFDCompose.PdfIrWriter.Tests.csproj (in 13.78 sec).
+  Restored /src/dotnet/tests/OFDCompose.Containers.Tests/OFDCompose.Containers.Tests.csproj (in 13.78 sec).
+  Restored /src/dotnet/tests/OFDCompose.SmokeTests/OFDCompose.SmokeTests.csproj (in 13.78 sec).
+  5 of 16 projects are up-to-date for restore.

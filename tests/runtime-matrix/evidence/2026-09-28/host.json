@@ -1,0 +1,17 @@
+{
+  "hostCpu": "Apple M4 Max",
+  "hostLogicalCpuCount": 16,
+  "hostMemoryBytes": 137438953472,
+  "sourceCommand": "sysctl -n machdep.cpu.brand_string hw.memsize hw.ncpu",
+  "dockerServer": "OrbStack Docker 29.4.0 linux/arm64",
+  "plannedContainerLimits": {
+    "cpus": 2,
+    "memoryBytes": 4294967296
+  },
+  "architectureLabels": {
+    "linux/arm64": "native architecture in OrbStack Linux VM on Apple M4 Max",
+    "linux/amd64": "emulated x64 on ARM host, not native x64 performance"
+  },
+  "results": "Actual execution and limits must be established by the corresponding completed run and docker inspect evidence. This inventory alone is not a pass.",
+  "hostIsolation": "Shared host, no exclusive CPU affinity. Other containers were not stopped; 13 running containers observed before benchmarks. Agent builds/tests serialized before measurement."
+}

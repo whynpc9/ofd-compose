@@ -1,0 +1,323 @@
+$ turbo run test --concurrency=1 --force
+• turbo 2.10.12
+
+   • Packages in scope: @ofd-compose/binding-core, @ofd-compose/document-model, @ofd-compose/gate-tests, @ofd-compose/golden-corpus, @ofd-compose/layout-core, @ofd-compose/layout-ir, @ofd-compose/media-core, @ofd-compose/render-worker, @ofd-compose/smoke-tests, @ofd-compose/source-protocol, @ofd-compose/template-compiler, @ofd-compose/typography-core
+   • Running test in 12 packages
+   • Remote caching disabled, using shared worktree cache
+
+@ofd-compose/golden-corpus:test: cache bypass, force executing 70ad791231d4282d
+@ofd-compose/golden-corpus:test: $ vitest run
+@ofd-compose/golden-corpus:test: 
+@ofd-compose/golden-corpus:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/tests/golden-corpus
+@ofd-compose/golden-corpus:test: 
+@ofd-compose/golden-corpus:test:  ✓ tests/corpus.dual.test.ts (23 tests) 14ms
+@ofd-compose/golden-corpus:test:  ✓ tests/loader.test.ts (14 tests) 262ms
+@ofd-compose/golden-corpus:test: 
+@ofd-compose/golden-corpus:test:  Test Files  2 passed (2)
+@ofd-compose/golden-corpus:test:       Tests  37 passed (37)
+@ofd-compose/golden-corpus:test:    Start at  12:12:48
+@ofd-compose/golden-corpus:test:    Duration  377ms (tests 46%, transform 34%, import 18%, worker 1%)
+@ofd-compose/golden-corpus:test: 
+@ofd-compose/typography-core:build: cache bypass, force executing c8d6424c0e41f2c2
+@ofd-compose/typography-core:build: $ tsdown
+@ofd-compose/typography-core:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/typography-core:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/typography-core/package.json 
+@ofd-compose/typography-core:build: ℹ entry: src/index.ts
+@ofd-compose/typography-core:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/typography-core:build: ℹ Build start
+@ofd-compose/typography-core:build: ℹ Cleaning 1 files
+@ofd-compose/typography-core:build: ℹ dist/index.mjs  10.69 kB │ gzip: 4.11 kB
+@ofd-compose/typography-core:build: ℹ 1 files, total: 10.69 kB
+@ofd-compose/typography-core:build: ✔ Build complete in 11ms
+@ofd-compose/smoke-tests:test: cache bypass, force executing 6510e1d0c2a581f4
+@ofd-compose/smoke-tests:test: $ vitest run --config vitest.node.config.ts
+@ofd-compose/smoke-tests:test: 
+@ofd-compose/smoke-tests:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/tests/smoke
+@ofd-compose/smoke-tests:test: 
+@ofd-compose/smoke-tests:test:  ✓ |node| src/core-wiring.node.test.ts (2 tests) 1ms
+@ofd-compose/smoke-tests:test: 
+@ofd-compose/smoke-tests:test:  Test Files  1 passed (1)
+@ofd-compose/smoke-tests:test:       Tests  2 passed (2)
+@ofd-compose/smoke-tests:test:    Start at  12:12:49
+@ofd-compose/smoke-tests:test:    Duration  318ms (transform 58%, import 41%, worker 1%, tests 1%)
+@ofd-compose/smoke-tests:test: 
+@ofd-compose/document-model:test: cache bypass, force executing 4495904e4fb45edb
+@ofd-compose/document-model:test: $ vitest run
+@ofd-compose/document-model:test: 
+@ofd-compose/document-model:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/document-model
+@ofd-compose/document-model:test: 
+@ofd-compose/document-model:test:  ✓ tests/validate.test.ts (14 tests) 15ms
+@ofd-compose/document-model:test: 
+@ofd-compose/document-model:test:  Test Files  1 passed (1)
+@ofd-compose/document-model:test:       Tests  14 passed (14)
+@ofd-compose/document-model:test:    Start at  12:12:50
+@ofd-compose/document-model:test:    Duration  145ms (import 42%, transform 39%, tests 17%, worker 2%)
+@ofd-compose/document-model:test: 
+@ofd-compose/source-protocol:test: cache bypass, force executing fc7154a0f2208fe9
+@ofd-compose/source-protocol:test: $ vitest run
+@ofd-compose/source-protocol:test: 
+@ofd-compose/source-protocol:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/source-protocol
+@ofd-compose/source-protocol:test: 
+@ofd-compose/source-protocol:test:  ✓ tests/schema.test.ts (1 test) 4ms
+@ofd-compose/source-protocol:test: 
+@ofd-compose/source-protocol:test:  Test Files  1 passed (1)
+@ofd-compose/source-protocol:test:       Tests  1 passed (1)
+@ofd-compose/source-protocol:test:    Start at  12:12:50
+@ofd-compose/source-protocol:test:    Duration  223ms (transform 62%, import 34%, tests 2%, worker 1%)
+@ofd-compose/source-protocol:test: 
+@ofd-compose/gate-tests:test: cache bypass, force executing 020dfab99d717519
+@ofd-compose/gate-tests:test: $ vitest run
+@ofd-compose/gate-tests:test: 
+@ofd-compose/gate-tests:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/tests/gates
+@ofd-compose/gate-tests:test: 
+@ofd-compose/gate-tests:test:  ✓ src/license-spdx.test.ts (10 tests) 4ms
+@ofd-compose/gate-tests:test:  ✓ src/core-lint-gate.test.ts (6 tests) 326ms
+@ofd-compose/gate-tests:test:  ✓ src/contract-schemas.test.ts (4 tests) 252ms
+@ofd-compose/gate-tests:test: 
+@ofd-compose/gate-tests:test:  Test Files  3 passed (3)
+@ofd-compose/gate-tests:test:       Tests  20 passed (20)
+@ofd-compose/gate-tests:test:    Start at  12:12:51
+@ofd-compose/gate-tests:test:    Duration  459ms (tests 75%, transform 15%, import 9%, worker 1%)
+@ofd-compose/gate-tests:test: 
+@ofd-compose/template-compiler:test: cache bypass, force executing 3752ad6419b8e8af
+@ofd-compose/template-compiler:test: $ vitest run
+@ofd-compose/template-compiler:test: 
+@ofd-compose/template-compiler:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/template-compiler
+@ofd-compose/template-compiler:test: 
+@ofd-compose/template-compiler:test:  ✓ tests/compile.test.ts (17 tests) 8ms
+@ofd-compose/template-compiler:test: 
+@ofd-compose/template-compiler:test:  Test Files  1 passed (1)
+@ofd-compose/template-compiler:test:       Tests  17 passed (17)
+@ofd-compose/template-compiler:test:    Start at  12:12:52
+@ofd-compose/template-compiler:test:    Duration  160ms (transform 51%, import 40%, tests 7%, worker 1%)
+@ofd-compose/template-compiler:test: 
+@ofd-compose/typography-core:test: cache bypass, force executing 0231c41bbcf496ac
+@ofd-compose/typography-core:test: $ vitest run
+@ofd-compose/typography-core:test: 
+@ofd-compose/typography-core:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/typography-core
+@ofd-compose/typography-core:test: 
+@ofd-compose/typography-core:test:  ✓ tests/resources.test.ts (3 tests) 109ms
+@ofd-compose/typography-core:test:  ✓ tests/typography.dual.test.ts (22 tests) 701ms
+@ofd-compose/typography-core:test:  ✓ tests/static-face-cache.dual.test.ts (3 tests) 9574ms
+@ofd-compose/typography-core:test:    ✓ evicts the least recently loaded face without invalidating live core fonts 1089ms
+@ofd-compose/typography-core:test:    ✓ loads the same full 16 MiB font into 160 live cores without duplicate native faces 8448ms
+@ofd-compose/typography-core:test: 
+@ofd-compose/typography-core:test:  Test Files  3 passed (3)
+@ofd-compose/typography-core:test:       Tests  28 passed (28)
+@ofd-compose/typography-core:test:    Start at  12:12:52
+@ofd-compose/typography-core:test:    Duration  9.70s (tests 98%, import 1%, transform 1%)
+@ofd-compose/typography-core:test: 
+@ofd-compose/binding-core:test: cache bypass, force executing 736312a7c3723e1a
+@ofd-compose/binding-core:test: $ vitest run
+@ofd-compose/binding-core:test: 
+@ofd-compose/binding-core:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/binding-core
+@ofd-compose/binding-core:test: 
+@ofd-compose/binding-core:test:  ✓ tests/legacy-compat-diff.test.ts (9 tests) 8ms
+@ofd-compose/binding-core:test:  ✓ tests/bind.test.ts (61 tests) 26ms
+@ofd-compose/binding-core:test:  ✓ tests/structure.test.ts (54 tests) 32ms
+@ofd-compose/binding-core:test: 
+@ofd-compose/binding-core:test:  Test Files  3 passed (3)
+@ofd-compose/binding-core:test:       Tests  124 passed (124)
+@ofd-compose/binding-core:test:    Start at  12:13:02
+@ofd-compose/binding-core:test:    Duration  232ms (transform 51%, import 34%, tests 13%, worker 1%)
+@ofd-compose/binding-core:test: 
+@ofd-compose/media-core:test: cache bypass, force executing 7222447f1dab862c
+@ofd-compose/media-core:test: $ vitest run
+@ofd-compose/media-core:test: 
+@ofd-compose/media-core:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/media-core
+@ofd-compose/media-core:test: 
+@ofd-compose/media-core:test:  ✓ tests/media.dual.test.ts (86 tests) 804ms
+@ofd-compose/media-core:test: 
+@ofd-compose/media-core:test:  Test Files  1 passed (1)
+@ofd-compose/media-core:test:       Tests  86 passed (86)
+@ofd-compose/media-core:test:    Start at  12:13:03
+@ofd-compose/media-core:test:    Duration  1.07s (tests 79%, transform 13%, import 8%)
+@ofd-compose/media-core:test: 
+@ofd-compose/layout-core:test: cache bypass, force executing d615616829f82453
+@ofd-compose/layout-core:test: $ vitest run
+@ofd-compose/layout-core:test: 
+@ofd-compose/layout-core:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-core
+@ofd-compose/layout-core:test: 
+@ofd-compose/layout-core:test:  ✓ tests/barcode-placement.dual.test.ts (2 tests) 47ms
+@ofd-compose/layout-core:test:  ✓ tests/corpus.dual.test.ts (1 test) 176ms
+@ofd-compose/layout-core:test:  ✓ tests/digest.test.ts (3 tests) 2392ms
+@ofd-compose/layout-core:test:    ✓ checks the 50-page baseline using independent Node SHA-256 2103ms
+@ofd-compose/layout-core:test:  ✓ tests/media-regions.dual.test.ts (32 tests) 4084ms
+@ofd-compose/layout-core:test:    ✓ prepared media, paths and regions (23)
+@ofd-compose/layout-core:test:      ✓ explicit scaling transforms text bounds and baseline inspection uniformly 363ms
+@ofd-compose/layout-core:test:      ✓ rejects singular transforms, invalid path sequences and degenerate dash patterns 348ms
+@ofd-compose/layout-core:test:  ✓ tests/pagination.dual.test.ts (20 tests) 8560ms
+@ofd-compose/layout-core:test:    ✓ lays out a 50-page Chinese report identically in repeat runs and the shared Node/browser fixture 4256ms
+@ofd-compose/layout-core:test:    ✓ processes a full 1000-page image-watermark document with linear state decoration 1225ms
+@ofd-compose/layout-core:test:    ✓ ignores overridden root fields and wholly hidden total fields when deciding to repeat layout 347ms
+@ofd-compose/layout-core:test:    ✓ lays out nested keyed repeat sections with stable occurrence identity and independent page policies 363ms
+@ofd-compose/layout-core:test:  ✓ tests/layout.dual.test.ts (29 tests) 9762ms
+@ofd-compose/layout-core:test:    ✓ applies left/center/right/justify, hanging indents, paragraph spacing and fixed line heights 467ms
+@ofd-compose/layout-core:test:    ✓ rejects missing faces, unsupported controls, invalid text, unbreakable words and page overflow 457ms
+@ofd-compose/layout-core:test:    ✓ retains terminal line offsets and supports controls and empty tables 344ms
+@ofd-compose/layout-core:test:    ✓ uses the selected font metrics for blank paragraphs and terminal lines, including fixed-height thresholds 914ms
+@ofd-compose/layout-core:test:    ✓ advances candidate/run cursors on control-only lines and bounds expanded source output 597ms
+@ofd-compose/layout-core:test:    ✓ aligns tab prefixes while keeping single/multiple stops anchored under indents and wrapping 2199ms
+@ofd-compose/layout-core:test:    ✓ bounds optional control and whitespace candidate measurement 1452ms
+@ofd-compose/layout-core:test:    ✓ preserves empty/null/missing DynamicText identities as ordered zero-length sources 342ms
+@ofd-compose/layout-core:test:  ✓ tests/tables.dual.test.ts (35 tests) 10539ms
+@ofd-compose/layout-core:test:    ✓ table layout (1)
+@ofd-compose/layout-core:test:      ✓ lays out 400 real-font rows exactly once with repeated-header identity 750ms
+@ofd-compose/layout-core:test:    ✓ binds 400 RepeatRowGroup instances and preserves table, row and cell contracts 756ms
+@ofd-compose/layout-core:test:    ✓ probes only the first group of a valid 6000-row table 3379ms
+@ofd-compose/layout-core:test:    ✓ bounds paragraph lookahead while preserving a 6000-line policy paragraph 1901ms
+@ofd-compose/layout-core:test: 
+@ofd-compose/layout-core:test:  Test Files  7 passed (7)
+@ofd-compose/layout-core:test:       Tests  122 passed (122)
+@ofd-compose/layout-core:test:    Start at  12:13:04
+@ofd-compose/layout-core:test:    Duration  10.90s (tests 94%, transform 3%, import 3%)
+@ofd-compose/layout-core:test: 
+@ofd-compose/layout-ir:test: cache bypass, force executing 5689a75c4df7942b
+@ofd-compose/layout-ir:test: $ vitest run
+@ofd-compose/layout-ir:test: 
+@ofd-compose/layout-ir:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-ir
+@ofd-compose/layout-ir:test: 
+@ofd-compose/layout-ir:test:  ✓ tests/source-ranges.dual.test.ts (3 tests) 13ms
+@ofd-compose/layout-ir:test:  ✓ tests/contract.dual.test.ts (80 tests) 112ms
+@ofd-compose/layout-ir:test:  ✓ tests/source-range-work.test.ts (1 test) 432ms
+@ofd-compose/layout-ir:test:    ✓ validates a large target once rather than once per fragment source range 431ms
+@ofd-compose/layout-ir:test:  ✓ tests/artifacts.test.ts (11 tests) 467ms
+@ofd-compose/layout-ir:test: 
+@ofd-compose/layout-ir:test:  Test Files  4 passed (4)
+@ofd-compose/layout-ir:test:       Tests  95 passed (95)
+@ofd-compose/layout-ir:test:    Start at  12:13:16
+@ofd-compose/layout-ir:test:    Duration  714ms (tests 64%, transform 20%, import 16%)
+@ofd-compose/layout-ir:test: 
+@ofd-compose/document-model:build: cache bypass, force executing 69c2831bef5d63e1
+@ofd-compose/document-model:build: $ tsdown
+@ofd-compose/document-model:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/document-model:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/document-model/package.json 
+@ofd-compose/document-model:build: ℹ entry: src/index.ts
+@ofd-compose/document-model:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/document-model:build: ℹ Build start
+@ofd-compose/document-model:build: ℹ Cleaning 1 files
+@ofd-compose/document-model:build: ℹ dist/index.mjs  34.34 kB │ gzip: 9.83 kB
+@ofd-compose/document-model:build: ℹ 1 files, total: 34.34 kB
+@ofd-compose/document-model:build: ✔ Build complete in 13ms
+@ofd-compose/template-compiler:build: cache bypass, force executing c72580ad34355f83
+@ofd-compose/template-compiler:build: $ tsdown
+@ofd-compose/template-compiler:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/template-compiler:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/template-compiler/package.json 
+@ofd-compose/template-compiler:build: ℹ entry: src/index.ts
+@ofd-compose/template-compiler:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/template-compiler:build: ℹ Build start
+@ofd-compose/template-compiler:build: ℹ Cleaning 1 files
+@ofd-compose/template-compiler:build: ℹ dist/index.mjs  29.95 kB │ gzip: 8.75 kB
+@ofd-compose/template-compiler:build: ℹ 1 files, total: 29.95 kB
+@ofd-compose/template-compiler:build: ✔ Build complete in 12ms
+@ofd-compose/binding-core:build: cache bypass, force executing 6dcac2ff67e59d45
+@ofd-compose/binding-core:build: $ tsdown
+@ofd-compose/binding-core:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/binding-core:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/binding-core/package.json 
+@ofd-compose/binding-core:build: ℹ entry: src/index.ts
+@ofd-compose/binding-core:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/binding-core:build: ℹ Build start
+@ofd-compose/binding-core:build: ℹ Cleaning 1 files
+@ofd-compose/binding-core:build: ℹ dist/index.mjs  59.12 kB │ gzip: 16.72 kB
+@ofd-compose/binding-core:build: ℹ 1 files, total: 59.12 kB
+@ofd-compose/binding-core:build: ✔ Build complete in 13ms
+@ofd-compose/layout-ir:build: cache bypass, force executing 9c2e1f311769a568
+@ofd-compose/layout-ir:build: $ tsdown
+@ofd-compose/layout-ir:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/layout-ir:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-ir/package.json 
+@ofd-compose/layout-ir:build: ℹ entry: src/index.ts
+@ofd-compose/layout-ir:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/layout-ir:build: ℹ Build start
+@ofd-compose/layout-ir:build: ℹ Cleaning 1 files
+@ofd-compose/layout-ir:build: ℹ dist/index.mjs  28.24 kB │ gzip: 8.10 kB
+@ofd-compose/layout-ir:build: ℹ 1 files, total: 28.24 kB
+@ofd-compose/layout-ir:build: ✔ Build complete in 11ms
+@ofd-compose/media-core:build: cache bypass, force executing b738524773655d7a
+@ofd-compose/media-core:build: $ tsdown
+@ofd-compose/media-core:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/media-core:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/media-core/package.json 
+@ofd-compose/media-core:build: ℹ entry: src/index.ts
+@ofd-compose/media-core:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/media-core:build: ℹ Build start
+@ofd-compose/media-core:build: ℹ Cleaning 1 files
+@ofd-compose/media-core:build: ℹ dist/index.mjs  33.73 kB │ gzip: 9.96 kB
+@ofd-compose/media-core:build: ℹ 1 files, total: 33.73 kB
+@ofd-compose/media-core:build: ✔ Build complete in 13ms
+@ofd-compose/source-protocol:build: cache bypass, force executing e80fa3ae6c705333
+@ofd-compose/source-protocol:build: $ tsdown
+@ofd-compose/source-protocol:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/source-protocol:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/source-protocol/package.json 
+@ofd-compose/source-protocol:build: ℹ entry: src/index.ts
+@ofd-compose/source-protocol:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/source-protocol:build: ℹ Build start
+@ofd-compose/source-protocol:build: ℹ Cleaning 1 files
+@ofd-compose/source-protocol:build: ℹ dist/index.mjs  4.08 kB │ gzip: 1.15 kB
+@ofd-compose/source-protocol:build: ℹ 1 files, total: 4.08 kB
+@ofd-compose/source-protocol:build: ✔ Build complete in 9ms
+@ofd-compose/layout-core:build: cache bypass, force executing 5821c98671a5502c
+@ofd-compose/layout-core:build: $ tsdown
+@ofd-compose/layout-core:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/layout-core:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-core/package.json 
+@ofd-compose/layout-core:build: ℹ entry: src/index.ts
+@ofd-compose/layout-core:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/layout-core:build: ℹ Build start
+@ofd-compose/layout-core:build: ℹ Cleaning 1 files
+@ofd-compose/layout-core:build: ℹ dist/index.mjs  106.90 kB │ gzip: 26.63 kB
+@ofd-compose/layout-core:build: ℹ 1 files, total: 106.90 kB
+@ofd-compose/layout-core:build: ✔ Build complete in 18ms
+@ofd-compose/render-worker:build: cache bypass, force executing 3523d20986d7de29
+@ofd-compose/render-worker:build: $ tsdown
+@ofd-compose/render-worker:build: ℹ tsdown v0.23.0 powered by rolldown v1.2.7
+@ofd-compose/render-worker:build: ℹ config file: /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/render-worker/package.json 
+@ofd-compose/render-worker:build: ℹ entry: src/index.ts
+@ofd-compose/render-worker:build: ℹ tsconfig: tsconfig.json
+@ofd-compose/render-worker:build: ℹ Build start
+@ofd-compose/render-worker:build: ℹ Cleaning 1 files
+@ofd-compose/render-worker:build: ℹ dist/index.mjs  38.92 kB │ gzip: 10.55 kB
+@ofd-compose/render-worker:build: ℹ 1 files, total: 38.92 kB
+@ofd-compose/render-worker:build: ✔ Build complete in 11ms
+@ofd-compose/render-worker:test: cache bypass, force executing b3d07415e4c1a5a4
+@ofd-compose/render-worker:test: $ vitest run
+@ofd-compose/render-worker:test: 
+@ofd-compose/render-worker:test:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/render-worker
+@ofd-compose/render-worker:test: 
+@ofd-compose/render-worker:test:  ✓ tests/media-corpus.dual.test.ts (9 tests) 1182ms
+@ofd-compose/render-worker:test:  ✓ tests/node.test.ts (2 tests) 1398ms
+@ofd-compose/render-worker:test:    ✓ renders in genuine Node with no DOM or canvas and independently verifies the shared SHA-256 baseline 816ms
+@ofd-compose/render-worker:test:    ✓ runs the built public render entry in an independent Node process without a test loader 582ms
+@ofd-compose/render-worker:test:  ✓ tests/corpus.dual.test.ts (20 tests) 3773ms
+@ofd-compose/render-worker:test:  ✓ tests/source.dual.test.ts (13 tests) 7721ms
+@ofd-compose/render-worker:test:    ✓ reopens filled source with inert expressions and genuinely new subset glyphs 398ms
+@ofd-compose/render-worker:test:    ✓ keeps visible values and source relationships while excluding unused business input 1824ms
+@ofd-compose/render-worker:test:    ✓ normalizes unused dynamic evaluation state without rebinding 535ms
+@ofd-compose/render-worker:test:    ✓ removes link targets while preserving effective underlines (default link false) 751ms
+@ofd-compose/render-worker:test:    ✓ removes link targets while preserving effective underlines (default link true) 753ms
+@ofd-compose/render-worker:test:    ✓ retains filled control identity and displayed fallback without unused form metadata 548ms
+@ofd-compose/render-worker:test:    ✓ removes never-rendered page-band content but keeps reserved geometry (default link false) 551ms
+@ofd-compose/render-worker:test:    ✓ removes never-rendered page-band content but keeps reserved geometry (default link true) 549ms
+@ofd-compose/render-worker:test:    ✓ removes inactive root watermarks without changing captured or reopened pages 557ms
+@ofd-compose/render-worker:test:    ✓ preserves distinct identical watermarks in root and later section settings 592ms
+@ofd-compose/render-worker:test:  ✓ tests/render.dual.test.ts (29 tests) 9690ms
+@ofd-compose/render-worker:test:    ✓ renders the complete narrative/table/image/two-barcode sample 416ms
+@ofd-compose/render-worker:test:    ✓ retains real TrueType composite outlines and advances through repeated alternating jobs 609ms
+@ofd-compose/render-worker:test:    ✓ is independent of async arrival order and concurrent renders 1132ms
+@ofd-compose/render-worker:test:    ✓ keeps budget and font validation failures atomic and recovers for the next job 406ms
+@ofd-compose/render-worker:test:    ✓ matches the committed independent Node digest in both engines 378ms
+@ofd-compose/render-worker:test:    ✓ subsets only used fonts from a complete five-font pack 900ms
+@ofd-compose/render-worker:test:    ✓ routes authorized watermark images through root and section pages to writer resources 310ms
+@ofd-compose/render-worker:test:    ✓ retains a notdef-only subset for fonts referenced by glyphless text objects 532ms
+@ofd-compose/render-worker:test:    ✓ commits every authorized image to the identity, independent of resource arrival/order 927ms
+@ofd-compose/render-worker:test:    ✓ returns the independently versioned barcode generator and the consumed profile snapshot 385ms
+@ofd-compose/render-worker:test:    ✓ distinguishes declared font style mismatch from an absent exact font face 346ms
+@ofd-compose/render-worker:test:    ✓ host timing observation preserves complete render identity and balances nested shaping 1700ms
+@ofd-compose/render-worker:test: 
+@ofd-compose/render-worker:test:  Test Files  5 passed (5)
+@ofd-compose/render-worker:test:       Tests  73 passed (73)
+@ofd-compose/render-worker:test:    Start at  12:13:19
+@ofd-compose/render-worker:test:    Duration  10.04s (tests 94%, transform 3%, import 3%)
+@ofd-compose/render-worker:test: 
+
+ Tasks:    21 successful, 21 total
+Cached:    0 cached, 21 total
+  Time:    41.338s 
+

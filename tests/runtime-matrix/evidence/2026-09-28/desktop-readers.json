@@ -1,0 +1,20 @@
+{
+  "observedAt": "2026-09-28",
+  "scope": "Filesystem inventory of /Applications and user Applications only; no successful GUI or licensed OFD-reader session",
+  "foxit": {
+    "installedApp": "/Applications/Foxit Phantom.app",
+    "version": "11.3.2009",
+    "source": "CFBundleShortVersionString in Contents/Info.plist",
+    "ofdCapableTargetBuild": "Not verified",
+    "licenseAvailability": "Not verified",
+    "cffOfdAndPdfDisplayCopySearch": "Not verified",
+    "ttfOfdAndPdfDisplayCopySearch": "Not verified",
+    "screenshots": "Not verified",
+    "sourceAttachmentExtraction": "Not verified"
+  },
+  "suwell": { "installation": "Not found in inspected directories", "acceptance": "Not verified" },
+  "wps": { "installation": "Not found in inspected directories", "acceptance": "Not verified" },
+  "cffFailureObserved": false,
+  "fontFamilyDecision": "Pending desktop evidence; no silent switch",
+  "businessTemplateData": "Not provided; Not verified"
+}

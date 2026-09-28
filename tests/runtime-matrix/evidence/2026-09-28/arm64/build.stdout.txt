@@ -1,0 +1,121 @@
+#0 building with "orbstack" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.28kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 2.7s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
+#3 CACHED
+
+#4 [internal] load metadata for mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664
+#4 DONE 0.0s
+
+#5 [internal] load metadata for docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+#5 DONE 0.0s
+
+#6 [internal] load metadata for mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#6 DONE 1.4s
+
+#7 [internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [dotnet-build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664
+#8 DONE 0.0s
+
+#9 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#9 DONE 0.0s
+
+#10 [node-dependencies 1/4] FROM docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+#10 DONE 0.0s
+
+#11 [internal] load build context
+#11 transferring context: 75.73MB 0.2s done
+#11 DONE 0.2s
+
+#12 [node-dependencies 2/4] WORKDIR /workspace
+#12 CACHED
+
+#13 [node-dependencies 3/4] COPY . /workspace/
+#13 DONE 0.3s
+
+#14 [node-dependencies 4/4] RUN corepack enable     && pnpm install --prod --frozen-lockfile
+#14 0.208 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.20.0.tgz
+#14 5.606 Scope: all 13 workspace projects
+#14 5.650 ? Verifying lockfile against supply-chain policies (190 entries)...
+#14 5.654 Lockfile is up to date, resolution step is skipped
+#14 5.679 Progress: resolved 1, reused 0, downloaded 0, added 0
+#14 5.688 Packages: +25
+#14 5.688 +++++++++++++++++++++++++
+#14 6.681 Progress: resolved 25, reused 0, downloaded 0, added 0
+#14 9.545 Progress: resolved 25, reused 0, downloaded 1, added 0
+#14 9.548 Packages are cloned from the content-addressable store to the virtual store.
+#14 9.548   Content-addressable store is at: /root/.local/share/pnpm/store/v11
+#14 9.548   Virtual store is at:             node_modules/.pnpm
+#14 10.55 Progress: resolved 25, reused 0, downloaded 21, added 21
+#14 10.70 [WARN] GET https://registry.npmjs.org/@rolldown%2Fbinding-android-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 11.55 Progress: resolved 25, reused 0, downloaded 24, added 24
+#14 12.33 Progress: resolved 25, reused 0, downloaded 25, added 25, done
+#14 14.86 
+#14 14.86    ╭──────────────────────────────────────────────╮
+#14 14.86    │                                              │
+#14 14.86    │     Update available! 11.20.0 → 12.6.0.      │
+#14 14.86    │     Changelog: https://pnpm.io/v/12.6.0      │
+#14 14.86    │   To update, run: corepack use pnpm@12.6.0   │
+#14 14.86    │                                              │
+#14 14.86    ╰──────────────────────────────────────────────╯
+#14 14.86 
+#14 21.55 [WARN] Request took 15879ms: https://registry.npmjs.org/@rolldown%2Fbinding-android-arm64
+#14 21.55 ✓ Lockfile passes supply-chain policies (190 entries in 15.9s)
+#14 21.58 
+#14 21.58 devDependencies: skipped
+#14 21.58 
+#14 21.60 Done in 16.3s using pnpm v11.20.0
+#14 DONE 21.8s
+
+#15 [runtime 4/6] COPY --from=dotnet-build /probe/ /probe/
+#15 CACHED
+
+#16 [runtime 2/6] COPY --from=node-dependencies /usr/local/bin/node /usr/local/bin/node
+#16 CACHED
+
+#17 [dotnet-build 2/8] WORKDIR /src
+#17 CACHED
+
+#18 [dotnet-build 3/8] RUN test "$(dotnet --version)" = "10.0.302"
+#18 CACHED
+
+#19 [dotnet-build 4/8] COPY global.json ./
+#19 CACHED
+
+#20 [dotnet-build 7/8] COPY third_party/ofdrw.net/ third_party/ofdrw.net/
+#20 CACHED
+
+#21 [runtime 3/6] COPY --from=node-dependencies /usr/local/LICENSE /usr/local/share/licenses/node/LICENSE
+#21 CACHED
+
+#22 [dotnet-build 5/8] COPY dotnet/ dotnet/
+#22 CACHED
+
+#23 [dotnet-build 6/8] COPY schemas/ schemas/
+#23 CACHED
+
+#24 [dotnet-build 8/8] RUN dotnet restore dotnet/tools/OFDCompose.RuntimeProbe/OFDCompose.RuntimeProbe.csproj       --locked-mode       -m:1       /nodeReuse:false       /p:UseSharedCompilation=false       --disable-build-servers     && dotnet publish dotnet/tools/OFDCompose.RuntimeProbe/OFDCompose.RuntimeProbe.csproj       --configuration Release       --no-restore       --output /probe       /p:UseAppHost=false       -m:1       /nodeReuse:false       /p:UseSharedCompilation=false       --disable-build-servers
+#24 CACHED
+
+#25 [runtime 5/6] WORKDIR /workspace
+#25 CACHED
+
+#26 [runtime 6/6] COPY --from=node-dependencies /workspace/ /workspace/
+#26 DONE 0.2s
+
+#27 exporting to image
+#27 exporting layers
+#27 exporting layers 0.3s done
+#27 writing image sha256:cbc4ff91d0d70ff37ec1b66249d043ca9de645f467d9077c88828eedb88d1b25
+#27 writing image sha256:cbc4ff91d0d70ff37ec1b66249d043ca9de645f467d9077c88828eedb88d1b25 done
+#27 naming to docker.io/library/ofd-compose-runtime-matrix:issue18-pure-arm64 done
+#27 DONE 0.3s

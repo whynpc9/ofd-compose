@@ -1,0 +1,70 @@
+name: Runtime evidence matrix
+
+on:
+  workflow_dispatch:
+
+jobs:
+  runtime:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            platform: linux/amd64
+            arch: x64
+          - runner: ubuntu-24.04-arm
+            platform: linux/arm64
+            arch: arm64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Freeze actual source, inputs and built JS
+        run: |
+          node --experimental-transform-types tests/runtime-matrix/prepare.mjs
+          node tests/runtime-matrix/context.mjs "${RUNNER_TEMP}/matrix-context"
+      - name: Build locked clean runtime image
+        run: |
+          docker build --platform '${{ matrix.platform }}' -f tests/runtime-matrix/Dockerfile -t ofd-runtime-matrix "${RUNNER_TEMP}/matrix-context"
+          mkdir -p "${RUNNER_TEMP}/matrix-output"
+          docker image inspect ofd-runtime-matrix > "${RUNNER_TEMP}/matrix-output/image-inspect.json"
+          docker info > "${RUNNER_TEMP}/matrix-output/docker-info.txt"
+      - name: Run corpus and benchmark without network or writable root
+        run: |
+          image_id="$(docker image inspect --format '{{.Id}}' ofd-runtime-matrix)"
+          for mode in corpus benchmark; do
+            docker run --rm --platform '${{ matrix.platform }}' --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m \
+              -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json \
+              -e MATRIX_EXECUTION_LABEL='native ${{ matrix.arch }} GitHub runner' \
+              -e MATRIX_IMAGE_ID="$image_id" \
+              -v "${RUNNER_TEMP}/matrix-output:/evidence" ofd-runtime-matrix \
+              tests/runtime-matrix/run.mjs "$mode" .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
+          done
+          node tests/runtime-matrix/summarize.mjs "${RUNNER_TEMP}/matrix-output" "${RUNNER_TEMP}/matrix-output/performance.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: runtime-${{ matrix.arch }}
+          path: ${{ runner.temp }}/matrix-output
+  compare:
+    needs: runtime
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - uses: actions/download-artifact@v4
+        with:
+          path: evidence
+      - run: node tests/runtime-matrix/compare.mjs evidence/runtime-arm64 evidence/runtime-x64 evidence/comparison.json
+      - run: node tests/runtime-matrix/mutation-gate.mjs evidence/runtime-arm64 evidence/runtime-x64
+      - uses: actions/upload-artifact@v4
+        with:
+          name: runtime-comparison
+          path: evidence/comparison.json

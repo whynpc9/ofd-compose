@@ -1,0 +1,23 @@
+{
+  "sdk": "10.0.302",
+  "architecture": "linux/arm64",
+  "validRun": {
+    "command": "dotnet test --solution dotnet/OFDCompose.slnx --configuration Release --no-build --no-restore",
+    "exitCode": 0,
+    "passed": 494,
+    "failed": 0,
+    "skipped": 0,
+    "assemblies": 5,
+    "elapsedSeconds": 120.063,
+    "stdout": "tests.stdout.txt"
+  },
+  "excludedAttempt": {
+    "exitCode": 5,
+    "tests": 0,
+    "reason": "MSBuild-only switches on no-build MTP command were forwarded to xUnit runner; zero tests selected",
+    "stdout": "invalid-test-invocation.stdout.txt",
+    "countedAsPass": false
+  },
+  "codeSha": "d0627b31067c137fb438762eb53f89723b799a5f",
+  "scope": "Local baseline before the Worker observation-boundary refactor. Current-head full-solution coverage is reported by PR CI; the new Worker has fresh Node, browser and actual dual-runtime evidence."
+}

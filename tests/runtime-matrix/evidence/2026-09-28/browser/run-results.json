@@ -1,0 +1,46 @@
+{
+  "chrome154": {
+    "status": "passed",
+    "codeSha": "5ead51614a41ceb6b581f2a469b211508220b55b",
+    "actualVersion": "154.0.8037.58",
+    "tasks": "7/7",
+    "cachedTasks": 0,
+    "tests": 409,
+    "duration": "1m53.83s",
+    "exitCode": 0,
+    "stdoutStderr": "chrome-154.stdout.txt"
+  },
+  "chrome153": {
+    "status": "passed",
+    "codeSha": "5ead51614a41ceb6b581f2a469b211508220b55b",
+    "actualVersion": "153.0.8010.12",
+    "tasks": "7/7",
+    "cachedTasks": 0,
+    "tests": 409,
+    "duration": "1m53.57s",
+    "exitCode": 0,
+    "stdoutStderr": "chrome-153.stdout.txt"
+  },
+  "firefox155": {
+    "status": "passed",
+    "codeSha": "5ead51614a41ceb6b581f2a469b211508220b55b",
+    "actualVersion": "155.0",
+    "tasks": "7/7",
+    "cachedTasks": 0,
+    "tests": 409,
+    "duration": "2m43.037s",
+    "exitCode": 0,
+    "stdoutStderr": "firefox-155.stdout.txt",
+    "instanceLabels": ["firefox", "browser (firefox)"]
+  },
+  "packageTests": {
+    "layout-ir": 83,
+    "golden-corpus": 23,
+    "smoke": 2,
+    "media-core": 86,
+    "layout-core": 119,
+    "typography-core": 25,
+    "render-worker": 71
+  },
+  "note": "These complete retained runs supersede the earlier summary-only and split Firefox evidence."
+}

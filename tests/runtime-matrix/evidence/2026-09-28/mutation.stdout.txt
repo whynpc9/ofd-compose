@@ -1,0 +1,5 @@
+rejected: changed canonical IR
+rejected: lost negative case
+rejected: different font input
+rejected: missing image identity
+rejected: same runtime architecture

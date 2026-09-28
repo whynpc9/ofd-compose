@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/OFDCompose.OfdIrWriter/OFDCompose.OfdIrWriter.csproj" />
+    <ProjectReference Include="../../src/OFDCompose.PdfIrWriter/OFDCompose.PdfIrWriter.csproj" />
+  </ItemGroup>
+</Project>

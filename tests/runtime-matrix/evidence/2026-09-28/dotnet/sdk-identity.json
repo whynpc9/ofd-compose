@@ -1,0 +1,14 @@
+{
+  "schema": "ofd-compose/runtime-matrix-sdk-identity@1",
+  "observedAt": "2026-09-28",
+  "repository": "mcr.microsoft.com/dotnet/sdk",
+  "localImageId": "sha256:927989b59ab634d7d5f2e780c3cafc8d83806d074355772927f6c93a6f889cfc",
+  "manifestListDigest": "sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664",
+  "platform": "linux/arm64",
+  "platformManifestDigest": "sha256:72c7d33e9f1cda9ea41dab1add1954a4ff8318c7501e272be0c61fc7d76f278b",
+  "dotnetSdkVersion": "10.0.302",
+  "verification": {
+    "manifest": "docker buildx imagetools inspect mcr.microsoft.com/dotnet/sdk@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664",
+    "sdk": "docker run --rm --entrypoint dotnet mcr.microsoft.com/dotnet/sdk:10.0 --version"
+  }
+}

@@ -1,0 +1,78 @@
+[
+  {
+    "architecture": "arm64",
+    "sampleRows": 172,
+    "positiveRows": 129,
+    "negativeRows": 43,
+    "allInputAndOutcomeIdentitiesMatchCorpus": true,
+    "imageInspectMatchesRunIdentity": true,
+    "outputDigests": {
+      "synthetic-1-page": {
+        "ofd": [
+          "270baa56f2e2ca4e10a0385777ca4710a63fde42fa9baec7125c79ab9e0df58f"
+        ],
+        "pdf": [
+          "8ec07a6a4bdb0a2ed944d3f46c6cf48c486fc587f86a19ad653b5d64e9216a83"
+        ]
+      },
+      "synthetic-1000-row": {
+        "ofd": [
+          "f6cb055ee86ac5d051ecbe8a362586586f0c9f5cedbb1e3219ebee0e7af973a4"
+        ],
+        "pdf": [
+          "ea988fc7279e3ed662fbbcd85809045c4da9263e82838b314f49de1994ae6454"
+        ]
+      },
+      "synthetic-50-page": {
+        "ofd": [
+          "4b7c23756c980336d7b8039082f3857a9a1a130020bad4fdc464ed9f77c3a8d0"
+        ],
+        "pdf": [
+          "51c0fe04f95ca8594fdbdd3c10b5b7254258fb865437806b2147e335e3a5a92f"
+        ]
+      },
+      "synthetic-6000-row": {
+        "ofd": [],
+        "pdf": []
+      }
+    }
+  },
+  {
+    "architecture": "amd64",
+    "sampleRows": 172,
+    "positiveRows": 129,
+    "negativeRows": 43,
+    "allInputAndOutcomeIdentitiesMatchCorpus": true,
+    "imageInspectMatchesRunIdentity": true,
+    "outputDigests": {
+      "synthetic-1-page": {
+        "ofd": [
+          "270baa56f2e2ca4e10a0385777ca4710a63fde42fa9baec7125c79ab9e0df58f"
+        ],
+        "pdf": [
+          "8ec07a6a4bdb0a2ed944d3f46c6cf48c486fc587f86a19ad653b5d64e9216a83"
+        ]
+      },
+      "synthetic-1000-row": {
+        "ofd": [
+          "f6cb055ee86ac5d051ecbe8a362586586f0c9f5cedbb1e3219ebee0e7af973a4"
+        ],
+        "pdf": [
+          "ea988fc7279e3ed662fbbcd85809045c4da9263e82838b314f49de1994ae6454"
+        ]
+      },
+      "synthetic-50-page": {
+        "ofd": [
+          "4b7c23756c980336d7b8039082f3857a9a1a130020bad4fdc464ed9f77c3a8d0"
+        ],
+        "pdf": [
+          "51c0fe04f95ca8594fdbdd3c10b5b7254258fb865437806b2147e335e3a5a92f"
+        ]
+      },
+      "synthetic-6000-row": {
+        "ofd": [],
+        "pdf": []
+      }
+    }
+  }
+]

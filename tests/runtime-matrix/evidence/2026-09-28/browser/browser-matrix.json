@@ -1,0 +1,36 @@
+{
+  "date": "2026-09-28",
+  "codeSha": "5ead51614a41ceb6b581f2a469b211508220b55b",
+  "platform": "macOS arm64",
+  "playwright": "1.63.0",
+  "versions": [
+    {
+      "browser": "Chrome",
+      "version": "154.0.8037.58",
+      "releaseSource": "https://chromereleases.googleblog.com/2026/09/stable-channel-update-for-desktop_0856730748.html"
+    },
+    {
+      "browser": "Chrome for Testing",
+      "version": "153.0.8010.12",
+      "releaseSource": "https://chromereleases.googleblog.com/2026/08/early-stable-update-for-desktop_0935803414.html"
+    },
+    {
+      "browser": "Firefox",
+      "version": "155.0",
+      "releaseSource": "https://firefox-admin-docs.mozilla.org/release-notes/version/firefox-155/"
+    }
+  ],
+  "commands": [
+    "OFD_BROWSER=chromium OFD_BROWSER_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' pnpm exec turbo run test:browser --force --concurrency=1",
+    "OFD_BROWSER=chromium OFD_BROWSER_EXECUTABLE_PATH='/Users/wanghongyi/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' pnpm exec turbo run test:browser --force --concurrency=1",
+    "OFD_BROWSER=firefox OFD_BROWSER_EXECUTABLE_PATH='/Users/wanghongyi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox' pnpm exec turbo run test:browser --force --concurrency=1"
+  ],
+  "resultFiles": [
+    "chrome-154.stdout.txt",
+    "chrome-153.stdout.txt",
+    "firefox-155.stdout.txt",
+    "probe-output.jsonl",
+    "run-results.json"
+  ],
+  "note": "The earlier summary-only and split Firefox evidence is superseded by these three complete retained stdout/stderr runs."
+}

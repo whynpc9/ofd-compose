@@ -18,7 +18,8 @@
       "!packages/layout-ir/fixtures/*.json",
       "!**/*.grit",
       "!tests/ofd-writer/fixtures",
-      "!tests/pdf-writer/fixtures"
+      "!tests/pdf-writer/fixtures",
+      "!tests/runtime-matrix/evidence"
     ]
   },
   "formatter": {

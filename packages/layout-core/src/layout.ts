@@ -443,6 +443,8 @@ export async function layout(
   options: LayoutOptions,
   preparedMedia?: object,
   job?: JobContext,
+  /** Job-owned typography dependency; callers must supply a fresh core for each job. */
+  typography?: TypographyCore,
 ) {
   preflightJsonTree(document);
   preflightDocument(document);
@@ -580,7 +582,7 @@ export async function layout(
         ? 1
         : 0,
   );
-  const core = new TypographyCore();
+  const core = typography ?? new TypographyCore();
   const faces: Face[] = [];
   for (const { definition, bytes } of loaded) {
     if (

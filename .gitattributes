@@ -1,0 +1,4 @@
+# Captured evidence is hashed byte-for-byte; never normalize its line endings.
+tests/runtime-matrix/evidence/** -text
+# Preserve native tool stdout, including prefix padding on otherwise empty lines.
+tests/runtime-matrix/evidence/**/*.stdout.txt -whitespace

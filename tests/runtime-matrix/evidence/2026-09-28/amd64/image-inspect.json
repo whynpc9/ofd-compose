@@ -1,0 +1,63 @@
+[
+    {
+        "Id": "sha256:e3eb3bc1fadf11f76914f42b6f62b47a287d6091fc35cc9112d155f71507e961",
+        "RepoTags": [
+            "ofd-compose-runtime-matrix:issue18-pure-amd64"
+        ],
+        "RepoDigests": [],
+        "Comment": "buildkit.dockerfile.v0",
+        "Created": "2026-09-28T12:22:54.24687229+08:00",
+        "Config": {
+            "Env": [
+                "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+                "APP_UID=1654",
+                "ASPNETCORE_HTTP_PORTS=8080",
+                "DOTNET_RUNNING_IN_CONTAINER=true",
+                "DOTNET_VERSION=10.0.12",
+                "ASPNET_VERSION=10.0.12",
+                "DOTNET_CLI_HOME=/tmp/dotnet",
+                "DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1",
+                "DOTNET_CLI_TELEMETRY_OPTOUT=1",
+                "NODE_ENV=production"
+            ],
+            "Entrypoint": [
+                "node"
+            ],
+            "WorkingDir": "/workspace",
+            "Labels": {
+                "org.opencontainers.image.version": "24.04"
+            }
+        },
+        "Architecture": "amd64",
+        "Os": "linux",
+        "Size": 461363158,
+        "GraphDriver": {
+            "Data": {
+                "LowerDir": "/var/lib/docker/overlay2/vdvpnftr1h5z7fddfxjccfsol/diff:/var/lib/docker/overlay2/osjnzrw33j3vjqlspqop9cc9l/diff:/var/lib/docker/overlay2/twcveypdultzutu074uvuf4mz/diff:/var/lib/docker/overlay2/b7fwgyvkirlutktzoe53j3nz0/diff:/var/lib/docker/overlay2/518f85d73309eaf38fdc1020d330cc9da7714604e9633eb3a500b8f0dddba08a/diff:/var/lib/docker/overlay2/b50c45062db6efedf4c112b2a09ca593657bcfa64ca1026cc9ff29567bb0bd1a/diff:/var/lib/docker/overlay2/c2ad7b3bcdf6c0096c94c35a7f90c154e1c056f20d4e5d87129ce5e79aa1316d/diff:/var/lib/docker/overlay2/093bf623d5a246aaf56a0e3db834814754488b6ec387a06ae4a5827df69dcb1d/diff:/var/lib/docker/overlay2/2931d78d2c45c01e422e7db464c7d8ffe494929a0a9507700de1d9fbe59ea844/diff:/var/lib/docker/overlay2/b0fea4e3e0b0e2e42c3055d1696392674fe73f02b085a1e40a0d06082fffc68c/diff",
+                "MergedDir": "/var/lib/docker/overlay2/lcfuvt6z1bfoshm5rp01vl2rf/merged",
+                "UpperDir": "/var/lib/docker/overlay2/lcfuvt6z1bfoshm5rp01vl2rf/diff",
+                "WorkDir": "/var/lib/docker/overlay2/lcfuvt6z1bfoshm5rp01vl2rf/work"
+            },
+            "Name": "overlay2"
+        },
+        "RootFS": {
+            "Type": "layers",
+            "Layers": [
+                "sha256:d81fb2a7c6ee3be05fdefaa7fd223be219c1ab172083ec1b994c3ecda33ac0a8",
+                "sha256:d31e497f2bb1cec025fc1cf2304a9de23a2ab8260c84410f31d1c0cbf57fa715",
+                "sha256:388b1ba7692262f815a6eb23daca56ca594371dfd194df4462e6a38b993d4562",
+                "sha256:c2f4845dd24bedc7934d3436a0019a986c54c77d4617a662906de319b62d9e56",
+                "sha256:2c5a20e2ec61113b298693bb86c2065296886e069d4890483afb22d81874a3ea",
+                "sha256:5dc05d781950f38f66c51617414615a63665085547e0be9d4a73197f955e229a",
+                "sha256:a497879ed5fd5e35c5d36d979d76df313c86f7354e66176dbe21ac4850b72548",
+                "sha256:e0dddd0cf759cc84e2b1190cb19498959dbcc6dd68e528904839c6b795e614ac",
+                "sha256:f0ce857ab24f2582ce5f4d2049810eabc233c9e6004eeac74589e56b8b4091e4",
+                "sha256:18eaabae83f00e9d14ed9c76c316aea458ac2acc9e1d344e9b4f073d5e4540f3",
+                "sha256:d1076efe1ec2477be1c9879c8256d50bf6b30587821623ce78019ef10bcab308"
+            ]
+        },
+        "Metadata": {
+            "LastTagTime": "2026-09-28T12:22:54.538792337+08:00"
+        }
+    }
+]
