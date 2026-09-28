@@ -17,7 +17,9 @@ these real runs. Counterexample files are temporary and never replace raw eviden
 identities. They are handoff material, not screenshots or desktop acceptance.
 `desktop-readers.json` preserves the missing target reader/license/GUI gates.
 
-`browser/` and initial `dotnet/*.summary.txt` explicitly identify summaries where
-complete stdout was not captured. They must not be represented as raw logs.
+`browser/` now retains three complete, forced, serial runs with exact version probes,
+commands, full stdout/stderr and exit codes. These supersede its historical summaries.
+Initial `dotnet/*.summary.txt` identify summaries where full stdout was not captured;
+the later whole-solution logs are retained separately. Summaries are not raw logs.
 `node.stdout.txt` is the captured complete Node test run. Generated evidence is excluded
 from formatter rewrites so raw file hashes remain valid.

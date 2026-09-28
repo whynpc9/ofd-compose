@@ -131,20 +131,20 @@ reader and browser kernel checks do not close these desktop gates.
 
 ## Browser kernel execution
 
-The existing seven shared suites ran with explicit engine/executable overrides. Actual
-versions were obtained from launched Playwright browsers, not inferred from download
-labels. Chrome 154.0.8037.58 passed 409 tests in 7 uncached tasks. Chrome for Testing
-153.0.8010.12 passed the same 409 tests in 7 uncached tasks; this is Google's fixed
-Early Stable build of the previous stable major, not a claim to its latest patch.
-Playwright Firefox 155.0 passed 338 tests in six suites and 71 Worker tests in a separate
-corrected run. The first Worker attempt lost the engine override in Turbo and was
-interrupted; it is excluded from Firefox evidence. This is 409 covered tests across
-two runs, not an uninterrupted full run or a stock desktop Firefox application claim.
+The existing seven shared suites were rerun serially with explicit engine/executable
+paths, `--force --concurrency=1`, at code SHA
+`1b4c6db124bb9bdc349d5497370608aaa662f4f2`. Every retained log includes the exact command,
+actual launch/version probe immediately before the test, full stdout/stderr and exit 0.
+Each completed **7/7 suites, 409 tests, zero cached tasks, no failures or skipped suites**:
+Chrome 154.0.8037.58, Chrome for Testing 153.0.8010.12, and Playwright Firefox 155.0.
+CfT 153 is Google's fixed Early Stable build of the previous stable major, not a claim
+to its latest patch. Playwright Firefox is not a stock desktop OFD reader.
 
-See `tests/runtime-matrix/evidence/2026-09-28/browser/` for exact commands, actual launch
-outputs, per-suite counts, official release URLs, and checksums. Complete browser stdout
-was observed in the execution session but not captured to files; retained counters are
-explicitly summaries. No desktop OFD rendering is inferred from these kernel tests.
+See [complete browser evidence](../../tests/runtime-matrix/evidence/2026-09-28/browser/browser-matrix.json)
+for raw logs, per-suite counts, exact versions, official release sources and checksums.
+These logged full runs supersede the earlier summary-only and split-Firefox evidence.
+The earlier Turbo override mistakes remain disclosed as excluded history; no invalid
+run is promoted to a pass. No desktop OFD rendering is inferred from kernel tests.
 
 
 The actual paired reader files and their hashes are in

@@ -26,8 +26,9 @@ Canonical IR/input/resource/complete-diagnostic comparison passed; five corrupte
 incomplete evidence counterexamples were rejected. Container package/executable/SDK
 inventories, image/source/font/WASM/output hashes and raw logs are retained.
 
-Chromium major 154 and 153 each covered 409 kernel tests; Firefox 155 covered 338 + 71
-in two explicitly documented runs. Node 619 and exact-SDK .NET 494/0-fail/0-skip passed.
+Chromium major 154 and 153 and Firefox 155 each passed a complete 409-test, seven-suite
+forced serial run with full stdout/stderr, version probes and exit 0 retained. These
+logged runs supersede the earlier summary-only / split-Firefox evidence. Node 619 and exact-SDK .NET 494/0-fail/0-skip passed.
 Formal measurements retain 172 raw rows per architecture (20 cold + 3 discarded warmups
 + 20 hot for each of four cases), per-stage p50/p95 and separate process memory peaks.
 The successful scale samples are synthetic 1/50 pages and 1000 rows/84 pages. The

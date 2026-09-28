@@ -1,24 +1,37 @@
 {
   "chrome154": {
     "status": "passed",
+    "codeSha": "1b4c6db124bb9bdc349d5497370608aaa662f4f2",
+    "actualVersion": "154.0.8037.58",
     "tasks": "7/7",
     "cachedTasks": 0,
     "tests": 409,
-    "duration": "1m12.308s"
+    "duration": "1m52.442s",
+    "exitCode": 0,
+    "stdoutStderr": "chrome-154.stdout.txt"
   },
   "chrome153": {
     "status": "passed",
+    "codeSha": "1b4c6db124bb9bdc349d5497370608aaa662f4f2",
+    "actualVersion": "153.0.8010.12",
     "tasks": "7/7",
     "cachedTasks": 0,
     "tests": 409,
-    "duration": "1m13.832s"
+    "duration": "1m51.713s",
+    "exitCode": 0,
+    "stdoutStderr": "chrome-153.stdout.txt"
   },
   "firefox155": {
-    "status": "passed in two corrected runs",
-    "firstSixPackages": 338,
-    "renderWorker": 71,
-    "coveredTests": 409,
-    "note": "The first six packages completed under Firefox. The render-worker Turbo override initially dropped the browser environment, so that invalid Chromium execution was interrupted; after fixing the override, render-worker passed directly under Firefox in 42.08s. This is not claimed as one uninterrupted full run."
+    "status": "passed",
+    "codeSha": "1b4c6db124bb9bdc349d5497370608aaa662f4f2",
+    "actualVersion": "155.0",
+    "tasks": "7/7",
+    "cachedTasks": 0,
+    "tests": 409,
+    "duration": "2m40.184s",
+    "exitCode": 0,
+    "stdoutStderr": "firefox-155.stdout.txt",
+    "instanceLabels": ["firefox", "browser (firefox)"]
   },
   "packageTests": {
     "layout-ir": 83,
@@ -28,5 +41,6 @@
     "layout-core": 119,
     "typography-core": 25,
     "render-worker": 71
-  }
+  },
+  "note": "These complete retained runs supersede the earlier summary-only and split Firefox evidence."
 }
