@@ -360,21 +360,36 @@ async function run() {
     const wrapped = adapter.state();
     check(wrapped);
     const undo = [];
+    let previousRevision = wrapped.revision;
     for (const expected of [edited, bound, baseline]) {
       editor.command.executeUndo();
       const s = adapter.state();
       check(s);
-      equal(s.ast, expected.ast, "mixed undo state");
+      equal(s.ast, expected.ast, "mixed undo source");
+      equal(
+        s.current,
+        expected.current,
+        "mixed undo complete immutable checkpoint (mapping offsets, projection styles, selection context)",
+      );
+      equal(s.view, expected.view, "mixed undo actual projection/range/context");
+      equal(s.liveSelection, expected.liveSelection, "mixed undo actual logical selection");
+      equal(s.revision, previousRevision + 1, "every mixed undo publishes a new revision");
+      previousRevision = s.revision;
       undo.push(s);
     }
     editor.command.executeRedo();
-    equal(adapter.state().ast, bound.ast, "binding redo");
+    const redo = adapter.state();
+    equal(redo.ast, bound.ast, "binding redo source");
+    equal(redo.current, bound.current, "binding redo complete immutable checkpoint");
+    equal(redo.view, bound.view, "binding redo actual projection/range/context");
+    equal(redo.liveSelection, bound.liveSelection, "binding redo actual logical selection");
+    equal(redo.revision, previousRevision + 1, "mixed redo publishes a new revision");
     insert("新");
     const branch = adapter.state();
     check(branch);
     equal(branch.history.redo, [], "branch cleared");
-    ok(branch.revision > wrapped.revision, "branch revision remains monotonic");
-    return { baseline, bound, edited, wrapped, undo, branch };
+    equal(branch.revision, redo.revision + 1, "branch revision remains monotonic");
+    return { baseline, bound, edited, wrapped, undo, redo, branch };
   });
   await test("patched-reconcile-failure-rollback-and-reentry", async () => {
     create();
