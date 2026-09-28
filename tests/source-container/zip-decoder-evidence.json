@@ -1,0 +1,71 @@
+{
+  "measuredAt": "2026-09-21",
+  "scope": "synthetic packet regressions and representative decoder probes; not authentication or a product-wide performance guarantee",
+  "decoder": {
+    "package": "SharpZipLib",
+    "version": "1.4.2",
+    "license": "MIT",
+    "asset": "net6.0",
+    "transitiveDependencies": [],
+    "nupkgSha256": "fe0895aa2930a2b1b65caa9f37db8bca35125ebdf9cc1b99d855f6afc5ff5946",
+    "nugetContentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A==",
+    "inputChunkBytes": 65536,
+    "outputChunkBytes": 65536,
+    "acceptance": [
+      "IsFinished",
+      "all declared input fed",
+      "RemainingInput == 0",
+      "exact expanded length",
+      "actual CRC32 matches central record"
+    ]
+  },
+  "validation": {
+    "zipTargetedPassed": 82,
+    "dotnetPassed": 490,
+    "dotnetFailed": 0,
+    "dotnetSkipped": 0,
+    "nugetLicensePackagesPassed": 28,
+    "redRecordCases": 30,
+    "redCodecAndCrcCases": 24,
+    "validPaddingAndDescriptorCasesPreserved": true,
+    "realCrcEqualToDescriptorSignature": "0x08074b50; data ac0a7ad5",
+    "additionalSingleDiskCasesAfterSnapshot": 4,
+    "finalGateForAdditionalCases": "GitHub CI using pinned SDK 10.0.302"
+  },
+  "probes": {
+    "bcl": {
+      "actualSource": "698340-byte existing subset font",
+      "syntheticRawDeflateBytes": 119004,
+      "tailBytes": 8,
+      "ordinaryAndSingleByteReadConsumedWithTail": 119012,
+      "decompressedBytes": 698340,
+      "decompressedShaUnchanged": true,
+      "conclusion": "underlying stream Position did not prove codec consumption; not used in production"
+    },
+    "sharpZipLegalAggregate": {
+      "memberExpandedBytes": 33554432,
+      "memberCompressedBytes": 21149897,
+      "compressionRatio": 1.587,
+      "members": 8,
+      "aggregateExpandedBytes": 268435456,
+      "aggregateCompressedBytesWithMetadataAllowance": 169201224,
+      "packageCeilingBytes": 268435456,
+      "elapsedMs": 1064.92,
+      "inflateCalls": 5168
+    },
+    "cancellation": {
+      "legalEmptyBlocks": 2000000,
+      "inputBytes": 10000005,
+      "cancelAfterMs": 5,
+      "observedReturnMs": 6.394,
+      "inflateCalls": 17,
+      "fedBytes": 1114112,
+      "maxInflateCallMs": 0.356
+    }
+  },
+  "sources": [
+    "https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT",
+    "https://github.com/icsharpcode/SharpZipLib/tree/v1.4.2",
+    "https://www.nuget.org/packages/SharpZipLib/1.4.2"
+  ]
+}

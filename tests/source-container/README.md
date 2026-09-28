@@ -32,8 +32,10 @@ an application observation. No actual desktop extraction, visual display, licens
 entitlement or supported-OFD claim follows from those observations. ADR-0005 remains
 Proposed, and the single/multiple attachment decision remains open for issue 19.
 
-Local validation snapshot after review fixes: fresh Node 618, fresh Chromium 408,
-full .NET 408 (214 container cases plus the unchanged 194 baseline cases).
+Local validation snapshot on 2026-09-21: fresh Node 618, fresh Chromium 408,
+full .NET 490 (296 container cases plus the unchanged 194 baseline cases).
+Four single-disk regressions were added afterward; the pinned-SDK CI run supplies
+the final complete-suite result, as the local temporary SDK was later removed.
 Lint, typecheck/build, locked NuGet restore and strict dependency licensing passed.
 Old OFD fixtures regenerated without a diff; existing 11-case Java Reader geometry
 baseline and pinned pdf.js strict/accepted-whitespace gates also passed. See
@@ -212,3 +214,20 @@ Both profiles reject changed/missing font descriptor names and mismatched extens
 for real OTF and TTF subsets. Names bind to the embedded subset bytes, not the full
 editing font; legal basename changes such as Design.otf remain supported. The regression
 uses the same static SFNT flavors admitted by the existing fixed-writer validator.
+
+ZIP-record regressions retain the exact logical entry bytes while rebuilding local and
+central offsets. Both profiles reject preambles, between-record gaps, trailing gaps,
+and missing/extra/inconsistent descriptors; legitimate signed/unsigned descriptor forms,
+known/zero local values and reversed central ordering remain supported. These tests
+explicitly cover record boundaries, not arbitrary codec canonicalization.
+
+Additional packet-level tests preserve record contiguity while adding compressed tails,
+omitting a DEFLATE final block, or coherently falsifying all CRC declarations. They reject
+these cases while retaining legal alignment padding and 12/16-byte descriptors. A real
+four-byte signature sidecar with CRC 0x08074b50 checks signature/CRC ambiguity. BCL stream
+Position was experimentally insufficient even with one-byte reads; the selected decoder
+exposes actual remaining input and completion state. Scratch decoder timings are evidence
+about that seam, not a whole-container benchmark.
+
+`zip-decoder-evidence.json` records the selected package identity, 82 packet checks,
+legal aggregate probe and cancellation measurements from the Sol validation worker.

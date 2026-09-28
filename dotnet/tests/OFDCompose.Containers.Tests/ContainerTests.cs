@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Buffers.Binary;
 using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
@@ -1477,6 +1478,139 @@ public sealed class ContainerTests
             foreach(var record in manifest["entries"]!.AsArray()){byte[] bytes=entries[record!["path"]!.GetValue<string>()];record["byteLength"]=bytes.Length;record["sha256"]=Hash(bytes);}
         });
         Assert.Equal("RESOURCE_FONT_DESCRIPTOR_MISMATCH",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+
+    private static byte[] ZipRecordVariant(byte[] original,string descriptor="none",string gap="none",string corruption="none",bool reverseCentral=false,string? corruptionEntry=null)
+    {
+        int end=original.Length-22;Assert.Equal(0x06054b50u,BinaryPrimitives.ReadUInt32LittleEndian(original.AsSpan(end)));
+        int count=BinaryPrimitives.ReadUInt16LittleEndian(original.AsSpan(end+10));int position=checked((int)BinaryPrimitives.ReadUInt32LittleEndian(original.AsSpan(end+16)));
+        using var output=new MemoryStream();var central=new List<byte[]>();byte[] hidden=Encoding.ASCII.GetBytes("HIDDEN_ZIP_RECORD_SECRET");
+        if(gap=="prefix")output.Write(hidden);
+        for(int i=0;i<count;i++)
+        {
+            Assert.Equal(0x02014b50u,BinaryPrimitives.ReadUInt32LittleEndian(original.AsSpan(position)));
+            int name=BinaryPrimitives.ReadUInt16LittleEndian(original.AsSpan(position+28)),extra=BinaryPrimitives.ReadUInt16LittleEndian(original.AsSpan(position+30)),comment=BinaryPrimitives.ReadUInt16LittleEndian(original.AsSpan(position+32));
+            Assert.Equal(0,extra);Assert.Equal(0,comment);
+            byte[] record=original.AsSpan(position,46+name).ToArray();string entryName=Encoding.ASCII.GetString(record,46,name);bool mutate=corruptionEntry is null?i==0:entryName==corruptionEntry;int local=checked((int)BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan(42)));int compressed=checked((int)BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan(20)));
+            Assert.Equal(0x04034b50u,BinaryPrimitives.ReadUInt32LittleEndian(original.AsSpan(local)));Assert.Equal(0,BinaryPrimitives.ReadUInt16LittleEndian(original.AsSpan(local+28)));
+            byte[] header=original.AsSpan(local,30+name).ToArray();byte[] payload=original.AsSpan(local+30+name,compressed).ToArray();
+            if(mutate&&corruption=="payload-tail")payload=[..payload,..Encoding.ASCII.GetBytes("HIDDEN_COMPRESSED_TAIL")];
+            if(mutate&&corruption is "unfinished" or "padding")
+            {
+                byte[] plain=Zip(original)[entryName];Assert.InRange(plain.Length,1,65535);
+                payload=new byte[5+plain.Length];payload[0]=corruption=="padding"?(byte)0xF9:(byte)0;
+                BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(1),checked((ushort)plain.Length));BinaryPrimitives.WriteUInt16LittleEndian(payload.AsSpan(3),unchecked((ushort)~plain.Length));plain.CopyTo(payload,5);
+                BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(8),8);BinaryPrimitives.WriteUInt16LittleEndian(record.AsSpan(10),8);
+            }
+            BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(18),checked((uint)payload.Length));BinaryPrimitives.WriteUInt32LittleEndian(record.AsSpan(20),checked((uint)payload.Length));
+            if(mutate&&corruption is "crc-stored" or "crc-deflated")
+            {uint crc=BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan(16))^0x80000000u;BinaryPrimitives.WriteUInt32LittleEndian(record.AsSpan(16),crc);BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(14),crc);}
+            ushort flags=BinaryPrimitives.ReadUInt16LittleEndian(header.AsSpan(6));Assert.Equal(0,flags&8);
+            if(descriptor!="none")
+            {
+                flags|=8;BinaryPrimitives.WriteUInt16LittleEndian(header.AsSpan(6),flags);BinaryPrimitives.WriteUInt16LittleEndian(record.AsSpan(8),flags);
+                if(corruption!="known")header.AsSpan(14,12).Clear();
+                if(mutate&&corruption=="local")BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(14),BinaryPrimitives.ReadUInt32LittleEndian(record.AsSpan(16))^0x80000000u);
+            }
+            BinaryPrimitives.WriteUInt32LittleEndian(record.AsSpan(42),checked((uint)output.Position));output.Write(header);output.Write(payload);
+            if(descriptor!="none"&&!(mutate&&corruption=="missing"))
+            {
+                if(descriptor=="signed")output.Write(new byte[]{0x50,0x4b,0x07,0x08});
+                byte[] values=record.AsSpan(16,12).ToArray();
+                if(mutate&&corruption is "crc" or "compressed" or "expanded")values[corruption=="crc"?0:corruption=="compressed"?4:8]^=1;
+                output.Write(values);if(mutate&&corruption=="extra")output.WriteByte(0x5A);
+            }
+            central.Add(record);position+=46+name;
+            if(i==0&&gap=="middle")output.Write(hidden);
+        }
+        if(gap=="tail")output.Write(hidden);
+        uint centralOffset=checked((uint)output.Position);if(reverseCentral)central.Reverse();foreach(var record in central)output.Write(record);
+        byte[] trailer=original.AsSpan(end,22).ToArray();BinaryPrimitives.WriteUInt32LittleEndian(trailer.AsSpan(16),centralOffset);BinaryPrimitives.WriteUInt32LittleEndian(trailer.AsSpan(12),checked((uint)central.Sum(record=>record.Length)));output.Write(trailer);return output.ToArray();
+    }
+    private static byte[] ProfileBytes(Fixture fixture,ContainerProfile profile)=>profile==ContainerProfile.NativeEditable?fixture.Sealed:SourceContainer.Create(fixture.Ofd.Bytes!,fixture.Identity["irDigest"]!.GetValue<string>(),fixture.Ofd.ObjectMap!,ContainerProfile.Distribution,cancellationToken:TestContext.Current.CancellationToken).Bytes!;
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable,"prefix")]
+    [InlineData(ContainerProfile.NativeEditable,"middle")]
+    [InlineData(ContainerProfile.NativeEditable,"tail")]
+    [InlineData(ContainerProfile.Distribution,"prefix")]
+    [InlineData(ContainerProfile.Distribution,"middle")]
+    [InlineData(ContainerProfile.Distribution,"tail")]
+    public async Task ZIP_records_cannot_hide_unindexed_preamble_or_gap_bytes(ContainerProfile profile,string gap)
+    {
+        var original=ProfileBytes(await Initial.Value,profile);var changed=ZipRecordVariant(original,gap:gap);
+        Assert.Equal("PACKAGE_INVALID",SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
+    }
+    public static IEnumerable<object[]> ZipDescriptorCases()
+    {
+        foreach(var profile in new[]{ContainerProfile.NativeEditable,ContainerProfile.Distribution})foreach(string descriptor in new[]{"signed","unsigned"})foreach(string corruption in new[]{"none","known","crc","compressed","expanded","extra","missing","local"})yield return new object[]{profile,descriptor,corruption};
+    }
+    [Theory]
+    [MemberData(nameof(ZipDescriptorCases))]
+    public async Task ZIP_data_descriptors_are_complete_and_consistent(ContainerProfile profile,string descriptor,string corruption)
+    {
+        var original=ProfileBytes(await Initial.Value,profile);var changed=ZipRecordVariant(original,descriptor:descriptor,corruption:corruption);
+        var result=SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
+        if(corruption is "none" or "known")Assert.True(result.Ok,result.Error);
+        else Assert.Equal(corruption is "extra" or "missing"?"PACKAGE_INVALID":"PACKAGE_SIZE",result.Error);
+    }
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable,"none")]
+    [InlineData(ContainerProfile.NativeEditable,"signed")]
+    [InlineData(ContainerProfile.NativeEditable,"unsigned")]
+    [InlineData(ContainerProfile.Distribution,"none")]
+    [InlineData(ContainerProfile.Distribution,"signed")]
+    [InlineData(ContainerProfile.Distribution,"unsigned")]
+    public async Task ZIP_physical_contiguity_does_not_require_central_directory_order(ContainerProfile profile,string descriptor)
+    {
+        var original=ProfileBytes(await Initial.Value,profile);var changed=ZipRecordVariant(original,descriptor:descriptor,reverseCentral:true);
+        var result=SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);Assert.True(result.Ok,result.Error);
+    }
+
+    public static IEnumerable<object[]> ZipPayloadCases()
+    {
+        foreach(var profile in new[]{ContainerProfile.NativeEditable,ContainerProfile.Distribution})foreach(string descriptor in new[]{"none","signed","unsigned"})foreach(string corruption in new[]{"payload-tail","unfinished","padding","crc-stored","crc-deflated"})yield return new object[]{profile,descriptor,corruption};
+    }
+    [Theory]
+    [MemberData(nameof(ZipPayloadCases))]
+    public async Task ZIP_payload_codec_end_and_actual_crc_are_checked(ContainerProfile profile,string descriptor,string corruption)
+    {
+        var original=ProfileBytes(await Initial.Value,profile);
+        if(corruption!="crc-stored")original=Pack(Zip(original));
+        var changed=ZipRecordVariant(original,descriptor:descriptor,corruption:corruption);
+        var result=SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
+        if(corruption=="padding")Assert.True(result.Ok,result.Error);
+        else Assert.Equal(corruption is "crc-stored" or "crc-deflated"?"PACKAGE_CRC_MISMATCH":"PACKAGE_INVALID",result.Error);
+    }
+
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable,"signed",false)]
+    [InlineData(ContainerProfile.NativeEditable,"signed",true)]
+    [InlineData(ContainerProfile.NativeEditable,"unsigned",false)]
+    [InlineData(ContainerProfile.NativeEditable,"unsigned",true)]
+    [InlineData(ContainerProfile.Distribution,"signed",false)]
+    [InlineData(ContainerProfile.Distribution,"signed",true)]
+    [InlineData(ContainerProfile.Distribution,"unsigned",false)]
+    [InlineData(ContainerProfile.Distribution,"unsigned",true)]
+    public async Task ZIP_descriptor_signature_is_disambiguated_from_real_CRC(ContainerProfile profile,string descriptor,bool corruptSize)
+    {
+        const string path="Doc_0/Signs/magic.dat";var entries=Zip(ProfileBytes(await Initial.Value,profile));entries.Add(path,new byte[]{172,10,122,213});
+        var original=Pack(entries);
+        using(var archive=new ZipArchive(new MemoryStream(original),ZipArchiveMode.Read))Assert.Equal(0x08074b50u,archive.GetEntry(path)!.Crc32);
+        var changed=ZipRecordVariant(original,descriptor:descriptor,corruption:corruptSize?"expanded":"none",corruptionEntry:path);
+        var result=SourceContainer.Extract(changed,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken);
+        if(corruptSize)Assert.Equal("PACKAGE_SIZE",result.Error);else {Assert.True(result.Ok,result.Error);Assert.Equal("present-unverified",result.Signature);}
+    }
+
+    [Theory]
+    [InlineData(ContainerProfile.NativeEditable,1)]
+    [InlineData(ContainerProfile.NativeEditable,65535)]
+    [InlineData(ContainerProfile.Distribution,1)]
+    [InlineData(ContainerProfile.Distribution,65535)]
+    public async Task ZIP_entry_disk_markers_must_match_the_single_disk_profile(ContainerProfile profile,int disk)
+    {
+        var bytes=(byte[])ProfileBytes(await Initial.Value,profile).Clone();int end=bytes.Length-22;int central=checked((int)BinaryPrimitives.ReadUInt32LittleEndian(bytes.AsSpan(end+16)));
+        BinaryPrimitives.WriteUInt16LittleEndian(bytes.AsSpan(central+34),checked((ushort)disk));
+        Assert.Equal("PACKAGE_INVALID",SourceContainer.Extract(bytes,sourceRenderResolver:ResolveSourceRender,cancellationToken:TestContext.Current.CancellationToken).Error);
     }
 
 }

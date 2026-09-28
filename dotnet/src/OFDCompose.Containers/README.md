@@ -221,3 +221,22 @@ The fixed-writer profile binds both FontName and FamilyName to `Subset-` plus th
 actual embedded subset digest. FontFile may use a different safe basename, but its
 extension must follow the admitted static SFNT flavor (OTTO/.otf or 0x00010000/.ttf),
 in native and distribution packages. These checks follow reachability validation.
+
+ZIP preflight requires indexed local records to cover byte zero through the central
+directory contiguously. Central-directory ordering may differ from physical ordering.
+Non-ZIP64 data descriptors accept the 12-byte form and the 16-byte signature form;
+physical boundaries resolve signature/CRC ambiguity, and all descriptor fields must
+match the central record. Local descriptor-mode fields may be zero or the corresponding
+known central value. See PKWARE APPNOTE section 4.3.9:
+https://pkware.cachefly.net/webdocs/casestudies/APPNOTE.TXT
+
+Declared member ranges are also checked at the codec boundary. Raw DEFLATE uses pinned
+SharpZipLib 1.4.2 Inflater public finished/remaining-input state, with 64 KiB input/output
+chunks, exact output size, and no trailing compressed bytes. Stored members require equal
+compressed/expanded sizes. Actual decoded bytes are checked with the library CRC32;
+matching header/descriptor declarations alone are insufficient. Allocation/work budgets
+and cancellation apply before decoding and between chunks. No reflection, single-byte
+stream workaround or new DEFLATE parser is used. The net6 asset has no transitive
+packages and uses MIT licensing; package locks and the strict license gate cover it.
+Sources: https://www.nuget.org/packages/SharpZipLib/1.4.2 and
+https://github.com/icsharpcode/SharpZipLib/tree/v1.4.2

@@ -151,7 +151,8 @@
       "ofdcompose.containers": {
         "type": "Project",
         "dependencies": {
-          "JsonSchema.Net": "[7.3.4, )"
+          "JsonSchema.Net": "[7.3.4, )",
+          "SharpZipLib": "[1.4.2, )"
         }
       },
       "ofdcompose.ofdirwriter": {
@@ -199,6 +200,12 @@
         "dependencies": {
           "JsonPointer.Net": "5.3.1"
         }
+      },
+      "SharpZipLib": {
+        "type": "CentralTransitive",
+        "requested": "[1.4.2, )",
+        "resolved": "1.4.2",
+        "contentHash": "yjj+3zgz8zgXpiiC3ZdF/iyTBbz2fFvMxZFEBPUcwZjIvXOf37Ylm+K58hqMfIBt5JgU/Z2uoUS67JmTLe973A=="
       }
     }
   }
