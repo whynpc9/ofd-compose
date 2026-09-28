@@ -2,3 +2,6 @@
 tests/runtime-matrix/evidence/** -text
 # Preserve native tool stdout, including prefix padding on otherwise empty lines.
 tests/runtime-matrix/evidence/**/*.stdout.txt -whitespace
+
+# Unified diffs require a space prefix on blank context lines.
+tools/editor-adapter-spike/upstream.patch whitespace=-blank-at-eol

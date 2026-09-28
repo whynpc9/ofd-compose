@@ -25,7 +25,7 @@ Each JSON contains case names, full source/mapping/projection/selection/stack st
 | Initial baseline, reset, clipping, association cleanup | No owned-source association | Pass | Same |
 | Unknown source node | No owned-source model | Whole-document read-only, opaque payload preserved | Same |
 
-Final local automated matrix: **12/12 cases per browser**, including two negative controls and ten patched cases; no browser page errors. [Chromium raw](evidence/chromium.json), [Firefox raw](evidence/firefox.json). These are actual macOS arm64 browser runs using synthetic events, not emulated OS IME or production UI acceptance. [Chromium image](evidence/chromium.png) was visually inspected and shows the synthetic readonly unknown-node fixture; images do not establish IME candidates or selection accuracy.
+Final local automated matrix: **14/14 cases per browser**, including two negative controls and twelve patched cases; no browser page errors. [Chromium raw](evidence/chromium.json), [Firefox raw](evidence/firefox.json). These are actual macOS arm64 browser runs using synthetic events, not emulated OS IME or production UI acceptance. [Chromium image](evidence/chromium.png) was visually inspected and shows the synthetic readonly unknown-node fixture; images do not establish IME candidates or selection accuracy.
 
 ## Failures retained, not erased
 
@@ -39,10 +39,10 @@ Final local automated matrix: **12/12 cases per browser**, including two negativ
 | Layer | Result | Limit |
 | --- | --- | --- |
 | Function diagnostic | [Original issue07 probe rerun](evidence/function-probe.json): selected cancel produces 丙 | Stub Draw/Range/Canvas; original defect only |
-| Real browser, synthetic events | Chromium + Firefox 12/12 each | Actual Editor, Canvas, workers; synthetic composition/input/paste/shortcut |
+| Real browser, synthetic events | Chromium + Firefox 14/14 each | Actual Editor, Canvas, workers; synthetic composition/input/paste/shortcut |
 | Real OS IME | **Not verified**: Windows Microsoft Pinyin; macOS Pinyin | No actual nonempty-selection candidate commit/cancel trace or IME screenshots |
 
-macOS environment inspection: macOS 26.6.2 (25G83), arm64; Apple Simplified Pinyin input-source ID `com.apple.inputmethod.SCIM.ITABC` enabled, current input source ABC. System Events reported UI accessibility disabled. No Windows test host is attached. These observations do not constitute either an OS IME pass or an editor IME failure.
+macOS environment inspection: macOS 26.6.2 (25G83), arm64; Apple Simplified Pinyin input-source ID `com.apple.inputmethod.SCIM.ITABC` enabled, current input source ABC. System Events reported UI accessibility disabled. No Windows test host is attached. A test-only headed Chromium harness was opened for a bounded desktop attempt. CUA `getState()` returned inventory after 5.9 seconds, but app binding returned no window state and was interrupted after 155.1 seconds. No click, typing, input-source change, candidate UI or OS IME event was observed; the test browser/server were closed. No further CUA retries were made. These observations do not constitute either an OS IME pass or an editor IME failure.
 
 ## Handoff and remaining support surface
 
@@ -51,3 +51,13 @@ Issue20 must replace the provisional atom AST/whole-document wrap with canonical
 Issue22 expands supported event orderings and mutation entry points (real clipboard, drag/drop, menus, blur, final input after compositionend, table contexts, header/footer editing, cross-page selection, multi-instance lifecycle and CSP). Issues24–26 replace the one-character binding/whole-document wrapping representatives with real business expression/structure transactions and actual stale-preview suppression. The experiment has no IR preview tasks, so “no transient source persistence” does not prove a preview scheduler exists.
 
 No changes to issues17/18 reader, host sample, architecture/performance evidence, or ADR-0005 status. No .NET/Java source changed; local .NET/Java suites were not rerun for this probe. Repository CI retains those existing gates and adds this two-browser experiment with raw artifacts.
+
+## Standards pre-review
+
+At `e180db9`, the independent Standards reviewer found zero hard violations and one optional P3 duplication suggestion: historical and live logical-anchor conversion share the same short formula. It remains a nonblocking prototype cleanup suggestion; it does not change the OS gates or imply production readiness.
+
+## Spec pre-review
+
+At `e180db9`, the independent Spec reviewer found two actionable issues: P1 synchronous `renderChange` could expose restored projection before owned source restoration, and P2 a prepended copy could take the original atom ID. Both were fixed before PR submission. The six-file patch now buffers EventBus notifications throughout transactions and publishes them after source/view/history are coherent; element ownership distinguishes original objects from inserted copies. Two additional browser cases observe synchronous source/view/ID consistency through undo/redo/cancel/failure and verify prepend-copy/delete preserves the original AST. The reset case also verifies authoritative replacement metadata/IDs and failed-reset rollback. Earlier 12-case evidence is retained in [pre-review](evidence/pre-review/chromium.json).
+
+Review counts: Standards 0 hard / 1 optional P3; Spec 2 (P1/P2), both addressed with the final 14-case browser matrix.

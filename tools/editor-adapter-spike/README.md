@@ -32,14 +32,14 @@ The patched HistoryManager retains the **one** upstream undo/redo domain, with u
 
 - `commit`: capture and validate source, identity mapping, projection, logical selection and context, then publish one revision. Binding changes with identical display text and whole-document structural wrapping use the same checkpoint entry.
 - `undo` / `redo`: restore the target entry under a reentry guard. Revision increases; it never reuses a historic number. Failures restore the complete pre-action view and stack cursors without publishing a revision.
-- `reset`: clear the old stack and publish the next baseline atomically through the adapter command boundary. The prototype requires `isSetCursor: true` on replacement so a baseline is immediately created.
+- `reset`: clear the old stack and publish the next baseline atomically through the adapter command boundary. The `reset(source)` boundary receives the authoritative new AST (including metadata and identities) and requires `isSetCursor: true` internally so a baseline is immediately created; raw `executeSetValue` is rejected.
 - `discard`: restore a captured pre-edit view including live range, zone and position context, restore source, and preserve both stacks. No source revision is published. An incrementing external preview cancellation token is still required once issue24 adds actual preview tasks.
 - Initial capture creates one entry; clipping and redo-branch replacement synchronously remove unreachable snapshot associations. History sequence numbers are never reused, including after failures/reset.
 - Direct input (including asynchronous plain clipboard callbacks) begins a snapshot in the patched input handler. Composition starts before selection replacement. DOM capture covers supported deletion/Enter commands, and adapter commands cover the explicit probe command list. Temporary composing inputs mutate only editor projection, never source/history. Cancellation restores the full pre-composition view without `setValue` or clearing redo.
 
 `current` in raw states is the immutable historical checkpoint; `liveSelection` and `view.range/context/zone` describe the current interaction selection, which can differ after a selection-only move. This distinction prevents selection movement from creating fake content revisions.
 
-The patch touches HistoryManager, Draw snapshot/restore, an explicit experimental Editor bridge, composition cancellation, and input begin. It is a private fork dependency with maintenance cost. It is **not** a stable plugin, zero-fork implementation, or a redesign of layout/rendering.
+The patch touches HistoryManager, Draw snapshot/restore, an explicit experimental Editor bridge, composition cancellation, input begin, and transaction-scoped EventBus buffering. It is a private fork dependency with maintenance cost. It is **not** a stable plugin, zero-fork implementation, or a redesign of layout/rendering.
 
 ## Evidence layers and decision boundary
 
@@ -61,4 +61,4 @@ Run `pnpm exec vite --config tools/editor-adapter-spike/vite.config.mjs`, open t
 4. Reset; create a text edit and undo so redo exists, select 甲乙 again, start Pinyin and cancel with Esc. Compare source/IDs/mapping, live selection/context, history cursor, redo IDs and revision with the before snapshot. Redo must still restore the original edit.
 5. Repeat on Chromium and Firefox on macOS Pinyin and Windows Microsoft Pinyin. Save raw traces and before/during/after screenshots with human observations and failures. If cancellation emits nonempty data or commits on blur, record that behavior; do not relabel it as a successful cancel.
 
-The current macOS host has `com.apple.inputmethod.SCIM.ITABC` enabled but ABC selected; System Events reports accessibility disabled. No Windows test host is attached. These facts explain missing evidence, not passing results.
+The current macOS host has `com.apple.inputmethod.SCIM.ITABC` enabled but ABC selected; System Events reports accessibility disabled. No Windows test host is attached. CUA inventory returned, but binding to the test-only browser failed to return a window state and was interrupted; no native input was performed. These facts explain missing evidence, not passing results.

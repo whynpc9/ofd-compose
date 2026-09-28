@@ -31,6 +31,8 @@ export class Adapter {
     this.ast = clone(source);
     this.revision = 0;
     this.sequence = 10;
+    this.owners = new WeakMap();
+    this.initialCapture = true;
     this.sessionId = crypto.randomUUID();
     this.snapshots = new Map();
     this.events = [];
@@ -49,6 +51,7 @@ export class Adapter {
         }
         this.ast = clone(s.ast);
         this.current = s;
+        this.rememberOwners();
         this.events.push({ action: `restore:${action}`, id });
       },
       publish: (action, id, liveIds) => {
@@ -96,7 +99,12 @@ export class Adapter {
       .map((e) => {
         let nodeId = e.extension?.nodeId;
         const previous = old.get(nodeId);
-        if (!previous || used.has(nodeId)) nodeId = `new${++this.sequence}`;
+        if (
+          !previous ||
+          used.has(nodeId) ||
+          (!this.initialCapture && this.owners.get(e) !== nodeId)
+        )
+          nodeId = `new${++this.sequence}`;
         used.add(nodeId);
         e.extension = { nodeId };
         return { ...(previous || { type: "text" }), nodeId, value: e.value, bold: !!e.bold };
@@ -134,9 +142,36 @@ export class Adapter {
     this.ast = clone(ast);
     this.current = snapshot;
     this.snapshots.set(id, snapshot);
+    this.initialCapture = false;
+    this.rememberOwners();
     return snapshot;
   }
+  rememberOwners() {
+    this.owners = new WeakMap(
+      this.editor.spike
+        .elements()
+        .slice(1)
+        .map((e) => [e, e.extension?.nodeId]),
+    );
+  }
+  reset(source) {
+    if (this.readonly || leaves(source).some((n) => n.type === "unknown"))
+      throw new Error("UNSUPPORTED_DOCUMENT_READONLY");
+    this.history.begin();
+    this.pending = clone(source);
+    this.initialCapture = true;
+    try {
+      this.editor.command.executeSetValue({ main: project(source) }, { isSetCursor: true });
+    } catch (error) {
+      this.history.cancel();
+      throw error;
+    } finally {
+      this.pending = null;
+      this.initialCapture = false;
+    }
+  }
   command(name, ...args) {
+    if (name === "executeSetValue") throw new Error("USE_SOURCE_RESET");
     if (this.readonly) throw new Error("UNSUPPORTED_DOCUMENT_READONLY");
     this.history.begin();
     try {

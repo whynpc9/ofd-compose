@@ -272,6 +272,76 @@ async function run() {
     equal(deleted.ast, styled.ast, "delete preserves originals");
     return { styled, duplicated, deleted };
   });
+  await test("patched-prepend-copy-keeps-original-identities", async () => {
+    create();
+    const before = adapter.state();
+    const copied = clone(before.view.main.slice(1, 3));
+    select(0, 0);
+    adapter.command("executeInsertElementList", copied);
+    const duplicated = adapter.state();
+    check(duplicated);
+    equal(
+      leaves(duplicated.ast)
+        .slice(2)
+        .map((n) => n.nodeId),
+      ["n1", "n2", "n3", "n4"],
+      "original IDs after prepended copy",
+    );
+    ok(
+      leaves(duplicated.ast)
+        .slice(0, 2)
+        .every((n) => !["n1", "n2"].includes(n.nodeId)),
+      "copies receive fresh IDs",
+    );
+    select(0, 2);
+    adapter.command("executeBackspace");
+    const deleted = adapter.state();
+    check(deleted);
+    equal(deleted.ast, before.ast, "deleting copy preserves original AST");
+    return { before, duplicated, deleted };
+  });
+  await test("patched-synchronous-observers-see-only-atomic-states", async () => {
+    create();
+    const observations = [];
+    for (const event of ["renderChange", "positionContextChange"])
+      editor.eventBus.on(event, () => {
+        const s = adapter.state();
+        observations.push({
+          event,
+          text: s.view.main
+            .slice(1)
+            .map((e) => e.value)
+            .join(""),
+          sourceText: leaves(s.ast)
+            .map((n) => n.value)
+            .join(""),
+          ids: s.view.main.slice(1).map((e) => e.extension?.nodeId),
+          sourceIds: leaves(s.ast).map((n) => n.nodeId),
+          revision: s.revision,
+        });
+      });
+    insert("A");
+    editor.command.executeUndo();
+    editor.command.executeRedo();
+    adapter.failRestore = true;
+    try {
+      editor.command.executeUndo();
+    } catch (e) {
+      equal(e.message, "RESTORE_REJECTED", "restore rejection");
+    }
+    select(0, 2);
+    composition("compositionstart");
+    input("n", true);
+    const duringObservationCount = observations.length;
+    composition("compositionend");
+    await delay();
+    ok(observations.length > duringObservationCount, "cancel publishes restored observation");
+    for (const observation of observations) {
+      equal(observation.text, observation.sourceText, "observer text atomicity");
+      equal(observation.ids, observation.sourceIds, "observer identity atomicity");
+    }
+    return { observations, state: adapter.state() };
+  });
   await test("patched-metadata-text-wrap-single-domain-and-branch", async () => {
     create();
     const baseline = adapter.state();
@@ -365,12 +435,34 @@ async function run() {
     adapter.domain(() => {});
     const metadataNoop = adapter.state();
     check(metadataNoop);
-    adapter.command("executeSetValue", { main: project(fixture) }, { isSetCursor: true });
+    adapter.domain((ast) => {
+      leaves(ast).find((n) => n.nodeId === "n4").binding = "sample.changed";
+    });
+    const beforeRejectedReset = adapter.state();
+    adapter.failCapture = true;
+    let failure;
+    try {
+      adapter.reset(fixture);
+    } catch (error) {
+      failure = error.message;
+    }
+    equal(failure, "RECONCILIATION_REJECTED", "reset failure diagnosed");
+    const rejectedReset = adapter.state();
+    equal(rejectedReset.ast, beforeRejectedReset.ast, "reset failure source rollback");
+    equal(rejectedReset.view, beforeRejectedReset.view, "reset failure view rollback");
+    equal(rejectedReset.history, beforeRejectedReset.history, "reset failure stack rollback");
+    equal(
+      rejectedReset.revision,
+      beforeRejectedReset.revision,
+      "reset failure no published revision",
+    );
+    adapter.reset(fixture);
     const reset = adapter.state();
+    equal(reset.ast, fixture, "reset uses authoritative new source metadata and identities");
     check(reset);
     equal(reset.history.undo.length, 1, "reset initial checkpoint");
     equal(reset.associations.length, 1, "reset clears associations");
-    return { clipped, metadataNoop, reset };
+    return { clipped, metadataNoop, beforeRejectedReset, rejectedReset, reset };
   });
   await test("patched-unknown-source-readonly-preserved", async () => {
     const unknown = clone(fixture);

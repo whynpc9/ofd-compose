@@ -1,6 +1,6 @@
 --- a/src/editor/core/history/HistoryManager.ts
 +++ b/src/editor/core/history/HistoryManager.ts
-@@ -1,61 +1,103 @@
+@@ -1,61 +1,109 @@
  import { Draw } from '../draw/Draw'
  
 +// Experimental issue35 hook; no business AST is interpreted by the editor.
@@ -43,7 +43,9 @@
 +  }
 +  public begin() {
 +    if (this.busy) throw new Error('HISTORY_REENTRY')
-+    if (!this.before) this.before = {
++    if (this.before) return
++    this.draw.getEventBus().spikeSuspend()
++    this.before = {
 +      view: this.draw.spikeSnapshot(),
 +      undo: this.undoStack.slice(), redo: this.redoStack.slice()
      }
@@ -59,12 +61,14 @@
 +    const before = this.before
 +    if (!before) return
 +    this.busy = true
++    this.draw.getEventBus().spikeDiscard()
 +    try {
 +      this.undoStack = before.undo; this.redoStack = before.redo
 +      this.draw.spikeRestore(before.view)
 +      const entry = this.undoStack.at(-1)
 +      if (entry) this.participant?.restore(entry.source, entry.id, 'discard')
 +      this.notify('discard')
++      this.draw.getEventBus().spikeResume()
 +    } finally { this.before = undefined; this.busy = false }
    }
 -
@@ -86,6 +90,7 @@
 +      this.participant?.restore(entry.source, entry.id, action)
 +      this.notify(action)
 +      this.before = undefined
++      this.draw.getEventBus().spikeResume()
 +    } catch (error) { this.busy = false; this.cancel(); throw error }
 +    finally { this.busy = false }
 +  }
@@ -109,6 +114,7 @@
 +      while (this.undoStack.length > this.maxRecordCount) this.undoStack.shift()
 +      this.notify(this.undoStack.length === 1 ? 'reset' : 'commit')
 +      this.before = undefined
++      this.draw.getEventBus().spikeResume()
 +    } catch (error) { this.busy = false; this.cancel(); throw error }
 +    finally { this.busy = false }
    }
@@ -236,3 +242,40 @@
    // 移除合成输入
    removeComposingInput(host)
    if (!isComposing) {
+--- a/src/editor/core/event/eventbus/EventBus.ts
++++ b/src/editor/core/event/eventbus/EventBus.ts
+@@ -1,5 +1,23 @@
+ export class EventBus<EventMap> {
+   private eventHub: Map<string, Set<Function>>
++  private spikeSuspended = false
++  private spikePending = new Map<string, any>()
++
++  public spikeSuspend() {
++    this.spikeSuspended = true
++    this.spikePending.clear()
++  }
++  public spikeDiscard() { this.spikePending.clear() }
++  public spikeResume() {
++    const pending = [...this.spikePending]
++    this.spikePending.clear()
++    this.spikeSuspended = false
++    for (const [name, payload] of pending) {
++      // Subscriber exceptions cannot turn an already published commit into a rollback.
++      try { this.emit(name as string & keyof EventMap, payload) }
++      catch (error) { queueMicrotask(() => { throw error }) }
++    }
++  }
+ 
+   constructor() {
+     this.eventHub = new Map()
+@@ -20,6 +38,10 @@
+     payload?: EventMap[K] extends (payload: infer P) => void ? P : never
+   ) {
+     if (!eventName) return
++    if (this.spikeSuspended) {
++      this.spikePending.set(eventName, payload)
++      return
++    }
+     const callBackSet = this.eventHub.get(eventName)
+     if (!callBackSet) return
+     if (callBackSet.size === 1) {

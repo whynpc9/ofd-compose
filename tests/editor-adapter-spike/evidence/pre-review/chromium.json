@@ -28,19 +28,19 @@
     "sriRecomputedThisRun": false,
     "sourceFilesVerified": 633,
     "publishedFilesVerified": 7,
-    "patchSha256": "9df1c93f3fd86a41d9dfc132eafbff62f355599823f2291809d517d6083cb0fa",
+    "patchSha256": "a6471eb872f1ec109ca1c60787e42a5e2f2e4b18de041b1b704756a02e06a3e4",
     "scope": "Experimental local patch, not a published or approved production fork"
   },
   "sourceSha256": {
-    "tools/editor-adapter-spike/harness.mjs": "7962ae10de3382cde0772c5a1a7ddaf5080b8d212cb361a052047a28547da4ce",
-    "tools/editor-adapter-spike/adapter.mjs": "5d5da8a0163b1ddf6b4c1a8517473c947d51943c2982913f50d767a7d0597c78",
-    "tools/editor-adapter-spike/upstream.patch": "9df1c93f3fd86a41d9dfc132eafbff62f355599823f2291809d517d6083cb0fa",
-    "tools/editor-adapter-spike/run-browser.mjs": "5287c5869ec1a2362da6f0f42c637501f99497d26e1557c7f9fae9c198ab09e7",
+    "tools/editor-adapter-spike/harness.mjs": "be503041ff29f8e8fbde404f957aeb6c24344774aef0686ddfbbe9d651175800",
+    "tools/editor-adapter-spike/adapter.mjs": "ec29c622ed30d6d9c63274078139d562e2aeca00a5b85dfd210084d9ac98834d",
+    "tools/editor-adapter-spike/upstream.patch": "a6471eb872f1ec109ca1c60787e42a5e2f2e4b18de041b1b704756a02e06a3e4",
+    "tools/editor-adapter-spike/run-browser.mjs": "04899567cfcc82af0e3696f607900321ffd261bbda034890149a06cd4f8a1625",
     "tools/editor-adapter-spike/baseline.json": "5515c7775d527f57c1784832dcff0184e2401e3531ea94677ef39647607e78b6",
     "tools/editor-adapter-spike/vite.config.mjs": "2cd3e80c21f760b1c8c0a264f96630d800fbad35e4628abcb58bff30d1a36862"
   },
-  "startedAt": "2026-09-28T05:24:40.072Z",
-  "finishedAt": "2026-09-28T05:24:41.557Z",
+  "startedAt": "2026-09-28T05:14:15.838Z",
+  "finishedAt": "2026-09-28T05:14:17.080Z",
   "layer": "synthetic-browser-events-with-real-Editor",
   "osImeVerified": false,
   "consoleMessages": [
@@ -71,7 +71,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 668.5
+              "time": 655.7000000476837
             },
             {
               "type": "input",
@@ -80,14 +80,14 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 678.6000000238419
+              "time": 663.6000000238419
             },
             {
               "type": "compositionend",
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 680
+              "time": 664
             }
           ]
         }
@@ -156,7 +156,7 @@
               ]
             },
             "current": {
-              "sessionId": "1e475049-6f3b-46be-8084-2d6290d0fc5e",
+              "sessionId": "e087be6a-c5f1-448d-ab47-08baf3f564a5",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -432,7 +432,7 @@
               ]
             },
             "current": {
-              "sessionId": "1e475049-6f3b-46be-8084-2d6290d0fc5e",
+              "sessionId": "e087be6a-c5f1-448d-ab47-08baf3f564a5",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -742,7 +742,7 @@
               ]
             },
             "current": {
-              "sessionId": "1e475049-6f3b-46be-8084-2d6290d0fc5e",
+              "sessionId": "e087be6a-c5f1-448d-ab47-08baf3f564a5",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -1074,7 +1074,7 @@
               ]
             },
             "current": {
-              "sessionId": "1e475049-6f3b-46be-8084-2d6290d0fc5e",
+              "sessionId": "e087be6a-c5f1-448d-ab47-08baf3f564a5",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -1375,7 +1375,7 @@
               ]
             },
             "current": {
-              "sessionId": "1e475049-6f3b-46be-8084-2d6290d0fc5e",
+              "sessionId": "e087be6a-c5f1-448d-ab47-08baf3f564a5",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -1656,7 +1656,7 @@
               ]
             },
             "current": {
-              "sessionId": "1e475049-6f3b-46be-8084-2d6290d0fc5e",
+              "sessionId": "e087be6a-c5f1-448d-ab47-08baf3f564a5",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -1969,7 +1969,7 @@
               ]
             },
             "current": {
-              "sessionId": "1e475049-6f3b-46be-8084-2d6290d0fc5e",
+              "sessionId": "e087be6a-c5f1-448d-ab47-08baf3f564a5",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -2301,7 +2301,7 @@
               ]
             },
             "current": {
-              "sessionId": "cc944bf6-f461-4c60-bc0a-3ad8748b4632",
+              "sessionId": "e4f0c2b2-fed4-4a71-9284-ffbc7be6b658",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -2574,7 +2574,7 @@
               ]
             },
             "current": {
-              "sessionId": "cc944bf6-f461-4c60-bc0a-3ad8748b4632",
+              "sessionId": "e4f0c2b2-fed4-4a71-9284-ffbc7be6b658",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -2843,7 +2843,7 @@
               ]
             },
             "current": {
-              "sessionId": "cc944bf6-f461-4c60-bc0a-3ad8748b4632",
+              "sessionId": "e4f0c2b2-fed4-4a71-9284-ffbc7be6b658",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -3074,7 +3074,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 786.6999999284744,
+              "time": 769.2999999523163,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3123,7 +3123,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cc944bf6-f461-4c60-bc0a-3ad8748b4632",
+                  "sessionId": "e4f0c2b2-fed4-4a71-9284-ffbc7be6b658",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3356,7 +3356,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 787.1999999284744,
+              "time": 769.7999999523163,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3405,7 +3405,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cc944bf6-f461-4c60-bc0a-3ad8748b4632",
+                  "sessionId": "e4f0c2b2-fed4-4a71-9284-ffbc7be6b658",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3628,7 +3628,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 787.3999999761581,
+              "time": 770.1000000238419,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3677,7 +3677,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cc944bf6-f461-4c60-bc0a-3ad8748b4632",
+                  "sessionId": "e4f0c2b2-fed4-4a71-9284-ffbc7be6b658",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3904,7 +3904,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 787.6999999284744,
+              "time": 770.3999999761581,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3953,7 +3953,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cc944bf6-f461-4c60-bc0a-3ad8748b4632",
+                  "sessionId": "e4f0c2b2-fed4-4a71-9284-ffbc7be6b658",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -4234,7 +4234,7 @@
               ]
             },
             "current": {
-              "sessionId": "e024e2a7-08fc-4660-bbfc-d54e9f7f941d",
+              "sessionId": "8a2603ee-f6bd-468e-beb9-28bfc603a9c4",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -4507,7 +4507,7 @@
               ]
             },
             "current": {
-              "sessionId": "e024e2a7-08fc-4660-bbfc-d54e9f7f941d",
+              "sessionId": "8a2603ee-f6bd-468e-beb9-28bfc603a9c4",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -4770,7 +4770,7 @@
               ]
             },
             "current": {
-              "sessionId": "e024e2a7-08fc-4660-bbfc-d54e9f7f941d",
+              "sessionId": "8a2603ee-f6bd-468e-beb9-28bfc603a9c4",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -4972,7 +4972,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 823.6000000238419,
+              "time": 805,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5021,7 +5021,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "e024e2a7-08fc-4660-bbfc-d54e9f7f941d",
+                  "sessionId": "8a2603ee-f6bd-468e-beb9-28bfc603a9c4",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5254,7 +5254,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 823.7999999523163,
+              "time": 805.2000000476837,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5303,7 +5303,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "e024e2a7-08fc-4660-bbfc-d54e9f7f941d",
+                  "sessionId": "8a2603ee-f6bd-468e-beb9-28bfc603a9c4",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5526,7 +5526,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 824.1000000238419,
+              "time": 805.3999999761581,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5575,7 +5575,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "e024e2a7-08fc-4660-bbfc-d54e9f7f941d",
+                  "sessionId": "8a2603ee-f6bd-468e-beb9-28bfc603a9c4",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5802,7 +5802,7 @@
               "data": "你",
               "clipboard": null,
               "isTrusted": false,
-              "time": 824.3999999761581,
+              "time": 805.7999999523163,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5845,7 +5845,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "e024e2a7-08fc-4660-bbfc-d54e9f7f941d",
+                  "sessionId": "8a2603ee-f6bd-468e-beb9-28bfc603a9c4",
                   "historyEntryId": "h4",
                   "ast": {
                     "type": "document",
@@ -6103,7 +6103,7 @@
               ]
             },
             "current": {
-              "sessionId": "c47884db-b8a9-4171-9929-8a76ebec594e",
+              "sessionId": "a133956d-c80f-4bd3-ab0d-fac261adf840",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -6421,7 +6421,7 @@
               ]
             },
             "current": {
-              "sessionId": "c47884db-b8a9-4171-9929-8a76ebec594e",
+              "sessionId": "a133956d-c80f-4bd3-ab0d-fac261adf840",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -6785,7 +6785,7 @@
               ]
             },
             "current": {
-              "sessionId": "c47884db-b8a9-4171-9929-8a76ebec594e",
+              "sessionId": "a133956d-c80f-4bd3-ab0d-fac261adf840",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -7048,7 +7048,7 @@
               "isComposing": false,
               "clipboard": null,
               "isTrusted": false,
-              "time": 861.6000000238419,
+              "time": 841,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7103,7 +7103,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "c47884db-b8a9-4171-9929-8a76ebec594e",
+                  "sessionId": "a133956d-c80f-4bd3-ab0d-fac261adf840",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -7371,7 +7371,7 @@
                 "text": "粘贴"
               },
               "isTrusted": false,
-              "time": 895.6000000238419,
+              "time": 873.6000000238419,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7426,7 +7426,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "c47884db-b8a9-4171-9929-8a76ebec594e",
+                  "sessionId": "a133956d-c80f-4bd3-ab0d-fac261adf840",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -7685,7 +7685,7 @@
               "isComposing": false,
               "clipboard": null,
               "isTrusted": false,
-              "time": 929,
+              "time": 905.5,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7740,7 +7740,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "c47884db-b8a9-4171-9929-8a76ebec594e",
+                  "sessionId": "a133956d-c80f-4bd3-ab0d-fac261adf840",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -8051,7 +8051,7 @@
               ]
             },
             "current": {
-              "sessionId": "b112deba-33ae-42da-a0c9-6ef89c27467c",
+              "sessionId": "214bb7df-507a-410e-8f11-aaeb1dcc5ea5",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -8337,7 +8337,7 @@
               ]
             },
             "current": {
-              "sessionId": "b112deba-33ae-42da-a0c9-6ef89c27467c",
+              "sessionId": "214bb7df-507a-410e-8f11-aaeb1dcc5ea5",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -8669,7 +8669,7 @@
               ]
             },
             "current": {
-              "sessionId": "b112deba-33ae-42da-a0c9-6ef89c27467c",
+              "sessionId": "214bb7df-507a-410e-8f11-aaeb1dcc5ea5",
               "historyEntryId": "h5",
               "ast": {
                 "type": "document",
@@ -8902,1384 +8902,6 @@
         }
       },
       {
-        "name": "patched-prepend-copy-keeps-original-identities",
-        "status": "pass",
-        "evidence": {
-          "before": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "focus": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "239291c5-03ce-4b3c-a573-c06a92361f5e",
-              "historyEntryId": "h2",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "focus": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 1,
-            "history": {
-              "undo": [
-                "h2"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2"
-            ],
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 0,
-                "endIndex": 0,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
-          "duplicated": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "new12",
-                "offset": 1
-              },
-              "focus": {
-                "nodeId": "new12",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "new11",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "new12",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "239291c5-03ce-4b3c-a573-c06a92361f5e",
-              "historyEntryId": "h3",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "new11",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "new12",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "new11",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "new12",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 5,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 6,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "new11"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "new12"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 2,
-                  "endIndex": 2,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "new12",
-                  "offset": 1
-                },
-                "focus": {
-                  "nodeId": "new12",
-                  "offset": 1
-                },
-                "range": {
-                  "startIndex": 2,
-                  "endIndex": 2,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 2,
-            "history": {
-              "undo": [
-                "h2",
-                "h3"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2",
-              "h3"
-            ],
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "new11"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "new12"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 2,
-                "endIndex": 2,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
-          "deleted": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "focus": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "239291c5-03ce-4b3c-a573-c06a92361f5e",
-              "historyEntryId": "h4",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "focus": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 3,
-            "history": {
-              "undo": [
-                "h2",
-                "h3",
-                "h4"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2",
-              "h3",
-              "h4"
-            ],
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 0,
-                "endIndex": 0,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          }
-        }
-      },
-      {
-        "name": "patched-synchronous-observers-see-only-atomic-states",
-        "status": "pass",
-        "evidence": {
-          "observations": [
-            {
-              "event": "renderChange",
-              "text": "A甲乙丙名",
-              "sourceText": "A甲乙丙名",
-              "ids": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 2
-            },
-            {
-              "event": "positionContextChange",
-              "text": "甲乙丙名",
-              "sourceText": "甲乙丙名",
-              "ids": [
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 3
-            },
-            {
-              "event": "renderChange",
-              "text": "甲乙丙名",
-              "sourceText": "甲乙丙名",
-              "ids": [
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 3
-            },
-            {
-              "event": "positionContextChange",
-              "text": "A甲乙丙名",
-              "sourceText": "A甲乙丙名",
-              "ids": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 4
-            },
-            {
-              "event": "renderChange",
-              "text": "A甲乙丙名",
-              "sourceText": "A甲乙丙名",
-              "ids": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 4
-            },
-            {
-              "event": "positionContextChange",
-              "text": "A甲乙丙名",
-              "sourceText": "A甲乙丙名",
-              "ids": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 4
-            },
-            {
-              "event": "renderChange",
-              "text": "A甲乙丙名",
-              "sourceText": "A甲乙丙名",
-              "ids": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 4
-            },
-            {
-              "event": "positionContextChange",
-              "text": "A甲乙丙名",
-              "sourceText": "A甲乙丙名",
-              "ids": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 4
-            },
-            {
-              "event": "renderChange",
-              "text": "A甲乙丙名",
-              "sourceText": "A甲乙丙名",
-              "ids": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "sourceIds": [
-                "new11",
-                "n1",
-                "n2",
-                "n3",
-                "n4"
-              ],
-              "revision": 4
-            }
-          ],
-          "state": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "focus": {
-                "nodeId": "n1",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "new11",
-                  "value": "A",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "ea107686-adb5-4322-9570-73ee261ecb9a",
-              "historyEntryId": "h3",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "new11",
-                    "value": "A",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "new11",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 5,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "A",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new11"
-                    }
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 1,
-                  "endIndex": 1,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "new11",
-                  "offset": 1
-                },
-                "focus": {
-                  "nodeId": "new11",
-                  "offset": 1
-                },
-                "range": {
-                  "startIndex": 1,
-                  "endIndex": 1,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 4,
-            "history": {
-              "undo": [
-                "h2",
-                "h3"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2",
-              "h3"
-            ],
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "A",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new11"
-                  }
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 0,
-                "endIndex": 2,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          }
-        }
-      },
-      {
         "name": "patched-metadata-text-wrap-single-domain-and-branch",
         "status": "pass",
         "evidence": {
@@ -10331,7 +8953,7 @@
               ]
             },
             "current": {
-              "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+              "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -10601,7 +9223,7 @@
               ]
             },
             "current": {
-              "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+              "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -10879,7 +9501,7 @@
               ]
             },
             "current": {
-              "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+              "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -11192,7 +9814,7 @@
               ]
             },
             "current": {
-              "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+              "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
               "historyEntryId": "h5",
               "ast": {
                 "type": "document",
@@ -11508,7 +10130,7 @@
                 ]
               },
               "current": {
-                "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+                "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
                 "historyEntryId": "h4",
                 "ast": {
                   "type": "document",
@@ -11811,7 +10433,7 @@
                 ]
               },
               "current": {
-                "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+                "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
                 "historyEntryId": "h3",
                 "ast": {
                   "type": "document",
@@ -12088,7 +10710,7 @@
                 ]
               },
               "current": {
-                "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+                "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
                 "historyEntryId": "h2",
                 "ast": {
                   "type": "document",
@@ -12372,7 +10994,7 @@
               ]
             },
             "current": {
-              "sessionId": "497052e3-c235-48b4-acde-ddec4c2ad47f",
+              "sessionId": "d5acefa3-2d99-4ad8-9441-4553a06f170d",
               "historyEntryId": "h6",
               "ast": {
                 "type": "document",
@@ -12678,7 +11300,7 @@
               ]
             },
             "current": {
-              "sessionId": "55dff3b6-7037-4743-ad99-432bebd6c5aa",
+              "sessionId": "9b294059-d4fe-457b-9e81-57254c4f5077",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -12951,7 +11573,7 @@
               ]
             },
             "current": {
-              "sessionId": "55dff3b6-7037-4743-ad99-432bebd6c5aa",
+              "sessionId": "9b294059-d4fe-457b-9e81-57254c4f5077",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -13237,7 +11859,7 @@
               ]
             },
             "current": {
-              "sessionId": "33a84e7d-7f72-4e7f-aa77-af291e924752",
+              "sessionId": "c72f33d2-f854-4c3f-9b39-0d9a76f0c68d",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -13541,7 +12163,7 @@
               ]
             },
             "current": {
-              "sessionId": "33a84e7d-7f72-4e7f-aa77-af291e924752",
+              "sessionId": "c72f33d2-f854-4c3f-9b39-0d9a76f0c68d",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -13870,7 +12492,7 @@
               ]
             },
             "current": {
-              "sessionId": "77080056-dcf2-4d07-b799-f72f0a7fd380",
+              "sessionId": "1b6580e5-1f4f-447f-94da-ba9c6596da01",
               "historyEntryId": "h6",
               "ast": {
                 "type": "document",
@@ -14272,7 +12894,7 @@
               ]
             },
             "current": {
-              "sessionId": "77080056-dcf2-4d07-b799-f72f0a7fd380",
+              "sessionId": "1b6580e5-1f4f-447f-94da-ba9c6596da01",
               "historyEntryId": "h7",
               "ast": {
                 "type": "document",
@@ -14602,810 +13224,6 @@
               "zone": "main"
             }
           },
-          "beforeRejectedReset": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "new14",
-                "offset": 1
-              },
-              "focus": {
-                "nodeId": "new14",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "new11",
-                  "value": "A",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "new12",
-                  "value": "B",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "new13",
-                  "value": "C",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "new14",
-                  "value": "D",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.changed",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "77080056-dcf2-4d07-b799-f72f0a7fd380",
-              "historyEntryId": "h8",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "new11",
-                    "value": "A",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "new12",
-                    "value": "B",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "new13",
-                    "value": "C",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "new14",
-                    "value": "D",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.changed",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "new11",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "new12",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "new13",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "new14",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 5,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 6,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 7,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 8,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "A",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new11"
-                    }
-                  },
-                  {
-                    "value": "B",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new12"
-                    }
-                  },
-                  {
-                    "value": "C",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new13"
-                    }
-                  },
-                  {
-                    "value": "D",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new14"
-                    }
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 4,
-                  "endIndex": 4,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "new14",
-                  "offset": 1
-                },
-                "focus": {
-                  "nodeId": "new14",
-                  "offset": 1
-                },
-                "range": {
-                  "startIndex": 4,
-                  "endIndex": 4,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 7,
-            "history": {
-              "undo": [
-                "h6",
-                "h7",
-                "h8"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h6",
-              "h7",
-              "h8"
-            ],
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "A",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new11"
-                  }
-                },
-                {
-                  "value": "B",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new12"
-                  }
-                },
-                {
-                  "value": "C",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new13"
-                  }
-                },
-                {
-                  "value": "D",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new14"
-                  }
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 4,
-                "endIndex": 4,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
-          "rejectedReset": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "new14",
-                "offset": 1
-              },
-              "focus": {
-                "nodeId": "new14",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "new11",
-                  "value": "A",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "new12",
-                  "value": "B",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "new13",
-                  "value": "C",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "new14",
-                  "value": "D",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.changed",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "77080056-dcf2-4d07-b799-f72f0a7fd380",
-              "historyEntryId": "h8",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "new11",
-                    "value": "A",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "new12",
-                    "value": "B",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "new13",
-                    "value": "C",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "new14",
-                    "value": "D",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.changed",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "new11",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "new12",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "new13",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "new14",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 5,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 6,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 7,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 8,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "A",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new11"
-                    }
-                  },
-                  {
-                    "value": "B",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new12"
-                    }
-                  },
-                  {
-                    "value": "C",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new13"
-                    }
-                  },
-                  {
-                    "value": "D",
-                    "left": 0,
-                    "extension": {
-                      "nodeId": "new14"
-                    }
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 4,
-                  "endIndex": 4,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "new14",
-                  "offset": 1
-                },
-                "focus": {
-                  "nodeId": "new14",
-                  "offset": 1
-                },
-                "range": {
-                  "startIndex": 4,
-                  "endIndex": 4,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 7,
-            "history": {
-              "undo": [
-                "h6",
-                "h7",
-                "h8"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h6",
-              "h7",
-              "h8"
-            ],
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "A",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new11"
-                  }
-                },
-                {
-                  "value": "B",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new12"
-                  }
-                },
-                {
-                  "value": "C",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new13"
-                  }
-                },
-                {
-                  "value": "D",
-                  "left": 0,
-                  "extension": {
-                    "nodeId": "new14"
-                  }
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 4,
-                "endIndex": 4,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
           "reset": {
             "liveSelection": {
               "anchor": {
@@ -15454,8 +13272,8 @@
               ]
             },
             "current": {
-              "sessionId": "77080056-dcf2-4d07-b799-f72f0a7fd380",
-              "historyEntryId": "h10",
+              "sessionId": "1b6580e5-1f4f-447f-94da-ba9c6596da01",
+              "historyEntryId": "h8",
               "ast": {
                 "type": "document",
                 "id": "fixture",
@@ -15599,17 +13417,17 @@
                 }
               }
             },
-            "revision": 8,
+            "revision": 7,
             "history": {
               "undo": [
-                "h10"
+                "h8"
               ],
               "redo": [],
               "composing": false,
               "busy": false
             },
             "associations": [
-              "h10"
+              "h8"
             ],
             "view": {
               "main": [
@@ -15737,7 +13555,7 @@
               ]
             },
             "current": {
-              "sessionId": "670d0a3f-2689-44e9-baf2-47a4d6c9fd46",
+              "sessionId": "fa106af1-c925-4766-94d7-1328dade48a7",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -16047,7 +13865,7 @@
               ]
             },
             "current": {
-              "sessionId": "670d0a3f-2689-44e9-baf2-47a4d6c9fd46",
+              "sessionId": "fa106af1-c925-4766-94d7-1328dade48a7",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -16305,7 +14123,7 @@
         }
       }
     ],
-    "passed": 14,
+    "passed": 12,
     "failed": 0
   }
 }
