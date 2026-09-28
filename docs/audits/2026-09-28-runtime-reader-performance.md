@@ -61,3 +61,11 @@ Node: 619 tests passed, 21/21 tasks, zero cached tasks, serial `pnpm test --conc
 The added observation test verifies full result equality and correctly nested shape
 intervals. Full stdout and its checksum are stored in the dated evidence directory.
 Workspace TypeScript: 12/12 tasks passed. Biome lint and `git diff --check` passed.
+
+The new .NET RuntimeProbe dependency lock was generated, then locked restore and
+Release build passed with exact SDK 10.0.302 from the cached official MCR image.
+Build: 0 warnings, 0 errors, 4.25 seconds. SDK/index/platform identity and explicitly
+labelled command summaries are retained under the dated `dotnet/` evidence directory.
+The final container uses that pinned SDK digest and asserts the SDK version; a native
+build emits a portable managed DLL with no apphost, then each target's actual CLR
+executes it. This build check is not the pending whole-solution or runtime matrix result.

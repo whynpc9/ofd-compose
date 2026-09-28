@@ -1,0 +1,17 @@
+SUMMARY ONLY: the original terminal stdout was captured by Codex but was not redirected to a raw log file.
+
+SDK: .NET SDK 10.0.302, official MCR image, linux/arm64
+Command shape: dotnet build dotnet/tools/OFDCompose.RuntimeProbe/OFDCompose.RuntimeProbe.csproj --configuration Release --no-restore -m:1 /nodeReuse:false /p:UseSharedCompilation=false --disable-build-servers
+Environment: DOTNET_CLI_HOME=/tmp/dotnet; DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1; DOTNET_CLI_TELEMETRY_OPTOUT=1; NUGET_PACKAGES=/nuget (task-scoped host mount)
+Exit code: 0
+Build result: succeeded
+Warnings: 0
+Errors: 0
+MSBuild elapsed: 00:00:04.25
+
+Outputs built:
+- Ofdrw.Net.Core (net10.0)
+- Ofdrw.Net.Packaging (net10.0)
+- OFDCompose.OfdIrWriter (net10.0)
+- OFDCompose.PdfIrWriter (net10.0)
+- OFDCompose.RuntimeProbe (net10.0)
