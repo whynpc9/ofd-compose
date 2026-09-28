@@ -748,3 +748,25 @@ it("checks per-kind font/image pack ceilings before awaiting resource bytes", as
     ],
   });
 });
+
+it("host timing observation preserves complete render identity and balances nested shaping", async () => {
+  const source = textSource("中文 office");
+  const plain = await render(source, {}, pack, profile);
+  const events: string[] = [];
+  const stack: string[] = [];
+  const observed = await render(source, {}, pack, profile, {
+    observe(stage, edge) {
+      events.push(`${stage}:${edge}`);
+      if (edge === "start") stack.push(stage);
+      else expect(stack.pop()).toBe(stage);
+    },
+  });
+  expect(observed).toEqual(plain);
+  expect(observed.ok).toBe(true);
+  expect(stack).toEqual([]);
+  expect(events).toContain("bind:start");
+  expect(events).toContain("subset:end");
+  expect(events).toContain("shape:start");
+  expect(events.indexOf("shape:start")).toBeGreaterThan(events.indexOf("layout:start"));
+  expect(events.lastIndexOf("shape:end")).toBeLessThan(events.indexOf("layout:end"));
+});

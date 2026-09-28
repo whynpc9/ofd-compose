@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-28",
+  "platform": "macOS arm64",
+  "playwright": "1.63.0",
+  "versions": [
+    {
+      "browser": "Chrome",
+      "version": "154.0.8037.58",
+      "releaseSource": "https://chromereleases.googleblog.com/2026/09/stable-channel-update-for-desktop_0856730748.html"
+    },
+    {
+      "browser": "Chrome for Testing",
+      "version": "153.0.8010.12",
+      "releaseSource": "https://chromereleases.googleblog.com/2026/08/early-stable-update-for-desktop_0935803414.html"
+    },
+    {
+      "browser": "Firefox",
+      "version": "155.0",
+      "releaseSource": "https://firefox-admin-docs.mozilla.org/release-notes/version/firefox-155/"
+    }
+  ],
+  "commands": [
+    "OFD_BROWSER=chromium OFD_BROWSER_EXECUTABLE_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' pnpm exec turbo run test:browser --force",
+    "OFD_BROWSER=chromium OFD_BROWSER_EXECUTABLE_PATH='/Users/wanghongyi/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing' pnpm exec turbo run test:browser --force",
+    "OFD_BROWSER=firefox pnpm exec turbo run test:browser --force",
+    "OFD_BROWSER=firefox pnpm --filter @ofd-compose/render-worker test:browser"
+  ],
+  "resultFiles": ["probe-output.jsonl", "run-results.json"],
+  "limitations": [
+    "Firefox evidence is split across the first six packages and a corrected direct render-worker run; it is not one uninterrupted full run.",
+    "Full stdout was observed in the execution session but was not redirected to files. run-results.json preserves the final counters and durations without representing itself as raw stdout."
+  ]
+}

@@ -161,7 +161,9 @@ async function run(
       control.signal,
       control.limits,
       control.sourceAttachment === true,
+      control.observe,
     );
+    budget.observe?.("resources", "start");
     const template = source === undefined ? undefined : snapshot(source, budget);
     const input = data === undefined ? null : snapshot(data, budget);
     const reopened = attachment === undefined ? undefined : snapshot(attachment, budget);
@@ -355,6 +357,7 @@ async function run(
         return left < right ? -1 : left > right ? 1 : 0;
       }),
     );
+    budget.observe?.("resources", "end");
     let document: ResolvedDocument;
     let templateIdentity = {} as Partial<{
       compiledTemplateFormat: string;
@@ -366,11 +369,15 @@ async function run(
     if (template !== undefined) {
       phase = "compile";
       budget.charge(phase, budget.used.jsonNodes);
+      budget.observe?.("compile", "start");
       const compiled = compile(template, { job: budget });
+      budget.observe?.("compile", "end");
       diagnostics.push(...compiled.diagnostics);
       if (!compiled.ok) return { ok: false as const, diagnostics };
       phase = "bind";
+      budget.observe?.("bind", "start");
       const bound = bind(compiled.template, input, { job: budget });
+      budget.observe?.("bind", "end");
       diagnostics.push(...bound.diagnostics);
       if (!bound.ok) return { ok: false as const, diagnostics };
       document = bound.document;
@@ -398,7 +405,9 @@ async function run(
     const images = loaded
       .filter((item) => item.kind === "image")
       .map((item) => ({ ...(item.metadata as Omit<AuthorizedImage, "bytes">), bytes: item.bytes }));
+    budget.observe?.("media", "start");
     const media = prepareMedia(document, { resources: images }, budget);
+    budget.observe?.("media", "end");
     diagnostics.push(...media.diagnostics);
     if (!media.ok) return { ok: false as const, diagnostics };
     const fonts = loaded
@@ -412,11 +421,14 @@ async function run(
         ...resource,
         id: sourceId,
       }));
+    budget.observe?.("layout", "start");
     const laid = await layout(document, fonts, layoutOptions, media, budget);
+    budget.observe?.("layout", "end");
     diagnostics.push(...laid.diagnostics);
     phase = "subset";
     const wasmBytes = loaded.find((item) => item.kind === "wasm")?.bytes;
     if (!wasmBytes) throw new RenderError("RESOURCE_FORBIDDEN", "Subset WASM missing");
+    budget.observe?.("subset", "start");
     const subsets: Awaited<ReturnType<typeof subsetFont>>[] = [];
     for (const font of fonts) {
       const resources = new Set(
@@ -437,7 +449,9 @@ async function run(
       subsets.push(await subsetFont(font.bytes, font.sha256, [...glyphs], wasmBytes, budget));
     }
     budget.check();
+    budget.observe?.("subset", "end");
     phase = "render";
+    budget.observe?.("identity", "start");
     prepayCanonical(laid.ir, budget, phase, 8);
     prepayCanonical(
       subsets.map(({ bytes: _bytes, ...identity }) => identity),
@@ -522,6 +536,7 @@ async function run(
           laid.pageDecorationSources,
         )
       : undefined;
+    budget.observe?.("identity", "end");
     return {
       ok: true as const,
       editingSource,

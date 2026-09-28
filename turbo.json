@@ -7,12 +7,22 @@
     },
     "typecheck": {},
     "test": {},
-    "test:browser": {},
+    "test:browser": {
+      "env": ["OFD_BROWSER", "OFD_BROWSER_EXECUTABLE_PATH"]
+    },
     "@ofd-compose/render-worker#test": {
       "dependsOn": ["build", "^test"]
     },
     "@ofd-compose/render-worker#test:browser": {
-      "dependsOn": ["^test:browser"]
+      "dependsOn": ["^test:browser"],
+      "env": ["OFD_BROWSER", "OFD_BROWSER_EXECUTABLE_PATH"]
     }
-  }
+  },
+  "globalPassThroughEnv": [
+    "MATRIX_SAMPLES",
+    "MATRIX_WARMUP",
+    "MATRIX_SOURCE_IDENTITY",
+    "MATRIX_EXECUTION_LABEL",
+    "MATRIX_IMAGE_ID"
+  ]
 }

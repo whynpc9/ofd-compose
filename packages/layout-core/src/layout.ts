@@ -637,6 +637,7 @@ export async function layout(
       totalPages,
       media,
       job?.captureSource ? job : undefined,
+      job?.observe,
     ).layout();
     if (!usesTotalPages || result.ir.pages.length === totalPages)
       return { ...result, paginationPasses: iteration };
@@ -772,6 +773,7 @@ class ParagraphLayouter {
     private readonly totalPages: number,
     private readonly media?: LayoutMediaSnapshot,
     private readonly sourceJob?: JobContext,
+    private readonly observe?: JobContext["observe"],
   ) {
     if (sourceJob) {
       const visit = (value: unknown, pointer: string): void => {
@@ -2458,14 +2460,19 @@ class ParagraphLayouter {
     this.work.shapedUnits += text.length;
     if (this.work.shapedUnits > 2_000_000)
       throw new LayoutError("LAYOUT_LIMIT", "Shaping work exceeds 2000000 UTF-16 units");
-    return this.core.shape({
-      text,
-      fontSha256: run.face.definition.sha256,
-      direction: "ltr",
-      script: run.script,
-      language: this.doc.settings.locale,
-      style: { weight: run.face.definition.weight, italic: run.face.definition.italic },
-    });
+    this.observe?.("shape", "start");
+    try {
+      return this.core.shape({
+        text,
+        fontSha256: run.face.definition.sha256,
+        direction: "ltr",
+        script: run.script,
+        language: this.doc.settings.locale,
+        style: { weight: run.face.definition.weight, italic: run.face.definition.italic },
+      });
+    } finally {
+      this.observe?.("shape", "end");
+    }
   }
   private runs(text: string, spans: Span[], base: TextStyle): Run[] {
     const runs: Run[] = [];

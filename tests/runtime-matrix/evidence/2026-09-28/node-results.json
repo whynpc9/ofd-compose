@@ -1,0 +1,9 @@
+{
+  "command": "pnpm test --concurrency=1",
+  "testsPassed": 619,
+  "packageCounts": [86, 1, 17, 95, 2, 122, 20, 28, 124, 37, 14, 73],
+  "tasksPassed": 21,
+  "cachedTasks": 0,
+  "durationSeconds": 43.53,
+  "stdoutSha256": "e5485391564955182a497c3542a05a8a9307f0d2f88bcb4081f8abbd9e618ad2"
+}

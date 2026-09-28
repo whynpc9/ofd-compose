@@ -1,0 +1,31 @@
+{
+  "schema": "ofd-compose/runtime-matrix-image-lock@1",
+  "verifiedAt": "2026-09-28",
+  "verificationCommand": "docker buildx imagetools inspect <image>:<tag>",
+  "images": {
+    "dotnetSdk": {
+      "tag": "mcr.microsoft.com/dotnet/sdk:10.0.302",
+      "index": "mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:72dd743782f2ae7e5476fd64f6a460045e3998dc862218b80e6944cba79a01b0",
+      "platforms": {
+        "linux/amd64": "sha256:7a91ccecc26d71bf7688c627a6b5eae2e27bb2cd1e37e8abe738348904245692",
+        "linux/arm64": "sha256:683d16913974bf1311381ccd6d6aba55213f313501c39ef964b0458f44c0c4bc"
+      }
+    },
+    "dotnetAspnet": {
+      "tag": "mcr.microsoft.com/dotnet/aspnet:10.0",
+      "index": "mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f",
+      "platforms": {
+        "linux/amd64": "sha256:ed6a2d26633ddcd3d42a1d9f9866214ecbbc11ba6ac5e0e843da02c13da24072",
+        "linux/arm64": "sha256:ac450e4a4eadcb5157792774dd5bb4fd2c1fcdd902b7605c68f0519622c949bc"
+      }
+    },
+    "node": {
+      "tag": "docker.io/library/node:24.19.0-bookworm-slim",
+      "index": "docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df",
+      "platforms": {
+        "linux/amd64": "sha256:e5a8dee7bc1e6a215d224a7ef8206f7e77271bc3cabd5febf2beafac0674f174",
+        "linux/arm64/v8": "sha256:be8929e08ae137e81b5e1edba02259e6c4cb2f5ad655092bb9f56b97e41c4536"
+      }
+    }
+  }
+}

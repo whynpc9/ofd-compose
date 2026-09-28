@@ -1,0 +1,32 @@
+{
+  "chrome154": {
+    "status": "passed",
+    "tasks": "7/7",
+    "cachedTasks": 0,
+    "tests": 409,
+    "duration": "1m12.308s"
+  },
+  "chrome153": {
+    "status": "passed",
+    "tasks": "7/7",
+    "cachedTasks": 0,
+    "tests": 409,
+    "duration": "1m13.832s"
+  },
+  "firefox155": {
+    "status": "passed in two corrected runs",
+    "firstSixPackages": 338,
+    "renderWorker": 71,
+    "coveredTests": 409,
+    "note": "The first six packages completed under Firefox. The render-worker Turbo override initially dropped the browser environment, so that invalid Chromium execution was interrupted; after fixing the override, render-worker passed directly under Firefox in 42.08s. This is not claimed as one uninterrupted full run."
+  },
+  "packageTests": {
+    "layout-ir": 83,
+    "golden-corpus": 23,
+    "smoke": 2,
+    "media-core": 86,
+    "layout-core": 119,
+    "typography-core": 25,
+    "render-worker": 71
+  }
+}
