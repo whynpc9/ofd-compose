@@ -1,35 +1,35 @@
 # Runtime matrix invocations
 
-Frozen source commit: `d0627b31067c137fb438762eb53f89723b799a5f`
+Frozen source commit: `5ead51614a41ceb6b581f2a469b211508220b55b`
 
-Frozen context: `/private/tmp/ofd18-context`
+Frozen context: `/private/tmp/ofd18-context-pure`
 
-Source identity: `/private/tmp/ofd18-context/.matrix/source.json`
+Source identity: `/private/tmp/ofd18-context-pure/.matrix/source.json`
 
 ## arm64 image
 
 ```sh
-docker buildx build --platform linux/arm64 --load --tag ofd-compose-runtime-matrix:issue18-arm64 --file /private/tmp/ofd18-context/tests/runtime-matrix/Dockerfile /private/tmp/ofd18-context
+docker buildx build --platform linux/arm64 --load --tag ofd-compose-runtime-matrix:issue18-pure-arm64 --file /private/tmp/ofd18-context-pure/tests/runtime-matrix/Dockerfile /private/tmp/ofd18-context-pure
 ```
 
-Image ID: `sha256:526b8e0f79d9fdf17c9efd651ae5c8f1bf34bcabd479c748976d0fb54fdac632`
+Image ID: `sha256:cbc4ff91d0d70ff37ec1b66249d043ca9de645f467d9077c88828eedb88d1b25`
 
 ```sh
-docker run --rm --platform linux/arm64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=nativeARMOrbStack -e MATRIX_IMAGE_ID=sha256:526b8e0f79d9fdf17c9efd651ae5c8f1bf34bcabd479c748976d0fb54fdac632 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/arm64:/evidence ofd-compose-runtime-matrix:issue18-arm64 tests/runtime-matrix/run.mjs corpus .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
-docker run --rm --platform linux/arm64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=nativeARMOrbStack -e MATRIX_IMAGE_ID=sha256:526b8e0f79d9fdf17c9efd651ae5c8f1bf34bcabd479c748976d0fb54fdac632 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/arm64:/evidence ofd-compose-runtime-matrix:issue18-arm64 tests/runtime-matrix/run.mjs benchmark .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
+docker run --rm --platform linux/arm64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=nativeARMOrbStack -e MATRIX_IMAGE_ID=sha256:cbc4ff91d0d70ff37ec1b66249d043ca9de645f467d9077c88828eedb88d1b25 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/pure-arm64:/evidence ofd-compose-runtime-matrix:issue18-pure-arm64 tests/runtime-matrix/run.mjs corpus .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
+docker run --rm --platform linux/arm64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=nativeARMOrbStack -e MATRIX_IMAGE_ID=sha256:cbc4ff91d0d70ff37ec1b66249d043ca9de645f467d9077c88828eedb88d1b25 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/pure-arm64:/evidence ofd-compose-runtime-matrix:issue18-pure-arm64 tests/runtime-matrix/run.mjs benchmark .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
 ```
 
 ## amd64 image on ARM host
 
 ```sh
-docker buildx build --platform linux/amd64 --load --tag ofd-compose-runtime-matrix:issue18-amd64 --file /private/tmp/ofd18-context/tests/runtime-matrix/Dockerfile /private/tmp/ofd18-context
+docker buildx build --platform linux/amd64 --load --tag ofd-compose-runtime-matrix:issue18-pure-amd64 --file /private/tmp/ofd18-context-pure/tests/runtime-matrix/Dockerfile /private/tmp/ofd18-context-pure
 ```
 
-Image ID: `sha256:d1cacddc4ff8454e7d25d789429690d71614d93e30ece9ecd73af1935c3e7cd1`
+Image ID: `sha256:e3eb3bc1fadf11f76914f42b6f62b47a287d6091fc35cc9112d155f71507e961`
 
 ```sh
-docker run --rm --platform linux/amd64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=emulatedX64OnARMOrbStack -e MATRIX_IMAGE_ID=sha256:d1cacddc4ff8454e7d25d789429690d71614d93e30ece9ecd73af1935c3e7cd1 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/amd64:/evidence ofd-compose-runtime-matrix:issue18-amd64 tests/runtime-matrix/run.mjs corpus .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
-docker run --rm --platform linux/amd64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=emulatedX64OnARMOrbStack -e MATRIX_IMAGE_ID=sha256:d1cacddc4ff8454e7d25d789429690d71614d93e30ece9ecd73af1935c3e7cd1 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/amd64:/evidence ofd-compose-runtime-matrix:issue18-amd64 tests/runtime-matrix/run.mjs benchmark .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
+docker run --rm --platform linux/amd64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=emulatedX64OnARMOrbStack -e MATRIX_IMAGE_ID=sha256:e3eb3bc1fadf11f76914f42b6f62b47a287d6091fc35cc9112d155f71507e961 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/pure-amd64:/evidence ofd-compose-runtime-matrix:issue18-pure-amd64 tests/runtime-matrix/run.mjs corpus .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
+docker run --rm --platform linux/amd64 --network none --cpus 2 --memory 4g --read-only --tmpfs /tmp:rw,size=256m -e MATRIX_SOURCE_IDENTITY=/workspace/.matrix/source.json -e MATRIX_EXECUTION_LABEL=emulatedX64OnARMOrbStack -e MATRIX_IMAGE_ID=sha256:e3eb3bc1fadf11f76914f42b6f62b47a287d6091fc35cc9112d155f71507e961 -v /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/.scratch/issue18-output/pure-amd64:/evidence ofd-compose-runtime-matrix:issue18-pure-amd64 tests/runtime-matrix/run.mjs benchmark .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
 ```
 
 Both corpus and benchmark runs used the image's default `node` entrypoint. The amd64 runs used host emulation and are not native-x64 performance evidence.

@@ -1,26 +1,26 @@
 {
   "schema": "ofd-compose/runtime-evidence@1",
   "mode": "corpus",
-  "startedAt": "2026-09-28T03:11:26.333Z",
+  "startedAt": "2026-09-28T04:23:48.216Z",
   "source": {
-    "codeSha": "d0627b31067c137fb438762eb53f89723b799a5f",
+    "codeSha": "5ead51614a41ceb6b581f2a469b211508220b55b",
     "builtFiles": {
       "packages/typography-core/dist/index.mjs": "ca4b09f8897d963ec9304738c1061f5b3940b891a8e986339b7926d485832c61",
       "packages/template-compiler/dist/index.mjs": "ce99e02192c0dc1df92d8b3b6fb4da62bb7710755d0af745e9c395a8d9ceb2b8",
       "packages/source-protocol/dist/index.mjs": "89020d5d180122e3a7bfeed952bc4ace26640b16dcc3d83da8d15fa8a38c3296",
-      "packages/render-worker/dist/index.mjs": "356f0d2acf2dcb1a71aafa3c8d0999143991b845e67fa6881a832e99abc7eaea",
+      "packages/render-worker/dist/index.mjs": "0b4be2a07d4962db7af3ef35d0bbabc1cb18bef75f36cc778586e27c3b5a746e",
       "packages/media-core/dist/index.mjs": "c3348d3745b83c761400d7561f5d8fc4f27347fc42c75bb22da696016d61c81c",
       "packages/layout-ir/dist/index.mjs": "1a19e42c258ad25a96756db76d8ef824648d7d1305aefb1fffb6d82702498f0b",
-      "packages/layout-core/dist/index.mjs": "55b4495b62425a4fe74d705c8c6f35a94710e98d0780943d26bbc582ca3bc79e",
+      "packages/layout-core/dist/index.mjs": "4a3485289e6ba4ae530e0d5b896a9f2d24298057eff4d494b7d2a027340fdc73",
       "packages/document-model/dist/index.mjs": "b614611beb1e1434877d515074e4eed543b9e655cd48d01ae001ea2f510998d4",
       "packages/binding-core/dist/index.mjs": "7b8df349ab33a37eb2e91c81fe12a662b2e36a033bf25d5549603c5820f8e288"
     },
-    "sourceArchiveSha256": "b616108faa8dadb2882e2ae83b15540f2e9239310078f81fd037f7a61c48cf4c",
+    "sourceArchiveSha256": "08c38b91fca563d7088ee6cfb3a762a9f3cbc2cb83bb195742b3a31f9e07dea7",
     "corpusSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
     "pnpmLockSha256": "ed5671ffdf293097715dfac921dcf38e16dae85036d7f0ade9263ca74c2bf739"
   },
   "executionLabel": "emulatedX64OnARMOrbStack",
-  "imageIdentity": "sha256:d1cacddc4ff8454e7d25d789429690d71614d93e30ece9ecd73af1935c3e7cd1",
+  "imageIdentity": "sha256:e3eb3bc1fadf11f76914f42b6f62b47a287d6091fc35cc9112d155f71507e961",
   "node": "v24.19.0",
   "arch": "x64",
   "platform": "linux",

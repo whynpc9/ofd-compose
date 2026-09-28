@@ -6,10 +6,10 @@ protocol/profile freeze. Base: issue 17 `4bfa4c9b513d17f31a5eebfcd9fdd42a89a0542
 
 ## Frozen inputs and actual runtimes
 
-Measured code below: `d0627b31067c137fb438762eb53f89723b799a5f` (historical experiment).
-Review remediation now moves shape observation to a job-owned Worker typography
-decorator; fresh runtime/performance evidence for that implementation is pending.
-These historical numbers must not be presented as measurements of the new implementation.
+Measured code: `5ead51614a41ceb6b581f2a469b211508220b55b`. The Worker owns a fresh TypographyCore
+per observed job and decorates its shape method. Layout Core only consumes its ordinary
+typography dependency; it has no observer interface, clock or event invocation.
+The earlier d0627b3 experiment is superseded by these freshly executed images and samples.
 [Source identity](../../tests/runtime-matrix/evidence/2026-09-28/source.json) records the
 Git archive, lockfile and built JS hashes. The exact input is retained losslessly in
 [corpus-input.json.gz](../../tests/runtime-matrix/evidence/2026-09-28/corpus-input.json.gz),
@@ -21,8 +21,8 @@ consistency, not signatures or authenticity.
 
 | Environment | Actual execution | Runtime | Image ID |
 | --- | --- | --- | --- |
-| Linux arm64 | Native architecture in OrbStack VM on Apple M4 Max | Node 24.19.0; .NET/ASP.NET 10.0.12; no SDK | `sha256:526b8e0f79d9fdf17c9efd651ae5c8f1bf34bcabd479c748976d0fb54fdac632` |
-| Linux x64 | **Emulated x64 on ARM host**, both Node and CLR report X64 | Node 24.19.0; .NET/ASP.NET 10.0.12; no SDK | `sha256:d1cacddc4ff8454e7d25d789429690d71614d93e30ece9ecd73af1935c3e7cd1` |
+| Linux arm64 | Native architecture in OrbStack VM on Apple M4 Max | Node 24.19.0; .NET/ASP.NET 10.0.12; no SDK | `sha256:cbc4ff91d0d70ff37ec1b66249d043ca9de645f467d9077c88828eedb88d1b25` |
+| Linux x64 | **Emulated x64 on ARM host**, both Node and CLR report X64 | Node 24.19.0; .NET/ASP.NET 10.0.12; no SDK | `sha256:e3eb3bc1fadf11f76914f42b6f62b47a287d6091fc35cc9112d155f71507e961` |
 
 Images use the pinned official ASP.NET base and Node binary, with production JS dependencies.
 The SDK 10.0.302 build stage is native and emits a portable managed DLL without an apphost;
@@ -85,30 +85,35 @@ cost is included. The subset is made once and identical bytes feed both formats.
 
 | Sample | Mode | Bind | Shape | Layout excl. | Subset | Both writers | Total | Peak Node / CLR MiB |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 page | cold | 1.0 / 1.1 | 2.9 / 3.9 | 68.7 / 72.4 | 90.0 / 99.9 | 158.0 / 167.0 | 561.5 / 590.3 | 254.2 / 86.6 |
-| 1 page | hot | 0.1 / 0.2 | 0.2 / 0.2 | 58.8 / 65.9 | 85.3 / 98.1 | 18.9 / 36.9 | 239.1 / 276.5 | 390.3 / 154.3 |
-| 1000 rows / 84 pages | cold | 5.7 / 6.7 | 19.7 / 24.2 | 666.0 / 699.3 | 88.3 / 94.1 | 2082.1 / 2162.3 | 3718.2 / 3799.4 | 445.6 / 537.1 |
-| 1000 rows / 84 pages | hot | 1.3 / 2.5 | 7.5 / 9.6 | 602.5 / 622.2 | 88.7 / 96.6 | 1293.1 / 1428.0 | 2665.2 / 2895.8 | 567.2 / 725.2 |
-| 50 pages | cold | 1.1 / 1.3 | 8.7 / 12.1 | 156.3 / 173.6 | 87.0 / 90.2 | 369.1 / 398.7 | 962.3 / 1033.6 | 349.7 / 164.5 |
-| 50 pages | hot | 0.2 / 0.2 | 2.6 / 4.0 | 117.4 / 130.2 | 72.5 / 86.3 | 117.9 / 158.3 | 454.2 / 501.5 | 456.8 / 209.8 |
+| 1 page | cold | 0.9 / 1.0 | 2.8 / 3.5 | 67.9 / 71.9 | 89.1 / 96.3 | 158.8 / 172.8 | 560.2 / 589.4 | 253.5 / 86.5 |
+| 1 page | hot | 0.1 / 0.1 | 0.2 / 0.2 | 59.2 / 75.2 | 85.2 / 92.4 | 15.8 / 25.8 | 234.7 / 273.5 | 357.8 / 157.7 |
+| 1000 rows / 84 pages | cold | 5.5 / 7.3 | 21.1 / 25.8 | 657.6 / 696.7 | 87.3 / 93.8 | 2060.8 / 2106.2 | 3675.2 / 3758.5 | 447.4 / 525.7 |
+| 1000 rows / 84 pages | hot | 1.3 / 2.3 | 7.1 / 9.0 | 595.6 / 625.6 | 87.8 / 96.0 | 1276.8 / 1436.3 | 2629.1 / 2821.9 | 558.4 / 734.0 |
+| 50 pages | cold | 1.1 / 1.4 | 8.3 / 11.8 | 152.8 / 172.2 | 88.2 / 94.8 | 367.9 / 385.2 | 964.0 / 1002.1 | 352.4 / 164.7 |
+| 50 pages | hot | 0.2 / 0.2 | 2.5 / 4.5 | 115.9 / 126.2 | 71.0 / 79.8 | 100.9 / 140.5 | 443.7 / 509.1 | 460.6 / 212.0 |
 
 ### Emulated x64 on ARM — not native x64 performance
 
 | Sample | Mode | Bind | Shape | Layout excl. | Subset | Both writers | Total | Peak Node / CLR MiB |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 page | cold | 3.2 / 3.5 | 25.4 / 27.4 | 498.6 / 509.9 | 784.5 / 803.7 | 563.9 / 598.6 | 3312.9 / 3421.8 | 316.1 / 133.6 |
-| 1 page | hot | 1.1 / 1.7 | 0.4 / 1.6 | 461.9 / 476.7 | 602.2 / 616.0 | 30.5 / 59.5 | 1587.5 / 1649.0 | 571.5 / 182.7 |
-| 1000 rows / 84 pages | cold | 13.4 / 19.6 | 160.0 / 176.3 | 1491.5 / 1519.2 | 614.7 / 637.2 | 3615.8 / 3730.3 | 8368.1 / 8496.1 | 537.7 / 580.8 |
-| 1000 rows / 84 pages | hot | 4.4 / 5.5 | 18.9 / 21.4 | 1333.0 / 1361.1 | 593.9 / 611.2 | 1720.8 / 1807.9 | 5177.8 / 5255.8 | 713.9 / 786.1 |
-| 50 pages | cold | 3.7 / 4.2 | 63.6 / 67.3 | 673.4 / 695.4 | 616.1 / 631.7 | 924.1 / 970.5 | 3857.5 / 3934.2 | 351.0 / 212.4 |
-| 50 pages | hot | 0.7 / 1.5 | 5.5 / 6.8 | 562.2 / 591.0 | 509.4 / 603.8 | 156.8 / 204.9 | 1868.7 / 1933.6 | 540.8 / 296.9 |
+| 1 page | cold | 3.2 / 3.8 | 26.2 / 29.6 | 497.0 / 522.3 | 783.6 / 803.1 | 559.3 / 604.5 | 3319.2 / 3408.0 | 316.5 / 133.2 |
+| 1 page | hot | 0.8 / 1.4 | 0.4 / 1.7 | 472.2 / 482.8 | 614.4 / 636.7 | 30.8 / 61.8 | 1623.8 / 1657.7 | 574.6 / 182.4 |
+| 1000 rows / 84 pages | cold | 13.8 / 15.6 | 163.4 / 171.1 | 1500.8 / 1564.9 | 619.3 / 633.0 | 3659.8 / 3806.3 | 8467.6 / 8635.4 | 537.6 / 582.3 |
+| 1000 rows / 84 pages | hot | 4.3 / 5.3 | 20.1 / 22.6 | 1374.9 / 1408.4 | 600.9 / 612.0 | 1756.9 / 1824.7 | 5271.3 / 5353.6 | 732.8 / 795.0 |
+| 50 pages | cold | 3.5 / 4.3 | 63.8 / 69.9 | 673.0 / 698.5 | 617.1 / 638.9 | 934.6 / 960.4 | 3874.7 / 3923.5 | 351.5 / 211.7 |
+| 50 pages | hot | 0.8 / 1.6 | 4.7 / 6.7 | 566.0 / 588.5 | 520.2 / 616.9 | 176.5 / 238.0 | 1896.7 / 2003.8 | 534.7 / 278.8 |
 
 Memory columns are separate process lifetime high-water marks (hot includes warmup),
-not per-stage peaks and not a simultaneous aggregate. They are never summed. The
-6000-row rejection total p50/p95 is 314.5/339.7 ms cold and 140.0/146.3 ms hot on arm64,
-and 1373.5/1426.6 ms cold and 585.6/601.4 ms hot under x64 emulation. These are **failure
-path costs**, not successful 6000-row render throughput; shape/layout/subset/write were
-not reached. Native x64 hardware performance remains **Not verified**.
+not per-stage peaks and not a simultaneous aggregate. They are never summed.
+The 6000-row rejection total p50/p95 in milliseconds:
+
+| Environment | Cold | Hot |
+| --- | --- | --- |
+| arm64 | 311.4 / 341.1 | 141.6 / 148.2 |
+| x64 emulated | 1381.3 / 1405.7 | 587.7 / 600.6 |
+
+These are **failure path costs**, not successful 6000-row throughput; shape/layout/subset/
+write were not reached. Native x64 hardware performance remains **Not verified**.
 
 ## Desktop reader matrix — Not verified
 
@@ -135,7 +140,7 @@ reader and browser kernel checks do not close these desktop gates.
 
 The existing seven shared suites were rerun serially with explicit engine/executable
 paths, `--force --concurrency=1`, at code SHA
-`1b4c6db124bb9bdc349d5497370608aaa662f4f2`. Every retained log includes the exact command,
+`5ead51614a41ceb6b581f2a469b211508220b55b`. Every retained log includes the exact command,
 actual launch/version probe immediately before the test, full stdout/stderr and exit 0.
 Each completed **7/7 suites, 409 tests, zero cached tasks, no failures or skipped suites**:
 Chrome 154.0.8037.58, Chrome for Testing 153.0.8010.12, and Playwright Firefox 155.0.
@@ -158,11 +163,14 @@ a desktop screenshot or license/extraction result.
 ## Regression and review evidence
 
 - Node: 619 passed, 21/21 tasks, zero cached tasks; complete stdout retained.
-- .NET: exact SDK 10.0.302 with actual CLR/ASP.NET 10.0.10 (separate from the runtime matrix
+- .NET local baseline at d0627b3 (before the observation-boundary refactor):
+  exact SDK 10.0.302 with actual CLR/ASP.NET 10.0.10 (separate from the runtime matrix
   images at 10.0.12), locked restore and Release build passed; full MTP run
   **494 succeeded / 0 failed / 0 skipped**, five assemblies. Raw logs retained. An initial
   no-build invocation wrongly forwarded MSBuild-only flags, selected **0 tests / exit 5**,
   and is explicitly excluded; it is not a passing or partially passing test run.
+  Current-head whole-solution status is the PR CI check; the refreshed runtime matrix
+  executes the actual fixed writers for every positive new-Worker output.
 - TypeScript: 12/12 tasks passed. Biome lint and `git diff --check` passed.
 - License gate: 25 strict production pnpm packages, 91 dev packages with 4 documented
   exceptions, 28 strict NuGet packages. No package dependency was added for the harness.

@@ -18,7 +18,7 @@
 
 2026-09-28: implementation and executed evidence are in
 `tests/runtime-matrix/` and `docs/audits/2026-09-28-runtime-reader-performance.md`.
-Measured source SHA: `d0627b31067c137fb438762eb53f89723b799a5f`.
+Measured source SHA: `5ead51614a41ceb6b581f2a469b211508220b55b`.
 Linux arm64 (native architecture in VM) and x64 (**emulated on ARM**, not native x64
 performance) each executed the same 34 inputs with Node 24.19.0 and .NET 10.0.12.
 All 28 positive cases actually wrote both formats; 6 explicit negatives were retained.

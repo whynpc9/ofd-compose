@@ -1,4 +1,4 @@
-code_sha=1b4c6db124bb9bdc349d5497370608aaa662f4f2
+code_sha=5ead51614a41ceb6b581f2a469b211508220b55b
 probe_command=OFD_BROWSER=firefox OFD_BROWSER_EXECUTABLE_PATH='/Users/wanghongyi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox' node tools/browser-matrix/probe.mjs
 {"browser":"firefox","version":"155.0","executablePath":"/Users/wanghongyi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox","platform":"darwin","architecture":"arm64"}
 test_command=OFD_BROWSER=firefox OFD_BROWSER_EXECUTABLE_PATH='/Users/wanghongyi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox' pnpm exec turbo run test:browser --force --concurrency=1
@@ -8,281 +8,281 @@ test_command=OFD_BROWSER=firefox OFD_BROWSER_EXECUTABLE_PATH='/Users/wanghongyi/
    • Running test:browser in 12 packages
    • Remote caching disabled, using shared worktree cache
 
-@ofd-compose/smoke-tests:test:browser: cache bypass, force executing 813df6e4a4fbf989
-@ofd-compose/smoke-tests:test:browser: $ vitest run --config vitest.browser.config.ts
-@ofd-compose/smoke-tests:test:browser: 
-@ofd-compose/smoke-tests:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/tests/smoke
-@ofd-compose/smoke-tests:test:browser:       API started at http://localhost:63315/
-@ofd-compose/smoke-tests:test:browser: 
-@ofd-compose/smoke-tests:test:browser:  ✓ |browser (firefox)| src/core-wiring.browser.test.ts (2 tests) 2ms
-@ofd-compose/smoke-tests:test:browser: 
-@ofd-compose/smoke-tests:test:browser:  Test Files  1 passed (1)
-@ofd-compose/smoke-tests:test:browser:       Tests  2 passed (2)
-@ofd-compose/smoke-tests:test:browser:    Start at  11:53:20
-@ofd-compose/smoke-tests:test:browser:    Duration  1.33s (worker 55%, import 45%, tests 1%)
-@ofd-compose/smoke-tests:test:browser: 
-@ofd-compose/layout-core:test:browser: cache bypass, force executing 36386c62a21bf670
-@ofd-compose/layout-core:test:browser: $ vitest run --config vitest.browser.config.ts
-@ofd-compose/layout-core:test:browser: 
-@ofd-compose/layout-core:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-core
-@ofd-compose/layout-core:test:browser:       API started at http://localhost:63315/
-@ofd-compose/layout-core:test:browser: 
-@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/barcode-placement.dual.test.ts (2 tests) 50ms
-@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/corpus.dual.test.ts (1 test) 760ms
-@ofd-compose/layout-core:test:browser:    ✓ extracts the committed narrative corpus exactly after binding, shaping and line breaking 760ms
-@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/media-regions.dual.test.ts (32 tests) 22721ms
-@ofd-compose/layout-core:test:browser:    ✓ prepared media, paths and regions (23)
-@ofd-compose/layout-core:test:browser:      ✓ centers each list image and retains binding and keyed repeat identity 728ms
-@ofd-compose/layout-core:test:browser:      ✓ moves an atomic image to the next page and rejects one taller than a whole page 1361ms
-@ofd-compose/layout-core:test:browser:      ✓ fits exactly at the page boundary without making a trailing page 700ms
-@ofd-compose/layout-core:test:browser:      ✓ clips an image in pixel-local coordinates without resizing its frozen source 1361ms
-@ofd-compose/layout-core:test:browser:      ✓ places barcode geometry unchanged, with full quiet-zone bounds and semantics 674ms
-@ofd-compose/layout-core:test:browser:      ✓ never crops barcode quiet zones or shrinks below legal physical dimensions 1340ms
-@ofd-compose/layout-core:test:browser:      ✓ keeps fixed and flowing content independent and fails default fixed overflow 1352ms
-@ofd-compose/layout-core:test:browser:      ✓ explicit truncation clips geometry and preserves semantic source with a diagnostic 673ms
-@ofd-compose/layout-core:test:browser:      ✓ explicit scaling transforms text bounds and baseline inspection uniformly 2039ms
-@ofd-compose/layout-core:test:browser:      ✓ minimum-font-size performs bounded real reflow and reports failures at the floor 1343ms
-@ofd-compose/layout-core:test:browser:      ✓ flow regions reserve their assigned height and keep following content after it 688ms
-@ofd-compose/layout-core:test:browser:      ✓ emits fill rules, dash/cap/join, reflected/rotated paths and paragraph borders 676ms
-@ofd-compose/layout-core:test:browser:      ✓ rejects singular transforms, invalid path sequences and degenerate dash patterns 2008ms
-@ofd-compose/layout-core:test:browser:      ✓ reuses shared budgets across region retries and rejects nested long input before fonts 679ms
-@ofd-compose/layout-core:test:browser:      ✓ is byte-deterministic with stable media identity 1363ms
-@ofd-compose/layout-core:test:browser:    ✓ scales actual page-space paragraph decoration paths in regions 670ms
-@ofd-compose/layout-core:test:browser:    ✓ handles right aligned unbreakable text on both region edges 1344ms
-@ofd-compose/layout-core:test:browser:    ✓ handles center aligned unbreakable text on both region edges 1376ms
-@ofd-compose/layout-core:test:browser:    ✓ reserves square diagonal cap corners under reflected path geometry 678ms
-@ofd-compose/layout-core:test:browser:    ✓ preserves center alignment when clipping an overwide image 681ms
-@ofd-compose/layout-core:test:browser:    ✓ preserves right alignment when clipping an overwide image 680ms
-@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/pagination.dual.test.ts (20 tests) 26330ms
-@ofd-compose/layout-core:test:browser:    ✓ binds physical page and section settings and records each page's geometry and source 695ms
-@ofd-compose/layout-core:test:browser:    ✓ automatically splits a paragraph by actual line boxes without losing source ranges 668ms
-@ofd-compose/layout-core:test:browser:    ✓ trims trailing spacing, drops before-spacing after automatic breaks, and preserves explicit blank pages 1337ms
-@ofd-compose/layout-core:test:browser:    ✓ reserves hidden bands, renders numbering and total fields, and draws a physical page border 1351ms
-@ofd-compose/layout-core:test:browser:    ✓ restarts page numbering and hiding relative to a section and wraps bands inside reserved height 671ms
-@ofd-compose/layout-core:test:browser:    ✓ emits transformed transparent text/image watermarks at their requested paint layers 671ms
-@ofd-compose/layout-core:test:browser:    ✓ rejects impossible lines/bands, invalid limits, absent images and page-budget overflow 1334ms
-@ofd-compose/layout-core:test:browser:    ✓ lays out a 50-page Chinese report identically in repeat runs and the shared Node/browser fixture 7335ms
-@ofd-compose/layout-core:test:browser:    ✓ rejects the explicit minimum page count before fonts and bands before concatenation 685ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps transformed watermark bounds in page space, including text decoration paths 1340ms
-@ofd-compose/layout-core:test:browser:    ✓ charges output work across pages instead of granting every page a fresh source budget 739ms
-@ofd-compose/layout-core:test:browser:    ✓ processes a full 1000-page image-watermark document with linear state decoration 2013ms
-@ofd-compose/layout-core:test:browser:    ✓ reflects image pixels with negative scaling and keeps page bounds and alpha consistent 664ms
-@ofd-compose/layout-core:test:browser:    ✓ ignores overridden root fields and wholly hidden total fields when deciding to repeat layout 2040ms
-@ofd-compose/layout-core:test:browser:    ✓ maps arbitrary image source IDs into a collision-free IR namespace and preserves references 665ms
-@ofd-compose/layout-core:test:browser:    ✓ lays out nested keyed repeat sections with stable occurrence identity and independent page policies 2027ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps section occurrence tuples collision-free for arbitrary keys, node IDs and the implicit root 667ms
-@ofd-compose/layout-core:test:browser:    ✓ separates an implicit root from a later explicit section with the same public source ID 670ms
-@ofd-compose/layout-core:test:browser:    ✓ charges repeated section metadata before source IDs can amplify output strings across lines 670ms
-@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/tables.dual.test.ts (35 tests) 32707ms
-@ofd-compose/layout-core:test:browser:    ✓ table layout (1)
-@ofd-compose/layout-core:test:browser:      ✓ lays out 400 real-font rows exactly once with repeated-header identity 2056ms
-@ofd-compose/layout-core:test:browser:    ✓ resolves shared borders once across rows 695ms
-@ofd-compose/layout-core:test:browser:    ✓ preserves empty control geometry in cells 696ms
-@ofd-compose/layout-core:test:browser:    ✓ rejects tall fixed rows and page-spanning merge groups explicitly 1387ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps a title with the following table's header and first row 697ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps at least two paragraph lines on each side of a page break 699ms
-@ofd-compose/layout-core:test:browser:    ✓ binds 400 RepeatRowGroup instances and preserves table, row and cell contracts 1476ms
-@ofd-compose/layout-core:test:browser:    ✓ places frozen media inside cells and retains barcode clipping safeguards in regions 1430ms
-@ofd-compose/layout-core:test:browser:    ✓ lays out merged cells with shared segmented edges and bottom alignment 700ms
-@ofd-compose/layout-core:test:browser:    ✓ accepts a fully covered empty row under a vertical merge 725ms
-@ofd-compose/layout-core:test:browser:    ✓ budgets repeated header source text and control-only output 736ms
-@ofd-compose/layout-core:test:browser:    ✓ rejects impossible orphan constraints after widow adjustment: {"count":3,"orphan":2,"widow":2} 692ms
-@ofd-compose/layout-core:test:browser:    ✓ rejects impossible orphan constraints after widow adjustment: {"count":5,"orphan":3,"widow":1} 695ms
-@ofd-compose/layout-core:test:browser:    ✓ versions implicit heading pagination in LayoutIdentity 699ms
-@ofd-compose/layout-core:test:browser:    ✓ honors explicitly disabled heading pagination without implicit orphan minima 696ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps headings before valid top-level flow regions 694ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps headings before valid top-level fixed regions 700ms
-@ofd-compose/layout-core:test:browser:    ✓ measures empty tables locally after an earlier nonempty table 700ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps a heading with only the first independently pageable image 724ms
-@ofd-compose/layout-core:test:browser:    ✓ probes only the first group of a valid 6000-row table 4898ms
-@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at start 695ms
-@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at middle 697ms
-@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at end 701ms
-@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at only 702ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps a heading with a short paragraph that cannot satisfy a split policy 688ms
-@ofd-compose/layout-core:test:browser:    ✓ bounds paragraph lookahead while preserving a 6000-line policy paragraph 3090ms
-@ofd-compose/layout-core:test:browser:    ✓ uses actual tall custom-page height for table cell measurement: direct 691ms
-@ofd-compose/layout-core:test:browser:    ✓ uses actual tall custom-page height for table cell measurement: heading 710ms
-@ofd-compose/layout-core:test:browser:    ✓ uses actual tall custom-page height for table cell measurement: region 690ms
-@ofd-compose/layout-core:test:browser:    ✓ places frozen media taller than 100000 mm when its custom page fits it 734ms
-@ofd-compose/layout-core:test:browser:    ✓ starts repeated-header indices at one after moving the original table to a fresh page 745ms
-@ofd-compose/layout-core:test:browser:    ✓ links repeated header text and control semantics to their original nodes 748ms
-@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/layout.dual.test.ts (29 tests) 48242ms
-@ofd-compose/layout-core:test:browser:    ✓ shares the pinned complete narrative IR digest in Node and Chromium 1377ms
-@ofd-compose/layout-core:test:browser:    ✓ shapes a ligature across static/dynamic source boundaries with both source ranges 667ms
-@ofd-compose/layout-core:test:browser:    ✓ uses Chinese opening and closing classes and word boundaries over the full paragraph 670ms
-@ofd-compose/layout-core:test:browser:    ✓ lays out tabs, CRLF, blank paragraphs and terminal breaks without losing logical controls 1340ms
-@ofd-compose/layout-core:test:browser:    ✓ applies left/center/right/justify, hanging indents, paragraph spacing and fixed line heights 2674ms
-@ofd-compose/layout-core:test:browser:    ✓ emits real font instances, superscript/subscript, color, highlight and link decorations 673ms
-@ofd-compose/layout-core:test:browser:    ✓ preserves heading and numbering through binding, with stable list continuation and restart 680ms
-@ofd-compose/layout-core:test:browser:    ✓ waits for every font before shaping; reverse resource order/arrival yields the same digest 1347ms
-@ofd-compose/layout-core:test:browser:    ✓ respects explicit dynamic style inheritance and preserves repeat identities 690ms
-@ofd-compose/layout-core:test:browser:    ✓ rejects missing faces, unsupported controls, invalid text, unbreakable words and page overflow 2690ms
-@ofd-compose/layout-core:test:browser:    ✓ keeps astral/combining clusters intact and supports bullet labels 669ms
-@ofd-compose/layout-core:test:browser:    ✓ retains terminal line offsets and supports controls and empty tables 2011ms
-@ofd-compose/layout-core:test:browser:    ✓ uses the selected font metrics for blank paragraphs and terminal lines, including fixed-height thresholds 5388ms
-@ofd-compose/layout-core:test:browser:    ✓ justifies punctuation-separated Chinese at legal boundaries and fills the actual glyph advance 668ms
-@ofd-compose/layout-core:test:browser:    ✓ rejects inherited object property names as missing styles in a supplied ResolvedDocument 669ms
-@ofd-compose/layout-core:test:browser:    ✓ advances candidate/run cursors on control-only lines and bounds expanded source output 2058ms
-@ofd-compose/layout-core:test:browser:    ✓ aligns tab prefixes while keeping single/multiple stops anchored under indents and wrapping 12632ms
-@ofd-compose/layout-core:test:browser:    ✓ bounds optional control and whitespace candidate measurement 3130ms
-@ofd-compose/layout-core:test:browser:    ✓ initializes explicit list starts once per repeated paragraph and restarts for a new parent group 1341ms
-@ofd-compose/layout-core:test:browser:    ✓ does not resolve an unused paragraph face when every visible fragment explicitly overrides it 649ms
-@ofd-compose/layout-core:test:browser:    ✓ preserves empty/null/missing DynamicText identities as ordered zero-length sources 1944ms
-@ofd-compose/layout-core:test:browser:    ✓ assigns zero-length sources exactly once at paragraph, style/run and line boundaries 648ms
-@ofd-compose/layout-core:test:browser:    ✓ itemizes generated numbering suffixes with the same Latin/Han/Kana shaping logic 1299ms
-@ofd-compose/layout-core:test:browser:    ✓ prevents exported profile metadata from changing future layout identities 1318ms
-@ofd-compose/layout-core:test:browser:    ✓ bounds empty fragment and paragraph counts before font loading or document copying 681ms
-@ofd-compose/layout-core:test:browser: 
-@ofd-compose/layout-core:test:browser:  Test Files  6 passed (6)
-@ofd-compose/layout-core:test:browser:       Tests  119 passed (119)
-@ofd-compose/layout-core:test:browser:    Start at  11:53:22
-@ofd-compose/layout-core:test:browser:    Duration  50.14s (tests 98%, worker 1%, import 1%)
-@ofd-compose/layout-core:test:browser: 
-@ofd-compose/golden-corpus:test:browser: cache bypass, force executing 6ce2bc03a30c9cfc
-@ofd-compose/golden-corpus:test:browser: $ vitest run --config vitest.browser.config.ts
-@ofd-compose/golden-corpus:test:browser: 
-@ofd-compose/golden-corpus:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/tests/golden-corpus
-@ofd-compose/golden-corpus:test:browser:       API started at http://localhost:63315/
-@ofd-compose/golden-corpus:test:browser: 
-@ofd-compose/golden-corpus:test:browser:  ✓ |browser (firefox)| tests/corpus.dual.test.ts (23 tests) 17ms
-@ofd-compose/golden-corpus:test:browser: 
-@ofd-compose/golden-corpus:test:browser:  Test Files  1 passed (1)
-@ofd-compose/golden-corpus:test:browser:       Tests  23 passed (23)
-@ofd-compose/golden-corpus:test:browser:    Start at  11:54:13
-@ofd-compose/golden-corpus:test:browser:    Duration  1.21s (worker 63%, import 29%, tests 8%)
-@ofd-compose/golden-corpus:test:browser: 
-@ofd-compose/media-core:test:browser: cache bypass, force executing 012bad8c812dcb18
-@ofd-compose/media-core:test:browser: $ vitest run --config vitest.browser.config.ts
-@ofd-compose/media-core:test:browser: 
-@ofd-compose/media-core:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/media-core
-@ofd-compose/media-core:test:browser:       API started at http://localhost:63315/
-@ofd-compose/media-core:test:browser: 
-@ofd-compose/media-core:test:browser:  ✓ |firefox| tests/media.dual.test.ts (86 tests) 927ms
-@ofd-compose/media-core:test:browser: 
-@ofd-compose/media-core:test:browser:  Test Files  1 passed (1)
-@ofd-compose/media-core:test:browser:       Tests  86 passed (86)
-@ofd-compose/media-core:test:browser:    Start at  11:54:15
-@ofd-compose/media-core:test:browser:    Duration  2.22s (tests 80%, worker 12%, import 8%)
-@ofd-compose/media-core:test:browser: 
-@ofd-compose/layout-ir:test:browser: cache bypass, force executing 70c31006c6f88c30
-@ofd-compose/layout-ir:test:browser: $ vitest run --config vitest.browser.config.ts
-@ofd-compose/layout-ir:test:browser: 
-@ofd-compose/layout-ir:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-ir
-@ofd-compose/layout-ir:test:browser:       API started at http://localhost:63315/
-@ofd-compose/layout-ir:test:browser: 
-@ofd-compose/layout-ir:test:browser:  ✓ |firefox| tests/source-ranges.dual.test.ts (3 tests) 14ms
-@ofd-compose/layout-ir:test:browser:  ✓ |firefox| tests/contract.dual.test.ts (80 tests) 128ms
-@ofd-compose/layout-ir:test:browser: 
-@ofd-compose/layout-ir:test:browser:  Test Files  2 passed (2)
-@ofd-compose/layout-ir:test:browser:       Tests  83 passed (83)
-@ofd-compose/layout-ir:test:browser:    Start at  11:54:18
-@ofd-compose/layout-ir:test:browser:    Duration  1.40s (worker 63%, tests 27%, import 11%)
-@ofd-compose/layout-ir:test:browser: 
 @ofd-compose/typography-core:test:browser: cache bypass, force executing 1967aec3896cd7a3
 @ofd-compose/typography-core:test:browser: $ vitest run --config vitest.browser.config.ts
 @ofd-compose/typography-core:test:browser: 
 @ofd-compose/typography-core:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/typography-core
 @ofd-compose/typography-core:test:browser:       API started at http://localhost:63315/
 @ofd-compose/typography-core:test:browser: 
-@ofd-compose/typography-core:test:browser:  ✓ |firefox| tests/typography.dual.test.ts (22 tests) 3835ms
+@ofd-compose/typography-core:test:browser:  ✓ |firefox| tests/typography.dual.test.ts (22 tests) 3890ms
 @ofd-compose/typography-core:test:browser:    ✓ identical Node/browser UTF-8 JSON fixtures (12)
-@ofd-compose/typography-core:test:browser:      ✓ compares all four font tables in both runtimes 1133ms
-@ofd-compose/typography-core:test:browser:    ✓ uses real static outlines and declares synthesis forbidden 792ms
-@ofd-compose/typography-core:test:browser:    ✓ requires the exact font bytes and refuses an unloaded digest 643ms
-@ofd-compose/typography-core:test:browser:  ✓ |firefox| tests/static-face-cache.dual.test.ts (3 tests) 55190ms
-@ofd-compose/typography-core:test:browser:    ✓ evicts the least recently loaded face without invalidating live core fonts 6307ms
-@ofd-compose/typography-core:test:browser:    ✓ loads the same full 16 MiB font into 160 live cores without duplicate native faces 48770ms
+@ofd-compose/typography-core:test:browser:      ✓ compares all four font tables in both runtimes 1148ms
+@ofd-compose/typography-core:test:browser:    ✓ uses real static outlines and declares synthesis forbidden 796ms
+@ofd-compose/typography-core:test:browser:    ✓ requires the exact font bytes and refuses an unloaded digest 671ms
+@ofd-compose/typography-core:test:browser:  ✓ |firefox| tests/static-face-cache.dual.test.ts (3 tests) 55659ms
+@ofd-compose/typography-core:test:browser:    ✓ evicts the least recently loaded face without invalidating live core fonts 6308ms
+@ofd-compose/typography-core:test:browser:    ✓ loads the same full 16 MiB font into 160 live cores without duplicate native faces 49243ms
 @ofd-compose/typography-core:test:browser: 
 @ofd-compose/typography-core:test:browser:  Test Files  2 passed (2)
 @ofd-compose/typography-core:test:browser:       Tests  25 passed (25)
-@ofd-compose/typography-core:test:browser:    Start at  11:54:20
-@ofd-compose/typography-core:test:browser:    Duration  56.54s (tests 99%, worker 1%)
+@ofd-compose/typography-core:test:browser:    Start at  12:18:52
+@ofd-compose/typography-core:test:browser:    Duration  57.03s (tests 99%, worker 1%)
 @ofd-compose/typography-core:test:browser: 
-@ofd-compose/render-worker:test:browser: cache bypass, force executing 9de3eb8ccac26a99
+@ofd-compose/layout-ir:test:browser: cache bypass, force executing 70c31006c6f88c30
+@ofd-compose/layout-ir:test:browser: $ vitest run --config vitest.browser.config.ts
+@ofd-compose/layout-ir:test:browser: 
+@ofd-compose/layout-ir:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-ir
+@ofd-compose/layout-ir:test:browser:       API started at http://localhost:63315/
+@ofd-compose/layout-ir:test:browser: 
+@ofd-compose/layout-ir:test:browser:  ✓ |firefox| tests/source-ranges.dual.test.ts (3 tests) 12ms
+@ofd-compose/layout-ir:test:browser:  ✓ |firefox| tests/contract.dual.test.ts (80 tests) 124ms
+@ofd-compose/layout-ir:test:browser: 
+@ofd-compose/layout-ir:test:browser:  Test Files  2 passed (2)
+@ofd-compose/layout-ir:test:browser:       Tests  83 passed (83)
+@ofd-compose/layout-ir:test:browser:    Start at  12:19:49
+@ofd-compose/layout-ir:test:browser:    Duration  1.41s (worker 63%, tests 25%, import 12%)
+@ofd-compose/layout-ir:test:browser: 
+@ofd-compose/golden-corpus:test:browser: cache bypass, force executing 6ce2bc03a30c9cfc
+@ofd-compose/golden-corpus:test:browser: $ vitest run --config vitest.browser.config.ts
+@ofd-compose/golden-corpus:test:browser: 
+@ofd-compose/golden-corpus:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/tests/golden-corpus
+@ofd-compose/golden-corpus:test:browser:       API started at http://localhost:63315/
+@ofd-compose/golden-corpus:test:browser: 
+@ofd-compose/golden-corpus:test:browser:  ✓ |browser (firefox)| tests/corpus.dual.test.ts (23 tests) 16ms
+@ofd-compose/golden-corpus:test:browser: 
+@ofd-compose/golden-corpus:test:browser:  Test Files  1 passed (1)
+@ofd-compose/golden-corpus:test:browser:       Tests  23 passed (23)
+@ofd-compose/golden-corpus:test:browser:    Start at  12:19:51
+@ofd-compose/golden-corpus:test:browser:    Duration  1.25s (worker 64%, import 29%, tests 7%)
+@ofd-compose/golden-corpus:test:browser: 
+@ofd-compose/layout-core:test:browser: cache bypass, force executing 615f1d7a0c0f9038
+@ofd-compose/layout-core:test:browser: $ vitest run --config vitest.browser.config.ts
+@ofd-compose/layout-core:test:browser: 
+@ofd-compose/layout-core:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/layout-core
+@ofd-compose/layout-core:test:browser:       API started at http://localhost:63315/
+@ofd-compose/layout-core:test:browser: 
+@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/barcode-placement.dual.test.ts (2 tests) 51ms
+@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/corpus.dual.test.ts (1 test) 739ms
+@ofd-compose/layout-core:test:browser:    ✓ extracts the committed narrative corpus exactly after binding, shaping and line breaking 738ms
+@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/media-regions.dual.test.ts (32 tests) 22669ms
+@ofd-compose/layout-core:test:browser:    ✓ prepared media, paths and regions (23)
+@ofd-compose/layout-core:test:browser:      ✓ centers each list image and retains binding and keyed repeat identity 729ms
+@ofd-compose/layout-core:test:browser:      ✓ moves an atomic image to the next page and rejects one taller than a whole page 1373ms
+@ofd-compose/layout-core:test:browser:      ✓ fits exactly at the page boundary without making a trailing page 718ms
+@ofd-compose/layout-core:test:browser:      ✓ clips an image in pixel-local coordinates without resizing its frozen source 1371ms
+@ofd-compose/layout-core:test:browser:      ✓ places barcode geometry unchanged, with full quiet-zone bounds and semantics 667ms
+@ofd-compose/layout-core:test:browser:      ✓ never crops barcode quiet zones or shrinks below legal physical dimensions 1335ms
+@ofd-compose/layout-core:test:browser:      ✓ keeps fixed and flowing content independent and fails default fixed overflow 1344ms
+@ofd-compose/layout-core:test:browser:      ✓ explicit truncation clips geometry and preserves semantic source with a diagnostic 676ms
+@ofd-compose/layout-core:test:browser:      ✓ explicit scaling transforms text bounds and baseline inspection uniformly 2011ms
+@ofd-compose/layout-core:test:browser:      ✓ minimum-font-size performs bounded real reflow and reports failures at the floor 1335ms
+@ofd-compose/layout-core:test:browser:      ✓ flow regions reserve their assigned height and keep following content after it 694ms
+@ofd-compose/layout-core:test:browser:      ✓ emits fill rules, dash/cap/join, reflected/rotated paths and paragraph borders 692ms
+@ofd-compose/layout-core:test:browser:      ✓ rejects singular transforms, invalid path sequences and degenerate dash patterns 2003ms
+@ofd-compose/layout-core:test:browser:      ✓ reuses shared budgets across region retries and rejects nested long input before fonts 674ms
+@ofd-compose/layout-core:test:browser:      ✓ is byte-deterministic with stable media identity 1371ms
+@ofd-compose/layout-core:test:browser:    ✓ scales actual page-space paragraph decoration paths in regions 671ms
+@ofd-compose/layout-core:test:browser:    ✓ handles right aligned unbreakable text on both region edges 1347ms
+@ofd-compose/layout-core:test:browser:    ✓ handles center aligned unbreakable text on both region edges 1340ms
+@ofd-compose/layout-core:test:browser:    ✓ reserves square diagonal cap corners under reflected path geometry 670ms
+@ofd-compose/layout-core:test:browser:    ✓ preserves center alignment when clipping an overwide image 684ms
+@ofd-compose/layout-core:test:browser:    ✓ preserves right alignment when clipping an overwide image 698ms
+@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/pagination.dual.test.ts (20 tests) 26397ms
+@ofd-compose/layout-core:test:browser:    ✓ binds physical page and section settings and records each page's geometry and source 694ms
+@ofd-compose/layout-core:test:browser:    ✓ automatically splits a paragraph by actual line boxes without losing source ranges 675ms
+@ofd-compose/layout-core:test:browser:    ✓ trims trailing spacing, drops before-spacing after automatic breaks, and preserves explicit blank pages 1367ms
+@ofd-compose/layout-core:test:browser:    ✓ reserves hidden bands, renders numbering and total fields, and draws a physical page border 1355ms
+@ofd-compose/layout-core:test:browser:    ✓ restarts page numbering and hiding relative to a section and wraps bands inside reserved height 670ms
+@ofd-compose/layout-core:test:browser:    ✓ emits transformed transparent text/image watermarks at their requested paint layers 670ms
+@ofd-compose/layout-core:test:browser:    ✓ rejects impossible lines/bands, invalid limits, absent images and page-budget overflow 1347ms
+@ofd-compose/layout-core:test:browser:    ✓ lays out a 50-page Chinese report identically in repeat runs and the shared Node/browser fixture 7332ms
+@ofd-compose/layout-core:test:browser:    ✓ rejects the explicit minimum page count before fonts and bands before concatenation 689ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps transformed watermark bounds in page space, including text decoration paths 1336ms
+@ofd-compose/layout-core:test:browser:    ✓ charges output work across pages instead of granting every page a fresh source budget 744ms
+@ofd-compose/layout-core:test:browser:    ✓ processes a full 1000-page image-watermark document with linear state decoration 2008ms
+@ofd-compose/layout-core:test:browser:    ✓ reflects image pixels with negative scaling and keeps page bounds and alpha consistent 670ms
+@ofd-compose/layout-core:test:browser:    ✓ ignores overridden root fields and wholly hidden total fields when deciding to repeat layout 1998ms
+@ofd-compose/layout-core:test:browser:    ✓ maps arbitrary image source IDs into a collision-free IR namespace and preserves references 683ms
+@ofd-compose/layout-core:test:browser:    ✓ lays out nested keyed repeat sections with stable occurrence identity and independent page policies 2052ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps section occurrence tuples collision-free for arbitrary keys, node IDs and the implicit root 681ms
+@ofd-compose/layout-core:test:browser:    ✓ separates an implicit root from a later explicit section with the same public source ID 670ms
+@ofd-compose/layout-core:test:browser:    ✓ charges repeated section metadata before source IDs can amplify output strings across lines 668ms
+@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/tables.dual.test.ts (35 tests) 32859ms
+@ofd-compose/layout-core:test:browser:    ✓ table layout (1)
+@ofd-compose/layout-core:test:browser:      ✓ lays out 400 real-font rows exactly once with repeated-header identity 2035ms
+@ofd-compose/layout-core:test:browser:    ✓ resolves shared borders once across rows 716ms
+@ofd-compose/layout-core:test:browser:    ✓ preserves empty control geometry in cells 709ms
+@ofd-compose/layout-core:test:browser:    ✓ rejects tall fixed rows and page-spanning merge groups explicitly 1398ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps a title with the following table's header and first row 712ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps at least two paragraph lines on each side of a page break 697ms
+@ofd-compose/layout-core:test:browser:    ✓ binds 400 RepeatRowGroup instances and preserves table, row and cell contracts 1485ms
+@ofd-compose/layout-core:test:browser:    ✓ places frozen media inside cells and retains barcode clipping safeguards in regions 1434ms
+@ofd-compose/layout-core:test:browser:    ✓ lays out merged cells with shared segmented edges and bottom alignment 705ms
+@ofd-compose/layout-core:test:browser:    ✓ accepts a fully covered empty row under a vertical merge 695ms
+@ofd-compose/layout-core:test:browser:    ✓ budgets repeated header source text and control-only output 719ms
+@ofd-compose/layout-core:test:browser:    ✓ rejects impossible orphan constraints after widow adjustment: {"count":3,"orphan":2,"widow":2} 718ms
+@ofd-compose/layout-core:test:browser:    ✓ rejects impossible orphan constraints after widow adjustment: {"count":5,"orphan":3,"widow":1} 697ms
+@ofd-compose/layout-core:test:browser:    ✓ versions implicit heading pagination in LayoutIdentity 717ms
+@ofd-compose/layout-core:test:browser:    ✓ honors explicitly disabled heading pagination without implicit orphan minima 694ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps headings before valid top-level flow regions 715ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps headings before valid top-level fixed regions 692ms
+@ofd-compose/layout-core:test:browser:    ✓ measures empty tables locally after an earlier nonempty table 697ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps a heading with only the first independently pageable image 728ms
+@ofd-compose/layout-core:test:browser:    ✓ probes only the first group of a valid 6000-row table 4916ms
+@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at start 703ms
+@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at middle 710ms
+@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at end 718ms
+@ofd-compose/layout-core:test:browser:    ✓ retains distinct semantic IDs for adjacent empty controls at only 696ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps a heading with a short paragraph that cannot satisfy a split policy 705ms
+@ofd-compose/layout-core:test:browser:    ✓ bounds paragraph lookahead while preserving a 6000-line policy paragraph 3135ms
+@ofd-compose/layout-core:test:browser:    ✓ uses actual tall custom-page height for table cell measurement: direct 689ms
+@ofd-compose/layout-core:test:browser:    ✓ uses actual tall custom-page height for table cell measurement: heading 695ms
+@ofd-compose/layout-core:test:browser:    ✓ uses actual tall custom-page height for table cell measurement: region 688ms
+@ofd-compose/layout-core:test:browser:    ✓ places frozen media taller than 100000 mm when its custom page fits it 713ms
+@ofd-compose/layout-core:test:browser:    ✓ starts repeated-header indices at one after moving the original table to a fresh page 750ms
+@ofd-compose/layout-core:test:browser:    ✓ links repeated header text and control semantics to their original nodes 760ms
+@ofd-compose/layout-core:test:browser:  ✓ |firefox| tests/layout.dual.test.ts (29 tests) 48223ms
+@ofd-compose/layout-core:test:browser:    ✓ shares the pinned complete narrative IR digest in Node and Chromium 1384ms
+@ofd-compose/layout-core:test:browser:    ✓ shapes a ligature across static/dynamic source boundaries with both source ranges 674ms
+@ofd-compose/layout-core:test:browser:    ✓ uses Chinese opening and closing classes and word boundaries over the full paragraph 689ms
+@ofd-compose/layout-core:test:browser:    ✓ lays out tabs, CRLF, blank paragraphs and terminal breaks without losing logical controls 1341ms
+@ofd-compose/layout-core:test:browser:    ✓ applies left/center/right/justify, hanging indents, paragraph spacing and fixed line heights 2679ms
+@ofd-compose/layout-core:test:browser:    ✓ emits real font instances, superscript/subscript, color, highlight and link decorations 669ms
+@ofd-compose/layout-core:test:browser:    ✓ preserves heading and numbering through binding, with stable list continuation and restart 674ms
+@ofd-compose/layout-core:test:browser:    ✓ waits for every font before shaping; reverse resource order/arrival yields the same digest 1349ms
+@ofd-compose/layout-core:test:browser:    ✓ respects explicit dynamic style inheritance and preserves repeat identities 672ms
+@ofd-compose/layout-core:test:browser:    ✓ rejects missing faces, unsupported controls, invalid text, unbreakable words and page overflow 2687ms
+@ofd-compose/layout-core:test:browser:    ✓ keeps astral/combining clusters intact and supports bullet labels 684ms
+@ofd-compose/layout-core:test:browser:    ✓ retains terminal line offsets and supports controls and empty tables 2004ms
+@ofd-compose/layout-core:test:browser:    ✓ uses the selected font metrics for blank paragraphs and terminal lines, including fixed-height thresholds 5351ms
+@ofd-compose/layout-core:test:browser:    ✓ justifies punctuation-separated Chinese at legal boundaries and fills the actual glyph advance 667ms
+@ofd-compose/layout-core:test:browser:    ✓ rejects inherited object property names as missing styles in a supplied ResolvedDocument 678ms
+@ofd-compose/layout-core:test:browser:    ✓ advances candidate/run cursors on control-only lines and bounds expanded source output 2095ms
+@ofd-compose/layout-core:test:browser:    ✓ aligns tab prefixes while keeping single/multiple stops anchored under indents and wrapping 12627ms
+@ofd-compose/layout-core:test:browser:    ✓ bounds optional control and whitespace candidate measurement 3164ms
+@ofd-compose/layout-core:test:browser:    ✓ initializes explicit list starts once per repeated paragraph and restarts for a new parent group 1303ms
+@ofd-compose/layout-core:test:browser:    ✓ does not resolve an unused paragraph face when every visible fragment explicitly overrides it 636ms
+@ofd-compose/layout-core:test:browser:    ✓ preserves empty/null/missing DynamicText identities as ordered zero-length sources 1977ms
+@ofd-compose/layout-core:test:browser:    ✓ assigns zero-length sources exactly once at paragraph, style/run and line boundaries 651ms
+@ofd-compose/layout-core:test:browser:    ✓ itemizes generated numbering suffixes with the same Latin/Han/Kana shaping logic 1307ms
+@ofd-compose/layout-core:test:browser:    ✓ prevents exported profile metadata from changing future layout identities 1299ms
+@ofd-compose/layout-core:test:browser:    ✓ bounds empty fragment and paragraph counts before font loading or document copying 685ms
+@ofd-compose/layout-core:test:browser: 
+@ofd-compose/layout-core:test:browser:  Test Files  6 passed (6)
+@ofd-compose/layout-core:test:browser:       Tests  119 passed (119)
+@ofd-compose/layout-core:test:browser:    Start at  12:19:53
+@ofd-compose/layout-core:test:browser:    Duration  50.14s (tests 98%, worker 1%, import 1%)
+@ofd-compose/layout-core:test:browser: 
+@ofd-compose/media-core:test:browser: cache bypass, force executing 012bad8c812dcb18
+@ofd-compose/media-core:test:browser: $ vitest run --config vitest.browser.config.ts
+@ofd-compose/media-core:test:browser: 
+@ofd-compose/media-core:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/media-core
+@ofd-compose/media-core:test:browser:       API started at http://localhost:63315/
+@ofd-compose/media-core:test:browser: 
+@ofd-compose/media-core:test:browser:  ✓ |firefox| tests/media.dual.test.ts (86 tests) 935ms
+@ofd-compose/media-core:test:browser: 
+@ofd-compose/media-core:test:browser:  Test Files  1 passed (1)
+@ofd-compose/media-core:test:browser:       Tests  86 passed (86)
+@ofd-compose/media-core:test:browser:    Start at  12:20:44
+@ofd-compose/media-core:test:browser:    Duration  2.29s (tests 78%, worker 14%, import 8%)
+@ofd-compose/media-core:test:browser: 
+@ofd-compose/smoke-tests:test:browser: cache bypass, force executing 813df6e4a4fbf989
+@ofd-compose/smoke-tests:test:browser: $ vitest run --config vitest.browser.config.ts
+@ofd-compose/smoke-tests:test:browser: 
+@ofd-compose/smoke-tests:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/tests/smoke
+@ofd-compose/smoke-tests:test:browser:       API started at http://localhost:63315/
+@ofd-compose/smoke-tests:test:browser: 
+@ofd-compose/smoke-tests:test:browser:  ✓ |browser (firefox)| src/core-wiring.browser.test.ts (2 tests) 1ms
+@ofd-compose/smoke-tests:test:browser: 
+@ofd-compose/smoke-tests:test:browser:  Test Files  1 passed (1)
+@ofd-compose/smoke-tests:test:browser:       Tests  2 passed (2)
+@ofd-compose/smoke-tests:test:browser:    Start at  12:20:47
+@ofd-compose/smoke-tests:test:browser:    Duration  1.32s (worker 53%, import 47%)
+@ofd-compose/smoke-tests:test:browser: 
+@ofd-compose/render-worker:test:browser: cache bypass, force executing 584bb46c7f99f6ee
 @ofd-compose/render-worker:test:browser: $ vitest run --config vitest.browser.config.ts
 @ofd-compose/render-worker:test:browser: 
 @ofd-compose/render-worker:test:browser:  RUN  v5.0.0 /Users/wanghongyi/.codex/worktrees/1a8f/ofd-compose/packages/render-worker
 @ofd-compose/render-worker:test:browser:       API started at http://localhost:63315/
 @ofd-compose/render-worker:test:browser: 
-@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/media-corpus.dual.test.ts (9 tests) 5804ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/09-inline-image-data-uri 329ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/10-block-image-centered 327ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/11-images-in-loop 336ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/12-real-png-scaling 1049ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/13-barcodes-code128-ean13 1019ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/14-barcodes-upca-itf 327ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction examples/06-images 325ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction examples/11-images-file-and-datauri-scaling 1056ms
-@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction examples/12-barcodes 1020ms
-@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/corpus.dual.test.ts (20 tests) 19314ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/01-basic-tags-path-index/template.txt to semantically complete IR 1027ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/02-condition-hidden/template.txt to semantically complete IR 989ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/02-condition-shown/template.txt to semantically complete IR 1006ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/03-loop-orders/template.txt to semantically complete IR 1011ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/04-table-row-loop/template.txt to semantically complete IR 1005ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/05-sort-take-count-format/template.txt to semantically complete IR 1009ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/06-narrative-aggregates/template.txt to semantically complete IR 1028ms
+@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/media-corpus.dual.test.ts (9 tests) 5844ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/09-inline-image-data-uri 328ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/10-block-image-centered 331ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/11-images-in-loop 331ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/12-real-png-scaling 1058ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/13-barcodes-code128-ean13 1033ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction docx-tests/14-barcodes-upca-itf 328ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction examples/06-images 328ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction examples/11-images-file-and-datauri-scaling 1062ms
+@ofd-compose/render-worker:test:browser:    ✓ renders native media reconstruction examples/12-barcodes 1025ms
+@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/corpus.dual.test.ts (20 tests) 19351ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/01-basic-tags-path-index/template.txt to semantically complete IR 1023ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/02-condition-hidden/template.txt to semantically complete IR 988ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/02-condition-shown/template.txt to semantically complete IR 1011ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/03-loop-orders/template.txt to semantically complete IR 1006ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/04-table-row-loop/template.txt to semantically complete IR 1007ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/05-sort-take-count-format/template.txt to semantically complete IR 1010ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/06-narrative-aggregates/template.txt to semantically complete IR 1029ms
 @ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/07-nth-at-ranking/template.txt to semantically complete IR 1014ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/08-inline-if-percent-permille/template.txt to semantically complete IR 1041ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/15-table-split-runs-date-format/template.txt to semantically complete IR 1017ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/01-basic-tags/template.txt to semantically complete IR 1010ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/02-condition/template.txt to semantically complete IR 1003ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/03-loop/template.txt to semantically complete IR 1005ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/04-table-loop/template.txt to semantically complete IR 1013ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/05-extensions/template.txt to semantically complete IR 1016ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/07-table-date-format-split-runs/template.txt to semantically complete IR 1011ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/08-inline-friendly-expressions/template.txt to semantically complete IR 1021ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/09-inline-ranking-positions/template.txt to semantically complete IR 1012ms
-@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/10-inline-conditions-and-rates/template.txt to semantically complete IR 1050ms
-@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/source.dual.test.ts (13 tests) 37737ms
-@ofd-compose/render-worker:test:browser:    ✓ reopens filled source with inert expressions and genuinely new subset glyphs 2015ms
-@ofd-compose/render-worker:test:browser:    ✓ requires the explicitly authorized full font and never treats a subset as that font 1375ms
-@ofd-compose/render-worker:test:browser:    ✓ keeps visible values and source relationships while excluding unused business input 6308ms
-@ofd-compose/render-worker:test:browser:    ✓ normalizes unused dynamic evaluation state without rebinding 2974ms
-@ofd-compose/render-worker:test:browser:    ✓ removes link targets while preserving effective underlines (default link false) 4030ms
-@ofd-compose/render-worker:test:browser:    ✓ removes link targets while preserving effective underlines (default link true) 4050ms
-@ofd-compose/render-worker:test:browser:    ✓ retains filled control identity and displayed fallback without unused form metadata 2980ms
-@ofd-compose/render-worker:test:browser:    ✓ removes never-rendered page-band content but keeps reserved geometry (default link false) 3002ms
-@ofd-compose/render-worker:test:browser:    ✓ removes never-rendered page-band content but keeps reserved geometry (default link true) 3025ms
-@ofd-compose/render-worker:test:browser:    ✓ bounds source snapshots, repeated identities, full resource bytes and cancellation before output 1009ms
-@ofd-compose/render-worker:test:browser:    ✓ removes inactive root watermarks without changing captured or reopened pages 2980ms
-@ofd-compose/render-worker:test:browser:    ✓ projects supplied watermark witnesses without merging identical sources 1011ms
-@ofd-compose/render-worker:test:browser:    ✓ preserves distinct identical watermarks in root and later section settings 2977ms
-@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/render.dual.test.ts (29 tests) 40558ms
-@ofd-compose/render-worker:test:browser:    ✓ renders real CFF glyph subsets with stable advances and writer identities 1365ms
-@ofd-compose/render-worker:test:browser:    ✓ renders the complete narrative/table/image/two-barcode sample 1266ms
-@ofd-compose/render-worker:test:browser:    ✓ fails atomically for missing fonts and images 361ms
-@ofd-compose/render-worker:test:browser:    ✓ snapshots direct inputs before asynchronous resources 984ms
-@ofd-compose/render-worker:test:browser:    ✓ retains real TrueType composite outlines and advances through repeated alternating jobs 3199ms
-@ofd-compose/render-worker:test:browser:    ✓ is independent of async arrival order and concurrent renders 3716ms
-@ofd-compose/render-worker:test:browser:    ✓ keeps budget and font validation failures atomic and recovers for the next job 2265ms
-@ofd-compose/render-worker:test:browser:    ✓ matches the committed independent Node digest in both engines 1250ms
-@ofd-compose/render-worker:test:browser:    ✓ charges every large array index allocation before count/first evaluation 337ms
-@ofd-compose/render-worker:test:browser:    ✓ never starts shaping while another authorized resource remains pending 310ms
-@ofd-compose/render-worker:test:browser:    ✓ rejects accessors without invoking them and preserves original font bytes after a caller edit 1006ms
-@ofd-compose/render-worker:test:browser:    ✓ meters repeated legacy object counts and repeated large extrema keys 666ms
-@ofd-compose/render-worker:test:browser:    ✓ rejects exponent expansion before fixed-point formatting allocation 326ms
-@ofd-compose/render-worker:test:browser:    ✓ subsets only used fonts from a complete five-font pack 5042ms
-@ofd-compose/render-worker:test:browser:    ✓ routes authorized watermark images through root and section pages to writer resources 1654ms
-@ofd-compose/render-worker:test:browser:    ✓ preserves the offending node identity on layout failures 636ms
-@ofd-compose/render-worker:test:browser:    ✓ retains a notdef-only subset for fonts referenced by glyphless text objects 2912ms
-@ofd-compose/render-worker:test:browser:    ✓ commits every authorized image to the identity, independent of resource arrival/order 5001ms
-@ofd-compose/render-worker:test:browser:    ✓ uses intrinsic byte lengths before copying typed arrays with shadowed size fields 987ms
-@ofd-compose/render-worker:test:browser:    ✓ returns the independently versioned barcode generator and the consumed profile snapshot 1241ms
-@ofd-compose/render-worker:test:browser:    ✓ distinguishes declared font style mismatch from an absent exact font face 1894ms
-@ofd-compose/render-worker:test:browser:    ✓ keeps section-watermark diagnostics attached to their owning paragraph 652ms
-@ofd-compose/render-worker:test:browser:    ✓ exposes the actual independent layout, shaping and protocol versions 965ms
-@ofd-compose/render-worker:test:browser:    ✓ host timing observation preserves complete render identity and balances nested shaping 2489ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/08-inline-if-percent-permille/template.txt to semantically complete IR 1035ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/docx-tests/15-table-split-runs-date-format/template.txt to semantically complete IR 1016ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/01-basic-tags/template.txt to semantically complete IR 1009ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/02-condition/template.txt to semantically complete IR 1007ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/03-loop/template.txt to semantically complete IR 1004ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/04-table-loop/template.txt to semantically complete IR 1022ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/05-extensions/template.txt to semantically complete IR 1015ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/07-table-date-format-split-runs/template.txt to semantically complete IR 1016ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/08-inline-friendly-expressions/template.txt to semantically complete IR 1030ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/09-inline-ranking-positions/template.txt to semantically complete IR 1014ms
+@ofd-compose/render-worker:test:browser:    ✓ renders corpus ../../../tests/golden-corpus/library/examples/10-inline-conditions-and-rates/template.txt to semantically complete IR 1047ms
+@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/source.dual.test.ts (13 tests) 37997ms
+@ofd-compose/render-worker:test:browser:    ✓ reopens filled source with inert expressions and genuinely new subset glyphs 2019ms
+@ofd-compose/render-worker:test:browser:    ✓ requires the explicitly authorized full font and never treats a subset as that font 1382ms
+@ofd-compose/render-worker:test:browser:    ✓ keeps visible values and source relationships while excluding unused business input 6333ms
+@ofd-compose/render-worker:test:browser:    ✓ normalizes unused dynamic evaluation state without rebinding 2994ms
+@ofd-compose/render-worker:test:browser:    ✓ removes link targets while preserving effective underlines (default link false) 4066ms
+@ofd-compose/render-worker:test:browser:    ✓ removes link targets while preserving effective underlines (default link true) 4070ms
+@ofd-compose/render-worker:test:browser:    ✓ retains filled control identity and displayed fallback without unused form metadata 3005ms
+@ofd-compose/render-worker:test:browser:    ✓ removes never-rendered page-band content but keeps reserved geometry (default link false) 3016ms
+@ofd-compose/render-worker:test:browser:    ✓ removes never-rendered page-band content but keeps reserved geometry (default link true) 3027ms
+@ofd-compose/render-worker:test:browser:    ✓ bounds source snapshots, repeated identities, full resource bytes and cancellation before output 1014ms
+@ofd-compose/render-worker:test:browser:    ✓ removes inactive root watermarks without changing captured or reopened pages 3025ms
+@ofd-compose/render-worker:test:browser:    ✓ projects supplied watermark witnesses without merging identical sources 1015ms
+@ofd-compose/render-worker:test:browser:    ✓ preserves distinct identical watermarks in root and later section settings 3027ms
+@ofd-compose/render-worker:test:browser:  ✓ |firefox| tests/render.dual.test.ts (29 tests) 42841ms
+@ofd-compose/render-worker:test:browser:    ✓ renders real CFF glyph subsets with stable advances and writer identities 1362ms
+@ofd-compose/render-worker:test:browser:    ✓ renders the complete narrative/table/image/two-barcode sample 1271ms
+@ofd-compose/render-worker:test:browser:    ✓ fails atomically for missing fonts and images 367ms
+@ofd-compose/render-worker:test:browser:    ✓ snapshots direct inputs before asynchronous resources 983ms
+@ofd-compose/render-worker:test:browser:    ✓ retains real TrueType composite outlines and advances through repeated alternating jobs 3214ms
+@ofd-compose/render-worker:test:browser:    ✓ is independent of async arrival order and concurrent renders 3734ms
+@ofd-compose/render-worker:test:browser:    ✓ keeps budget and font validation failures atomic and recovers for the next job 2278ms
+@ofd-compose/render-worker:test:browser:    ✓ matches the committed independent Node digest in both engines 1254ms
+@ofd-compose/render-worker:test:browser:    ✓ charges every large array index allocation before count/first evaluation 331ms
+@ofd-compose/render-worker:test:browser:    ✓ never starts shaping while another authorized resource remains pending 315ms
+@ofd-compose/render-worker:test:browser:    ✓ rejects accessors without invoking them and preserves original font bytes after a caller edit 1004ms
+@ofd-compose/render-worker:test:browser:    ✓ meters repeated legacy object counts and repeated large extrema keys 671ms
+@ofd-compose/render-worker:test:browser:    ✓ rejects exponent expansion before fixed-point formatting allocation 327ms
+@ofd-compose/render-worker:test:browser:    ✓ subsets only used fonts from a complete five-font pack 5053ms
+@ofd-compose/render-worker:test:browser:    ✓ routes authorized watermark images through root and section pages to writer resources 1663ms
+@ofd-compose/render-worker:test:browser:    ✓ preserves the offending node identity on layout failures 638ms
+@ofd-compose/render-worker:test:browser:    ✓ retains a notdef-only subset for fonts referenced by glyphless text objects 2923ms
+@ofd-compose/render-worker:test:browser:    ✓ commits every authorized image to the identity, independent of resource arrival/order 5042ms
+@ofd-compose/render-worker:test:browser:    ✓ uses intrinsic byte lengths before copying typed arrays with shadowed size fields 1002ms
+@ofd-compose/render-worker:test:browser:    ✓ returns the independently versioned barcode generator and the consumed profile snapshot 1247ms
+@ofd-compose/render-worker:test:browser:    ✓ distinguishes declared font style mismatch from an absent exact font face 1923ms
+@ofd-compose/render-worker:test:browser:    ✓ keeps section-watermark diagnostics attached to their owning paragraph 661ms
+@ofd-compose/render-worker:test:browser:    ✓ exposes the actual independent layout, shaping and protocol versions 992ms
+@ofd-compose/render-worker:test:browser:    ✓ host timing observation preserves complete render identity and balances nested shaping 4543ms
 @ofd-compose/render-worker:test:browser: 
 @ofd-compose/render-worker:test:browser:  Test Files  4 passed (4)
 @ofd-compose/render-worker:test:browser:       Tests  71 passed (71)
-@ofd-compose/render-worker:test:browser:    Start at  11:55:17
-@ofd-compose/render-worker:test:browser:    Duration  42.30s (tests 98%, import 1%, worker 1%)
+@ofd-compose/render-worker:test:browser:    Start at  12:20:49
+@ofd-compose/render-worker:test:browser:    Duration  44.60s (tests 98%, worker 1%, import 1%)
 @ofd-compose/render-worker:test:browser: 
 
  Tasks:    7 successful, 7 total
 Cached:    0 cached, 7 total
-  Time:    2m40.184s 
+  Time:    2m43.037s 
 
 exit_code=0
