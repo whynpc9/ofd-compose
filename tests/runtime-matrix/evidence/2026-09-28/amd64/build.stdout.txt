@@ -1,0 +1,441 @@
+#0 building with "orbstack" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.28kB done
+#1 DONE 0.0s
+
+#2 resolve image config for docker-image://docker.io/docker/dockerfile:1
+#2 DONE 2.2s
+
+#3 docker-image://docker.io/docker/dockerfile:1@sha256:ecfaec9ed6d810b56388c508f4121597bfbba70d41a6dfeee4d8cad5f295fc32
+#3 CACHED
+
+#4 [internal] load metadata for mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664
+#4 DONE 0.0s
+
+#5 [internal] load metadata for docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+#5 ...
+
+#6 [internal] load metadata for mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#6 DONE 1.3s
+
+#5 [internal] load metadata for docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+#5 DONE 3.0s
+
+#7 [internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.0s
+
+#8 [dotnet-build 1/8] FROM mcr.microsoft.com/dotnet/sdk:10.0.302@sha256:ed034a8bf0b24ded0cbbac07e17825d8e9ebfe21e308191d0f7421eaf5ad4664
+#8 DONE 0.0s
+
+#9 [internal] load build context
+#9 transferring context: 70.47kB 0.0s done
+#9 DONE 0.0s
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 resolve mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f 0.0s done
+#10 sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f 1.08kB / 1.08kB done
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 0B / 29.76MB 0.1s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 0B / 16.78MB 0.1s
+#10 sha256:ed6a2d26633ddcd3d42a1d9f9866214ecbbc11ba6ac5e0e843da02c13da24072 1.58kB / 1.58kB done
+#10 sha256:d84f2a8aca8b8dbf142dd6bb1ffa7a1c051085c55bf36fc2f7fa1b1f17820932 3.13kB / 3.13kB done
+#10 sha256:a5cebd405655232f15f734db62490e47124a0cb581430165b95a94181e7fc914 0B / 3.57kB 0.1s
+#10 sha256:a5cebd405655232f15f734db62490e47124a0cb581430165b95a94181e7fc914 3.57kB / 3.57kB 0.2s done
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 0B / 36.60MB 0.3s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 1.05MB / 16.78MB 2.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 2.10MB / 29.76MB 2.6s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 2.10MB / 16.78MB 5.2s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 0B / 36.60MB 5.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 3.15MB / 29.76MB 7.7s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 3.15MB / 16.78MB 10.1s
+#10 ...
+
+#11 [node-dependencies 1/4] FROM docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+#11 resolve docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df 0.0s done
+#11 sha256:e5a8dee7bc1e6a215d224a7ef8206f7e77271bc3cabd5febf2beafac0674f174 1.93kB / 1.93kB done
+#11 sha256:622f209f6c16ba5af4d9a337cae6577d096f17174b904cfc6a5b0c81a2679c24 6.76kB / 6.76kB done
+#11 sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df 3.93kB / 3.93kB done
+#11 ...
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 1.05MB / 36.60MB 10.5s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 4.19MB / 29.76MB 12.8s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 3.15MB / 16.78MB 15.2s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 1.05MB / 36.60MB 15.6s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 4.19MB / 16.78MB 15.8s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 4.19MB / 29.76MB 17.8s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 2.10MB / 36.60MB 20.7s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 4.19MB / 16.78MB 20.9s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 5.24MB / 16.78MB 21.6s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 5.24MB / 29.76MB 22.9s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 3.15MB / 36.60MB 25.8s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 5.24MB / 16.78MB 26.7s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 6.29MB / 16.78MB 27.3s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 6.29MB / 29.76MB 27.9s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 3.15MB / 36.60MB 30.9s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 6.29MB / 16.78MB 32.3s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 7.34MB / 29.76MB 33.0s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 7.34MB / 16.78MB 33.2s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 4.19MB / 36.60MB 35.9s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 8.39MB / 29.76MB 38.1s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 7.34MB / 16.78MB 38.2s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 8.39MB / 16.78MB 39.1s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 5.24MB / 36.60MB 41.0s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 9.44MB / 29.76MB 43.2s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 8.39MB / 16.78MB 44.2s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 9.44MB / 16.78MB 45.1s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 5.24MB / 36.60MB 46.0s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 10.49MB / 29.76MB 48.4s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 9.44MB / 16.78MB 50.2s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 6.29MB / 36.60MB 51.1s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 10.49MB / 16.78MB 51.9s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 11.53MB / 29.76MB 53.5s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 7.34MB / 36.60MB 56.2s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 10.49MB / 16.78MB 56.9s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 11.53MB / 16.78MB 57.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 11.53MB / 29.76MB 58.6s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 7.34MB / 36.60MB 61.3s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 11.53MB / 16.78MB 62.6s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 12.58MB / 16.78MB 62.9s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 12.58MB / 29.76MB 63.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 8.39MB / 36.60MB 66.4s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 12.58MB / 16.78MB 68.0s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 13.63MB / 16.78MB 68.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 13.63MB / 29.76MB 68.9s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 9.44MB / 36.60MB 71.6s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 13.63MB / 16.78MB 73.5s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 14.68MB / 16.78MB 73.8s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 14.68MB / 29.76MB 74.0s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 9.44MB / 36.60MB 76.7s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 14.68MB / 16.78MB 78.9s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 15.73MB / 29.76MB 79.1s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 15.73MB / 16.78MB 79.4s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 10.49MB / 36.60MB 81.8s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 16.78MB / 29.76MB 84.1s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 15.73MB / 16.78MB 84.5s
+#10 sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 16.78MB / 16.78MB 85.3s done
+#10 sha256:5e69a756d7854bdeaa612af1a66cfab8c8ea5b496b704eeb9fac5ec3ff5e7118 0B / 155B 85.4s
+#10 sha256:5e69a756d7854bdeaa612af1a66cfab8c8ea5b496b704eeb9fac5ec3ff5e7118 155B / 155B 85.8s done
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 0B / 12.74MB 85.8s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 11.53MB / 36.60MB 86.9s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 17.83MB / 29.76MB 89.3s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 0B / 12.74MB 90.9s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 1.05MB / 12.74MB 91.3s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 11.53MB / 36.60MB 92.0s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 18.87MB / 29.76MB 94.4s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 2.10MB / 12.74MB 96.3s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 12.58MB / 36.60MB 97.0s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 19.92MB / 29.76MB 99.6s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 2.10MB / 12.74MB 101.4s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 13.63MB / 36.60MB 102.0s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 3.15MB / 12.74MB 102.2s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 20.97MB / 29.76MB 104.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 13.63MB / 36.60MB 107.1s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 3.15MB / 12.74MB 107.2s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 4.19MB / 12.74MB 107.3s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 22.02MB / 29.76MB 109.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 14.68MB / 36.60MB 112.1s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 4.19MB / 12.74MB 112.4s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 5.24MB / 12.74MB 113.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 22.02MB / 29.76MB 114.8s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 14.68MB / 36.60MB 117.2s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 5.24MB / 12.74MB 118.5s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 23.07MB / 29.76MB 119.9s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 6.29MB / 12.74MB 119.9s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 15.73MB / 36.60MB 122.3s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 24.12MB / 29.76MB 124.9s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 6.29MB / 12.74MB 124.9s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 7.34MB / 12.74MB 126.1s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 16.78MB / 36.60MB 127.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 25.17MB / 29.76MB 130.0s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 7.34MB / 12.74MB 131.1s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 8.39MB / 12.74MB 131.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 16.78MB / 36.60MB 132.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 26.21MB / 29.76MB 135.1s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 8.39MB / 12.74MB 136.8s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 9.44MB / 12.74MB 137.4s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 17.83MB / 36.60MB 137.6s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 27.26MB / 29.76MB 140.2s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 9.44MB / 12.74MB 142.5s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 18.87MB / 36.60MB 142.7s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 10.49MB / 12.74MB 143.1s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 28.31MB / 29.76MB 145.3s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 18.87MB / 36.60MB 147.9s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 10.49MB / 12.74MB 148.1s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 11.53MB / 12.74MB 149.4s
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 29.36MB / 29.76MB 150.3s
+#10 extracting sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70
+#10 sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 29.76MB / 29.76MB 152.0s done
+#10 ...
+
+#11 [node-dependencies 1/4] FROM docker.io/library/node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 0B / 28.23MB 152.1s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 2.10MB / 28.23MB 154.1s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 4.19MB / 28.23MB 154.4s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 7.34MB / 28.23MB 154.7s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 9.44MB / 28.23MB 155.0s
+#11 sha256:990581063f5c8a03a57db7a0d116679ea6e6e335d4ac48ef457f26f82d917eba 0B / 3.32kB 155.0s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 11.53MB / 28.23MB 155.1s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 13.63MB / 28.23MB 155.3s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 18.87MB / 28.23MB 155.6s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 20.97MB / 28.23MB 155.7s
+#11 sha256:990581063f5c8a03a57db7a0d116679ea6e6e335d4ac48ef457f26f82d917eba 3.32kB / 3.32kB 155.7s done
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 0B / 50.50MB 155.8s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 25.17MB / 28.23MB 156.0s
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 28.23MB / 28.23MB 156.2s
+#11 extracting sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71
+#11 sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 28.23MB / 28.23MB 156.2s done
+#11 sha256:f95897c2a1fb7bce26b018dd74b2845f816f7b86d5adff2939c6482b1d5b474c 0B / 1.71MB 156.3s
+#11 extracting sha256:a8ac7f6c67abc236e4c745052c404112b8fab6fe8ac3a329d1ef3b867ad67c71 0.6s done
+#11 extracting sha256:990581063f5c8a03a57db7a0d116679ea6e6e335d4ac48ef457f26f82d917eba done
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 3.15MB / 50.50MB 157.2s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 6.29MB / 50.50MB 157.5s
+#11 sha256:f95897c2a1fb7bce26b018dd74b2845f816f7b86d5adff2939c6482b1d5b474c 1.71MB / 1.71MB 157.5s done
+#11 sha256:c35748eaa5ecc949b0f7cc349a9f7c4a5417dc008e2d9bebd53678d87238fcbf 0B / 450B 157.5s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 9.44MB / 50.50MB 157.8s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 14.68MB / 50.50MB 158.1s
+#11 sha256:c35748eaa5ecc949b0f7cc349a9f7c4a5417dc008e2d9bebd53678d87238fcbf 450B / 450B 158.1s done
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 18.87MB / 50.50MB 158.4s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 26.21MB / 50.50MB 158.8s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 29.36MB / 50.50MB 159.2s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 32.51MB / 50.50MB 159.5s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 35.65MB / 50.50MB 159.6s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 39.85MB / 50.50MB 160.0s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 44.04MB / 50.50MB 160.4s
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 47.19MB / 50.50MB 160.6s
+#11 extracting sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4
+#11 sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 50.50MB / 50.50MB 161.0s done
+#11 extracting sha256:4996e33358abd29e5daf56cdda6681efb4db3bd55b5ab63a7d3d44f8400195a4 0.7s done
+#11 extracting sha256:f95897c2a1fb7bce26b018dd74b2845f816f7b86d5adff2939c6482b1d5b474c 0.0s done
+#11 extracting sha256:c35748eaa5ecc949b0f7cc349a9f7c4a5417dc008e2d9bebd53678d87238fcbf done
+#11 DONE 162.0s
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 20.97MB / 36.60MB 161.9s
+#10 sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 12.74MB / 12.74MB 154.8s done
+#10 extracting sha256:a60ef8ec184edb5ed91f5983f00261359fb2fe20f603e8d488b9477d32fcad70 0.5s done
+#10 extracting sha256:ea6cb4dbc0441ebd0533ffbd6a74ab2beda50e0405abcf7f0970e98d50e7cb1c 0.3s done
+#10 extracting sha256:a5cebd405655232f15f734db62490e47124a0cb581430165b95a94181e7fc914 done
+#10 ...
+
+#12 [node-dependencies 2/4] WORKDIR /workspace
+#12 DONE 0.8s
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 ...
+
+#13 [node-dependencies 3/4] COPY . /workspace/
+#13 DONE 0.2s
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 20.97MB / 36.60MB 166.9s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 22.02MB / 36.60MB 171.9s
+#10 ...
+
+#14 [node-dependencies 4/4] RUN corepack enable     && pnpm install --prod --frozen-lockfile
+#14 0.873 ! Corepack is about to download https://registry.npmjs.org/pnpm/-/pnpm-11.20.0.tgz
+#14 5.189 Scope: all 13 workspace projects
+#14 5.315 ? Verifying lockfile against supply-chain policies (190 entries)...
+#14 5.326 Lockfile is up to date, resolution step is skipped
+#14 5.425 Progress: resolved 1, reused 0, downloaded 0, added 0
+#14 5.498 Packages: +25
+#14 5.498 +++++++++++++++++++++++++
+#14 6.429 Progress: resolved 25, reused 0, downloaded 0, added 0
+#14 9.352 [WARN] GET https://registry.npmjs.org/@napi-rs%2Fcanvas-darwin-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.366 [WARN] GET https://registry.npmjs.org/@polka%2Furl error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.369 [WARN] GET https://registry.npmjs.org/@rolldown%2Fbinding-win32-arm64-msvc error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.375 [WARN] GET https://registry.npmjs.org/@oxc-project%2Ftypes error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.420 [WARN] GET https://registry.npmjs.org/@rolldown%2Fbinding-darwin-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.422 [WARN] GET https://registry.npmjs.org/@noble%2Fhashes error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.435 [WARN] GET https://registry.npmjs.org/@swc%2Fhelpers error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.539 [WARN] GET https://registry.npmjs.org/@blazediff%2Fcore error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.576 [WARN] GET https://registry.npmjs.org/@turbo%2Fdarwin-64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.579 [WARN] GET https://registry.npmjs.org/@jridgewell%2Fsourcemap-codec error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.582 [WARN] GET https://registry.npmjs.org/@turbo%2Flinux-64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.583 [WARN] GET https://registry.npmjs.org/@turbo%2Flinux-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.601 [WARN] GET https://registry.npmjs.org/@turbo%2Fwindows-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.602 [WARN] GET https://registry.npmjs.org/@turbo%2Fwindows-64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.604 [WARN] GET https://registry.npmjs.org/@vitest%2Fpretty-format error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.608 [WARN] GET https://registry.npmjs.org/@vitest%2Fspy error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.612 [WARN] GET https://registry.npmjs.org/@types%2Femscripten error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.664 [WARN] GET https://registry.npmjs.org/@vitest%2Fui error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.869 [WARN] GET https://registry.npmjs.org/unicode-trie/-/unicode-trie-2.0.0.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.878 [WARN] GET https://registry.npmjs.org/restructure/-/restructure-3.0.2.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.880 [WARN] GET https://registry.npmjs.org/@vitest%2Fmocker error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.882 [WARN] GET https://registry.npmjs.org/@sinclair/typebox/-/typebox-0.34.52.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.883 [WARN] GET https://registry.npmjs.org/dfa/-/dfa-1.2.0.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.884 [WARN] GET https://registry.npmjs.org/@vitest%2Fbrowser error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.886 [WARN] GET https://registry.npmjs.org/tiny-inflate/-/tiny-inflate-1.0.3.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.888 [WARN] GET https://registry.npmjs.org/unicode-properties/-/unicode-properties-1.4.1.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.890 [WARN] GET https://registry.npmjs.org/fflate/-/fflate-0.8.3.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.892 Progress: resolved 25, reused 0, downloaded 1, added 0
+#14 9.904 Packages are cloned from the content-addressable store to the virtual store.
+#14 9.904   Content-addressable store is at: /root/.local/share/pnpm/store/v11
+#14 9.904   Virtual store is at:             node_modules/.pnpm
+#14 9.910 [WARN] GET https://registry.npmjs.org/@vitest%2Fbrowser-playwright error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.922 [WARN] GET https://registry.npmjs.org/@rolldown%2Fbinding-linux-x64-musl error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 9.924 [WARN] GET https://registry.npmjs.org/harfbuzzjs/-/harfbuzzjs-1.6.0.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.11 
+#14 10.11    ╭──────────────────────────────────────────────╮
+#14 10.11    │                                              │
+#14 10.11    │     Update available! 11.20.0 → 12.6.0.      │
+#14 10.11    │     Changelog: https://pnpm.io/v/12.6.0      │
+#14 10.11    │   To update, run: corepack use pnpm@12.6.0   │
+#14 10.11    │                                              │
+#14 10.11    ╰──────────────────────────────────────────────╯
+#14 10.11 
+#14 10.12 [WARN] GET https://registry.npmjs.org/@vitest%2Futils error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.12 [WARN] GET https://registry.npmjs.org/clone/-/clone-2.1.2.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.13 [WARN] GET https://registry.npmjs.org/decimal.js/-/decimal.js-10.6.0.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.13 [WARN] GET https://registry.npmjs.org/@cto.af/linebreak/-/linebreak-4.0.3.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.21 [WARN] GET https://registry.npmjs.org/image-size/-/image-size-2.0.2.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 ...
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 22.02MB / 36.60MB 177.0s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 23.07MB / 36.60MB 182.1s
+#10 ...
+
+#14 [node-dependencies 4/4] RUN corepack enable     && pnpm install --prod --frozen-lockfile
+#14 10.25 [WARN] GET https://registry.npmjs.org/@yuku-codegen%2Fbinding-darwin-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.35 [WARN] GET https://registry.npmjs.org/@yuku-codegen%2Fbinding-linux-arm64-gnu error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.38 [WARN] GET https://registry.npmjs.org/@yuku-codegen%2Fbinding-linux-arm-gnu error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.42 [WARN] GET https://registry.npmjs.org/@rolldown%2Fbinding-linux-arm64-gnu error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.46 [WARN] GET https://registry.npmjs.org/@cto.af/unicode-trie-runtime/-/unicode-trie-runtime-3.2.9.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.46 [WARN] GET https://registry.npmjs.org/brotli/-/brotli-1.3.3.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.48 [WARN] GET https://registry.npmjs.org/@rolldown%2Fbinding-linux-arm-gnueabihf error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.49 [WARN] GET https://registry.npmjs.org/@swc/helpers/-/helpers-0.5.23.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.55 [WARN] GET https://registry.npmjs.org/@yuku-codegen%2Fbinding-linux-arm64-musl error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.61 [WARN] GET https://registry.npmjs.org/@yuku-codegen%2Fbinding-darwin-x64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.68 [WARN] GET https://registry.npmjs.org/@turbo%2Fdarwin-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 10.89 Progress: resolved 25, reused 0, downloaded 7, added 7
+#14 11.02 [WARN] GET https://registry.npmjs.org/@yuku-codegen%2Fbinding-android-arm64 error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 11.90 Progress: resolved 25, reused 0, downloaded 9, added 9
+#14 12.90 [WARN] GET https://registry.npmjs.org/fontkit/-/fontkit-2.0.4.tgz error (ECONNRESET). Will retry in 10 seconds. 2 retries left.
+#14 15.81 [WARN] Request took 10438ms: https://registry.npmjs.org/@napi-rs%2Fcanvas-linux-riscv64-gnu
+#14 17.82 [WARN] Request took 12427ms: https://registry.npmjs.org/@rolldown%2Fbinding-darwin-x64
+#14 19.59 [WARN] Request took 14210ms: https://registry.npmjs.org/@oxc-project%2Ftypes
+#14 19.66 [WARN] Request took 14277ms: https://registry.npmjs.org/@noble%2Fhashes
+#14 19.71 [WARN] Request took 14338ms: https://registry.npmjs.org/@napi-rs%2Fcanvas-darwin-arm64
+#14 19.73 [WARN] Request took 14368ms: https://registry.npmjs.org/@blazediff%2Fcore
+#14 19.77 [WARN] Request took 14411ms: https://registry.npmjs.org/@jridgewell%2Fsourcemap-codec
+#14 19.78 [WARN] Request took 14383ms: https://registry.npmjs.org/@rolldown%2Fbinding-win32-arm64-msvc
+#14 19.86 [WARN] Request took 10426ms: https://registry.npmjs.org/@vitest%2Fpretty-format
+#14 19.92 [WARN] Request took 14511ms: https://registry.npmjs.org/@turbo%2Fwindows-64
+#14 19.96 [WARN] Request took 14557ms: https://registry.npmjs.org/@turbo%2Fwindows-arm64
+#14 20.04 [WARN] Request took 14652ms: https://registry.npmjs.org/@polka%2Furl
+#14 20.07 [WARN] Request took 14665ms: https://registry.npmjs.org/@turbo%2Flinux-64
+#14 20.08 [WARN] Request took 14674ms: https://registry.npmjs.org/@swc%2Fhelpers
+#14 20.13 Progress: resolved 25, reused 0, downloaded 10, added 9
+#14 20.13 [WARN] Request took 14727ms: https://registry.npmjs.org/@vitest%2Fmocker
+#14 20.15 [WARN] Request took 14747ms: https://registry.npmjs.org/@turbo%2Fdarwin-64
+#14 20.16 [WARN] Request took 14759ms: https://registry.npmjs.org/@rolldown%2Fbinding-linux-x64-musl
+#14 20.19 [WARN] Request took 14784ms: https://registry.npmjs.org/@vitest%2Fbrowser-playwright
+#14 20.20 [WARN] Request took 10739ms: https://registry.npmjs.org/@vitest%2Fui
+#14 20.28 [WARN] Request took 10839ms: https://registry.npmjs.org/@vitest%2Fspy
+#14 20.32 [WARN] Request took 14930ms: https://registry.npmjs.org/@rolldown%2Fbinding-darwin-arm64
+#14 20.38 [WARN] Request took 14974ms: https://registry.npmjs.org/@vitest%2Fbrowser
+#14 20.41 [WARN] Request took 10947ms: https://registry.npmjs.org/@vitest%2Futils
+#14 ...
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 23.07MB / 36.60MB 187.2s
+#10 ...
+
+#14 [node-dependencies 4/4] RUN corepack enable     && pnpm install --prod --frozen-lockfile
+#14 20.67 [WARN] Request took 15258ms: https://registry.npmjs.org/@types%2Femscripten
+#14 20.80 [WARN] Request took 15395ms: https://registry.npmjs.org/@turbo%2Flinux-arm64
+#14 20.84 [WARN] Request took 11193ms: https://registry.npmjs.org/@yuku-codegen%2Fbinding-linux-arm-gnu
+#14 20.92 [WARN] Request took 15529ms: https://registry.npmjs.org/@rolldown%2Fbinding-linux-arm-gnueabihf
+#14 20.93 [WARN] Request took 15532ms: https://registry.npmjs.org/@rolldown%2Fbinding-linux-arm64-gnu
+#14 20.93 [WARN] Request took 11178ms: https://registry.npmjs.org/@yuku-codegen%2Fbinding-linux-arm64-gnu
+#14 20.95 [WARN] Request took 15541ms: https://registry.npmjs.org/@turbo%2Fdarwin-arm64
+#14 20.97 [WARN] Request took 11376ms: https://registry.npmjs.org/@yuku-codegen%2Fbinding-darwin-arm64
+#14 21.13 Progress: resolved 25, reused 0, downloaded 21, added 21
+#14 21.17 [WARN] Request took 11412ms: https://registry.npmjs.org/@yuku-codegen%2Fbinding-linux-arm64-musl
+#14 21.39 [WARN] Request took 11772ms: https://registry.npmjs.org/@yuku-codegen%2Fbinding-darwin-x64
+#14 21.87 [WARN] Request took 16475ms: https://registry.npmjs.org/@rolldown%2Fbinding-linux-x64-gnu
+#14 22.14 Progress: resolved 25, reused 0, downloaded 24, added 24
+#14 22.22 [WARN] Request took 12742ms: https://registry.npmjs.org/@yuku-codegen%2Fbinding-android-arm64
+#14 22.24 ✓ Lockfile passes supply-chain policies (190 entries in 16.9s)
+#14 24.48 Progress: resolved 25, reused 0, downloaded 25, added 24
+#14 24.50 Progress: resolved 25, reused 0, downloaded 25, added 25, done
+#14 24.56 
+#14 24.56 devDependencies: skipped
+#14 24.56 
+#14 24.72 Done in 20s using pnpm v11.20.0
+#14 DONE 24.9s
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 ...
+
+#15 [dotnet-build 7/8] COPY third_party/ofdrw.net/ third_party/ofdrw.net/
+#15 CACHED
+
+#16 [dotnet-build 2/8] WORKDIR /src
+#16 CACHED
+
+#17 [dotnet-build 4/8] COPY global.json ./
+#17 CACHED
+
+#18 [dotnet-build 6/8] COPY schemas/ schemas/
+#18 CACHED
+
+#19 [dotnet-build 3/8] RUN test "$(dotnet --version)" = "10.0.302"
+#19 CACHED
+
+#20 [dotnet-build 5/8] COPY dotnet/ dotnet/
+#20 CACHED
+
+#21 [dotnet-build 8/8] RUN dotnet restore dotnet/tools/OFDCompose.RuntimeProbe/OFDCompose.RuntimeProbe.csproj       --locked-mode       -m:1       /nodeReuse:false       /p:UseSharedCompilation=false       --disable-build-servers     && dotnet publish dotnet/tools/OFDCompose.RuntimeProbe/OFDCompose.RuntimeProbe.csproj       --configuration Release       --no-restore       --output /probe       /p:UseAppHost=false       -m:1       /nodeReuse:false       /p:UseSharedCompilation=false       --disable-build-servers
+#21 CACHED
+
+#10 [runtime 1/6] FROM mcr.microsoft.com/dotnet/aspnet:10.0@sha256:2d584d8147faddb0d678c5748d47953e5b8e18621ed4fb7049a91381d9d7746f
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 24.12MB / 36.60MB 192.2s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 25.17MB / 36.60MB 197.3s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 25.17MB / 36.60MB 202.4s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 26.21MB / 36.60MB 207.5s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 27.26MB / 36.60MB 212.6s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 27.26MB / 36.60MB 217.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 28.31MB / 36.60MB 222.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 28.31MB / 36.60MB 227.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 29.36MB / 36.60MB 232.8s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 30.41MB / 36.60MB 237.9s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 30.41MB / 36.60MB 243.0s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 31.46MB / 36.60MB 248.1s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 32.51MB / 36.60MB 253.3s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 32.51MB / 36.60MB 258.3s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 33.55MB / 36.60MB 263.5s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 34.60MB / 36.60MB 268.6s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 34.60MB / 36.60MB 273.7s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 35.65MB / 36.60MB 278.8s
+#10 sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 36.60MB / 36.60MB 282.8s done
+#10 extracting sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 0.1s
+#10 extracting sha256:6b5ca14511f7caa4a8cfbe9a3b02f35dcc941eb7f35268face0d5633b659e6aa 0.3s done
+#10 extracting sha256:5e69a756d7854bdeaa612af1a66cfab8c8ea5b496b704eeb9fac5ec3ff5e7118 done
+#10 extracting sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c
+#10 extracting sha256:900a7e4f4a95ace020db70e2884d34b23086c5b30cfb33f7649ba218e4813d4c 0.1s done
+#10 DONE 283.4s
+
+#22 [runtime 2/6] COPY --from=node-dependencies /usr/local/bin/node /usr/local/bin/node
+#22 DONE 0.1s
+
+#23 [runtime 3/6] COPY --from=node-dependencies /usr/local/LICENSE /usr/local/share/licenses/node/LICENSE
+#23 DONE 0.0s
+
+#24 [runtime 4/6] COPY --from=dotnet-build /probe/ /probe/
+#24 DONE 0.0s
+
+#25 [runtime 5/6] WORKDIR /workspace
+#25 DONE 0.0s
+
+#26 [runtime 6/6] COPY --from=node-dependencies /workspace/ /workspace/
+#26 DONE 0.2s
+
+#27 exporting to image
+#27 exporting layers
+#27 exporting layers 0.3s done
+#27 writing image sha256:d1cacddc4ff8454e7d25d789429690d71614d93e30ece9ecd73af1935c3e7cd1 done
+#27 naming to docker.io/library/ofd-compose-runtime-matrix:issue18-amd64 done
+#27 DONE 0.3s

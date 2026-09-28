@@ -1,0 +1,7 @@
+{
+  "file": "corpus-input.json.gz",
+  "compression": "gzip; lossless original UTF-8 JSON bytes",
+  "uncompressedSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
+  "archiveSha256": "931203ab7f0e71fd05cc9c3fd42f83afe224d79531cc62a022da2328b825e72d",
+  "uncompressedBytes": 1228070
+}

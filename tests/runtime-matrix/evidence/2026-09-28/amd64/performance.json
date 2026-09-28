@@ -1,0 +1,867 @@
+{
+  "method": "nearest-rank percentiles; warmup discarded; no latency SLO claimed",
+  "summarizerSha256": "2ee7710629abb322910ab9ff6e200a28ab48fce7b360654d63e9b2591378b263",
+  "environment": {
+    "schema": "ofd-compose/runtime-evidence@1",
+    "mode": "benchmark",
+    "startedAt": "2026-09-28T03:21:43.402Z",
+    "source": {
+      "codeSha": "d0627b31067c137fb438762eb53f89723b799a5f",
+      "builtFiles": {
+        "packages/typography-core/dist/index.mjs": "ca4b09f8897d963ec9304738c1061f5b3940b891a8e986339b7926d485832c61",
+        "packages/template-compiler/dist/index.mjs": "ce99e02192c0dc1df92d8b3b6fb4da62bb7710755d0af745e9c395a8d9ceb2b8",
+        "packages/source-protocol/dist/index.mjs": "89020d5d180122e3a7bfeed952bc4ace26640b16dcc3d83da8d15fa8a38c3296",
+        "packages/render-worker/dist/index.mjs": "356f0d2acf2dcb1a71aafa3c8d0999143991b845e67fa6881a832e99abc7eaea",
+        "packages/media-core/dist/index.mjs": "c3348d3745b83c761400d7561f5d8fc4f27347fc42c75bb22da696016d61c81c",
+        "packages/layout-ir/dist/index.mjs": "1a19e42c258ad25a96756db76d8ef824648d7d1305aefb1fffb6d82702498f0b",
+        "packages/layout-core/dist/index.mjs": "55b4495b62425a4fe74d705c8c6f35a94710e98d0780943d26bbc582ca3bc79e",
+        "packages/document-model/dist/index.mjs": "b614611beb1e1434877d515074e4eed543b9e655cd48d01ae001ea2f510998d4",
+        "packages/binding-core/dist/index.mjs": "7b8df349ab33a37eb2e91c81fe12a662b2e36a033bf25d5549603c5820f8e288"
+      },
+      "sourceArchiveSha256": "b616108faa8dadb2882e2ae83b15540f2e9239310078f81fd037f7a61c48cf4c",
+      "corpusSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
+      "pnpmLockSha256": "ed5671ffdf293097715dfac921dcf38e16dae85036d7f0ade9263ca74c2bf739"
+    },
+    "executionLabel": "emulatedX64OnARMOrbStack",
+    "imageIdentity": "sha256:d1cacddc4ff8454e7d25d789429690d71614d93e30ece9ecd73af1935c3e7cd1",
+    "node": "v24.19.0",
+    "arch": "x64",
+    "platform": "linux",
+    "osRelease": "7.0.14-orbstack-00380-ga7e0a2dc9535",
+    "cpus": [
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      },
+      {
+        "model": "VirtualApple @ 2.50GHz",
+        "speed": 2000
+      }
+    ],
+    "totalMemoryBytes": 16818663424,
+    "dotnet": "Microsoft.AspNetCore.App 10.0.12 [/usr/share/dotnet/shared/Microsoft.AspNetCore.App]\nMicrosoft.NETCore.App 10.0.12 [/usr/share/dotnet/shared/Microsoft.NETCore.App]",
+    "corpusSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
+    "samples": 20,
+    "warmup": 3,
+    "cold": "fresh Node and writer processes per sample; OS page cache not purged; process/module/JIT startup included in wallMs",
+    "hot": "persistent Node and writer processes, 3 or configured discarded warmups per case; resources cached in Node; writer resources reloaded each job",
+    "scope": "wallMs includes resource load, render, IR/resource spool, both writers and output file writes. Stage write timers exclude input/output filesystem I/O. Queue/network/HTTP/source attachment excluded; no HTTP seam exists yet.",
+    "memory": "Node maxRSS and CLR PeakWorkingSet are separate process high-water marks, not their sum or a sampled per-job peak. Hot marks are cumulative from process startup including warmup.",
+    "osReleaseFile": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n",
+    "cgroupLimits": {
+      "cpu.max": "200000 100000",
+      "memory.max": "4294967296"
+    },
+    "packages": "apt 2.8.3\nbase-files 13ubuntu10.5\nbase-passwd 3.6.3build1\nbash 5.2.21-2ubuntu4\nbsdutils 1:2.39.3-9ubuntu6.6\nca-certificates 20260601~24.04.1\ncoreutils 9.4-3ubuntu6.3\ndash 0.5.12-6ubuntu5\ndebconf 1.5.86ubuntu1\ndebianutils 5.17build1\ndiffutils 1:3.10-1ubuntu0.1\ndpkg 1.22.6ubuntu6.6\ne2fsprogs 1.47.0-2.4~exp1ubuntu4.1\nfindutils 4.9.0-5build1\ngcc-14-base 14.2.0-4ubuntu2~24.04.1\ngpgv 2.4.4-2ubuntu17.6\ngrep 3.11-4build1\ngzip 1.12-1ubuntu3.2\nhostname 3.23+nmu2ubuntu2\ninit-system-helpers 1.66ubuntu1\nlibacl1 2.3.2-1build1.1\nlibapt-pkg6.0t64 2.8.3\nlibassuan0 2.5.6-1build1\nlibattr1 1:2.5.2-1ubuntu0.1\nlibaudit-common 1:3.1.2-2.1build1.1\nlibaudit1 1:3.1.2-2.1build1.1\nlibblkid1 2.39.3-9ubuntu6.6\nlibbz2-1.0 1.0.8-5.1ubuntu0.1\nlibc-bin 2.39-0ubuntu8.9\nlibc6 2.39-0ubuntu8.9\nlibcap-ng0 0.8.4-2build2\nlibcap2 1:2.66-5ubuntu2.4\nlibcom-err2 1.47.0-2.4~exp1ubuntu4.1\nlibcrypt1 1:4.4.36-4build1\nlibdb5.3t64 5.3.28+dfsg2-7\nlibdebconfclient0 0.271ubuntu3\nlibext2fs2t64 1.47.0-2.4~exp1ubuntu4.1\nlibffi8 3.4.6-1build1\nlibgcc-s1 14.2.0-4ubuntu2~24.04.1\nlibgcrypt20 1.10.3-2ubuntu0.2\nlibgmp10 2:6.3.0+dfsg-2ubuntu6.1\nlibgnutls30t64 3.8.3-1.1ubuntu3.6\nlibgpg-error0 1.47-3build2.1\nlibhogweed6t64 3.9.1-2.2build1.1\nlibicu74 74.2-1ubuntu3.1\nlibidn2-0 2.3.7-2build1.1\nliblz4-1 1.9.4-1build1.1\nliblzma5 5.6.1+really5.4.5-1ubuntu0.3\nlibmd0 1.1.0-2build1.1\nlibmount1 2.39.3-9ubuntu6.6\nlibncursesw6 6.4+20240113-1ubuntu2.2\nlibnettle8t64 3.9.1-2.2build1.1\nlibnpth0t64 1.6-3.1build1\nlibp11-kit0 0.25.3-4ubuntu2.2\nlibpam-modules 1.5.3-5ubuntu5.7\nlibpam-modules-bin 1.5.3-5ubuntu5.7\nlibpam-runtime 1.5.3-5ubuntu5.7\nlibpam0g 1.5.3-5ubuntu5.7\nlibpcre2-8-0 10.42-4ubuntu2.1\nlibproc2-0 2:4.0.4-4ubuntu3.3\nlibseccomp2 2.5.5-1ubuntu3.1\nlibselinux1 3.5-2ubuntu2.1\nlibsemanage-common 3.5-1build5\nlibsemanage2 3.5-1build5\nlibsepol2 3.5-2build1\nlibsmartcols1 2.39.3-9ubuntu6.6\nlibss2 1.47.0-2.4~exp1ubuntu4.1\nlibssl3t64 3.0.13-0ubuntu3.15\nlibstdc++6 14.2.0-4ubuntu2~24.04.1\nlibsystemd0 255.4-1ubuntu8.17\nlibtasn1-6 4.19.0-3ubuntu0.24.04.2\nlibtinfo6 6.4+20240113-1ubuntu2.2\nlibudev1 255.4-1ubuntu8.17\nlibunistring5 1.1-2build1.1\nlibuuid1 2.39.3-9ubuntu6.6\nlibxxhash0 0.8.2-2build1\nlibzstd1 1.5.5+dfsg2-2build1.1\nlogin 1:4.13+dfsg1-4ubuntu3.2\nlogsave 1.47.0-2.4~exp1ubuntu4.1\nmawk 1.3.4.20240123-1build1\nmount 2.39.3-9ubuntu6.6\nncurses-base 6.4+20240113-1ubuntu2.2\nncurses-bin 6.4+20240113-1ubuntu2.2\nopenssl 3.0.13-0ubuntu3.15\npasswd 1:4.13+dfsg1-4ubuntu3.2\nperl-base 5.38.2-3.2ubuntu0.6\nprocps 2:4.0.4-4ubuntu3.3\nsed 4.9-2ubuntu0.24.04.1\nsensible-utils 0.0.22\nsysvinit-utils 3.08-6ubuntu3\ntar 1.35+dfsg-3ubuntu0.4\ntzdata 2026c-0ubuntu0.24.04.1\ntzdata-legacy 2026c-0ubuntu0.24.04.1\nubuntu-keyring 2023.11.28.1\nunminimize 0.2.1\nutil-linux 2.39.3-9ubuntu6.6\nzlib1g 1:1.3.dfsg-3.1ubuntu2.2",
+    "executableCheck": "",
+    "dotnetSdks": ""
+  },
+  "summary": [
+    {
+      "id": "synthetic-1-page",
+      "temperature": "cold",
+      "count": 20,
+      "status": "rendered and both formats written",
+      "diagnostics": [],
+      "milliseconds": {
+        "wall": {
+          "p50": 3312.9000449999985,
+          "p95": 3421.8312239999996,
+          "max": 3423.678273
+        },
+        "resourceLoad": {
+          "p50": 42.029080999999906,
+          "p95": 45.83601199999998,
+          "max": 47.178476000000046
+        },
+        "render": {
+          "p50": 1807.78149,
+          "p95": 1832.4925859999998,
+          "max": 1837.229979
+        },
+        "stages": {
+          "resources": {
+            "p50": 481.19975799999986,
+            "p95": 488.3396190000001,
+            "max": 491.875633
+          },
+          "compile": {
+            "p50": 2.1780080000000908,
+            "p95": 2.789635999999973,
+            "max": 2.9314699999999903
+          },
+          "bind": {
+            "p50": 3.198761999999988,
+            "p95": 3.4975550000001476,
+            "max": 3.6122640000000956
+          },
+          "media": {
+            "p50": 0.9009610000000521,
+            "p95": 1.1090879999999288,
+            "max": 1.212797000000137
+          },
+          "shape": {
+            "p50": 25.374184000000014,
+            "p95": 27.380981999999904,
+            "max": 28.811655999999857
+          },
+          "layout": {
+            "p50": 524.843887,
+            "p95": 536.131556,
+            "max": 541.648036
+          },
+          "layoutExclusive": {
+            "p50": 498.5907030000001,
+            "p95": 509.94658000000027,
+            "max": 514.8875149999994
+          },
+          "subset": {
+            "p50": 784.5251529999998,
+            "p95": 803.7024780000002,
+            "max": 808.72008
+          },
+          "identity": {
+            "p50": 11.738254000000325,
+            "p95": 12.913426000000072,
+            "max": 13.569177999999738
+          }
+        },
+        "writerInputLoad": {
+          "p50": 163.5566,
+          "p95": 180.0443,
+          "max": 186.5029
+        },
+        "ofd": {
+          "p50": 448.1899,
+          "p95": 474.3613,
+          "max": 491.2491
+        },
+        "pdf": {
+          "p50": 113.8582,
+          "p95": 131.172,
+          "max": 133.3945
+        },
+        "writeBoth": {
+          "p50": 563.9451,
+          "p95": 598.628,
+          "max": 615.5285
+        }
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 328855552,
+          "p95": 330428416,
+          "max": 331452416
+        },
+        "writerProcessHighWater": {
+          "p50": 138424320,
+          "p95": 140025856,
+          "max": 140107776
+        }
+      }
+    },
+    {
+      "id": "synthetic-1-page",
+      "temperature": "hot",
+      "count": 20,
+      "status": "rendered and both formats written",
+      "diagnostics": [],
+      "milliseconds": {
+        "wall": {
+          "p50": 1587.4745020000119,
+          "p95": 1648.957534000001,
+          "max": 1658.8362819999893
+        },
+        "resourceLoad": {
+          "p50": 0.0030830000032437965,
+          "p95": 0.004041000000142958,
+          "max": 0.04637499999989814
+        },
+        "render": {
+          "p50": 1542.7961609999984,
+          "p95": 1572.9852790000004,
+          "max": 1615.9931969999961
+        },
+        "stages": {
+          "resources": {
+            "p50": 467.83678900000086,
+            "p95": 481.0348819999999,
+            "max": 490.97054600000047
+          },
+          "compile": {
+            "p50": 0.6648359999999229,
+            "p95": 1.0137119999999413,
+            "max": 1.0449619999999413
+          },
+          "bind": {
+            "p50": 1.107588000002579,
+            "p95": 1.6825070000013511,
+            "max": 2.064758000000438
+          },
+          "media": {
+            "p50": 0.19291700000030687,
+            "p95": 0.4637510000011389,
+            "max": 0.5847520000024815
+          },
+          "shape": {
+            "p50": 0.41625200000089535,
+            "p95": 1.620586999997613,
+            "max": 2.8122610000100394
+          },
+          "layout": {
+            "p50": 462.3757250000017,
+            "p95": 477.04682499999944,
+            "max": 539.1575669999947
+          },
+          "layoutExclusive": {
+            "p50": 461.9215550000081,
+            "p95": 476.66965800000435,
+            "max": 538.6458569999959
+          },
+          "subset": {
+            "p50": 602.2023139999983,
+            "p95": 616.0334519999997,
+            "max": 631.182843999999
+          },
+          "identity": {
+            "p50": 5.465437999999267,
+            "p95": 6.340566000000763,
+            "max": 7.40369500000088
+          }
+        },
+        "writerInputLoad": {
+          "p50": 2.7842,
+          "p95": 5.2169,
+          "max": 5.4274
+        },
+        "ofd": {
+          "p50": 13.7717,
+          "p95": 32.4779,
+          "max": 40.0759
+        },
+        "pdf": {
+          "p50": 17.1792,
+          "p95": 23.1247,
+          "max": 27.0686
+        },
+        "writeBoth": {
+          "p50": 30.5128,
+          "p95": 59.546499999999995,
+          "max": 60.137
+        }
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 546918400,
+          "p95": 599232512,
+          "max": 599232512
+        },
+        "writerProcessHighWater": {
+          "p50": 187105280,
+          "p95": 190902272,
+          "max": 191590400
+        }
+      }
+    },
+    {
+      "id": "synthetic-1000-row",
+      "temperature": "cold",
+      "count": 20,
+      "status": "rendered and both formats written",
+      "diagnostics": [],
+      "milliseconds": {
+        "wall": {
+          "p50": 8368.05842300001,
+          "p95": 8496.089016999991,
+          "max": 8519.064219000022
+        },
+        "resourceLoad": {
+          "p50": 41.39412000000004,
+          "p95": 47.284460999999965,
+          "max": 49.46485199999995
+        },
+        "render": {
+          "p50": 3708.8038080000006,
+          "p95": 3770.182761,
+          "max": 3799.1335360000003
+        },
+        "stages": {
+          "resources": {
+            "p50": 482.22913700000004,
+            "p95": 510.09995100000003,
+            "max": 513.247576
+          },
+          "compile": {
+            "p50": 3.9515210000001844,
+            "p95": 4.591934999999921,
+            "max": 5.056027999999969
+          },
+          "bind": {
+            "p50": 13.374718999999914,
+            "p95": 19.57674300000008,
+            "max": 21.714899999999943
+          },
+          "media": {
+            "p50": 2.400175999999874,
+            "p95": 2.974830000000111,
+            "max": 3.275385000000142
+          },
+          "shape": {
+            "p50": 160.01866700000778,
+            "p95": 176.34612000001198,
+            "max": 178.51668800000607
+          },
+          "layout": {
+            "p50": 1649.2505380000002,
+            "p95": 1690.0372389999998,
+            "max": 1692.2262369999999
+          },
+          "layoutExclusive": {
+            "p50": 1491.5014759999879,
+            "p95": 1519.2277910000093,
+            "max": 1536.602066999982
+          },
+          "subset": {
+            "p50": 614.7403910000003,
+            "p95": 637.1591549999998,
+            "max": 653.3681820000002
+          },
+          "identity": {
+            "p50": 914.2026619999997,
+            "p95": 934.7865319999996,
+            "max": 937.8074019999995
+          }
+        },
+        "writerInputLoad": {
+          "p50": 165.4546,
+          "p95": 181.6067,
+          "max": 183.7601
+        },
+        "ofd": {
+          "p50": 2179.7841,
+          "p95": 2242.0727,
+          "max": 2250.7714
+        },
+        "pdf": {
+          "p50": 1441.5332,
+          "p95": 1530.8159,
+          "max": 1536.7609
+        },
+        "writeBoth": {
+          "p50": 3615.7506999999996,
+          "p95": 3730.3307,
+          "max": 3738.5758
+        }
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 542552064,
+          "p95": 562360320,
+          "max": 563793920
+        },
+        "writerProcessHighWater": {
+          "p50": 602394624,
+          "p95": 608411648,
+          "max": 608972800
+        }
+      }
+    },
+    {
+      "id": "synthetic-1000-row",
+      "temperature": "hot",
+      "count": 20,
+      "status": "rendered and both formats written",
+      "diagnostics": [],
+      "milliseconds": {
+        "wall": {
+          "p50": 5177.773719999997,
+          "p95": 5255.83486100001,
+          "max": 5267.864112000039
+        },
+        "resourceLoad": {
+          "p50": 0.003540000005159527,
+          "p95": 0.005997000000206754,
+          "max": 0.008205000005546026
+        },
+        "render": {
+          "p50": 3355.4894820000045,
+          "p95": 3428.2036659999867,
+          "max": 3445.3402849999984
+        },
+        "stages": {
+          "resources": {
+            "p50": 464.5814020000107,
+            "p95": 474.79375199999777,
+            "max": 475.1418180000037
+          },
+          "compile": {
+            "p50": 1.523668000008911,
+            "p95": 1.7001689999997325,
+            "max": 1.988591000001179
+          },
+          "bind": {
+            "p50": 4.357103000002098,
+            "p95": 5.493450999998458,
+            "max": 5.7371709999970335
+          },
+          "media": {
+            "p50": 0.7625210000005609,
+            "p95": 0.9845849999983329,
+            "max": 1.5191279999999097
+          },
+          "shape": {
+            "p50": 18.937345000638743,
+            "p95": 21.407833999721333,
+            "max": 21.97048899996298
+          },
+          "layout": {
+            "p50": 1352.163059999999,
+            "p95": 1379.2627330000105,
+            "max": 1405.2650830000057
+          },
+          "layoutExclusive": {
+            "p50": 1332.9613000001846,
+            "p95": 1361.0892219997768,
+            "max": 1387.6256819997943
+          },
+          "subset": {
+            "p50": 593.9189699999988,
+            "p95": 611.1743799999967,
+            "max": 619.2731729999941
+          },
+          "identity": {
+            "p50": 904.3449140000012,
+            "p95": 935.8587069999921,
+            "max": 985.3373980000033
+          }
+        },
+        "writerInputLoad": {
+          "p50": 8.1862,
+          "p95": 10.6688,
+          "max": 10.9505
+        },
+        "ofd": {
+          "p50": 874.8964,
+          "p95": 937.481,
+          "max": 1001.9552
+        },
+        "pdf": {
+          "p50": 840.9244,
+          "p95": 891.1366,
+          "max": 931.008
+        },
+        "writeBoth": {
+          "p50": 1720.8373000000001,
+          "p95": 1807.9272999999998,
+          "max": 1813.0981000000002
+        }
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 706711552,
+          "p95": 748597248,
+          "max": 748597248
+        },
+        "writerProcessHighWater": {
+          "p50": 824233984,
+          "p95": 824233984,
+          "max": 824233984
+        }
+      }
+    },
+    {
+      "id": "synthetic-50-page",
+      "temperature": "cold",
+      "count": 20,
+      "status": "rendered and both formats written",
+      "diagnostics": [],
+      "milliseconds": {
+        "wall": {
+          "p50": 3857.5193540000473,
+          "p95": 3934.202403000032,
+          "max": 3955.502755000023
+        },
+        "resourceLoad": {
+          "p50": 41.72527400000001,
+          "p95": 47.696113999999966,
+          "max": 49.57232299999998
+        },
+        "render": {
+          "p50": 1985.449188,
+          "p95": 2006.1749599999998,
+          "max": 2011.441706
+        },
+        "stages": {
+          "resources": {
+            "p50": 480.4149540000001,
+            "p95": 494.3676049999999,
+            "max": 505.8878789999999
+          },
+          "compile": {
+            "p50": 4.161742000000004,
+            "p95": 6.45948199999998,
+            "max": 6.630276999999978
+          },
+          "bind": {
+            "p50": 3.656187999999929,
+            "p95": 4.1925679999999375,
+            "max": 5.55318299999999
+          },
+          "media": {
+            "p50": 1.154784999999947,
+            "p95": 1.4341389999999592,
+            "max": 1.4669659999999567
+          },
+          "shape": {
+            "p50": 63.618319000000156,
+            "p95": 67.28341100000239,
+            "max": 67.96027499999968
+          },
+          "layout": {
+            "p50": 738.862046,
+            "p95": 760.79909,
+            "max": 762.9020390000001
+          },
+          "layoutExclusive": {
+            "p50": 673.3549489999978,
+            "p95": 695.4263560000031,
+            "max": 700.4009610000021
+          },
+          "subset": {
+            "p50": 616.1321410000003,
+            "p95": 631.7432150000002,
+            "max": 640.6132449999998
+          },
+          "identity": {
+            "p50": 127.49251399999957,
+            "p95": 142.96620200000007,
+            "max": 157.16054900000017
+          }
+        },
+        "writerInputLoad": {
+          "p50": 165.7338,
+          "p95": 174.9094,
+          "max": 183.1031
+        },
+        "ofd": {
+          "p50": 655.782,
+          "p95": 694.8947,
+          "max": 707.0214
+        },
+        "pdf": {
+          "p50": 266.494,
+          "p95": 278.7189,
+          "max": 296.7504
+        },
+        "writeBoth": {
+          "p50": 924.0984000000001,
+          "p95": 970.5077999999999,
+          "max": 972.0983
+        }
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 361345024,
+          "p95": 365416448,
+          "max": 368070656
+        },
+        "writerProcessHighWater": {
+          "p50": 206114816,
+          "p95": 206589952,
+          "max": 222724096
+        }
+      }
+    },
+    {
+      "id": "synthetic-50-page",
+      "temperature": "hot",
+      "count": 20,
+      "status": "rendered and both formats written",
+      "diagnostics": [],
+      "milliseconds": {
+        "wall": {
+          "p50": 1868.720450999972,
+          "p95": 1933.6047050000052,
+          "max": 2114.5595520000206
+        },
+        "resourceLoad": {
+          "p50": 0.003166000002238434,
+          "p95": 0.00558199999795761,
+          "max": 0.005623999997624196
+        },
+        "render": {
+          "p50": 1682.9549220000008,
+          "p95": 1769.829584000001,
+          "max": 1836.2818639999987
+        },
+        "stages": {
+          "resources": {
+            "p50": 469.2153580000013,
+            "p95": 480.16225999999915,
+            "max": 487.1886999999988
+          },
+          "compile": {
+            "p50": 0.9289610000014363,
+            "p95": 1.6051020000013523,
+            "max": 2.74001700000008
+          },
+          "bind": {
+            "p50": 0.6973870000001625,
+            "p95": 1.451177999999345,
+            "max": 1.9329460000008112
+          },
+          "media": {
+            "p50": 0.3912880000061705,
+            "p95": 0.46693799999957264,
+            "max": 0.9776579999997921
+          },
+          "shape": {
+            "p50": 5.496943999987707,
+            "p95": 6.752421999999569,
+            "max": 7.063382999995156
+          },
+          "layout": {
+            "p50": 567.9123929999987,
+            "p95": 596.2378929999977,
+            "max": 619.6955989999988
+          },
+          "layoutExclusive": {
+            "p50": 562.1944210000293,
+            "p95": 590.9709420000436,
+            "max": 612.9512939999786
+          },
+          "subset": {
+            "p50": 509.4077219999999,
+            "p95": 603.8019640000002,
+            "max": 610.8878060000006
+          },
+          "identity": {
+            "p50": 122.97401799999352,
+            "p95": 132.44912099999783,
+            "max": 140.16219999999885
+          }
+        },
+        "writerInputLoad": {
+          "p50": 3.8448,
+          "p95": 6.0166,
+          "max": 6.7617
+        },
+        "ofd": {
+          "p50": 75.8906,
+          "p95": 132.2182,
+          "max": 142.37
+        },
+        "pdf": {
+          "p50": 68.3719,
+          "p95": 112.0557,
+          "max": 118.998
+        },
+        "writeBoth": {
+          "p50": 156.7517,
+          "p95": 204.8918,
+          "max": 244.9964
+        }
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 532078592,
+          "p95": 560463872,
+          "max": 567095296
+        },
+        "writerProcessHighWater": {
+          "p50": 296513536,
+          "p95": 311291904,
+          "max": 311291904
+        }
+      }
+    },
+    {
+      "id": "synthetic-6000-row",
+      "temperature": "cold",
+      "count": 20,
+      "status": "expected capacity rejection; successful long-table performance Not verified",
+      "diagnostics": [
+        {
+          "code": "RESOURCE_LIMIT",
+          "severity": "error",
+          "phase": "bind",
+          "message": "JSON properties exceed budget"
+        }
+      ],
+      "milliseconds": {
+        "wall": {
+          "p50": 1373.542535000015,
+          "p95": 1426.6205249999766,
+          "max": 1429.7735540000722
+        },
+        "resourceLoad": {
+          "p50": 41.42558699999995,
+          "p95": 47.27963999999997,
+          "max": 47.674608000000035
+        },
+        "render": {
+          "p50": 639.494669,
+          "p95": 655.8088919999999,
+          "max": 657.387593
+        },
+        "stages": {
+          "resources": {
+            "p50": 492.398061,
+            "p95": 503.420892,
+            "max": 514.3017339999999
+          },
+          "compile": {
+            "p50": 3.9748349999999846,
+            "p95": 4.601282999999967,
+            "max": 4.708981999999878
+          },
+          "bind": {
+            "p50": 36.11361299999999,
+            "p95": 38.43496100000016,
+            "max": 40.02299599999992
+          },
+          "media": null,
+          "shape": null,
+          "layout": null,
+          "layoutExclusive": null,
+          "subset": null,
+          "identity": null
+        },
+        "writerInputLoad": null,
+        "ofd": null,
+        "pdf": null,
+        "writeBoth": null
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 234147840,
+          "p95": 237363200,
+          "max": 238145536
+        },
+        "writerProcessHighWater": null
+      }
+    },
+    {
+      "id": "synthetic-6000-row",
+      "temperature": "hot",
+      "count": 20,
+      "status": "expected capacity rejection; successful long-table performance Not verified",
+      "diagnostics": [
+        {
+          "code": "RESOURCE_LIMIT",
+          "severity": "error",
+          "phase": "bind",
+          "message": "JSON properties exceed budget"
+        }
+      ],
+      "milliseconds": {
+        "wall": {
+          "p50": 585.608871000004,
+          "p95": 601.4020960000344,
+          "max": 608.9702980000293
+        },
+        "resourceLoad": {
+          "p50": 0.0027920000002268353,
+          "p95": 0.005708000000595348,
+          "max": 0.07011899999997695
+        },
+        "render": {
+          "p50": 574.2862320000004,
+          "p95": 593.7996040000003,
+          "max": 601.7795640000004
+        },
+        "stages": {
+          "resources": {
+            "p50": 466.48668,
+            "p95": 484.01934299999994,
+            "max": 488.2080769999993
+          },
+          "compile": {
+            "p50": 0.6342809999996462,
+            "p95": 1.569618999999875,
+            "max": 2.238354999999501
+          },
+          "bind": {
+            "p50": 13.574867999999697,
+            "p95": 17.176566999999523,
+            "max": 18.004582000000028
+          },
+          "media": null,
+          "shape": null,
+          "layout": null,
+          "layoutExclusive": null,
+          "subset": null,
+          "identity": null
+        },
+        "writerInputLoad": null,
+        "ofd": null,
+        "pdf": null,
+        "writeBoth": null
+      },
+      "bytes": {
+        "nodeProcessHighWater": {
+          "p50": 395780096,
+          "p95": 396877824,
+          "max": 396976128
+        },
+        "writerProcessHighWater": null
+      }
+    }
+  ]
+}

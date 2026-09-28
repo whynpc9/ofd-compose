@@ -1,0 +1,21 @@
+{
+  "sdk": "10.0.302",
+  "architecture": "linux/arm64",
+  "validRun": {
+    "command": "dotnet test --solution dotnet/OFDCompose.slnx --configuration Release --no-build --no-restore",
+    "exitCode": 0,
+    "passed": 494,
+    "failed": 0,
+    "skipped": 0,
+    "assemblies": 5,
+    "elapsedSeconds": 120.063,
+    "stdout": "tests.stdout.txt"
+  },
+  "excludedAttempt": {
+    "exitCode": 5,
+    "tests": 0,
+    "reason": "MSBuild-only switches on no-build MTP command were forwarded to xUnit runner; zero tests selected",
+    "stdout": "invalid-test-invocation.stdout.txt",
+    "countedAsPass": false
+  }
+}

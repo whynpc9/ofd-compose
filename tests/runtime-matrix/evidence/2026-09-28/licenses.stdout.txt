@@ -1,0 +1,2 @@
+$ node tools/license-check/check-licenses.mjs
+License gate passed: 25 pnpm production package(s) strict, 91 pnpm dev package(s) with 4 documented exception(s), 28 NuGet package(s) strict.

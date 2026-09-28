@@ -1,0 +1,33 @@
+{
+  "purpose": "Issue17 target-reader extraction handoff; desktop extraction Not verified",
+  "producer": "Full exact-SDK .NET container tests, 494 passed",
+  "files": [
+    {
+      "file": "initial.ofd",
+      "sha256": "bd6d1b0921fcbff1b014970f0fcb5fd4a668b9442f6a7384203d63483a38932c"
+    },
+    {
+      "file": "edited.ofd",
+      "sha256": "11919c9b666c2737c0c2c91047df2a3bbb17f8f4d64b6469b6c4f7ac1695390e"
+    },
+    {
+      "file": "paths.json",
+      "sha256": "8887b870278a1b662198e1d8ca07ed2a6bec1d83a491d99ede22556d5e98f642"
+    }
+  ],
+  "attachmentReference": [
+    {
+      "ofd": "initial.ofd",
+      "entry": "Doc_0/Attachs/ofd-compose.json",
+      "byteLength": 6428,
+      "sha256": "e8db54b1fd888d29a3231092abd65d4bab420698509e0d574ba6330709624fe9"
+    },
+    {
+      "ofd": "edited.ofd",
+      "entry": "Doc_0/Attachs/ofd-compose.json",
+      "byteLength": 6698,
+      "sha256": "42ebc42f883fe5849dd4ee178ecb66cac8e2bdbdf30950ef35b9edae2f389d0e"
+    }
+  ],
+  "referenceMethod": "Python ZIP read of owned generated sample, not target desktop extraction"
+}

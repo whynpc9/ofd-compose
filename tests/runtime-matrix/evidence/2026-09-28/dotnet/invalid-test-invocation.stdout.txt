@@ -1,0 +1,20 @@
+/src/dotnet/tests/OFDCompose.PdfIrWriter.Tests/bin/Release/net10.0/OFDCompose.PdfIrWriter.Tests.dll (net10.0) Zero tests ran
+Exit code: 5
+/src/dotnet/tests/OFDCompose.Containers.Tests/bin/Release/net10.0/OFDCompose.Containers.Tests.dll (net10.0) Zero tests ran
+Exit code: 5
+/src/dotnet/tests/OFDCompose.DocxScanner.Tests/bin/Release/net10.0/OFDCompose.DocxScanner.Tests.dll (net10.0) Zero tests ran
+Exit code: 5
+/src/dotnet/tests/OFDCompose.SmokeTests/bin/Release/net10.0/OFDCompose.SmokeTests.dll (net10.0) Zero tests ran
+Exit code: 5
+/src/dotnet/tests/OFDCompose.OfdIrWriter.Tests/bin/Release/net10.0/OFDCompose.OfdIrWriter.Tests.dll (net10.0) Zero tests ran
+Exit code: 5
+
+Test run summary: Zero tests ran
+  error: 5
+
+  total: 0
+  failed: 0
+  succeeded: 0
+  skipped: 0
+  duration: 73ms
+Test run completed with non-success exit code: 5 (see: https://aka.ms/testingplatform/exitcodes)

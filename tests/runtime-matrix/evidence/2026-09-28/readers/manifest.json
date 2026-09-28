@@ -1,0 +1,112 @@
+{
+  "purpose": "Actual paired font-format samples for pending desktop display/copy/search; no desktop acceptance claimed",
+  "codeSha": "d0627b31067c137fb438762eb53f89723b799a5f",
+  "copyText": "中文 office é 2026",
+  "search": [
+    "中文",
+    "office"
+  ],
+  "regions": [
+    "text",
+    "table border",
+    "image"
+  ],
+  "files": [
+    {
+      "file": "reader-cff.ofd",
+      "sha256": "56eb4c15488393f3bd71b7ace2f0c5d099b4a0e7f7a051d7a0d8dfae82277577",
+      "input": {
+        "corpusSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
+        "inputSha256": "016f05b750add5e62921bff4c0f62b8570cd4923dae0e5f8d352cea9377cd542",
+        "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+        "subsetWasmSha256": "e3bf5ad5841bfdcc37878dff5330a13eea071b5860471d9d6515e31506e4ff96",
+        "profileSha256": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182"
+      },
+      "irDigest": "4eea0855ea2c92ab9fc60bb9a7ea4fe8cfa41d64d008a99b3e4da0d45528bbda",
+      "subsetResources": [
+        {
+          "resourceId": "r1",
+          "file": "r1.bin",
+          "sha256": "0d10304a6e02a625c67732f35c165f3b14e4bf013fab080232fb54bc427f2177"
+        },
+        {
+          "resourceId": "r0",
+          "file": "r0.bin",
+          "sha256": "9cdff8203a31c08c2bab9f798f6061e9a194dcdf13aaae3c4f105586dfd62aa5"
+        }
+      ]
+    },
+    {
+      "file": "reader-cff.pdf",
+      "sha256": "636e0cae72bb20be0b5ba92ee52f4362c52efd087c156faa5ca9817467aca779",
+      "input": {
+        "corpusSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
+        "inputSha256": "016f05b750add5e62921bff4c0f62b8570cd4923dae0e5f8d352cea9377cd542",
+        "fontSha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+        "subsetWasmSha256": "e3bf5ad5841bfdcc37878dff5330a13eea071b5860471d9d6515e31506e4ff96",
+        "profileSha256": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182"
+      },
+      "irDigest": "4eea0855ea2c92ab9fc60bb9a7ea4fe8cfa41d64d008a99b3e4da0d45528bbda",
+      "subsetResources": [
+        {
+          "resourceId": "r1",
+          "file": "r1.bin",
+          "sha256": "0d10304a6e02a625c67732f35c165f3b14e4bf013fab080232fb54bc427f2177"
+        },
+        {
+          "resourceId": "r0",
+          "file": "r0.bin",
+          "sha256": "9cdff8203a31c08c2bab9f798f6061e9a194dcdf13aaae3c4f105586dfd62aa5"
+        }
+      ]
+    },
+    {
+      "file": "reader-ttf.ofd",
+      "sha256": "47985e4032cf62e091340bfe9d76d2a7968565e78b156a9280eda8b81d2555e2",
+      "input": {
+        "corpusSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
+        "inputSha256": "f2209660c24f51c0acf3710aafa31e737db72d875322b1b0d524ddf878ff98f1",
+        "fontSha256": "39ad71264b588165b469e35e6afb162a378dacd1f95348160240ba9038ac3009",
+        "subsetWasmSha256": "e3bf5ad5841bfdcc37878dff5330a13eea071b5860471d9d6515e31506e4ff96",
+        "profileSha256": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182"
+      },
+      "irDigest": "c657ef2e28aea65ca13c36a4ddb93e02bc4bca0e61c9fa9af3a3e704d3e317af",
+      "subsetResources": [
+        {
+          "resourceId": "r1",
+          "file": "r1.bin",
+          "sha256": "51d52e6787d9882c8c176f0d279a44d619ebd7c530e3a0a53b386f272fc9f95f"
+        },
+        {
+          "resourceId": "r0",
+          "file": "r0.bin",
+          "sha256": "9cdff8203a31c08c2bab9f798f6061e9a194dcdf13aaae3c4f105586dfd62aa5"
+        }
+      ]
+    },
+    {
+      "file": "reader-ttf.pdf",
+      "sha256": "4ce0c93c9ee1d5c09bbdd39b9e312546cadd897b5c3f7ee21a32378a287630e4",
+      "input": {
+        "corpusSha256": "4796ec9c30bceeeee22717486abce25fd01c9fc9fcd7c13d23150b23c2ee741a",
+        "inputSha256": "f2209660c24f51c0acf3710aafa31e737db72d875322b1b0d524ddf878ff98f1",
+        "fontSha256": "39ad71264b588165b469e35e6afb162a378dacd1f95348160240ba9038ac3009",
+        "subsetWasmSha256": "e3bf5ad5841bfdcc37878dff5330a13eea071b5860471d9d6515e31506e4ff96",
+        "profileSha256": "066c5e27fc4e89e51f855c23b6cfffe58388e47cc227c5d515e519fd5383b182"
+      },
+      "irDigest": "c657ef2e28aea65ca13c36a4ddb93e02bc4bca0e61c9fa9af3a3e704d3e317af",
+      "subsetResources": [
+        {
+          "resourceId": "r1",
+          "file": "r1.bin",
+          "sha256": "51d52e6787d9882c8c176f0d279a44d619ebd7c530e3a0a53b386f272fc9f95f"
+        },
+        {
+          "resourceId": "r0",
+          "file": "r0.bin",
+          "sha256": "9cdff8203a31c08c2bab9f798f6061e9a194dcdf13aaae3c4f105586dfd62aa5"
+        }
+      ]
+    }
+  ]
+}

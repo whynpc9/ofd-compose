@@ -63,6 +63,7 @@ jobs:
         with:
           path: evidence
       - run: node tests/runtime-matrix/compare.mjs evidence/runtime-arm64 evidence/runtime-x64 evidence/comparison.json
+      - run: node tests/runtime-matrix/mutation-gate.mjs evidence/runtime-arm64 evidence/runtime-x64
       - uses: actions/upload-artifact@v4
         with:
           name: runtime-comparison

@@ -8,8 +8,22 @@ const read = async (dir) => {
   const bytes = await readFile(`${dir}/corpus.jsonl`);
   const complete = JSON.parse(await readFile(`${dir}/corpus-complete.json`));
   assert.equal(complete.rawSha256, createHash("sha256").update(bytes).digest("hex"));
+  assert.equal(complete.cases, 34);
+  const environment = JSON.parse(await readFile(`${dir}/corpus-environment.json`));
+  assert.equal(environment.mode, "corpus");
+  assert.match(environment.imageIdentity, /^sha256:[a-f0-9]{64}$/);
+  assert.match(environment.source.codeSha, /^[a-f0-9]{40}$/);
+  for (const key of ["sourceArchiveSha256", "pnpmLockSha256", "corpusSha256"])
+    assert.match(environment.source[key], /^[a-f0-9]{64}$/);
+  assert.equal(environment.source.corpusSha256, environment.corpusSha256);
+  assert.ok(Object.keys(environment.source.builtFiles).length >= 9);
+  for (const digest of Object.values(environment.source.builtFiles))
+    assert.match(digest, /^[a-f0-9]{64}$/);
+  assert.equal(environment.dotnetSdks, "");
+  assert.equal(environment.executableCheck, "");
+  assert.ok(environment.packages && !environment.packages.startsWith("Unavailable:"));
   return {
-    environment: JSON.parse(await readFile(`${dir}/corpus-environment.json`)),
+    environment,
     rows: bytes.toString().trim().split("\n").map(JSON.parse),
   };
 };
@@ -59,7 +73,18 @@ const cases = left.rows.map((l, i) => {
 });
 await writeFile(
   output,
-  `${JSON.stringify({ comparedAt: new Date().toISOString(), environments: [left.environment, right.environment], cases }, null, 2)}\n`,
+  `${JSON.stringify(
+    {
+      comparedAt: new Date().toISOString(),
+      verifierSha256: createHash("sha256")
+        .update(await readFile(new URL(import.meta.url)))
+        .digest("hex"),
+      environments: [left.environment, right.environment],
+      cases,
+    },
+    null,
+    2,
+  )}\n`,
 );
 console.log(
   "34 exact input/outcome matches, including 6 negative diagnostics; both architectures actually executed",

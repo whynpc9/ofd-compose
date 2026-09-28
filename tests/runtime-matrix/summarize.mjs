@@ -61,6 +61,7 @@ for (const id of [...new Set(rows.map((r) => r.id))])
         writerInputLoad: collect((r) => r.writer?.loadMs),
         ofd: collect((r) => r.writer?.ofdMs),
         pdf: collect((r) => r.writer?.pdfMs),
+        writeBoth: collect((r) => (r.writer ? r.writer.ofdMs + r.writer.pdfMs : undefined)),
       },
       bytes: {
         nodeProcessHighWater: collect((r) => r.nodePeakRssBytes),
@@ -71,6 +72,17 @@ for (const id of [...new Set(rows.map((r) => r.id))])
 assert.equal(summary.length, 8);
 await writeFile(
   output,
-  `${JSON.stringify({ method: "nearest-rank percentiles; warmup discarded; no latency SLO claimed", environment, summary }, null, 2)}\n`,
+  `${JSON.stringify(
+    {
+      method: "nearest-rank percentiles; warmup discarded; no latency SLO claimed",
+      summarizerSha256: createHash("sha256")
+        .update(await readFile(new URL(import.meta.url)))
+        .digest("hex"),
+      environment,
+      summary,
+    },
+    null,
+    2,
+  )}\n`,
 );
 console.log(`${summary.length} case/temperature summaries from ${rows.length} raw samples`);

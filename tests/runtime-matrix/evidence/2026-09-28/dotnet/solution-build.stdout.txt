@@ -1,0 +1,22 @@
+  OFDCompose.Api -> /src/dotnet/src/OFDCompose.Api/bin/Release/net10.0/OFDCompose.Api.dll
+  OFDCompose.ClientSdk -> /src/dotnet/src/OFDCompose.ClientSdk/bin/Release/net10.0/OFDCompose.ClientSdk.dll
+  OFDCompose.Containers -> /src/dotnet/src/OFDCompose.Containers/bin/Release/net10.0/OFDCompose.Containers.dll
+  Ofdrw.Net.Core -> /src/third_party/ofdrw.net/src/Ofdrw.Net.Core/bin/Debug/net10.0/Ofdrw.Net.Core.dll
+  Ofdrw.Net.Packaging -> /src/third_party/ofdrw.net/src/Ofdrw.Net.Packaging/bin/Debug/net10.0/Ofdrw.Net.Packaging.dll
+  OFDCompose.OfdIrWriter -> /src/dotnet/src/OFDCompose.OfdIrWriter/bin/Release/net10.0/OFDCompose.OfdIrWriter.dll
+  OFDCompose.PdfIrWriter -> /src/dotnet/src/OFDCompose.PdfIrWriter/bin/Release/net10.0/OFDCompose.PdfIrWriter.dll
+  Ofdrw.Net.Reader -> /src/third_party/ofdrw.net/src/Ofdrw.Net.Reader/bin/Debug/net10.0/Ofdrw.Net.Reader.dll
+  OFDCompose.Containers.Tests -> /src/dotnet/tests/OFDCompose.Containers.Tests/bin/Release/net10.0/OFDCompose.Containers.Tests.dll
+  OFDCompose.DocxScanner -> /src/dotnet/tools/OFDCompose.DocxScanner/bin/Release/net10.0/OFDCompose.DocxScanner.dll
+  OFDCompose.CorpusDocxGenerator -> /src/dotnet/tools/OFDCompose.CorpusDocxGenerator/bin/Release/net10.0/OFDCompose.CorpusDocxGenerator.dll
+  OFDCompose.DocxScanner.Tests -> /src/dotnet/tests/OFDCompose.DocxScanner.Tests/bin/Release/net10.0/OFDCompose.DocxScanner.Tests.dll
+  OFDCompose.OfdIrWriter.Tests -> /src/dotnet/tests/OFDCompose.OfdIrWriter.Tests/bin/Release/net10.0/OFDCompose.OfdIrWriter.Tests.dll
+  OFDCompose.PdfIrWriter.Tests -> /src/dotnet/tests/OFDCompose.PdfIrWriter.Tests/bin/Release/net10.0/OFDCompose.PdfIrWriter.Tests.dll
+  OFDCompose.SmokeTests -> /src/dotnet/tests/OFDCompose.SmokeTests/bin/Release/net10.0/OFDCompose.SmokeTests.dll
+  OFDCompose.RuntimeProbe -> /src/dotnet/tools/OFDCompose.RuntimeProbe/bin/Release/net10.0/OFDCompose.RuntimeProbe.dll
+
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+
+Time Elapsed 00:00:13.59

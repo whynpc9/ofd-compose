@@ -14,7 +14,8 @@ barcode diagnostics. Failing cases are not silently discarded.
 Input JSON includes SHA-256 of the original fixtures, all source/data/profile values,
 and image bytes. Both architectures consume exactly the same file and font manifests.
 
-Additional cases: CFF and TTF reader pages; synthetic 1/50 pages; a 1000-row/84-page
+Additional cases: CFF and TTF reader pages; synthetic 1/50 pages (one short paragraph
+per page, explicit page breaks, not a dense business report); a 1000-row/84-page
 bound table; and the **original 6000-row intended 500-page scale**, which the actual
 Worker rejects at bind with `RESOURCE_LIMIT: JSON properties exceed budget`.
 That capacity rejection remains in both matrices and timing records. It is not a
@@ -50,6 +51,7 @@ docker run --rm --platform linux/arm64 --network none --cpus 2 --memory 4g \
   tests/runtime-matrix/run.mjs corpus .matrix/corpus.json /evidence /probe/OFDCompose.RuntimeProbe.dll
 # Repeat with mode benchmark, then for the amd64 image. On an ARM host label x64 emulated.
 node tests/runtime-matrix/compare.mjs <arm64-output> <x64-output> <comparison.json>
+node tests/runtime-matrix/mutation-gate.mjs <arm64-output> <x64-output>
 node tests/runtime-matrix/summarize.mjs <output> <performance.json>
 ```
 
@@ -74,8 +76,9 @@ processes and their lifetime high-water memory marks are reported separately, ne
 or mislabelled as per-stage peaks. A hot process's marks include its warmups.
 
 `RenderControl.observe` is an optional trusted-host hook; Core has no clock dependency.
-Compile, bind, resource ownership, media, subset and final identity intervals surround
-actual stages. Shape measures actual TypographyCore.shape calls inside layout;
+Compile, bind, initial input/resource ownership, media, subset and final identity
+intervals surround actual stages. `resources` includes source/data/profile snapshot
+validation and authorized resource copying/digest checks, not just file acquisition. Shape measures actual TypographyCore.shape calls inside layout;
 `layoutExclusive = layout - shape`. This includes layout setup/font loading/line breaking
 but excludes measured shape calls. Observer overhead is present in benchmark samples.
 The dual test checks fully equal output/identity with and without observation.
