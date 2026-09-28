@@ -1,7 +1,7 @@
 {
-  "browser": "firefox",
-  "browserVersion": "155.0",
-  "executablePath": "/Users/wanghongyi/Library/Caches/ms-playwright/firefox-1543/firefox/Nightly.app/Contents/MacOS/firefox",
+  "browser": "chromium",
+  "browserVersion": "153.0.8010.12",
+  "executablePath": "/Users/wanghongyi/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing",
   "nodeVersion": "v24.19.0",
   "platform": "darwin",
   "architecture": "arm64",
@@ -32,15 +32,15 @@
     "scope": "Experimental local patch, not a published or approved production fork"
   },
   "sourceSha256": {
-    "tools/editor-adapter-spike/harness.mjs": "191b9ee6b5636ca3a9013b985dc527f98f0628691b9e7ee3093943173d656524",
-    "tools/editor-adapter-spike/adapter.mjs": "8e0512ab7b6455668a4c7340a44f70c33922ab6f64193e59c9af5409b150c55a",
+    "tools/editor-adapter-spike/harness.mjs": "735cf3b7616c661bc1d22b3d2d2cd8fbc7b0efd9ef697120c2759c9f60dd83e7",
+    "tools/editor-adapter-spike/adapter.mjs": "31f1cbf48648226508718164186e9b62c06d16974ce96279c8d6b92ec36e8180",
     "tools/editor-adapter-spike/upstream.patch": "aa0870430dbe08afc7ddf260ad9cedb2a6ffcb2fa3f613de9ede97eb65d1b284",
     "tools/editor-adapter-spike/run-browser.mjs": "5287c5869ec1a2362da6f0f42c637501f99497d26e1557c7f9fae9c198ab09e7",
     "tools/editor-adapter-spike/baseline.json": "5515c7775d527f57c1784832dcff0184e2401e3531ea94677ef39647607e78b6",
     "tools/editor-adapter-spike/vite.config.mjs": "2cd3e80c21f760b1c8c0a264f96630d800fbad35e4628abcb58bff30d1a36862"
   },
-  "startedAt": "2026-09-28T05:45:40.571Z",
-  "finishedAt": "2026-09-28T05:45:43.022Z",
+  "startedAt": "2026-09-28T05:34:03.792Z",
+  "finishedAt": "2026-09-28T05:34:05.117Z",
   "layer": "synthetic-browser-events-with-real-Editor",
   "osImeVerified": false,
   "consoleMessages": [
@@ -51,17 +51,13 @@
     {
       "type": "debug",
       "text": "[vite] connected."
-    },
-    {
-      "type": "warning",
-      "text": "[JavaScript Warning: \"unreachable code after return statement\" {file: \"http://127.0.0.1:4535/@fs/Users/wanghongyi/.codex/worktrees/57b5/ofd-compose/.scratch/first-release/reference/issue35/patched/src/editor/core/event/handlers/composition.ts\" line: 17}]"
     }
   ],
   "pageErrors": [],
   "result": {
     "layer": "synthetic-browser-events-with-real-Editor",
     "osImeVerified": false,
-    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:155.0) Gecko/20100101 Firefox/155.0",
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.8010.12 Safari/537.36",
     "cases": [
       {
         "name": "published-selected-cancel-reproduces-loss",
@@ -75,7 +71,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 797
+              "time": 671.1999999284744
             },
             {
               "type": "input",
@@ -84,14 +80,14 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 797
+              "time": 678.7999999523163
             },
             {
               "type": "compositionend",
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 798
+              "time": 679.1999999284744
             }
           ]
         }
@@ -160,7 +156,7 @@
               ]
             },
             "current": {
-              "sessionId": "d0417c09-ee03-43a7-a068-62b2ebda79d8",
+              "sessionId": "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -318,7 +314,7 @@
               "h2"
             ],
             "associationKeys": [
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h2"
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h2"
             ],
             "blocked": null,
             "view": {
@@ -440,7 +436,7 @@
               ]
             },
             "current": {
-              "sessionId": "d0417c09-ee03-43a7-a068-62b2ebda79d8",
+              "sessionId": "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -619,8 +615,8 @@
               "h3"
             ],
             "associationKeys": [
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h2",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h3"
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h2",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h3"
             ],
             "blocked": null,
             "view": {
@@ -755,7 +751,7 @@
               ]
             },
             "current": {
-              "sessionId": "d0417c09-ee03-43a7-a068-62b2ebda79d8",
+              "sessionId": "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -955,9 +951,9 @@
               "h4"
             ],
             "associationKeys": [
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h2",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h3",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h4"
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h2",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h3",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h4"
             ],
             "blocked": null,
             "view": {
@@ -1093,7 +1089,7 @@
               ]
             },
             "current": {
-              "sessionId": "d0417c09-ee03-43a7-a068-62b2ebda79d8",
+              "sessionId": "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -1275,9 +1271,9 @@
               "h4"
             ],
             "associationKeys": [
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h2",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h3",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h4"
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h2",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h3",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h4"
             ],
             "blocked": null,
             "view": {
@@ -1400,7 +1396,7 @@
               ]
             },
             "current": {
-              "sessionId": "d0417c09-ee03-43a7-a068-62b2ebda79d8",
+              "sessionId": "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -1563,9 +1559,9 @@
               "h4"
             ],
             "associationKeys": [
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h2",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h3",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h4"
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h2",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h3",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h4"
             ],
             "blocked": null,
             "view": {
@@ -1687,7 +1683,7 @@
               ]
             },
             "current": {
-              "sessionId": "d0417c09-ee03-43a7-a068-62b2ebda79d8",
+              "sessionId": "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -1869,9 +1865,9 @@
               "h4"
             ],
             "associationKeys": [
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h2",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h3",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h4"
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h2",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h3",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h4"
             ],
             "blocked": null,
             "view": {
@@ -2006,7 +2002,7 @@
               ]
             },
             "current": {
-              "sessionId": "d0417c09-ee03-43a7-a068-62b2ebda79d8",
+              "sessionId": "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -2206,9 +2202,9 @@
               "h4"
             ],
             "associationKeys": [
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h2",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h3",
-              "d0417c09-ee03-43a7-a068-62b2ebda79d8:h4"
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h2",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h3",
+              "0cae65eb-be4e-484a-bdb1-4f4d8ccf5123:h4"
             ],
             "blocked": null,
             "view": {
@@ -2344,7 +2340,7 @@
               ]
             },
             "current": {
-              "sessionId": "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c",
+              "sessionId": "15fee672-bfc7-464c-ab37-f10483e7bf18",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -2505,8 +2501,8 @@
               "h3"
             ],
             "associationKeys": [
-              "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h2",
-              "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h3"
+              "15fee672-bfc7-464c-ab37-f10483e7bf18:h2",
+              "15fee672-bfc7-464c-ab37-f10483e7bf18:h3"
             ],
             "blocked": null,
             "view": {
@@ -2622,7 +2618,7 @@
               ]
             },
             "current": {
-              "sessionId": "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c",
+              "sessionId": "15fee672-bfc7-464c-ab37-f10483e7bf18",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -2783,8 +2779,8 @@
               "h3"
             ],
             "associationKeys": [
-              "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h2",
-              "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h3"
+              "15fee672-bfc7-464c-ab37-f10483e7bf18:h2",
+              "15fee672-bfc7-464c-ab37-f10483e7bf18:h3"
             ],
             "blocked": null,
             "view": {
@@ -2896,7 +2892,7 @@
               ]
             },
             "current": {
-              "sessionId": "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c",
+              "sessionId": "15fee672-bfc7-464c-ab37-f10483e7bf18",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -3057,8 +3053,8 @@
               "h3"
             ],
             "associationKeys": [
-              "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h2",
-              "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h3"
+              "15fee672-bfc7-464c-ab37-f10483e7bf18:h2",
+              "15fee672-bfc7-464c-ab37-f10483e7bf18:h3"
             ],
             "blocked": null,
             "view": {
@@ -3132,7 +3128,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 920,
+              "time": 786,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3181,7 +3177,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c",
+                  "sessionId": "15fee672-bfc7-464c-ab37-f10483e7bf18",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3342,8 +3338,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h2",
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h3"
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h2",
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -3419,7 +3415,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 920,
+              "time": 786.5,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3468,7 +3464,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c",
+                  "sessionId": "15fee672-bfc7-464c-ab37-f10483e7bf18",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3629,8 +3625,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h2",
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h3"
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h2",
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -3696,7 +3692,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 921,
+              "time": 786.7999999523163,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3745,7 +3741,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c",
+                  "sessionId": "15fee672-bfc7-464c-ab37-f10483e7bf18",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3906,8 +3902,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h2",
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h3"
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h2",
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -3977,7 +3973,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 921,
+              "time": 787.0999999046326,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -4026,7 +4022,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c",
+                  "sessionId": "15fee672-bfc7-464c-ab37-f10483e7bf18",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -4187,8 +4183,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h2",
-                  "02b5aea1-e995-4fc7-b0d3-4bb64e83fd4c:h3"
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h2",
+                  "15fee672-bfc7-464c-ab37-f10483e7bf18:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -4312,7 +4308,7 @@
               ]
             },
             "current": {
-              "sessionId": "659191c9-bc58-4f6c-b88a-06b70b16f9e9",
+              "sessionId": "43e10ac5-5306-4181-ba9b-8397f9c7a990",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -4473,8 +4469,8 @@
               "h3"
             ],
             "associationKeys": [
-              "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h2",
-              "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h3"
+              "43e10ac5-5306-4181-ba9b-8397f9c7a990:h2",
+              "43e10ac5-5306-4181-ba9b-8397f9c7a990:h3"
             ],
             "blocked": null,
             "view": {
@@ -4590,7 +4586,7 @@
               ]
             },
             "current": {
-              "sessionId": "659191c9-bc58-4f6c-b88a-06b70b16f9e9",
+              "sessionId": "43e10ac5-5306-4181-ba9b-8397f9c7a990",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -4751,8 +4747,8 @@
               "h3"
             ],
             "associationKeys": [
-              "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h2",
-              "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h3"
+              "43e10ac5-5306-4181-ba9b-8397f9c7a990:h2",
+              "43e10ac5-5306-4181-ba9b-8397f9c7a990:h3"
             ],
             "blocked": null,
             "view": {
@@ -4858,7 +4854,7 @@
               ]
             },
             "current": {
-              "sessionId": "659191c9-bc58-4f6c-b88a-06b70b16f9e9",
+              "sessionId": "43e10ac5-5306-4181-ba9b-8397f9c7a990",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -4998,8 +4994,8 @@
               "h4"
             ],
             "associationKeys": [
-              "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h2",
-              "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h4"
+              "43e10ac5-5306-4181-ba9b-8397f9c7a990:h2",
+              "43e10ac5-5306-4181-ba9b-8397f9c7a990:h4"
             ],
             "blocked": null,
             "view": {
@@ -5065,7 +5061,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 956,
+              "time": 823,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5114,7 +5110,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "659191c9-bc58-4f6c-b88a-06b70b16f9e9",
+                  "sessionId": "43e10ac5-5306-4181-ba9b-8397f9c7a990",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5275,8 +5271,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h2",
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h3"
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h2",
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -5352,7 +5348,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 956,
+              "time": 823.1999999284744,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5401,7 +5397,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "659191c9-bc58-4f6c-b88a-06b70b16f9e9",
+                  "sessionId": "43e10ac5-5306-4181-ba9b-8397f9c7a990",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5562,8 +5558,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h2",
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h3"
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h2",
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -5629,7 +5625,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 957,
+              "time": 823.5,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5678,7 +5674,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "659191c9-bc58-4f6c-b88a-06b70b16f9e9",
+                  "sessionId": "43e10ac5-5306-4181-ba9b-8397f9c7a990",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5839,8 +5835,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h2",
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h3"
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h2",
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -5910,15 +5906,15 @@
               "data": "你",
               "clipboard": null,
               "isTrusted": false,
-              "time": 957,
+              "time": 823.8999999761581,
               "state": {
                 "liveSelection": {
                   "anchor": {
-                    "nodeId": "n2",
+                    "nodeId": "new12",
                     "offset": 1
                   },
                   "focus": {
-                    "nodeId": "n2",
+                    "nodeId": "new12",
                     "offset": 1
                   },
                   "zone": "main",
@@ -5933,15 +5929,9 @@
                   "children": [
                     {
                       "type": "text",
-                      "nodeId": "n1",
-                      "value": "甲",
+                      "nodeId": "new12",
+                      "value": "你",
                       "bold": false
-                    },
-                    {
-                      "type": "text",
-                      "nodeId": "n2",
-                      "value": "乙",
-                      "bold": true
                     },
                     {
                       "type": "text",
@@ -5959,23 +5949,17 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "659191c9-bc58-4f6c-b88a-06b70b16f9e9",
-                  "historyEntryId": "h2",
+                  "sessionId": "43e10ac5-5306-4181-ba9b-8397f9c7a990",
+                  "historyEntryId": "h4",
                   "ast": {
                     "type": "document",
                     "id": "fixture",
                     "children": [
                       {
                         "type": "text",
-                        "nodeId": "n1",
-                        "value": "甲",
+                        "nodeId": "new12",
+                        "value": "你",
                         "bold": false
-                      },
-                      {
-                        "type": "text",
-                        "nodeId": "n2",
-                        "value": "乙",
-                        "bold": true
                       },
                       {
                         "type": "text",
@@ -5995,24 +5979,18 @@
                   "mapping": [
                     {
                       "index": 1,
-                      "nodeId": "n1",
+                      "nodeId": "new12",
                       "start": 0,
                       "end": 1
                     },
                     {
                       "index": 2,
-                      "nodeId": "n2",
-                      "start": 0,
-                      "end": 1
-                    },
-                    {
-                      "index": 3,
                       "nodeId": "n3",
                       "start": 0,
                       "end": 1
                     },
                     {
-                      "index": 4,
+                      "index": 3,
                       "nodeId": "n4",
                       "start": 0,
                       "end": 1
@@ -6025,20 +6003,12 @@
                         "left": 0
                       },
                       {
-                        "value": "甲",
+                        "value": "你",
                         "bold": false,
+                        "left": 0,
                         "extension": {
-                          "nodeId": "n1"
-                        },
-                        "left": 0
-                      },
-                      {
-                        "value": "乙",
-                        "bold": true,
-                        "extension": {
-                          "nodeId": "n2"
-                        },
-                        "left": 0
+                          "nodeId": "new12"
+                        }
                       },
                       {
                         "value": "丙",
@@ -6070,8 +6040,8 @@
                       }
                     ],
                     "range": {
-                      "startIndex": 0,
-                      "endIndex": 0,
+                      "startIndex": 1,
+                      "endIndex": 1,
                       "isCrossRowCol": false,
                       "zone": "main"
                     },
@@ -6084,16 +6054,16 @@
                   },
                   "selection": {
                     "anchor": {
-                      "nodeId": "fixture",
-                      "offset": 0
+                      "nodeId": "new12",
+                      "offset": 1
                     },
                     "focus": {
-                      "nodeId": "fixture",
-                      "offset": 0
+                      "nodeId": "new12",
+                      "offset": 1
                     },
                     "range": {
-                      "startIndex": 0,
-                      "endIndex": 0,
+                      "startIndex": 1,
+                      "endIndex": 1,
                       "isCrossRowCol": false,
                       "zone": "main"
                     },
@@ -6104,24 +6074,23 @@
                     }
                   }
                 },
-                "revision": 3,
+                "revision": 4,
                 "history": {
                   "undo": [
-                    "h2"
+                    "h2",
+                    "h4"
                   ],
-                  "redo": [
-                    "h3"
-                  ],
-                  "composing": true,
+                  "redo": [],
+                  "composing": false,
                   "busy": false
                 },
                 "associations": [
                   "h2",
-                  "h3"
+                  "h4"
                 ],
                 "associationKeys": [
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h2",
-                  "659191c9-bc58-4f6c-b88a-06b70b16f9e9:h3"
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h2",
+                  "43e10ac5-5306-4181-ba9b-8397f9c7a990:h4"
                 ],
                 "blocked": null,
                 "view": {
@@ -6131,16 +6100,12 @@
                       "left": 0
                     },
                     {
-                      "value": "n",
+                      "value": "你",
                       "bold": false,
-                      "underline": true,
-                      "left": 0
-                    },
-                    {
-                      "value": "i",
-                      "bold": false,
-                      "underline": true,
-                      "left": 0
+                      "left": 0,
+                      "extension": {
+                        "nodeId": "new12"
+                      }
                     },
                     {
                       "value": "丙",
@@ -6172,8 +6137,8 @@
                     }
                   ],
                   "range": {
-                    "startIndex": 2,
-                    "endIndex": 2,
+                    "startIndex": 1,
+                    "endIndex": 1,
                     "isCrossRowCol": false,
                     "zone": "main"
                   },
@@ -6247,7 +6212,7 @@
               ]
             },
             "current": {
-              "sessionId": "9e04989f-5d83-4f58-9b19-4826d39eab31",
+              "sessionId": "6f30e112-b5b9-4b1b-924e-17b790cd436b",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -6427,8 +6392,8 @@
               "h3"
             ],
             "associationKeys": [
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h2",
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h3"
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h2",
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h3"
             ],
             "blocked": null,
             "view": {
@@ -6570,7 +6535,7 @@
               ]
             },
             "current": {
-              "sessionId": "9e04989f-5d83-4f58-9b19-4826d39eab31",
+              "sessionId": "6f30e112-b5b9-4b1b-924e-17b790cd436b",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -6792,9 +6757,9 @@
               "h4"
             ],
             "associationKeys": [
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h2",
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h3",
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h4"
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h2",
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h3",
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h4"
             ],
             "blocked": null,
             "view": {
@@ -6940,7 +6905,7 @@
               ]
             },
             "current": {
-              "sessionId": "9e04989f-5d83-4f58-9b19-4826d39eab31",
+              "sessionId": "6f30e112-b5b9-4b1b-924e-17b790cd436b",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -7123,9 +7088,9 @@
               "h4"
             ],
             "associationKeys": [
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h2",
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h3",
-              "9e04989f-5d83-4f58-9b19-4826d39eab31:h4"
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h2",
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h3",
+              "6f30e112-b5b9-4b1b-924e-17b790cd436b:h4"
             ],
             "blocked": null,
             "view": {
@@ -7209,7 +7174,7 @@
               "isComposing": false,
               "clipboard": null,
               "isTrusted": false,
-              "time": 990,
+              "time": 859.0999999046326,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7264,7 +7229,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "9e04989f-5d83-4f58-9b19-4826d39eab31",
+                  "sessionId": "6f30e112-b5b9-4b1b-924e-17b790cd436b",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -7444,8 +7409,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "9e04989f-5d83-4f58-9b19-4826d39eab31:h2",
-                  "9e04989f-5d83-4f58-9b19-4826d39eab31:h3"
+                  "6f30e112-b5b9-4b1b-924e-17b790cd436b:h2",
+                  "6f30e112-b5b9-4b1b-924e-17b790cd436b:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -7537,7 +7502,7 @@
                 "text": "粘贴"
               },
               "isTrusted": false,
-              "time": 1023,
+              "time": 892.8999999761581,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7592,7 +7557,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "9e04989f-5d83-4f58-9b19-4826d39eab31",
+                  "sessionId": "6f30e112-b5b9-4b1b-924e-17b790cd436b",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -7772,8 +7737,8 @@
                   "h3"
                 ],
                 "associationKeys": [
-                  "9e04989f-5d83-4f58-9b19-4826d39eab31:h2",
-                  "9e04989f-5d83-4f58-9b19-4826d39eab31:h3"
+                  "6f30e112-b5b9-4b1b-924e-17b790cd436b:h2",
+                  "6f30e112-b5b9-4b1b-924e-17b790cd436b:h3"
                 ],
                 "blocked": null,
                 "view": {
@@ -7856,7 +7821,7 @@
               "isComposing": false,
               "clipboard": null,
               "isTrusted": false,
-              "time": 1059,
+              "time": 926.1999999284744,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7911,7 +7876,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "9e04989f-5d83-4f58-9b19-4826d39eab31",
+                  "sessionId": "6f30e112-b5b9-4b1b-924e-17b790cd436b",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -8094,9 +8059,9 @@
                   "h4"
                 ],
                 "associationKeys": [
-                  "9e04989f-5d83-4f58-9b19-4826d39eab31:h2",
-                  "9e04989f-5d83-4f58-9b19-4826d39eab31:h3",
-                  "9e04989f-5d83-4f58-9b19-4826d39eab31:h4"
+                  "6f30e112-b5b9-4b1b-924e-17b790cd436b:h2",
+                  "6f30e112-b5b9-4b1b-924e-17b790cd436b:h3",
+                  "6f30e112-b5b9-4b1b-924e-17b790cd436b:h4"
                 ],
                 "blocked": null,
                 "view": {
@@ -8228,7 +8193,7 @@
               ]
             },
             "current": {
-              "sessionId": "af1b46e1-fe87-42b0-9b74-185645b64fe6",
+              "sessionId": "30563c27-d75c-431a-90a1-5801d5fafc49",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -8389,8 +8354,8 @@
               "h3"
             ],
             "associationKeys": [
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h2",
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h3"
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h2",
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h3"
             ],
             "blocked": null,
             "view": {
@@ -8519,7 +8484,7 @@
               ]
             },
             "current": {
-              "sessionId": "af1b46e1-fe87-42b0-9b74-185645b64fe6",
+              "sessionId": "30563c27-d75c-431a-90a1-5801d5fafc49",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -8722,9 +8687,9 @@
               "h4"
             ],
             "associationKeys": [
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h2",
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h3",
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h4"
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h2",
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h3",
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h4"
             ],
             "blocked": null,
             "view": {
@@ -8857,7 +8822,7 @@
               ]
             },
             "current": {
-              "sessionId": "af1b46e1-fe87-42b0-9b74-185645b64fe6",
+              "sessionId": "30563c27-d75c-431a-90a1-5801d5fafc49",
               "historyEntryId": "h5",
               "ast": {
                 "type": "document",
@@ -9022,10 +8987,10 @@
               "h5"
             ],
             "associationKeys": [
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h2",
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h3",
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h4",
-              "af1b46e1-fe87-42b0-9b74-185645b64fe6:h5"
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h2",
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h3",
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h4",
+              "30563c27-d75c-431a-90a1-5801d5fafc49:h5"
             ],
             "blocked": null,
             "view": {
@@ -9148,7 +9113,7 @@
               ]
             },
             "current": {
-              "sessionId": "2c5df96b-7319-49e5-9359-078301b1a3df",
+              "sessionId": "53debd90-84d2-480f-87f5-01216d1896b6",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -9306,7 +9271,7 @@
               "h2"
             ],
             "associationKeys": [
-              "2c5df96b-7319-49e5-9359-078301b1a3df:h2"
+              "53debd90-84d2-480f-87f5-01216d1896b6:h2"
             ],
             "blocked": null,
             "view": {
@@ -9434,7 +9399,7 @@
               ]
             },
             "current": {
-              "sessionId": "2c5df96b-7319-49e5-9359-078301b1a3df",
+              "sessionId": "53debd90-84d2-480f-87f5-01216d1896b6",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -9634,8 +9599,8 @@
               "h3"
             ],
             "associationKeys": [
-              "2c5df96b-7319-49e5-9359-078301b1a3df:h2",
-              "2c5df96b-7319-49e5-9359-078301b1a3df:h3"
+              "53debd90-84d2-480f-87f5-01216d1896b6:h2",
+              "53debd90-84d2-480f-87f5-01216d1896b6:h3"
             ],
             "blocked": null,
             "view": {
@@ -9767,7 +9732,7 @@
               ]
             },
             "current": {
-              "sessionId": "2c5df96b-7319-49e5-9359-078301b1a3df",
+              "sessionId": "53debd90-84d2-480f-87f5-01216d1896b6",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -9929,9 +9894,9 @@
               "h4"
             ],
             "associationKeys": [
-              "2c5df96b-7319-49e5-9359-078301b1a3df:h2",
-              "2c5df96b-7319-49e5-9359-078301b1a3df:h3",
-              "2c5df96b-7319-49e5-9359-078301b1a3df:h4"
+              "53debd90-84d2-480f-87f5-01216d1896b6:h2",
+              "53debd90-84d2-480f-87f5-01216d1896b6:h3",
+              "53debd90-84d2-480f-87f5-01216d1896b6:h4"
             ],
             "blocked": null,
             "view": {
@@ -10237,7 +10202,7 @@
               ]
             },
             "current": {
-              "sessionId": "2b197f06-d7be-47c0-bd7c-88b93302fb1c",
+              "sessionId": "67b4c167-b4d1-4d6b-a7b1-da5d1958958b",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -10416,8 +10381,8 @@
               "h3"
             ],
             "associationKeys": [
-              "2b197f06-d7be-47c0-bd7c-88b93302fb1c:h2",
-              "2b197f06-d7be-47c0-bd7c-88b93302fb1c:h3"
+              "67b4c167-b4d1-4d6b-a7b1-da5d1958958b:h2",
+              "67b4c167-b4d1-4d6b-a7b1-da5d1958958b:h3"
             ],
             "blocked": null,
             "view": {
@@ -10546,7 +10511,7 @@
               ]
             },
             "current": {
-              "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+              "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -10704,7 +10669,7 @@
               "h2"
             ],
             "associationKeys": [
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2"
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2"
             ],
             "blocked": null,
             "view": {
@@ -10820,7 +10785,7 @@
               ]
             },
             "current": {
-              "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+              "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -10980,8 +10945,8 @@
               "h3"
             ],
             "associationKeys": [
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h3"
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h3"
             ],
             "blocked": null,
             "view": {
@@ -11103,7 +11068,7 @@
               ]
             },
             "current": {
-              "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+              "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -11284,9 +11249,9 @@
               "h4"
             ],
             "associationKeys": [
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h3",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h4"
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h3",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h4"
             ],
             "blocked": null,
             "view": {
@@ -11422,7 +11387,7 @@
               ]
             },
             "current": {
-              "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+              "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
               "historyEntryId": "h5",
               "ast": {
                 "type": "document",
@@ -11612,10 +11577,10 @@
               "h5"
             ],
             "associationKeys": [
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h3",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h4",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h5"
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h3",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h4",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h5"
             ],
             "blocked": null,
             "view": {
@@ -11745,7 +11710,7 @@
                 ]
               },
               "current": {
-                "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+                "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
                 "historyEntryId": "h4",
                 "ast": {
                   "type": "document",
@@ -11929,10 +11894,10 @@
                 "h5"
               ],
               "associationKeys": [
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h3",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h4",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h5"
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h3",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h4",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h5"
               ],
               "blocked": null,
               "view": {
@@ -12055,7 +12020,7 @@
                 ]
               },
               "current": {
-                "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+                "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
                 "historyEntryId": "h3",
                 "ast": {
                   "type": "document",
@@ -12220,10 +12185,10 @@
                 "h5"
               ],
               "associationKeys": [
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h3",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h4",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h5"
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h3",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h4",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h5"
               ],
               "blocked": null,
               "view": {
@@ -12339,7 +12304,7 @@
                 ]
               },
               "current": {
-                "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+                "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
                 "historyEntryId": "h2",
                 "ast": {
                   "type": "document",
@@ -12504,10 +12469,10 @@
                 "h5"
               ],
               "associationKeys": [
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h3",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h4",
-                "548aaa72-82de-479d-902d-3ed0a2c8c87d:h5"
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h3",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h4",
+                "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h5"
               ],
               "blocked": null,
               "view": {
@@ -12630,7 +12595,7 @@
               ]
             },
             "current": {
-              "sessionId": "548aaa72-82de-479d-902d-3ed0a2c8c87d",
+              "sessionId": "2322a9dc-0ec8-4ad4-8289-f74b3f89f445",
               "historyEntryId": "h6",
               "ast": {
                 "type": "document",
@@ -12811,9 +12776,9 @@
               "h6"
             ],
             "associationKeys": [
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h2",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h3",
-              "548aaa72-82de-479d-902d-3ed0a2c8c87d:h6"
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h2",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h3",
+              "2322a9dc-0ec8-4ad4-8289-f74b3f89f445:h6"
             ],
             "blocked": null,
             "view": {
@@ -12942,7 +12907,7 @@
               ]
             },
             "current": {
-              "sessionId": "8189c667-7236-4e2e-bbcc-2ec80d746602",
+              "sessionId": "54efd4a7-62bd-4d29-b43b-65d867dbc35a",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -13103,8 +13068,8 @@
               "h3"
             ],
             "associationKeys": [
-              "8189c667-7236-4e2e-bbcc-2ec80d746602:h2",
-              "8189c667-7236-4e2e-bbcc-2ec80d746602:h3"
+              "54efd4a7-62bd-4d29-b43b-65d867dbc35a:h2",
+              "54efd4a7-62bd-4d29-b43b-65d867dbc35a:h3"
             ],
             "blocked": null,
             "view": {
@@ -13220,7 +13185,7 @@
               ]
             },
             "current": {
-              "sessionId": "8189c667-7236-4e2e-bbcc-2ec80d746602",
+              "sessionId": "54efd4a7-62bd-4d29-b43b-65d867dbc35a",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -13381,8 +13346,8 @@
               "h3"
             ],
             "associationKeys": [
-              "8189c667-7236-4e2e-bbcc-2ec80d746602:h2",
-              "8189c667-7236-4e2e-bbcc-2ec80d746602:h3"
+              "54efd4a7-62bd-4d29-b43b-65d867dbc35a:h2",
+              "54efd4a7-62bd-4d29-b43b-65d867dbc35a:h3"
             ],
             "blocked": null,
             "view": {
@@ -13511,7 +13476,7 @@
               ]
             },
             "current": {
-              "sessionId": "94e751ed-28fe-4a04-9470-90e252f94795",
+              "sessionId": "87c2b61d-bc78-40f3-9315-d964857c66f4",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -13690,8 +13655,8 @@
               "h3"
             ],
             "associationKeys": [
-              "94e751ed-28fe-4a04-9470-90e252f94795:h2",
-              "94e751ed-28fe-4a04-9470-90e252f94795:h3"
+              "87c2b61d-bc78-40f3-9315-d964857c66f4:h2",
+              "87c2b61d-bc78-40f3-9315-d964857c66f4:h3"
             ],
             "blocked": null,
             "view": {
@@ -13820,7 +13785,7 @@
               ]
             },
             "current": {
-              "sessionId": "94e751ed-28fe-4a04-9470-90e252f94795",
+              "sessionId": "87c2b61d-bc78-40f3-9315-d964857c66f4",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -13999,8 +13964,8 @@
               "h3"
             ],
             "associationKeys": [
-              "94e751ed-28fe-4a04-9470-90e252f94795:h2",
-              "94e751ed-28fe-4a04-9470-90e252f94795:h3"
+              "87c2b61d-bc78-40f3-9315-d964857c66f4:h2",
+              "87c2b61d-bc78-40f3-9315-d964857c66f4:h3"
             ],
             "blocked": null,
             "view": {
@@ -14154,7 +14119,7 @@
               ]
             },
             "current": {
-              "sessionId": "7d2a43f6-ce9e-4418-a6ac-65dc78320b67",
+              "sessionId": "dda0c6f3-2e88-4b02-b245-e73a8aa49d03",
               "historyEntryId": "h6",
               "ast": {
                 "type": "document",
@@ -14392,9 +14357,9 @@
               "h6"
             ],
             "associationKeys": [
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h4",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h5",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h6"
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h4",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h5",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h6"
             ],
             "blocked": null,
             "view": {
@@ -14562,7 +14527,7 @@
               ]
             },
             "current": {
-              "sessionId": "7d2a43f6-ce9e-4418-a6ac-65dc78320b67",
+              "sessionId": "dda0c6f3-2e88-4b02-b245-e73a8aa49d03",
               "historyEntryId": "h7",
               "ast": {
                 "type": "document",
@@ -14800,9 +14765,9 @@
               "h7"
             ],
             "associationKeys": [
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h5",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h6",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h7"
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h5",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h6",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h7"
             ],
             "blocked": null,
             "view": {
@@ -14970,7 +14935,7 @@
               ]
             },
             "current": {
-              "sessionId": "7d2a43f6-ce9e-4418-a6ac-65dc78320b67",
+              "sessionId": "dda0c6f3-2e88-4b02-b245-e73a8aa49d03",
               "historyEntryId": "h8",
               "ast": {
                 "type": "document",
@@ -15208,9 +15173,9 @@
               "h8"
             ],
             "associationKeys": [
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h6",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h7",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h8"
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h6",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h7",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h8"
             ],
             "blocked": null,
             "view": {
@@ -15378,7 +15343,7 @@
               ]
             },
             "current": {
-              "sessionId": "7d2a43f6-ce9e-4418-a6ac-65dc78320b67",
+              "sessionId": "dda0c6f3-2e88-4b02-b245-e73a8aa49d03",
               "historyEntryId": "h8",
               "ast": {
                 "type": "document",
@@ -15616,9 +15581,9 @@
               "h8"
             ],
             "associationKeys": [
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h6",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h7",
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h8"
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h6",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h7",
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h8"
             ],
             "blocked": null,
             "view": {
@@ -15762,7 +15727,7 @@
               ]
             },
             "current": {
-              "sessionId": "7d2a43f6-ce9e-4418-a6ac-65dc78320b67",
+              "sessionId": "dda0c6f3-2e88-4b02-b245-e73a8aa49d03",
               "historyEntryId": "h10",
               "ast": {
                 "type": "document",
@@ -15920,7 +15885,7 @@
               "h10"
             ],
             "associationKeys": [
-              "7d2a43f6-ce9e-4418-a6ac-65dc78320b67:h10"
+              "dda0c6f3-2e88-4b02-b245-e73a8aa49d03:h10"
             ],
             "blocked": null,
             "view": {
@@ -15991,1168 +15956,6 @@
         }
       },
       {
-        "name": "patched-mutating-bold-shortcut-captures-before-and-rolls-back",
-        "status": "pass",
-        "evidence": {
-          "before": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "focus": {
-                "nodeId": "n2",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "c15a4edd-1065-47eb-a397-ad6c079270a8",
-              "historyEntryId": "h2",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "focus": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 1,
-            "history": {
-              "undo": [
-                "h2"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2"
-            ],
-            "associationKeys": [
-              "c15a4edd-1065-47eb-a397-ad6c079270a8:h2"
-            ],
-            "blocked": null,
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 0,
-                "endIndex": 2,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
-          "styled": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "focus": {
-                "nodeId": "n2",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "c15a4edd-1065-47eb-a397-ad6c079270a8",
-              "historyEntryId": "h3",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0,
-                    "bold": true
-                  },
-                  {
-                    "value": "甲",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 2,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "focus": {
-                  "nodeId": "n2",
-                  "offset": 1
-                },
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 2,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 2,
-            "history": {
-              "undo": [
-                "h2",
-                "h3"
-              ],
-              "redo": [],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2",
-              "h3"
-            ],
-            "associationKeys": [
-              "c15a4edd-1065-47eb-a397-ad6c079270a8:h2",
-              "c15a4edd-1065-47eb-a397-ad6c079270a8:h3"
-            ],
-            "blocked": null,
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0,
-                  "bold": true
-                },
-                {
-                  "value": "甲",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 0,
-                "endIndex": 2,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
-          "undo": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "focus": {
-                "nodeId": "n2",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "c15a4edd-1065-47eb-a397-ad6c079270a8",
-              "historyEntryId": "h2",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "focus": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 3,
-            "history": {
-              "undo": [
-                "h2"
-              ],
-              "redo": [
-                "h3"
-              ],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2",
-              "h3"
-            ],
-            "associationKeys": [
-              "c15a4edd-1065-47eb-a397-ad6c079270a8:h2",
-              "c15a4edd-1065-47eb-a397-ad6c079270a8:h3"
-            ],
-            "blocked": null,
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 0,
-                "endIndex": 2,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
-          "rejected": {
-            "liveSelection": {
-              "anchor": {
-                "nodeId": "fixture",
-                "offset": 0
-              },
-              "focus": {
-                "nodeId": "n2",
-                "offset": 1
-              },
-              "zone": "main",
-              "context": {
-                "isTable": false,
-                "isControl": false
-              }
-            },
-            "ast": {
-              "type": "document",
-              "id": "fixture",
-              "children": [
-                {
-                  "type": "text",
-                  "nodeId": "n1",
-                  "value": "甲",
-                  "bold": false
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n2",
-                  "value": "乙",
-                  "bold": true
-                },
-                {
-                  "type": "text",
-                  "nodeId": "n3",
-                  "value": "丙",
-                  "bold": false
-                },
-                {
-                  "type": "binding",
-                  "nodeId": "n4",
-                  "value": "名",
-                  "binding": "sample.name",
-                  "bold": false
-                }
-              ]
-            },
-            "current": {
-              "sessionId": "c15a4edd-1065-47eb-a397-ad6c079270a8",
-              "historyEntryId": "h2",
-              "ast": {
-                "type": "document",
-                "id": "fixture",
-                "children": [
-                  {
-                    "type": "text",
-                    "nodeId": "n1",
-                    "value": "甲",
-                    "bold": false
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n2",
-                    "value": "乙",
-                    "bold": true
-                  },
-                  {
-                    "type": "text",
-                    "nodeId": "n3",
-                    "value": "丙",
-                    "bold": false
-                  },
-                  {
-                    "type": "binding",
-                    "nodeId": "n4",
-                    "value": "名",
-                    "binding": "sample.name",
-                    "bold": false
-                  }
-                ]
-              },
-              "mapping": [
-                {
-                  "index": 1,
-                  "nodeId": "n1",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 2,
-                  "nodeId": "n2",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 3,
-                  "nodeId": "n3",
-                  "start": 0,
-                  "end": 1
-                },
-                {
-                  "index": 4,
-                  "nodeId": "n4",
-                  "start": 0,
-                  "end": 1
-                }
-              ],
-              "projection": {
-                "main": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  },
-                  {
-                    "value": "甲",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n1"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "乙",
-                    "bold": true,
-                    "extension": {
-                      "nodeId": "n2"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "丙",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n3"
-                    },
-                    "left": 0
-                  },
-                  {
-                    "value": "名",
-                    "bold": false,
-                    "extension": {
-                      "nodeId": "n4"
-                    },
-                    "left": 0
-                  }
-                ],
-                "header": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "footer": [
-                  {
-                    "value": "​",
-                    "left": 0
-                  }
-                ],
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                },
-                "page": 0,
-                "zone": "main"
-              },
-              "selection": {
-                "anchor": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "focus": {
-                  "nodeId": "fixture",
-                  "offset": 0
-                },
-                "range": {
-                  "startIndex": 0,
-                  "endIndex": 0,
-                  "isCrossRowCol": false,
-                  "zone": "main"
-                },
-                "zone": "main",
-                "context": {
-                  "isTable": false,
-                  "isControl": false
-                }
-              }
-            },
-            "revision": 3,
-            "history": {
-              "undo": [
-                "h2"
-              ],
-              "redo": [
-                "h3"
-              ],
-              "composing": false,
-              "busy": false
-            },
-            "associations": [
-              "h2",
-              "h3"
-            ],
-            "associationKeys": [
-              "c15a4edd-1065-47eb-a397-ad6c079270a8:h2",
-              "c15a4edd-1065-47eb-a397-ad6c079270a8:h3"
-            ],
-            "blocked": null,
-            "view": {
-              "main": [
-                {
-                  "value": "​",
-                  "left": 0
-                },
-                {
-                  "value": "甲",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n1"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "乙",
-                  "bold": true,
-                  "extension": {
-                    "nodeId": "n2"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "丙",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n3"
-                  },
-                  "left": 0
-                },
-                {
-                  "value": "名",
-                  "bold": false,
-                  "extension": {
-                    "nodeId": "n4"
-                  },
-                  "left": 0
-                }
-              ],
-              "header": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "footer": [
-                {
-                  "value": "​",
-                  "left": 0
-                }
-              ],
-              "range": {
-                "startIndex": 0,
-                "endIndex": 2,
-                "isCrossRowCol": false,
-                "zone": "main"
-              },
-              "context": {
-                "isTable": false,
-                "isControl": false
-              },
-              "page": 0,
-              "zone": "main"
-            }
-          },
-          "expectedErrors": [
-            "RECONCILIATION_REJECTED"
-          ],
-          "observations": [
-            {
-              "projection": [
-                true,
-                true,
-                false,
-                false
-              ],
-              "source": [
-                true,
-                true,
-                false,
-                false
-              ]
-            },
-            {
-              "projection": [
-                false,
-                true,
-                false,
-                false
-              ],
-              "source": [
-                false,
-                true,
-                false,
-                false
-              ]
-            },
-            {
-              "projection": [
-                false,
-                true,
-                false,
-                false
-              ],
-              "source": [
-                false,
-                true,
-                false,
-                false
-              ]
-            }
-          ]
-        }
-      },
-      {
         "name": "patched-missing-association-rolls-back-and-blocks-edit-save",
         "status": "pass",
         "evidence": {
@@ -17216,7 +16019,7 @@
               ]
             },
             "current": {
-              "sessionId": "39e82b9a-cb20-4d60-babe-414d63d5ba6a",
+              "sessionId": "88979731-836e-420b-9410-b859787d1eda",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -17415,8 +16218,8 @@
               "h4"
             ],
             "associationKeys": [
-              "39e82b9a-cb20-4d60-babe-414d63d5ba6a:h2",
-              "39e82b9a-cb20-4d60-babe-414d63d5ba6a:h4"
+              "88979731-836e-420b-9410-b859787d1eda:h2",
+              "88979731-836e-420b-9410-b859787d1eda:h4"
             ],
             "blocked": null,
             "view": {
@@ -17558,7 +16361,7 @@
               ]
             },
             "current": {
-              "sessionId": "39e82b9a-cb20-4d60-babe-414d63d5ba6a",
+              "sessionId": "88979731-836e-420b-9410-b859787d1eda",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -17757,8 +16560,8 @@
               "h4"
             ],
             "associationKeys": [
-              "39e82b9a-cb20-4d60-babe-414d63d5ba6a:h2",
-              "39e82b9a-cb20-4d60-babe-414d63d5ba6a:h4"
+              "88979731-836e-420b-9410-b859787d1eda:h2",
+              "88979731-836e-420b-9410-b859787d1eda:h4"
             ],
             "blocked": "HISTORY_ASSOCIATION_MISSING",
             "view": {
@@ -17902,7 +16705,7 @@
               ]
             },
             "current": {
-              "sessionId": "f3ffed43-707d-4610-988d-da697212ba1e",
+              "sessionId": "f3624a10-4dbf-4b03-b4f0-b868010634b2",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -18086,7 +16889,7 @@
               "h2"
             ],
             "associationKeys": [
-              "f3ffed43-707d-4610-988d-da697212ba1e:h2"
+              "f3624a10-4dbf-4b03-b4f0-b868010634b2:h2"
             ],
             "blocked": null,
             "view": {
@@ -18216,7 +17019,7 @@
               ]
             },
             "current": {
-              "sessionId": "f3ffed43-707d-4610-988d-da697212ba1e",
+              "sessionId": "f3624a10-4dbf-4b03-b4f0-b868010634b2",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -18400,7 +17203,7 @@
               "h2"
             ],
             "associationKeys": [
-              "f3ffed43-707d-4610-988d-da697212ba1e:h2"
+              "f3624a10-4dbf-4b03-b4f0-b868010634b2:h2"
             ],
             "blocked": null,
             "view": {
@@ -18478,7 +17281,7 @@
         }
       }
     ],
-    "passed": 16,
+    "passed": 15,
     "failed": 0
   }
 }

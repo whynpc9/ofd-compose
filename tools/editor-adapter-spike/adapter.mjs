@@ -67,8 +67,38 @@ export class Adapter {
     if (this.readonly) editor.command.executeMode("readonly");
     const container = editor.command.getContainer();
     this.onBefore = (event) => {
-      if (this.readonly || event.isComposing) return;
-      if (event.type === "keydown" && !["Backspace", "Delete", "Enter"].includes(event.key)) return;
+      if (this.readonly) return;
+      if (event.type === "keydown") {
+        const key = event.key.toLowerCase();
+        const modified = event.ctrlKey || event.metaKey || event.altKey;
+        const bold =
+          (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && key === "b";
+        const passive =
+          !event.altKey &&
+          !event.shiftKey &&
+          [
+            "z",
+            "y",
+            "c",
+            "a",
+            "v",
+            "arrowleft",
+            "arrowright",
+            "arrowup",
+            "arrowdown",
+            "home",
+            "end",
+          ].includes(key);
+        // The atom fixture admits bold only; other built-in format/list/title/cut
+        // shortcuts and Tab are explicitly disabled until their source semantics exist.
+        if (key === "tab" || (modified && ((!bold && !passive) || this.composing))) {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          return;
+        }
+        if (!bold && !["Backspace", "Delete", "Enter"].includes(event.key)) return;
+      }
+      if (event.isComposing) return;
       this.history.begin();
       // Non-mutating input/paste does not leave an open transaction behind.
       queueMicrotask(() => {

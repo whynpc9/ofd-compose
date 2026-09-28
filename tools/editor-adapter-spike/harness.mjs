@@ -464,6 +464,71 @@ async function run() {
     equal(reset.associations.length, 1, "reset clears associations");
     return { clipped, metadataNoop, beforeRejectedReset, rejectedReset, reset };
   });
+  await test("patched-mutating-bold-shortcut-captures-before-and-rolls-back", async () => {
+    create();
+    select(0, 2);
+    const before = adapter.state();
+    const observations = [];
+    editor.eventBus.on("renderChange", () => {
+      const s = adapter.state();
+      observations.push({
+        projection: s.view.main.slice(1).map((e) => !!e.bold),
+        source: leaves(s.ast).map((n) => n.bold),
+      });
+    });
+    key("b", { ctrlKey: true, metaKey: true });
+    await delay();
+    const styled = adapter.state();
+    check(styled);
+    equal(
+      leaves(styled.ast)
+        .slice(0, 2)
+        .map((n) => n.bold),
+      [true, true],
+      "format shortcut committed style",
+    );
+    equal(
+      styled.history.undo.length,
+      before.history.undo.length + 1,
+      "format shortcut one transaction",
+    );
+    editor.command.executeUndo();
+    select(0, 2);
+    const undo = adapter.state();
+    equal(undo.ast, before.ast, "format shortcut undo");
+    const expectedErrors = [];
+    const captureExpectedError = (event) => {
+      if (event.error?.message === "RECONCILIATION_REJECTED") {
+        expectedErrors.push(event.error.message);
+        event.preventDefault();
+      }
+    };
+    window.addEventListener("error", captureExpectedError);
+    try {
+      adapter.failCapture = true;
+      key("b", { ctrlKey: true, metaKey: true });
+      await delay();
+    } finally {
+      window.removeEventListener("error", captureExpectedError);
+    }
+    equal(
+      expectedErrors,
+      ["RECONCILIATION_REJECTED"],
+      "exact failure reported by real DOM shortcut dispatch",
+    );
+    const rejected = adapter.state();
+    equal(rejected.ast, undo.ast, "failed shortcut source rollback");
+    equal(rejected.view, undo.view, "failed shortcut projection/selection rollback");
+    equal(rejected.history, undo.history, "failed shortcut stacks rollback");
+    equal(rejected.revision, undo.revision, "failed shortcut no revision");
+    key("i", { ctrlKey: true, metaKey: true });
+    key("Tab");
+    await delay();
+    equal(adapter.state(), rejected, "unadmitted shortcuts disabled");
+    for (const o of observations)
+      equal(o.projection, o.source, "synchronous style observer atomicity");
+    return { before, styled, undo, rejected, expectedErrors, observations };
+  });
   await test("patched-missing-association-rolls-back-and-blocks-edit-save", async () => {
     create();
     insert("A");

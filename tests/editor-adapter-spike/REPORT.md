@@ -18,6 +18,7 @@ Each JSON contains case names, full source/mapping/projection/selection/stack st
 | Synchronous A then B, asynchronous notification | Observers read B twice; A checkpoint not identified | Every undo/redo intermediate checkpoint matches immutable source | Same |
 | Selected composition commit with redo branch | Not an acceptance claim | One entry; transient text absent from source; redo pruned | Same |
 | Direct input, asynchronous paste callback, shortcut undo | Not measured as a fix | Pass through actual textarea handlers | Pass; explicitly synthetic clipboard payload |
+| Bold shortcut success/failed capture | Not a fix claim | Before snapshot, style observer atomicity, complete rollback; unsupported shortcuts disabled | Same |
 | Chinese style split, rich duplicate, delete | Not an acceptance claim | IDs preserved/reallocated uniquely as appropriate | Same |
 | Binding expression change without display change; text; wrap | No owned-source association | Single history; intermediate domain states restored | Same |
 | Undo then new edit | No owned-source association | Redo associations removed; new revision | Same |
@@ -26,7 +27,7 @@ Each JSON contains case names, full source/mapping/projection/selection/stack st
 | Initial baseline, reset, clipping, association cleanup | No owned-source association | Pass | Same |
 | Unknown source node | No owned-source model | Whole-document read-only, opaque payload preserved | Same |
 
-Final local automated matrix: **15/15 cases per browser**, including two negative controls and thirteen patched cases; no browser page errors. [Chromium raw](evidence/chromium.json), [Firefox raw](evidence/firefox.json). These are actual macOS arm64 browser runs using synthetic events, not emulated OS IME or production UI acceptance. [Chromium image](evidence/chromium.png) was visually inspected and shows the synthetic readonly unknown-node fixture; images do not establish IME candidates or selection accuracy.
+Final local automated matrix: **16/16 cases per browser**, including two negative controls and fourteen patched cases; no browser page errors. [Chromium raw](evidence/chromium.json), [Firefox raw](evidence/firefox.json). These are actual macOS arm64 browser runs using synthetic events, not emulated OS IME or production UI acceptance. [Chromium image](evidence/chromium.png) was visually inspected and shows the synthetic readonly unknown-node fixture; images do not establish IME candidates or selection accuracy.
 
 ## Failures retained, not erased
 
@@ -40,7 +41,7 @@ Final local automated matrix: **15/15 cases per browser**, including two negativ
 | Layer | Result | Limit |
 | --- | --- | --- |
 | Function diagnostic | [Original issue07 probe rerun](evidence/function-probe.json): selected cancel produces 丙 | Stub Draw/Range/Canvas; original defect only |
-| Real browser, synthetic events | Chromium + Firefox 15/15 each | Actual Editor, Canvas, workers; synthetic composition/input/paste/shortcut |
+| Real browser, synthetic events | Chromium + Firefox 16/16 each | Actual Editor, Canvas, workers; synthetic composition/input/paste/shortcut |
 | Real OS IME | **Not verified**: Windows Microsoft Pinyin; macOS Pinyin | No actual nonempty-selection candidate commit/cancel trace or IME screenshots |
 
 macOS environment inspection: macOS 26.6.2 (25G83), arm64; Apple Simplified Pinyin input-source ID `com.apple.inputmethod.SCIM.ITABC` enabled, current input source ABC. System Events reported UI accessibility disabled. No Windows test host is attached. A test-only headed Chromium harness was opened for a bounded desktop attempt. CUA `getState()` returned inventory after 5.9 seconds, but app binding returned no window state and was interrupted after 155.1 seconds. No click, typing, input-source change, candidate UI or OS IME event was observed; the test browser/server were closed. No further CUA retries were made. These observations do not constitute either an OS IME pass or an editor IME failure.
@@ -66,3 +67,5 @@ Review counts: Standards 0 hard / 1 optional P3; Spec 2 (P1/P2), both addressed 
 ## PR bot review remediation
 
 The review of `4cb7c26` identified one P2: storing a complete source object in an upstream history entry bypassed the required association-registry lookup. History entries now keep only their opaque ID and editor restore closure; Adapter restore resolves the composite session/entry key, validates it, and reports `HISTORY_ASSOCIATION_MISSING` if absent. The regression deliberately removes an undo target association, verifies complete before-state rollback with no new revision, and verifies subsequent edit/save refusal until a new session is loaded. Prior 14-case evidence is retained in `evidence/pre-bot/`.
+
+A second bot review of `24c9ce7` found P1 mutating formatting shortcuts bypassed the pre-mutation snapshot. The probe now begins a transaction before its admitted Ctrl/Cmd+B action and explicitly disables unsupported formatting/list/title/cut shortcuts and Tab. A regression dispatches actual synthetic keydown events to the textarea, checks successful style commit/undo, catches only the deliberately injected reconciliation error, checks complete failed-edit rollback, and observes synchronous style/source consistency. Prior 15-case evidence is retained in `evidence/pre-shortcut/`.
