@@ -78,7 +78,8 @@ or mislabelled as per-stage peaks. A hot process's marks include its warmups.
 `RenderControl.observe` is an optional trusted-host hook; Core has no clock dependency.
 Compile, bind, initial input/resource ownership, media, subset and final identity
 intervals surround actual stages. `resources` includes source/data/profile snapshot
-validation and authorized resource copying/digest checks, not just file acquisition. Shape measures actual TypographyCore.shape calls inside layout;
+validation and authorized resource copying/digest checks, not just file acquisition. Shape measures actual TypographyCore.shape calls through a job-owned Worker decorator;
+Layout Core has no observer interface or event calls.
 `layoutExclusive = layout - shape`. This includes layout setup/font loading/line breaking
 but excludes measured shape calls. Observer overhead is present in benchmark samples.
 The dual test checks fully equal output/identity with and without observation.

@@ -6,8 +6,10 @@ protocol/profile freeze. Base: issue 17 `4bfa4c9b513d17f31a5eebfcd9fdd42a89a0542
 
 ## Frozen inputs and actual runtimes
 
-Measured code: `d0627b31067c137fb438762eb53f89723b799a5f`. Subsequent evidence/reporting
-changes do not change the measured Worker, writers, input generator or runtime sampler.
+Measured code below: `d0627b31067c137fb438762eb53f89723b799a5f` (historical experiment).
+Review remediation now moves shape observation to a job-owned Worker typography
+decorator; fresh runtime/performance evidence for that implementation is pending.
+These historical numbers must not be presented as measurements of the new implementation.
 [Source identity](../../tests/runtime-matrix/evidence/2026-09-28/source.json) records the
 Git archive, lockfile and built JS hashes. The exact input is retained losslessly in
 [corpus-input.json.gz](../../tests/runtime-matrix/evidence/2026-09-28/corpus-input.json.gz),

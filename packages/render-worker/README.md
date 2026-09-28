@@ -149,7 +149,9 @@ To intentionally refresh the independent baseline/timing, run the Node-only test
 For host-side measurement, `RenderControl.observe(stage, edge)` optionally receives
 stage boundaries. The callback is trusted host code and must return synchronously
 without throwing or mutating render inputs. Core never reads a clock or includes
-measurements in IR/identity. `shape` intervals nest inside `layout`; observers should
+measurements in IR/identity. The Worker decorates its job-owned TypographyCore for
+`shape` measurement; Layout Core has no observer interface or event calls. `shape`
+intervals nest inside `layout`; observers should
 subtract their sum for exclusive layout time. Failure may leave a stage open; callers
 must discard unfinished intervals and must not invent timings for unreached stages.
 The complete runtime/benchmark procedure and limitations are in

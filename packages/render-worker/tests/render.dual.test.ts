@@ -769,4 +769,25 @@ it("host timing observation preserves complete render identity and balances nest
   expect(events).toContain("shape:start");
   expect(events.indexOf("shape:start")).toBeGreaterThan(events.indexOf("layout:start"));
   expect(events.lastIndexOf("shape:end")).toBeLessThan(events.indexOf("layout:end"));
+
+  // Concurrent jobs get separate typography decorators and observation stacks.
+  const independent = await Promise.all(
+    ["甲 office", "乙 report"].map(async (text) => {
+      const pending: string[] = [];
+      let shapes = 0;
+      const result = await render(textSource(text), {}, pack, profile, {
+        observe(stage, edge) {
+          if (edge === "start") {
+            pending.push(stage);
+            if (stage === "shape") shapes++;
+          } else expect(pending.pop()).toBe(stage);
+        },
+      });
+      expect(result.ok).toBe(true);
+      expect(pending).toEqual([]);
+      expect(shapes).toBeGreaterThan(0);
+      return result;
+    }),
+  );
+  expect(independent[0]).not.toEqual(independent[1]);
 });

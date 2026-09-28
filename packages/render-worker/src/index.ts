@@ -42,7 +42,11 @@ import { compile } from "@ofd-compose/template-compiler";
 
 export type { RenderProfile } from "@ofd-compose/source-protocol";
 
-import { fontDigest, shapingAndLineBreakVersions } from "@ofd-compose/typography-core";
+import {
+  fontDigest,
+  shapingAndLineBreakVersions,
+  TypographyCore,
+} from "@ofd-compose/typography-core";
 import {
   prepayCanonical,
   RenderBudget,
@@ -422,7 +426,23 @@ async function run(
         id: sourceId,
       }));
     budget.observe?.("layout", "start");
-    const laid = await layout(document, fonts, layoutOptions, media, budget);
+    // Instrument a job-owned typography instance at the Worker boundary. Layout Core
+    // sees only its ordinary typography dependency, never host observers or clocks.
+    let typography: TypographyCore | undefined;
+    if (budget.observe) {
+      const observe = budget.observe;
+      typography = new TypographyCore();
+      const shape = typography.shape.bind(typography);
+      typography.shape = (request) => {
+        observe("shape", "start");
+        try {
+          return shape(request);
+        } finally {
+          observe("shape", "end");
+        }
+      };
+    }
+    const laid = await layout(document, fonts, layoutOptions, media, budget, typography);
     budget.observe?.("layout", "end");
     diagnostics.push(...laid.diagnostics);
     phase = "subset";
