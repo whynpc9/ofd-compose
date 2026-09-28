@@ -35,6 +35,7 @@ export class Adapter {
     this.initialCapture = true;
     this.sessionId = crypto.randomUUID();
     this.snapshots = new Map();
+    this.blocked = null;
     this.events = [];
     this.history = editor.spike.history;
     this.pending = null;
@@ -43,8 +44,10 @@ export class Adapter {
     this.reenter = false;
     this.readonly = leaves(source).some((n) => n.type === "unknown");
     this.history.connect({
+      prepare: (id) => this.requireAssociation(id),
       capture: (id) => this.capture(id),
-      restore: (s, id, action) => {
+      restore: (id, action) => {
+        const s = this.requireAssociation(id, action === "discard");
         if (this.failRestore && action !== "discard") {
           this.failRestore = false;
           throw new Error("RESTORE_REJECTED");
@@ -56,7 +59,7 @@ export class Adapter {
       },
       publish: (action, id, liveIds) => {
         for (const key of this.snapshots.keys())
-          if (!liveIds.includes(key)) this.snapshots.delete(key);
+          if (!liveIds.includes(this.snapshots.get(key).historyEntryId)) this.snapshots.delete(key);
         if (action !== "discard") this.revision++;
         this.events.push({ action, id, liveIds, revision: this.revision });
       },
@@ -141,10 +144,23 @@ export class Adapter {
     });
     this.ast = clone(ast);
     this.current = snapshot;
-    this.snapshots.set(id, snapshot);
+    this.snapshots.set(`${this.sessionId}:${id}`, snapshot);
     this.initialCapture = false;
     this.rememberOwners();
     return snapshot;
+  }
+  requireAssociation(id, rollback = false) {
+    if (this.blocked && !rollback) throw new Error(this.blocked);
+    const snapshot = this.snapshots.get(`${this.sessionId}:${id}`);
+    if (!snapshot || snapshot.sessionId !== this.sessionId || snapshot.historyEntryId !== id) {
+      this.blocked = "HISTORY_ASSOCIATION_MISSING";
+      throw new Error(this.blocked);
+    }
+    return snapshot;
+  }
+  saveSource() {
+    this.requireAssociation(this.current.historyEntryId);
+    return clone(this.ast);
   }
   rememberOwners() {
     this.owners = new WeakMap(
@@ -215,7 +231,9 @@ export class Adapter {
       current: this.current,
       revision: this.revision,
       history: this.history.inspect(),
-      associations: [...this.snapshots.keys()],
+      associations: [...this.snapshots.values()].map((s) => s.historyEntryId),
+      associationKeys: [...this.snapshots.keys()],
+      blocked: this.blocked,
       view: this.editor.spike.snapshot(),
     });
   }

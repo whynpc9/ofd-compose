@@ -1,13 +1,14 @@
 --- a/src/editor/core/history/HistoryManager.ts
 +++ b/src/editor/core/history/HistoryManager.ts
-@@ -1,61 +1,109 @@
+@@ -1,61 +1,112 @@
  import { Draw } from '../draw/Draw'
  
 +// Experimental issue35 hook; no business AST is interpreted by the editor.
-+type Entry = { id: string; restore: Function; source: unknown }
++type Entry = { id: string; restore: Function }
 +type Participant = {
-+  capture: (id: string) => unknown
-+  restore: (source: unknown, id: string, action: string) => void
++  prepare: (id: string) => void
++  capture: (id: string) => void
++  restore: (id: string, action: string) => void
 +  publish: (action: string, id: string, liveIds: string[]) => void
 +}
  export class HistoryManager {
@@ -44,6 +45,8 @@
 +  public begin() {
 +    if (this.busy) throw new Error('HISTORY_REENTRY')
 +    if (this.before) return
++    const current = this.undoStack.at(-1)
++    if (current) this.participant?.prepare(current.id)
 +    this.draw.getEventBus().spikeSuspend()
 +    this.before = {
 +      view: this.draw.spikeSnapshot(),
@@ -66,7 +69,7 @@
 +      this.undoStack = before.undo; this.redoStack = before.redo
 +      this.draw.spikeRestore(before.view)
 +      const entry = this.undoStack.at(-1)
-+      if (entry) this.participant?.restore(entry.source, entry.id, 'discard')
++      if (entry) this.participant?.restore(entry.id, 'discard')
 +      this.notify('discard')
 +      this.draw.getEventBus().spikeResume()
 +    } finally { this.before = undefined; this.busy = false }
@@ -87,7 +90,7 @@
 +      else this.undoStack.push(this.redoStack.pop()!)
 +      const entry = this.undoStack.at(-1)!
 +      entry.restore()
-+      this.participant?.restore(entry.source, entry.id, action)
++      this.participant?.restore(entry.id, action)
 +      this.notify(action)
 +      this.before = undefined
 +      this.draw.getEventBus().spikeResume()
@@ -103,9 +106,9 @@
 +    this.busy = true
 +    try {
 +      const id = `h${++this.sequence}`
-+      const source = this.participant?.capture(id)
++      this.participant?.capture(id)
 +      const snapshot = this.participant ? this.draw.spikeSnapshot() : undefined
-+      this.undoStack.push({ id, source, restore: snapshot ? () => this.draw.spikeRestore(snapshot) : fn })
++      this.undoStack.push({ id, restore: snapshot ? () => this.draw.spikeRestore(snapshot) : fn })
        this.redoStack = []
 -    }
 -    while (this.undoStack.length > this.maxRecordCount) {

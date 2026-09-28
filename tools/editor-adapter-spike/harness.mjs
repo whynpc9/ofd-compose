@@ -464,6 +464,36 @@ async function run() {
     equal(reset.associations.length, 1, "reset clears associations");
     return { clipped, metadataNoop, beforeRejectedReset, rejectedReset, reset };
   });
+  await test("patched-missing-association-rolls-back-and-blocks-edit-save", async () => {
+    create();
+    insert("A");
+    const a = adapter.state();
+    insert("B");
+    adapter.snapshots.delete(`${adapter.sessionId}:${a.current.historyEntryId}`);
+    const before = adapter.state();
+    let failure;
+    try {
+      editor.command.executeUndo();
+    } catch (error) {
+      failure = error.message;
+    }
+    equal(failure, "HISTORY_ASSOCIATION_MISSING", "missing target diagnosed by registry lookup");
+    const after = adapter.state();
+    equal(after.ast, before.ast, "missing target source rollback");
+    equal(after.view, before.view, "missing target projection rollback");
+    equal(after.history, before.history, "missing target stacks rollback");
+    equal(after.revision, before.revision, "missing target no revision");
+    for (const operation of [() => insert("blocked"), () => adapter.saveSource()]) {
+      let blocked;
+      try {
+        operation();
+      } catch (error) {
+        blocked = error.message;
+      }
+      equal(blocked, "HISTORY_ASSOCIATION_MISSING", "edit/save fail closed until document reload");
+    }
+    return { before, after, failure };
+  });
   await test("patched-unknown-source-readonly-preserved", async () => {
     const unknown = clone(fixture);
     unknown.children.push({

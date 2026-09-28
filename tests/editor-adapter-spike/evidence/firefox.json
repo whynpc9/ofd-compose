@@ -28,19 +28,19 @@
     "sriRecomputedThisRun": false,
     "sourceFilesVerified": 633,
     "publishedFilesVerified": 7,
-    "patchSha256": "9df1c93f3fd86a41d9dfc132eafbff62f355599823f2291809d517d6083cb0fa",
+    "patchSha256": "aa0870430dbe08afc7ddf260ad9cedb2a6ffcb2fa3f613de9ede97eb65d1b284",
     "scope": "Experimental local patch, not a published or approved production fork"
   },
   "sourceSha256": {
-    "tools/editor-adapter-spike/harness.mjs": "7962ae10de3382cde0772c5a1a7ddaf5080b8d212cb361a052047a28547da4ce",
-    "tools/editor-adapter-spike/adapter.mjs": "5d5da8a0163b1ddf6b4c1a8517473c947d51943c2982913f50d767a7d0597c78",
-    "tools/editor-adapter-spike/upstream.patch": "9df1c93f3fd86a41d9dfc132eafbff62f355599823f2291809d517d6083cb0fa",
+    "tools/editor-adapter-spike/harness.mjs": "735cf3b7616c661bc1d22b3d2d2cd8fbc7b0efd9ef697120c2759c9f60dd83e7",
+    "tools/editor-adapter-spike/adapter.mjs": "31f1cbf48648226508718164186e9b62c06d16974ce96279c8d6b92ec36e8180",
+    "tools/editor-adapter-spike/upstream.patch": "aa0870430dbe08afc7ddf260ad9cedb2a6ffcb2fa3f613de9ede97eb65d1b284",
     "tools/editor-adapter-spike/run-browser.mjs": "5287c5869ec1a2362da6f0f42c637501f99497d26e1557c7f9fae9c198ab09e7",
     "tools/editor-adapter-spike/baseline.json": "5515c7775d527f57c1784832dcff0184e2401e3531ea94677ef39647607e78b6",
     "tools/editor-adapter-spike/vite.config.mjs": "2cd3e80c21f760b1c8c0a264f96630d800fbad35e4628abcb58bff30d1a36862"
   },
-  "startedAt": "2026-09-28T05:24:41.559Z",
-  "finishedAt": "2026-09-28T05:24:43.956Z",
+  "startedAt": "2026-09-28T05:34:05.119Z",
+  "finishedAt": "2026-09-28T05:34:07.419Z",
   "layer": "synthetic-browser-events-with-real-Editor",
   "osImeVerified": false,
   "consoleMessages": [
@@ -75,7 +75,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 813
+              "time": 800
             },
             {
               "type": "input",
@@ -84,14 +84,14 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 814
+              "time": 800
             },
             {
               "type": "compositionend",
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 815
+              "time": 801
             }
           ]
         }
@@ -160,7 +160,7 @@
               ]
             },
             "current": {
-              "sessionId": "7f2f1616-aae5-4f47-95fb-3886f4fed827",
+              "sessionId": "a989e7ac-2b84-48c4-82f8-d90b8666d618",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -317,6 +317,10 @@
             "associations": [
               "h2"
             ],
+            "associationKeys": [
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h2"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -436,7 +440,7 @@
               ]
             },
             "current": {
-              "sessionId": "7f2f1616-aae5-4f47-95fb-3886f4fed827",
+              "sessionId": "a989e7ac-2b84-48c4-82f8-d90b8666d618",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -614,6 +618,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h2",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -746,7 +755,7 @@
               ]
             },
             "current": {
-              "sessionId": "7f2f1616-aae5-4f47-95fb-3886f4fed827",
+              "sessionId": "a989e7ac-2b84-48c4-82f8-d90b8666d618",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -945,6 +954,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h2",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h3",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -1078,7 +1093,7 @@
               ]
             },
             "current": {
-              "sessionId": "7f2f1616-aae5-4f47-95fb-3886f4fed827",
+              "sessionId": "a989e7ac-2b84-48c4-82f8-d90b8666d618",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -1259,6 +1274,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h2",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h3",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -1379,7 +1400,7 @@
               ]
             },
             "current": {
-              "sessionId": "7f2f1616-aae5-4f47-95fb-3886f4fed827",
+              "sessionId": "a989e7ac-2b84-48c4-82f8-d90b8666d618",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -1541,6 +1562,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h2",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h3",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -1660,7 +1687,7 @@
               ]
             },
             "current": {
-              "sessionId": "7f2f1616-aae5-4f47-95fb-3886f4fed827",
+              "sessionId": "a989e7ac-2b84-48c4-82f8-d90b8666d618",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -1841,6 +1868,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h2",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h3",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -1973,7 +2006,7 @@
               ]
             },
             "current": {
-              "sessionId": "7f2f1616-aae5-4f47-95fb-3886f4fed827",
+              "sessionId": "a989e7ac-2b84-48c4-82f8-d90b8666d618",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -2172,6 +2205,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h2",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h3",
+              "a989e7ac-2b84-48c4-82f8-d90b8666d618:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -2305,7 +2344,7 @@
               ]
             },
             "current": {
-              "sessionId": "4a3bbefc-5d3c-4f18-885d-d1ddd64083a5",
+              "sessionId": "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -2465,6 +2504,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h2",
+              "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -2578,7 +2622,7 @@
               ]
             },
             "current": {
-              "sessionId": "4a3bbefc-5d3c-4f18-885d-d1ddd64083a5",
+              "sessionId": "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -2738,6 +2782,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h2",
+              "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -2847,7 +2896,7 @@
               ]
             },
             "current": {
-              "sessionId": "4a3bbefc-5d3c-4f18-885d-d1ddd64083a5",
+              "sessionId": "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -3007,6 +3056,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h2",
+              "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -3078,7 +3132,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 936,
+              "time": 920,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3127,7 +3181,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "4a3bbefc-5d3c-4f18-885d-d1ddd64083a5",
+                  "sessionId": "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3287,6 +3341,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h2",
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -3360,7 +3419,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 936,
+              "time": 920,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3409,7 +3468,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "4a3bbefc-5d3c-4f18-885d-d1ddd64083a5",
+                  "sessionId": "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3569,6 +3628,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h2",
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -3632,7 +3696,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 937,
+              "time": 920,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3681,7 +3745,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "4a3bbefc-5d3c-4f18-885d-d1ddd64083a5",
+                  "sessionId": "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -3841,6 +3905,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h2",
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -3908,7 +3977,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 937,
+              "time": 921,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -3957,7 +4026,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "4a3bbefc-5d3c-4f18-885d-d1ddd64083a5",
+                  "sessionId": "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -4117,6 +4186,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h2",
+                  "c5f5e72c-e6ed-47c8-8d62-e29afdbcf357:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -4238,7 +4312,7 @@
               ]
             },
             "current": {
-              "sessionId": "cf8c163b-435d-4aec-95cf-2b8467344cf6",
+              "sessionId": "9f3b4f41-ee8c-43b0-a042-f434a0df65dc",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -4398,6 +4472,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h2",
+              "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -4511,7 +4590,7 @@
               ]
             },
             "current": {
-              "sessionId": "cf8c163b-435d-4aec-95cf-2b8467344cf6",
+              "sessionId": "9f3b4f41-ee8c-43b0-a042-f434a0df65dc",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -4671,6 +4750,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h2",
+              "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -4774,7 +4858,7 @@
               ]
             },
             "current": {
-              "sessionId": "cf8c163b-435d-4aec-95cf-2b8467344cf6",
+              "sessionId": "9f3b4f41-ee8c-43b0-a042-f434a0df65dc",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -4913,6 +4997,11 @@
               "h2",
               "h4"
             ],
+            "associationKeys": [
+              "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h2",
+              "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -4976,7 +5065,7 @@
               "data": "",
               "clipboard": null,
               "isTrusted": false,
-              "time": 971,
+              "time": 955,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5025,7 +5114,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cf8c163b-435d-4aec-95cf-2b8467344cf6",
+                  "sessionId": "9f3b4f41-ee8c-43b0-a042-f434a0df65dc",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5185,6 +5274,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h2",
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -5258,7 +5352,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 971,
+              "time": 955,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5307,7 +5401,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cf8c163b-435d-4aec-95cf-2b8467344cf6",
+                  "sessionId": "9f3b4f41-ee8c-43b0-a042-f434a0df65dc",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5467,6 +5561,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h2",
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -5530,7 +5629,7 @@
               "isComposing": true,
               "clipboard": null,
               "isTrusted": false,
-              "time": 972,
+              "time": 956,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5579,7 +5678,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cf8c163b-435d-4aec-95cf-2b8467344cf6",
+                  "sessionId": "9f3b4f41-ee8c-43b0-a042-f434a0df65dc",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -5739,6 +5838,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h2",
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -5806,7 +5910,7 @@
               "data": "你",
               "clipboard": null,
               "isTrusted": false,
-              "time": 972,
+              "time": 956,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -5855,7 +5959,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "cf8c163b-435d-4aec-95cf-2b8467344cf6",
+                  "sessionId": "9f3b4f41-ee8c-43b0-a042-f434a0df65dc",
                   "historyEntryId": "h2",
                   "ast": {
                     "type": "document",
@@ -6015,6 +6119,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h2",
+                  "9f3b4f41-ee8c-43b0-a042-f434a0df65dc:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -6138,7 +6247,7 @@
               ]
             },
             "current": {
-              "sessionId": "3241e76b-df50-4a86-9c5e-30b92bdcedb9",
+              "sessionId": "594cdf4d-b638-4a02-a669-9f518922f0f9",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -6317,6 +6426,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h2",
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -6456,7 +6570,7 @@
               ]
             },
             "current": {
-              "sessionId": "3241e76b-df50-4a86-9c5e-30b92bdcedb9",
+              "sessionId": "594cdf4d-b638-4a02-a669-9f518922f0f9",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -6677,6 +6791,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h2",
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h3",
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -6820,7 +6940,7 @@
               ]
             },
             "current": {
-              "sessionId": "3241e76b-df50-4a86-9c5e-30b92bdcedb9",
+              "sessionId": "594cdf4d-b638-4a02-a669-9f518922f0f9",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -7002,6 +7122,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h2",
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h3",
+              "594cdf4d-b638-4a02-a669-9f518922f0f9:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -7083,7 +7209,7 @@
               "isComposing": false,
               "clipboard": null,
               "isTrusted": false,
-              "time": 1007,
+              "time": 999,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7138,7 +7264,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "3241e76b-df50-4a86-9c5e-30b92bdcedb9",
+                  "sessionId": "594cdf4d-b638-4a02-a669-9f518922f0f9",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -7317,6 +7443,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "594cdf4d-b638-4a02-a669-9f518922f0f9:h2",
+                  "594cdf4d-b638-4a02-a669-9f518922f0f9:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -7406,7 +7537,7 @@
                 "text": "粘贴"
               },
               "isTrusted": false,
-              "time": 1045,
+              "time": 1031,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7461,7 +7592,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "3241e76b-df50-4a86-9c5e-30b92bdcedb9",
+                  "sessionId": "594cdf4d-b638-4a02-a669-9f518922f0f9",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -7640,6 +7771,11 @@
                   "h2",
                   "h3"
                 ],
+                "associationKeys": [
+                  "594cdf4d-b638-4a02-a669-9f518922f0f9:h2",
+                  "594cdf4d-b638-4a02-a669-9f518922f0f9:h3"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -7720,7 +7856,7 @@
               "isComposing": false,
               "clipboard": null,
               "isTrusted": false,
-              "time": 1077,
+              "time": 1073,
               "state": {
                 "liveSelection": {
                   "anchor": {
@@ -7775,7 +7911,7 @@
                   ]
                 },
                 "current": {
-                  "sessionId": "3241e76b-df50-4a86-9c5e-30b92bdcedb9",
+                  "sessionId": "594cdf4d-b638-4a02-a669-9f518922f0f9",
                   "historyEntryId": "h3",
                   "ast": {
                     "type": "document",
@@ -7957,6 +8093,12 @@
                   "h3",
                   "h4"
                 ],
+                "associationKeys": [
+                  "594cdf4d-b638-4a02-a669-9f518922f0f9:h2",
+                  "594cdf4d-b638-4a02-a669-9f518922f0f9:h3",
+                  "594cdf4d-b638-4a02-a669-9f518922f0f9:h4"
+                ],
+                "blocked": null,
                 "view": {
                   "main": [
                     {
@@ -8086,7 +8228,7 @@
               ]
             },
             "current": {
-              "sessionId": "002621c3-a414-4edf-9663-bc962c69195b",
+              "sessionId": "733ad054-3c4e-47b3-9403-619acb5f3e6f",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -8246,6 +8388,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h2",
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -8372,7 +8519,7 @@
               ]
             },
             "current": {
-              "sessionId": "002621c3-a414-4edf-9663-bc962c69195b",
+              "sessionId": "733ad054-3c4e-47b3-9403-619acb5f3e6f",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -8574,6 +8721,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h2",
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h3",
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -8704,7 +8857,7 @@
               ]
             },
             "current": {
-              "sessionId": "002621c3-a414-4edf-9663-bc962c69195b",
+              "sessionId": "733ad054-3c4e-47b3-9403-619acb5f3e6f",
               "historyEntryId": "h5",
               "ast": {
                 "type": "document",
@@ -8868,6 +9021,13 @@
               "h4",
               "h5"
             ],
+            "associationKeys": [
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h2",
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h3",
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h4",
+              "733ad054-3c4e-47b3-9403-619acb5f3e6f:h5"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -8988,7 +9148,7 @@
               ]
             },
             "current": {
-              "sessionId": "4f2fc743-11d6-4af6-950b-89992687a467",
+              "sessionId": "da747424-6391-41df-9aa0-1256729a2e0e",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -9145,6 +9305,10 @@
             "associations": [
               "h2"
             ],
+            "associationKeys": [
+              "da747424-6391-41df-9aa0-1256729a2e0e:h2"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -9270,7 +9434,7 @@
               ]
             },
             "current": {
-              "sessionId": "4f2fc743-11d6-4af6-950b-89992687a467",
+              "sessionId": "da747424-6391-41df-9aa0-1256729a2e0e",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -9469,6 +9633,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "da747424-6391-41df-9aa0-1256729a2e0e:h2",
+              "da747424-6391-41df-9aa0-1256729a2e0e:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -9598,7 +9767,7 @@
               ]
             },
             "current": {
-              "sessionId": "4f2fc743-11d6-4af6-950b-89992687a467",
+              "sessionId": "da747424-6391-41df-9aa0-1256729a2e0e",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -9759,6 +9928,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "da747424-6391-41df-9aa0-1256729a2e0e:h2",
+              "da747424-6391-41df-9aa0-1256729a2e0e:h3",
+              "da747424-6391-41df-9aa0-1256729a2e0e:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -10062,7 +10237,7 @@
               ]
             },
             "current": {
-              "sessionId": "1bcd5e28-b475-48c2-9b59-32a994b0ccd5",
+              "sessionId": "86fe9a6b-3b8d-4c41-aeda-fa7f8005cfc6",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -10240,6 +10415,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "86fe9a6b-3b8d-4c41-aeda-fa7f8005cfc6:h2",
+              "86fe9a6b-3b8d-4c41-aeda-fa7f8005cfc6:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -10366,7 +10546,7 @@
               ]
             },
             "current": {
-              "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+              "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -10523,6 +10703,10 @@
             "associations": [
               "h2"
             ],
+            "associationKeys": [
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -10636,7 +10820,7 @@
               ]
             },
             "current": {
-              "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+              "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -10795,6 +10979,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -10914,7 +11103,7 @@
               ]
             },
             "current": {
-              "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+              "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
               "historyEntryId": "h4",
               "ast": {
                 "type": "document",
@@ -11094,6 +11283,12 @@
               "h3",
               "h4"
             ],
+            "associationKeys": [
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h3",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h4"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -11227,7 +11422,7 @@
               ]
             },
             "current": {
-              "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+              "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
               "historyEntryId": "h5",
               "ast": {
                 "type": "document",
@@ -11416,6 +11611,13 @@
               "h4",
               "h5"
             ],
+            "associationKeys": [
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h3",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h4",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h5"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -11543,7 +11745,7 @@
                 ]
               },
               "current": {
-                "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+                "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
                 "historyEntryId": "h4",
                 "ast": {
                   "type": "document",
@@ -11726,6 +11928,13 @@
                 "h4",
                 "h5"
               ],
+              "associationKeys": [
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h3",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h4",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h5"
+              ],
+              "blocked": null,
               "view": {
                 "main": [
                   {
@@ -11846,7 +12055,7 @@
                 ]
               },
               "current": {
-                "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+                "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
                 "historyEntryId": "h3",
                 "ast": {
                   "type": "document",
@@ -12010,6 +12219,13 @@
                 "h4",
                 "h5"
               ],
+              "associationKeys": [
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h3",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h4",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h5"
+              ],
+              "blocked": null,
               "view": {
                 "main": [
                   {
@@ -12123,7 +12339,7 @@
                 ]
               },
               "current": {
-                "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+                "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
                 "historyEntryId": "h2",
                 "ast": {
                   "type": "document",
@@ -12287,6 +12503,13 @@
                 "h4",
                 "h5"
               ],
+              "associationKeys": [
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h3",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h4",
+                "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h5"
+              ],
+              "blocked": null,
               "view": {
                 "main": [
                   {
@@ -12407,7 +12630,7 @@
               ]
             },
             "current": {
-              "sessionId": "60ccedb3-6d1e-4ac1-b0bf-be3e172c961b",
+              "sessionId": "b023a9f3-32a1-4ad4-8ee6-6903de4024db",
               "historyEntryId": "h6",
               "ast": {
                 "type": "document",
@@ -12587,6 +12810,12 @@
               "h3",
               "h6"
             ],
+            "associationKeys": [
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h2",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h3",
+              "b023a9f3-32a1-4ad4-8ee6-6903de4024db:h6"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -12713,7 +12942,7 @@
               ]
             },
             "current": {
-              "sessionId": "8a43aab6-08e6-4be3-bf25-9a6817e6a136",
+              "sessionId": "4592b922-cc8b-44be-bf60-e6b0e51633f9",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -12873,6 +13102,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "4592b922-cc8b-44be-bf60-e6b0e51633f9:h2",
+              "4592b922-cc8b-44be-bf60-e6b0e51633f9:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -12986,7 +13220,7 @@
               ]
             },
             "current": {
-              "sessionId": "8a43aab6-08e6-4be3-bf25-9a6817e6a136",
+              "sessionId": "4592b922-cc8b-44be-bf60-e6b0e51633f9",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -13146,6 +13380,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "4592b922-cc8b-44be-bf60-e6b0e51633f9:h2",
+              "4592b922-cc8b-44be-bf60-e6b0e51633f9:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -13272,7 +13511,7 @@
               ]
             },
             "current": {
-              "sessionId": "32f7a12c-a9fe-4679-aa4a-3a8ef6333e59",
+              "sessionId": "27201d45-4c8c-4be8-a058-efb2b1395a7e",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -13450,6 +13689,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "27201d45-4c8c-4be8-a058-efb2b1395a7e:h2",
+              "27201d45-4c8c-4be8-a058-efb2b1395a7e:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -13576,7 +13820,7 @@
               ]
             },
             "current": {
-              "sessionId": "32f7a12c-a9fe-4679-aa4a-3a8ef6333e59",
+              "sessionId": "27201d45-4c8c-4be8-a058-efb2b1395a7e",
               "historyEntryId": "h3",
               "ast": {
                 "type": "document",
@@ -13754,6 +13998,11 @@
               "h2",
               "h3"
             ],
+            "associationKeys": [
+              "27201d45-4c8c-4be8-a058-efb2b1395a7e:h2",
+              "27201d45-4c8c-4be8-a058-efb2b1395a7e:h3"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -13905,7 +14154,7 @@
               ]
             },
             "current": {
-              "sessionId": "2585a0da-eff2-46bb-94e6-924bfd49cc25",
+              "sessionId": "58cdf325-026e-4c54-bda8-06a1fdbe5eda",
               "historyEntryId": "h6",
               "ast": {
                 "type": "document",
@@ -14142,6 +14391,12 @@
               "h5",
               "h6"
             ],
+            "associationKeys": [
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h4",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h5",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h6"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -14307,7 +14562,7 @@
               ]
             },
             "current": {
-              "sessionId": "2585a0da-eff2-46bb-94e6-924bfd49cc25",
+              "sessionId": "58cdf325-026e-4c54-bda8-06a1fdbe5eda",
               "historyEntryId": "h7",
               "ast": {
                 "type": "document",
@@ -14544,6 +14799,12 @@
               "h6",
               "h7"
             ],
+            "associationKeys": [
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h5",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h6",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h7"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -14709,7 +14970,7 @@
               ]
             },
             "current": {
-              "sessionId": "2585a0da-eff2-46bb-94e6-924bfd49cc25",
+              "sessionId": "58cdf325-026e-4c54-bda8-06a1fdbe5eda",
               "historyEntryId": "h8",
               "ast": {
                 "type": "document",
@@ -14946,6 +15207,12 @@
               "h7",
               "h8"
             ],
+            "associationKeys": [
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h6",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h7",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h8"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -15111,7 +15378,7 @@
               ]
             },
             "current": {
-              "sessionId": "2585a0da-eff2-46bb-94e6-924bfd49cc25",
+              "sessionId": "58cdf325-026e-4c54-bda8-06a1fdbe5eda",
               "historyEntryId": "h8",
               "ast": {
                 "type": "document",
@@ -15348,6 +15615,12 @@
               "h7",
               "h8"
             ],
+            "associationKeys": [
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h6",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h7",
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h8"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -15489,7 +15762,7 @@
               ]
             },
             "current": {
-              "sessionId": "2585a0da-eff2-46bb-94e6-924bfd49cc25",
+              "sessionId": "58cdf325-026e-4c54-bda8-06a1fdbe5eda",
               "historyEntryId": "h10",
               "ast": {
                 "type": "document",
@@ -15646,6 +15919,10 @@
             "associations": [
               "h10"
             ],
+            "associationKeys": [
+              "58cdf325-026e-4c54-bda8-06a1fdbe5eda:h10"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -15714,6 +15991,697 @@
         }
       },
       {
+        "name": "patched-missing-association-rolls-back-and-blocks-edit-save",
+        "status": "pass",
+        "evidence": {
+          "before": {
+            "liveSelection": {
+              "anchor": {
+                "nodeId": "new12",
+                "offset": 1
+              },
+              "focus": {
+                "nodeId": "new12",
+                "offset": 1
+              },
+              "zone": "main",
+              "context": {
+                "isTable": false,
+                "isControl": false
+              }
+            },
+            "ast": {
+              "type": "document",
+              "id": "fixture",
+              "children": [
+                {
+                  "type": "text",
+                  "nodeId": "new11",
+                  "value": "A",
+                  "bold": false
+                },
+                {
+                  "type": "text",
+                  "nodeId": "new12",
+                  "value": "B",
+                  "bold": false
+                },
+                {
+                  "type": "text",
+                  "nodeId": "n1",
+                  "value": "甲",
+                  "bold": false
+                },
+                {
+                  "type": "text",
+                  "nodeId": "n2",
+                  "value": "乙",
+                  "bold": true
+                },
+                {
+                  "type": "text",
+                  "nodeId": "n3",
+                  "value": "丙",
+                  "bold": false
+                },
+                {
+                  "type": "binding",
+                  "nodeId": "n4",
+                  "value": "名",
+                  "binding": "sample.name",
+                  "bold": false
+                }
+              ]
+            },
+            "current": {
+              "sessionId": "3888cb91-0589-4af8-ada9-1e2392bbbc60",
+              "historyEntryId": "h4",
+              "ast": {
+                "type": "document",
+                "id": "fixture",
+                "children": [
+                  {
+                    "type": "text",
+                    "nodeId": "new11",
+                    "value": "A",
+                    "bold": false
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "new12",
+                    "value": "B",
+                    "bold": false
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "n1",
+                    "value": "甲",
+                    "bold": false
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "n2",
+                    "value": "乙",
+                    "bold": true
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "n3",
+                    "value": "丙",
+                    "bold": false
+                  },
+                  {
+                    "type": "binding",
+                    "nodeId": "n4",
+                    "value": "名",
+                    "binding": "sample.name",
+                    "bold": false
+                  }
+                ]
+              },
+              "mapping": [
+                {
+                  "index": 1,
+                  "nodeId": "new11",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 2,
+                  "nodeId": "new12",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 3,
+                  "nodeId": "n1",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 4,
+                  "nodeId": "n2",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 5,
+                  "nodeId": "n3",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 6,
+                  "nodeId": "n4",
+                  "start": 0,
+                  "end": 1
+                }
+              ],
+              "projection": {
+                "main": [
+                  {
+                    "value": "​",
+                    "left": 0
+                  },
+                  {
+                    "value": "A",
+                    "left": 0,
+                    "extension": {
+                      "nodeId": "new11"
+                    }
+                  },
+                  {
+                    "value": "B",
+                    "left": 0,
+                    "extension": {
+                      "nodeId": "new12"
+                    }
+                  },
+                  {
+                    "value": "甲",
+                    "bold": false,
+                    "extension": {
+                      "nodeId": "n1"
+                    },
+                    "left": 0
+                  },
+                  {
+                    "value": "乙",
+                    "bold": true,
+                    "extension": {
+                      "nodeId": "n2"
+                    },
+                    "left": 0
+                  },
+                  {
+                    "value": "丙",
+                    "bold": false,
+                    "extension": {
+                      "nodeId": "n3"
+                    },
+                    "left": 0
+                  },
+                  {
+                    "value": "名",
+                    "bold": false,
+                    "extension": {
+                      "nodeId": "n4"
+                    },
+                    "left": 0
+                  }
+                ],
+                "header": [
+                  {
+                    "value": "​",
+                    "left": 0
+                  }
+                ],
+                "footer": [
+                  {
+                    "value": "​",
+                    "left": 0
+                  }
+                ],
+                "range": {
+                  "startIndex": 2,
+                  "endIndex": 2,
+                  "isCrossRowCol": false,
+                  "zone": "main"
+                },
+                "context": {
+                  "isTable": false,
+                  "isControl": false
+                },
+                "page": 0,
+                "zone": "main"
+              },
+              "selection": {
+                "anchor": {
+                  "nodeId": "new12",
+                  "offset": 1
+                },
+                "focus": {
+                  "nodeId": "new12",
+                  "offset": 1
+                },
+                "range": {
+                  "startIndex": 2,
+                  "endIndex": 2,
+                  "isCrossRowCol": false,
+                  "zone": "main"
+                },
+                "zone": "main",
+                "context": {
+                  "isTable": false,
+                  "isControl": false
+                }
+              }
+            },
+            "revision": 3,
+            "history": {
+              "undo": [
+                "h2",
+                "h3",
+                "h4"
+              ],
+              "redo": [],
+              "composing": false,
+              "busy": false
+            },
+            "associations": [
+              "h2",
+              "h4"
+            ],
+            "associationKeys": [
+              "3888cb91-0589-4af8-ada9-1e2392bbbc60:h2",
+              "3888cb91-0589-4af8-ada9-1e2392bbbc60:h4"
+            ],
+            "blocked": null,
+            "view": {
+              "main": [
+                {
+                  "value": "​",
+                  "left": 0
+                },
+                {
+                  "value": "A",
+                  "left": 0,
+                  "extension": {
+                    "nodeId": "new11"
+                  }
+                },
+                {
+                  "value": "B",
+                  "left": 0,
+                  "extension": {
+                    "nodeId": "new12"
+                  }
+                },
+                {
+                  "value": "甲",
+                  "bold": false,
+                  "extension": {
+                    "nodeId": "n1"
+                  },
+                  "left": 0
+                },
+                {
+                  "value": "乙",
+                  "bold": true,
+                  "extension": {
+                    "nodeId": "n2"
+                  },
+                  "left": 0
+                },
+                {
+                  "value": "丙",
+                  "bold": false,
+                  "extension": {
+                    "nodeId": "n3"
+                  },
+                  "left": 0
+                },
+                {
+                  "value": "名",
+                  "bold": false,
+                  "extension": {
+                    "nodeId": "n4"
+                  },
+                  "left": 0
+                }
+              ],
+              "header": [
+                {
+                  "value": "​",
+                  "left": 0
+                }
+              ],
+              "footer": [
+                {
+                  "value": "​",
+                  "left": 0
+                }
+              ],
+              "range": {
+                "startIndex": 2,
+                "endIndex": 2,
+                "isCrossRowCol": false,
+                "zone": "main"
+              },
+              "context": {
+                "isTable": false,
+                "isControl": false
+              },
+              "page": 0,
+              "zone": "main"
+            }
+          },
+          "after": {
+            "liveSelection": {
+              "anchor": {
+                "nodeId": "new12",
+                "offset": 1
+              },
+              "focus": {
+                "nodeId": "new12",
+                "offset": 1
+              },
+              "zone": "main",
+              "context": {
+                "isTable": false,
+                "isControl": false
+              }
+            },
+            "ast": {
+              "type": "document",
+              "id": "fixture",
+              "children": [
+                {
+                  "type": "text",
+                  "nodeId": "new11",
+                  "value": "A",
+                  "bold": false
+                },
+                {
+                  "type": "text",
+                  "nodeId": "new12",
+                  "value": "B",
+                  "bold": false
+                },
+                {
+                  "type": "text",
+                  "nodeId": "n1",
+                  "value": "甲",
+                  "bold": false
+                },
+                {
+                  "type": "text",
+                  "nodeId": "n2",
+                  "value": "乙",
+                  "bold": true
+                },
+                {
+                  "type": "text",
+                  "nodeId": "n3",
+                  "value": "丙",
+                  "bold": false
+                },
+                {
+                  "type": "binding",
+                  "nodeId": "n4",
+                  "value": "名",
+                  "binding": "sample.name",
+                  "bold": false
+                }
+              ]
+            },
+            "current": {
+              "sessionId": "3888cb91-0589-4af8-ada9-1e2392bbbc60",
+              "historyEntryId": "h4",
+              "ast": {
+                "type": "document",
+                "id": "fixture",
+                "children": [
+                  {
+                    "type": "text",
+                    "nodeId": "new11",
+                    "value": "A",
+                    "bold": false
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "new12",
+                    "value": "B",
+                    "bold": false
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "n1",
+                    "value": "甲",
+                    "bold": false
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "n2",
+                    "value": "乙",
+                    "bold": true
+                  },
+                  {
+                    "type": "text",
+                    "nodeId": "n3",
+                    "value": "丙",
+                    "bold": false
+                  },
+                  {
+                    "type": "binding",
+                    "nodeId": "n4",
+                    "value": "名",
+                    "binding": "sample.name",
+                    "bold": false
+                  }
+                ]
+              },
+              "mapping": [
+                {
+                  "index": 1,
+                  "nodeId": "new11",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 2,
+                  "nodeId": "new12",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 3,
+                  "nodeId": "n1",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 4,
+                  "nodeId": "n2",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 5,
+                  "nodeId": "n3",
+                  "start": 0,
+                  "end": 1
+                },
+                {
+                  "index": 6,
+                  "nodeId": "n4",
+                  "start": 0,
+                  "end": 1
+                }
+              ],
+              "projection": {
+                "main": [
+                  {
+                    "value": "​",
+                    "left": 0
+                  },
+                  {
+                    "value": "A",
+                    "left": 0,
+                    "extension": {
+                      "nodeId": "new11"
+                    }
+                  },
+                  {
+                    "value": "B",
+                    "left": 0,
+                    "extension": {
+                      "nodeId": "new12"
+                    }
+                  },
+                  {
+                    "value": "甲",
+                    "bold": false,
+                    "extension": {
+                      "nodeId": "n1"
+                    },
+                    "left": 0
+                  },
+                  {
+                    "value": "乙",
+                    "bold": true,
+                    "extension": {
+                      "nodeId": "n2"
+                    },
+                    "left": 0
+                  },
+                  {
+                    "value": "丙",
+                    "bold": false,
+                    "extension": {
+                      "nodeId": "n3"
+                    },
+                    "left": 0
+                  },
+                  {
+                    "value": "名",
+                    "bold": false,
+                    "extension": {
+                      "nodeId": "n4"
+                    },
+                    "left": 0
+                  }
+                ],
+                "header": [
+                  {
+                    "value": "​",
+                    "left": 0
+                  }
+                ],
+                "footer": [
+                  {
+                    "value": "​",
+                    "left": 0
+                  }
+                ],
+                "range": {
+                  "startIndex": 2,
+                  "endIndex": 2,
+                  "isCrossRowCol": false,
+                  "zone": "main"
+                },
+                "context": {
+                  "isTable": false,
+                  "isControl": false
+                },
+                "page": 0,
+                "zone": "main"
+              },
+              "selection": {
+                "anchor": {
+                  "nodeId": "new12",
+                  "offset": 1
+                },
+                "focus": {
+                  "nodeId": "new12",
+                  "offset": 1
+                },
+                "range": {
+                  "startIndex": 2,
+                  "endIndex": 2,
+                  "isCrossRowCol": false,
+                  "zone": "main"
+                },
+                "zone": "main",
+                "context": {
+                  "isTable": false,
+                  "isControl": false
+                }
+              }
+            },
+            "revision": 3,
+            "history": {
+              "undo": [
+                "h2",
+                "h3",
+                "h4"
+              ],
+              "redo": [],
+              "composing": false,
+              "busy": false
+            },
+            "associations": [
+              "h2",
+              "h4"
+            ],
+            "associationKeys": [
+              "3888cb91-0589-4af8-ada9-1e2392bbbc60:h2",
+              "3888cb91-0589-4af8-ada9-1e2392bbbc60:h4"
+            ],
+            "blocked": "HISTORY_ASSOCIATION_MISSING",
+            "view": {
+              "main": [
+                {
+                  "value": "​",
+                  "left": 0
+                },
+                {
+                  "value": "A",
+                  "left": 0,
+                  "extension": {
+                    "nodeId": "new11"
+                  }
+                },
+                {
+                  "value": "B",
+                  "left": 0,
+                  "extension": {
+                    "nodeId": "new12"
+                  }
+                },
+                {
+                  "value": "甲",
+                  "bold": false,
+                  "extension": {
+                    "nodeId": "n1"
+                  },
+                  "left": 0
+                },
+                {
+                  "value": "乙",
+                  "bold": true,
+                  "extension": {
+                    "nodeId": "n2"
+                  },
+                  "left": 0
+                },
+                {
+                  "value": "丙",
+                  "bold": false,
+                  "extension": {
+                    "nodeId": "n3"
+                  },
+                  "left": 0
+                },
+                {
+                  "value": "名",
+                  "bold": false,
+                  "extension": {
+                    "nodeId": "n4"
+                  },
+                  "left": 0
+                }
+              ],
+              "header": [
+                {
+                  "value": "​",
+                  "left": 0
+                }
+              ],
+              "footer": [
+                {
+                  "value": "​",
+                  "left": 0
+                }
+              ],
+              "range": {
+                "startIndex": 2,
+                "endIndex": 2,
+                "isCrossRowCol": false,
+                "zone": "main"
+              },
+              "context": {
+                "isTable": false,
+                "isControl": false
+              },
+              "page": 0,
+              "zone": "main"
+            }
+          },
+          "failure": "HISTORY_ASSOCIATION_MISSING"
+        }
+      },
+      {
         "name": "patched-unknown-source-readonly-preserved",
         "status": "pass",
         "evidence": {
@@ -15772,7 +16740,7 @@
               ]
             },
             "current": {
-              "sessionId": "e3d2354b-2d9a-4ceb-93c5-577ef39ce849",
+              "sessionId": "3a0e36bf-acff-4027-9310-37ce3b38ce8a",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -15955,6 +16923,10 @@
             "associations": [
               "h2"
             ],
+            "associationKeys": [
+              "3a0e36bf-acff-4027-9310-37ce3b38ce8a:h2"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -16082,7 +17054,7 @@
               ]
             },
             "current": {
-              "sessionId": "e3d2354b-2d9a-4ceb-93c5-577ef39ce849",
+              "sessionId": "3a0e36bf-acff-4027-9310-37ce3b38ce8a",
               "historyEntryId": "h2",
               "ast": {
                 "type": "document",
@@ -16265,6 +17237,10 @@
             "associations": [
               "h2"
             ],
+            "associationKeys": [
+              "3a0e36bf-acff-4027-9310-37ce3b38ce8a:h2"
+            ],
+            "blocked": null,
             "view": {
               "main": [
                 {
@@ -16340,7 +17316,7 @@
         }
       }
     ],
-    "passed": 14,
+    "passed": 15,
     "failed": 0
   }
 }

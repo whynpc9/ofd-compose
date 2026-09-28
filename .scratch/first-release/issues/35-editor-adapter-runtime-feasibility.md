@@ -24,6 +24,6 @@
 
 ## Runtime evidence — 2026-09-28
 
-[运行报告](../../../tests/editor-adapter-spike/REPORT.md)、[复跑与人工 OS 门禁步骤](../../../tools/editor-adapter-spike/README.md)、[固定来源与补丁](../../../tools/editor-adapter-spike/upstream.patch)。Chromium 153.0.8010.12 / Firefox 155.0 在 macOS arm64 上均完成 14/14 个合成事件浏览器用例（含两项上游缺陷负向对照），原始失败/修复证据均保留。已有函数 probe 另行复跑，不能与浏览器层相互替代。
+[运行报告](../../../tests/editor-adapter-spike/REPORT.md)、[复跑与人工 OS 门禁步骤](../../../tools/editor-adapter-spike/README.md)、[固定来源与补丁](../../../tools/editor-adapter-spike/upstream.patch)。Chromium 153.0.8010.12 / Firefox 155.0 在 macOS arm64 上均完成 15/15 个合成事件浏览器用例（含两项上游缺陷负向对照），原始失败/修复证据均保留。已有函数 probe 另行复跑，不能与浏览器层相互替代。
 
 暂定单一历史协议在本票小型 fixture 范围内成立，但需要六文件实验补丁。非空选区 IME 提交/取消只通过合成浏览器层；Windows 微软拼音与 macOS 拼音的真实 OS 事件/观察仍 **Not verified**，因此这两项保留未勾选，状态为 `needs-info`。19 可据此评估路线及必要补丁，不能写无条件 Go、零 fork 或生产 fork 已批准。20/22–26 的契约迁移与正式支持面仍未完成。本票技术交付与全验收分开，不自动推进或冻结下一票。
