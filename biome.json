@@ -19,7 +19,8 @@
       "!**/*.grit",
       "!tests/ofd-writer/fixtures",
       "!tests/pdf-writer/fixtures",
-      "!tests/runtime-matrix/evidence"
+      "!tests/runtime-matrix/evidence",
+      "!tests/editor-adapter-spike/evidence"
     ]
   },
   "formatter": {

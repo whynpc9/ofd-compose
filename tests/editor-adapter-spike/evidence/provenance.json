@@ -1,0 +1,26 @@
+{
+  "upstreamCommit": "83985f729cde373eccdcf25314227827b971bb63",
+  "version": "1.0.2",
+  "inputs": [
+    {
+      "name": "source",
+      "url": "https://codeload.github.com/Hufe921/canvas-editor/tar.gz/83985f729cde373eccdcf25314227827b971bb63",
+      "algorithm": "sha256",
+      "digest": "6e9a875b15885e88ed1e710468f75d8a4d5ad44de74faeacef5298e5cf77f2bd",
+      "target": "original"
+    },
+    {
+      "name": "package",
+      "url": "https://registry.npmjs.org/@hufe921/canvas-editor/-/canvas-editor-1.0.2.tgz",
+      "algorithm": "sha512",
+      "digest": "uAdI70JPqakd9+8TmSO1Fv77xDG86vCXaAVfqwMChJnAiz9Ub77l2ep0t8/lnydoIjdFqywcs+dea7x2f9vNEg==",
+      "target": "package"
+    }
+  ],
+  "mode": "verified-extracted-cache",
+  "sriRecomputedThisRun": false,
+  "sourceFilesVerified": 633,
+  "publishedFilesVerified": 7,
+  "patchSha256": "a6471eb872f1ec109ca1c60787e42a5e2f2e4b18de041b1b704756a02e06a3e4",
+  "scope": "Experimental local patch, not a published or approved production fork"
+}

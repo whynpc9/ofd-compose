@@ -1,0 +1,26 @@
+{
+  "browser": "firefox",
+  "browserVersion": "155.0",
+  "layer": "independent-synthetic-clipboard-payload-diagnostic",
+  "nativeClipboardVerified": false,
+  "dataTransfer": {
+    "types": ["text/plain"],
+    "items": 1,
+    "getData": "粘贴",
+    "itemKind": "string",
+    "itemType": "text/plain",
+    "getAsString": "粘贴"
+  },
+  "clipboardEventConstructor": {
+    "clipboardDataType": "object",
+    "types": [],
+    "getData": ""
+  },
+  "definedClipboardData": {
+    "definePropertyError": null,
+    "sameDataTransfer": true,
+    "observedTypes": ["text/plain"],
+    "observedItems": 1,
+    "observedGetData": "粘贴"
+  }
+}
