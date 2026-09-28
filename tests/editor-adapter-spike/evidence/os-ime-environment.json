@@ -1,0 +1,23 @@
+{
+  "evidenceLayer": "environment-and-desktop-access-attempt-only",
+  "macOS": {
+    "version": "26.6.2",
+    "build": "25G83",
+    "architecture": "arm64",
+    "enabledInputSource": "com.apple.inputmethod.SCIM.ITABC",
+    "currentInputSource": "ABC",
+    "systemEventsAccessibility": false,
+    "cuaInventoryReturnedAfterSeconds": 5.9,
+    "cuaAppBinding": "No window state returned; interrupted after 155.1 seconds",
+    "nativeInputPerformed": false,
+    "candidateScreenshotCaptured": false,
+    "actualImeVersion": "Not verified",
+    "selectedCommit": "Not verified",
+    "selectedCancel": "Not verified",
+    "cleanup": "Test-only headed Chromium and Vite stopped"
+  },
+  "windowsMicrosoftPinyin": {
+    "status": "Not verified",
+    "reason": "No attached Windows test host"
+  }
+}

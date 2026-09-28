@@ -1,0 +1,284 @@
+--- a/src/editor/core/history/HistoryManager.ts
++++ b/src/editor/core/history/HistoryManager.ts
+@@ -1,61 +1,112 @@
+ import { Draw } from '../draw/Draw'
+ 
++// Experimental issue35 hook; no business AST is interpreted by the editor.
++type Entry = { id: string; restore: Function }
++type Participant = {
++  prepare: (id: string) => void
++  capture: (id: string) => void
++  restore: (id: string, action: string) => void
++  publish: (action: string, id: string, liveIds: string[]) => void
++}
+ export class HistoryManager {
+-  private undoStack: Array<Function> = []
+-  private redoStack: Array<Function> = []
++  private undoStack: Entry[] = []
++  private redoStack: Entry[] = []
++  private sequence = 0
++  private busy = false
++  private participant?: Participant
++  private before?: { view: any; undo: Entry[]; redo: Entry[] }
+   private maxRecordCount: number
+-
+-  constructor(draw: Draw) {
+-    // 忽略第一次历史记录
++  constructor(private draw: Draw) {
+     this.maxRecordCount = draw.getOptions().historyMaxRecordCount + 1
+   }
+-
+-  public undo() {
+-    if (this.undoStack.length > 1) {
+-      const pop = this.undoStack.pop()!
+-      this.redoStack.push(pop)
+-      if (this.undoStack.length) {
+-        this.undoStack[this.undoStack.length - 1]()
+-      }
++  public connect(participant: Participant) {
++    if (this.participant) throw new Error('ALREADY_CONNECTED')
++    this.participant = participant
++    this.undoStack = []
++    this.redoStack = []
++    this.draw.submitHistory(this.draw.getRange().getRange().endIndex)
++  }
++  public begin() {
++    if (this.busy) throw new Error('HISTORY_REENTRY')
++    if (this.before) return
++    const current = this.undoStack.at(-1)
++    if (current) this.participant?.prepare(current.id)
++    this.draw.getEventBus().spikeSuspend()
++    this.before = {
++      view: this.draw.spikeSnapshot(),
++      undo: this.undoStack.slice(), redo: this.redoStack.slice()
+     }
+   }
+-
+-  public redo() {
+-    if (this.redoStack.length) {
+-      const pop = this.redoStack.pop()!
+-      this.undoStack.push(pop)
+-      pop()
+-    }
++  public cancel() {
++    const before = this.before
++    if (!before) return
++    this.busy = true
++    this.draw.getEventBus().spikeDiscard()
++    try {
++      this.undoStack = before.undo; this.redoStack = before.redo
++      this.draw.spikeRestore(before.view)
++      const entry = this.undoStack.at(-1)
++      if (entry) this.participant?.restore(entry.id, 'discard')
++      this.notify('discard')
++      this.draw.getEventBus().spikeResume()
++    } finally { this.before = undefined; this.busy = false }
+   }
+-
++  private notify(action: string) {
++    this.participant?.publish(action, this.undoStack.at(-1)?.id || '',
++      [...this.undoStack, ...this.redoStack].map(e => e.id))
++  }
++  private travel(action: 'undo' | 'redo') {
++    if (this.busy) throw new Error('HISTORY_REENTRY')
++    if (this.before) throw new Error('TRANSACTION_OPEN')
++    if (action === 'undo' ? !this.isCanUndo() : !this.isCanRedo()) return
++    this.begin()
++    this.busy = true
++    try {
++      if (action === 'undo') this.redoStack.push(this.undoStack.pop()!)
++      else this.undoStack.push(this.redoStack.pop()!)
++      const entry = this.undoStack.at(-1)!
++      entry.restore()
++      this.participant?.restore(entry.id, action)
++      this.notify(action)
++      this.before = undefined
++      this.draw.getEventBus().spikeResume()
++    } catch (error) { this.busy = false; this.cancel(); throw error }
++    finally { this.busy = false }
++  }
++  public undo() { this.travel('undo') }
++  public redo() { this.travel('redo') }
+   public execute(fn: Function) {
+-    this.undoStack.push(fn)
+-    if (this.redoStack.length) {
++    if (this.busy) throw new Error('HISTORY_REENTRY')
++    this.busy = true
++    try {
++      const id = `h${++this.sequence}`
++      this.participant?.capture(id)
++      const snapshot = this.participant ? this.draw.spikeSnapshot() : undefined
++      this.undoStack.push({ id, restore: snapshot ? () => this.draw.spikeRestore(snapshot) : fn })
+       this.redoStack = []
+-    }
+-    while (this.undoStack.length > this.maxRecordCount) {
+-      this.undoStack.shift()
+-    }
++      while (this.undoStack.length > this.maxRecordCount) this.undoStack.shift()
++      this.notify(this.undoStack.length === 1 ? 'reset' : 'commit')
++      this.before = undefined
++      this.draw.getEventBus().spikeResume()
++    } catch (error) { this.busy = false; this.cancel(); throw error }
++    finally { this.busy = false }
+   }
+-
+-  public isCanUndo(): boolean {
+-    return this.undoStack.length > 1
++  public isCanUndo() { return this.undoStack.length > 1 }
++  public isCanRedo() { return !!this.redoStack.length }
++  public isStackEmpty() { return !this.undoStack.length && !this.redoStack.length }
++  public recovery() {
++    if (this.busy) throw new Error('HISTORY_REENTRY')
++    this.undoStack = []; this.redoStack = []
++    // Reset is published together with the next baseline checkpoint.
+   }
+-
+-  public isCanRedo(): boolean {
+-    return !!this.redoStack.length
++  public popUndo() {
++    if (this.busy) throw new Error('HISTORY_REENTRY')
++    const entry = this.undoStack.pop()
++    this.notify('discard')
++    return entry?.restore
+   }
+-
+-  public isStackEmpty(): boolean {
+-    return !this.undoStack.length && !this.redoStack.length
+-  }
+-
+-  public recovery() {
+-    this.undoStack = []
+-    this.redoStack = []
+-  }
+-
+-  public popUndo() {
+-    return this.undoStack.pop()
++  public inspect() {
++    return { undo: this.undoStack.map(e => e.id), redo: this.redoStack.map(e => e.id),
++      composing: !!this.before, busy: this.busy }
+   }
+ }
+--- a/src/editor/core/draw/Draw.ts
++++ b/src/editor/core/draw/Draw.ts
+@@ -3329,6 +3329,26 @@
+     return curIndex
+   }
+ 
++  // Full pre-input view, including range context; never calls setValue/clears history.
++  public spikeSnapshot() {
++    return deepClone({
++      main: getSlimCloneElementList(this.elementList),
++      header: getSlimCloneElementList(this.header.getElementList()),
++      footer: getSlimCloneElementList(this.footer.getElementList()),
++      range: this.range.getRange(), context: this.position.getPositionContext(),
++      page: this.pageNo, zone: this.zone.getZone()
++    })
++  }
++  public spikeRestore(snapshot: ReturnType<Draw['spikeSnapshot']>) {
++    const s = deepClone(snapshot)
++    this.zone.setZone(s.zone)
++    this.setPageNo(s.page)
++    this.position.setPositionContext(s.context)
++    this.setEditorData(s)
++    this.range.replaceRange(s.range)
++    this.render({ curIndex: s.range.endIndex, isSubmitHistory: false, isSourceHistory: true })
++  }
++
+   public submitHistory(curIndex: number | undefined) {
+     const positionContext = this.position.getPositionContext()
+     const oldElementList = getSlimCloneElementList(this.elementList)
+--- a/src/editor/index.ts
++++ b/src/editor/index.ts
+@@ -78,6 +78,7 @@
+ import { IGraffitiData } from './interface/Graffiti'
+ 
+ export default class Editor {
++  public spike: any
+   public command: Command
+   public version: string
+   public listener: Listener
+@@ -142,6 +143,14 @@
+       this.eventBus,
+       this.override
+     )
++    // Experimental bridge is explicit, not a claimed public 1.0.2 extension API.
++    this.spike = {
++      history: draw.getHistoryManager(),
++      snapshot: () => draw.spikeSnapshot(),
++      checkpoint: () => draw.submitHistory(draw.getRange().getRange().endIndex),
++      elements: () => draw.getOriginalMainElementList(),
++      restore: (s: any) => draw.spikeRestore(s)
++    }
+     // 命令
+     this.command = new Command(new CommandAdapt(draw))
+     // 宏
+--- a/src/editor/core/event/handlers/composition.ts
++++ b/src/editor/core/event/handlers/composition.ts
+@@ -3,6 +3,7 @@
+ import { input, removeComposingInput } from './input'
+ 
+ function compositionstart(host: CanvasEvent) {
++  host.getDraw().getHistoryManager().begin()
+   host.isComposing = true
+ }
+ 
+@@ -12,7 +13,10 @@
+   const draw = host.getDraw()
+   // 不存在值：删除合成输入
+   if (!evt.data) {
+-    removeComposingInput(host)
++    host.compositionInfo = null
++    draw.getHistoryManager().cancel()
++    draw.getCursor().clearAgentDomValue()
++    return
+     const rangeManager = draw.getRange()
+     const { endIndex: curIndex } = rangeManager.getRange()
+     draw.render({
+--- a/src/editor/core/event/handlers/input.ts
++++ b/src/editor/core/event/handlers/input.ts
+@@ -24,6 +24,8 @@
+   // 移除合成前，缓存设置的默认样式设置
+   const defaultStyle =
+     rangeManager.getDefaultStyle() || host.compositionInfo?.defaultStyle || null
++  // Capture before mutation for direct input and asynchronous clipboard callbacks.
++  draw.getHistoryManager().begin()
+   // 移除合成输入
+   removeComposingInput(host)
+   if (!isComposing) {
+--- a/src/editor/core/event/eventbus/EventBus.ts
++++ b/src/editor/core/event/eventbus/EventBus.ts
+@@ -1,5 +1,23 @@
+ export class EventBus<EventMap> {
+   private eventHub: Map<string, Set<Function>>
++  private spikeSuspended = false
++  private spikePending = new Map<string, any>()
++
++  public spikeSuspend() {
++    this.spikeSuspended = true
++    this.spikePending.clear()
++  }
++  public spikeDiscard() { this.spikePending.clear() }
++  public spikeResume() {
++    const pending = [...this.spikePending]
++    this.spikePending.clear()
++    this.spikeSuspended = false
++    for (const [name, payload] of pending) {
++      // Subscriber exceptions cannot turn an already published commit into a rollback.
++      try { this.emit(name as string & keyof EventMap, payload) }
++      catch (error) { queueMicrotask(() => { throw error }) }
++    }
++  }
+ 
+   constructor() {
+     this.eventHub = new Map()
+@@ -20,6 +38,10 @@
+     payload?: EventMap[K] extends (payload: infer P) => void ? P : never
+   ) {
+     if (!eventName) return
++    if (this.spikeSuspended) {
++      this.spikePending.set(eventName, payload)
++      return
++    }
+     const callBackSet = this.eventHub.get(eventName)
+     if (!callBackSet) return
+     if (callBackSet.size === 1) {

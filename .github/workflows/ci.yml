@@ -41,10 +41,25 @@ jobs:
         run: pnpm test --concurrency=1
 
       - name: Install Playwright browser
-        run: pnpm exec playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium firefox
 
       - name: TS tests (browser mode)
         run: pnpm test:browser --concurrency=1
+
+      - name: Editor adapter runtime experiment (synthetic events)
+        env:
+          EDITOR_SPIKE_EVIDENCE: ${{ runner.temp }}/editor-spike
+        run: |
+          node tools/editor-adapter-spike/prepare.mjs
+          node tools/editor-adapter-spike/run-browser.mjs
+
+      - name: Upload editor adapter raw evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor-adapter-spike
+          path: ${{ runner.temp }}/editor-spike
+          if-no-files-found: ignore
 
       - name: .NET restore (locked)
         run: dotnet restore dotnet/OFDCompose.slnx --locked-mode
