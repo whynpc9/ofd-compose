@@ -21,8 +21,8 @@
 ResourcePack 只传宿主授权字节与内容摘要，不隐式访问 URL/路径。Worker 用 harfbuzzjs1.6.0 的实际 `harfbuzz-subset.wasm`、retainGids，一次子集供双 writer 原样嵌入；字形 closure/映射仍校验。完整字体用于编辑/新增字符，不能拿嵌入 subset 充当 full font；宿主必须显式授权并匹配原文件摘要。静态字体/资源门禁已实现；硬进程内存/超时需 Job Host。
 
 [ADR-0001 §F](ADR-0001-technology-baseline.md) 的候选与条件路线不变：Noto Sans SC（Google Fonts 构建的静态 TTF 实例）是 TrueType 轮廓备选，LXGW WenKai 是楷体候选；目标阅读器确认 CFF 失败时转向 TrueType 轮廓路线。现有实测 TTF 字节来自 WenKai，不意味着已经选用它替换指定的 Noto Sans SC 候选；后者精确静态文件/摘要及本平台 reader 验收 **Not verified**。
-+
-+目前没有目标桌面 CFF 失败证据，故上述条件尚未触发，本票不执行或批准字体切换，也不撤销 ADR-0001 的条件路线。完成 issue18 同一样本 CFF/TTF 显示/复制/搜索后再固定首发文件/字重；若确认失败，按该条件路线提出具体静态 TTF 文件和字重锁，完成新字体度量/布局/双 writer/目标 reader 回归及明确资源选择后才能放行。新文件不能沿用 WenKai 的测试结果。
+
+目前没有目标桌面 CFF 失败证据，故上述条件尚未触发，本票不执行或批准字体切换，也不撤销 ADR-0001 的条件路线。完成 issue18 同一样本 CFF/TTF 显示/复制/搜索后再固定首发文件/字重；若确认失败，按该条件路线提出具体静态 TTF 文件和字重锁，完成新字体度量/布局/双 writer/目标 reader 回归及明确资源选择后才能放行。新文件不能沿用 WenKai 的测试结果。
 
 ## 源附件：单 JSON 为候选，未冻结容器协议
 
