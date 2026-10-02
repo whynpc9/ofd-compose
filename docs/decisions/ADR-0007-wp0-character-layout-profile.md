@@ -14,7 +14,7 @@ issue03 扫描的 28 份库级 DOCX（12 示例原件、16 生成测试样例）
 | 静态 header/footer `w:t` | 0 | 0 | 0 |
 | 宿主真实模板/数据及绑定后字符 | Not verified | Not verified | Not verified |
 
-复现：`python3 tools/wp0-audit/character-inventory.py`，stdout 与上述 JSON 比较。它不执行表达式、不读取图片引用、不统计 XML tab/break 元素，不将标签字符当成最终打印字符；0 个页眉页脚字符不表示支持旧引擎动态页眉。动态数据、生成页码/列表标签和真实业务值需另作最终渲染输入检查。该库级统计不能批准业务全集，也不是字体覆盖测试。
+复现：在包含上述基线 Git 对象的 checkout 中运行 `python3 tools/wp0-audit/character-inventory.py`，stdout 与上述 JSON 比较。脚本将 repertoire、MigrationReport、每份扫描报告和 DOCX 字节逐一对照固定提交；缺少历史对象或工作区输入改变即失败，不只验证两份可变输入彼此一致。它不执行表达式、不读取图片引用、不统计 XML tab/break 元素，不将标签字符当成最终打印字符；0 个页眉页脚字符不表示支持旧引擎动态页眉。动态数据、生成页码/列表标签和真实业务值需另作最终渲染输入检查。该库级统计不能批准业务全集，也不是字体覆盖测试。
 
 保留已实现的 `wp0.4-p0-repertoire-v1` 候选：71850 码点，SHA-256 `98a2b1d874c03a894693db5a93f9d45eb759ac070899dbf5df9996dcf7a58e8b`。含 GB2312 全集、明确拉丁/组合符/汉字扩展与符号，精确范围以 [repertoire-data.ts](../../packages/typography-core/src/repertoire-data.ts) 为准。[assertP0Characters](../../packages/typography-core/src/repertoire.ts) 在整形前拒绝范围外字符；范围内仍可能 `GLYPH_MISSING`。emoji/任意 Unicode、系统字体回退并非承诺。换行/Tab 由 Layout 处理，不直接通过绘制字符准入。
 
