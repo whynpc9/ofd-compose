@@ -22,7 +22,7 @@ issue03 扫描的 28 份库级 DOCX（12 示例原件、16 生成测试样例）
 
 | 层 | 实际工程候选/来源 | 限制及后续动作 |
 | --- | --- | --- |
-| 绑定与结构 | [Binding Core](../../packages/binding-core/src/bind.ts)、[求值器](../../packages/binding-core/src/evaluate.ts)：路径、sort/take/取项/极值/get/count/if/声明格式，Conditional/Repeat/RepeatRowGroup | 版本化 strict/legacy 政策与显式预算；迁移仍逐节点差分确认，不是完整 DOCX 兼容 |
+| 绑定与结构 | [Binding Core](../../packages/binding-core/src/bind.ts)、[求值器](../../packages/binding-core/src/evaluate.ts)：路径、sort/take/取项/极值/get/count/if/声明格式，ConditionalBlock/RepeatBlock/RepeatRowGroup | 版本化 `bindingPolicyVersion`（`strict-1` / `legacy-compat-1`）与显式预算；迁移仍逐节点差分确认，不是完整 DOCX 兼容 |
 | 整形与断行 | [Typography](../../packages/typography-core/README.md)：harfbuzzjs 1.6.0 / HB14.3.0、fontkit2.0.4、linebreak4.0.3/Unicode17；完整段落候选断点 | 无系统字体/Intl 度量；静态真实字重/斜体；Typography 可单 run RTL，不等于 Layout 已支持双向段落 |
 | 段落/分页 | [Layout Core](../../packages/layout-core/README.md) 09/10：LTR 脚本切分、禁则、cluster 安全重整形、对齐/缩进/Tab、段距、页眉页脚/页数域/水印 | 不做 emergency 单词拆分/连字断词；页数域最多4轮，超预算/溢出显式失败；多节能力存在不扩大首版 P0 范围 |
 | 媒体/区域 | 同 README 12、[ADR-0003](ADR-0003-media-core-profile.md)：PNG/JPEG、code128/ean13、路径、固定/流式区域 | truncate/scale/min-font-size 必须显式且诊断；不把源隐藏字符串等同可见文字；其余六码制仍 issue27 |

@@ -7,7 +7,7 @@ Related ADRs: docs/decisions/ADR-0001-technology-baseline.md
 **Spec 版本：** v1 · 基于《OFD Compose（元版）原生文档排版平台实施计划 v0.3》（2026-09-10）
 **覆盖范围：** 实施计划中的 WP0（可行性、语料与架构准入）与 WP1（模板设计—绑定—渲染首版闭环），以及 WP0/WP1 必须一并定义的 OFD 容器源附件协议基础。
 **不覆盖：** WP2（容器服务与证据链）、WP3（完整单文档编辑 SDK）、WP4（发布收敛）。这些应作为后续独立 spec，在 WP0 的 ADR 产出后再制定。
-**状态：** 待评审。本 spec 的实现决策以计划 v0.3 的"建议基线"为准；凡计划中标注"必须通过 WP0 才能冻结"的项，在本 spec 中以"待 WP0 ADR 冻结"标记，实施顺序上先于依赖它们的工作。
+**状态：** 待评审。本 spec 的实现决策以计划 v0.3 的"建议基线"为准；凡计划中标注"必须通过 WP0 才能冻结"的项，现按文末“WP0 决策状态清单（2026-10-02）”区分已接受的限定政策、延期与阻塞；实现和实验身份不等于正式冻结，实施顺序上仍先于依赖它们的工作。
 
 > 术语约定：本 spec 使用计划 v0.3 的词汇——TemplateSource、ResolvedDocument、Layout IR、Semantic Map、RenderProfile、ResourcePack、DynamicText、InputControl、ConditionalBlock、RepeatBlock / RepeatRowGroup、ImageBinding、BarcodeBinding、OfdIrWriter、PdfIrWriter、capability profile、golden corpus、MigrationReport、LayoutIdentity。仓库尚无独立术语表；本 spec 的"补充说明"节列出了应在 WP0 中固化为术语表的词条。
 
@@ -244,13 +244,13 @@ UniDmrCore 目前用 DOCX 模板承载简报、报表等文书：模板作者在
 - P0 冻结字符范围：中文、拉丁、数字与业务必需符号；超出范围报告。
 - 字体候选从思源/Noto 等许可字体中选定精确静态文件、字重与覆盖；不依赖系统字体；字体家族名不是资源身份。
 - 可回编辑 OFD 版面字体子集嵌入；编辑源保存完整字体身份与获取约定；子集化不改变上游度量。
-- 整形链路与断行的候选组合已在 ADR-0001 定为 harfbuzzjs（整形 + hb-subset 子集化，`retainGids=true`）+ fontkit（表/度量）+ `@cto.af/linebreak`（UAX #14 候选断点）+ Layout Core 内的禁则/段落策略；**待 WP0.4 验证后冻结**。
+- 整形链路与断行的候选组合已在 ADR-0001 定为 harfbuzzjs（整形 + hb-subset 子集化，`retainGids=true`）+ fontkit（表/度量）+ `@cto.af/linebreak`（UAX #14 候选断点）+ Layout Core 内的禁则/段落策略；**06/09及18已有固定版本的整形/断行验证，正式首版业务 profile 冻结延期至 WP0.10 补齐业务交集**，见 [ADR-0007](../../docs/decisions/ADR-0007-wp0-character-layout-profile.md)。
 - 字体子集化在 Render Worker 内执行一次，OFD 与 PDF 嵌入同一子集字节；写入器不再各自子集化。
 
 ### 9. Layout IR 契约
 
 - 组成：身份（irVersion、输入摘要、layout profile、语义摘要）；资源（字体原文件摘要 + face/字重/特性、图片摘要/类型/尺寸）；页面（每页纸张、内容区、方向、页序、节来源）；图形状态（绘制顺序、变换、裁剪、颜色/透明度、受支持合成方式）；文字（原始逻辑文本、显示文本、字体实例、字号、语言/方向、基线、glyph ID、位置/advance/offset、cluster 映射）；路径（填充规则、描边、虚线、端点/连接、指令；局部坐标 vs 页面坐标）；图片（资源、变换、边界、裁剪）；语义（nodeId、bindingId、重复实例、控件、表格行列、阅读顺序、来源文本范围、重复表头标记）；标记（不绘制区域、选区命中、控件几何；明确非签名覆盖范围）。
-- 坐标：左上原点、毫米语义；规范化单位建议 1/1000 mm 整数，精度/范围/舍入 **待 WP0.5 误差与容量测试冻结**。
+- 坐标：左上原点、毫米语义；版本0工程候选已实现 1/1000 mm 整数、half-away-from-zero及显式范围；**正式冻结延期至 WP0.10 的几何阈值/容量准入结论，v1由获准后的issue20处理**，见 [ADR-0009](../../docs/decisions/ADR-0009-wp0-ir-precision.md)。
 - 文本范围索引：公共 JSON 用 UTF-16 offset，禁止切断代理对；整形 cluster 提供显式转换表。
 - IR 对象与输出文件对象一对多；写入器返回完整映射。
 
@@ -385,18 +385,18 @@ UniDmrCore 目前用 DOCX 模板承载简报、报表等文书：模板作者在
 
 ### WP0 决策状态清单（2026-10-02）
 
-“工程基线已固定”指已有实现/版本/实验身份可复验，**不等于 v1 契约或生产 profile 已冻结**。未通过的门禁不得在 WP1 硬编码为已接受能力。详见 [WP0 Audit](../../docs/audits/2026-10-02-wp0-go-no-go.md)；延期按证据解锁，不设置日历截止。
+“已实现工程候选”指已有实现/版本/实验身份可复验，相关正式冻结仍按表列延期或阻塞，**不等于 v1 契约或生产 profile 已冻结**。未通过的门禁不得在 WP1 硬编码为已接受能力。详见 [WP0 Audit](../../docs/audits/2026-10-02-wp0-go-no-go.md)；延期按证据解锁，不设置日历截止。
 
 | 决策 | 当前状态 / 依赖 | 记录与补证归属 |
 | --- | --- | --- |
 | canvas-editor 接法、fork 范围 | **阻塞**：1.0.2加六文件实验patch可行；真实IME与(a)/生产fork批准未完成；WP0.2/0.3/0.10 | [ADR-0006](../../docs/decisions/ADR-0006-wp0-editor-route.md)，35真机证据+19人类决定 |
-| 整形/度量/回退/断行组合 | **工程基线已固定**：HB/fontkit/UAX14、无系统fallback；业务profile仍阻塞；WP0.4 | [ADR-0007](../../docs/decisions/ADR-0007-wp0-character-layout-profile.md)，06/09–13实证与业务交集 |
-| IR规范化单位、精度、范围、舍入 | **工程基线已固定**：v0整数µm、half-away-from-zero及范围；v1冻结阻塞；WP0.5 | [ADR-0009](../../docs/decisions/ADR-0009-wp0-ir-precision.md)，正式误差与20兼容决策待解锁 |
+| 整形/度量/回退/断行组合 | **延期冻结（已实现工程候选）**：HB/fontkit/UAX14、无系统fallback；业务profile仍阻塞；WP0.4 | [ADR-0007](../../docs/decisions/ADR-0007-wp0-character-layout-profile.md)，06/09–13实证与业务交集 |
+| IR规范化单位、精度、范围、舍入 | **延期冻结（已实现工程候选）**：v0整数µm、half-away-from-zero及范围；v1冻结阻塞；WP0.5 | [ADR-0009](../../docs/decisions/ADR-0009-wp0-ir-precision.md)，正式误差与20兼容决策待解锁 |
 | 首个OFD后端profile | **阻塞**：ofdrw.net低层适配通过库reader，目标桌面未验收；Java仅测试；WP0.6/0.10 | [ADR-0008](../../docs/decisions/ADR-0008-wp0-writer-profiles.md)，18三reader矩阵 |
 | 自研PdfIrWriter字体/文本映射 | **已接受限定profile**：ADR0004仅精确Worker双空格高层例外；生产设备/业务延期；WP0.7 | [ADR-0004](../../docs/decisions/ADR-0004-pdf-writer-reader-profile.md)、[ADR-0008](../../docs/decisions/ADR-0008-wp0-writer-profiles.md) |
-| 字体家族/字重：CFF vs TTF | **阻塞**：五文件静态资源锁已定，桌面互操作未验收；不自动换家族；WP0.2/0.9 | [ADR-0010](../../docs/decisions/ADR-0010-wp0-fonts-resources-attachments.md)，18矩阵后明确选择 |
+| 字体家族/字重：CFF vs TTF | **阻塞**：五文件静态资源锁已定，桌面互操作未验收；ADR0001的CFF失败转TTF条件尚未触发；WP0.2/0.9 | [ADR-0010](../../docs/decisions/ADR-0010-wp0-fonts-resources-attachments.md)，18矩阵后明确选择 |
 | 源附件单包/多附件 | **阻塞**：experimental@1单JSON仅为实验，目标提取Not verified；WP0.8 | [ADR-0005](../../docs/decisions/ADR-0005-source-attachment-experiment.md)、[ADR-0010](../../docs/decisions/ADR-0010-wp0-fonts-resources-attachments.md)，17真实提取 |
-| 图片格式政策 | **已接受现有P0政策**：PNG/JPEG-only，更窄writer交集；GIF/BMP/TIFF拒绝，新解码延期 | [ADR-0003](../../docs/decisions/ADR-0003-media-core-profile.md)、[ADR-0010](../../docs/decisions/ADR-0010-wp0-fonts-resources-attachments.md) |
+| 图片格式政策 | **仅issue11政策已接受，生产writer/profile冻结延期**：PNG/JPEG-only，更窄writer交集；GIF/BMP/TIFF拒绝，新解码延期 | [ADR-0003](../../docs/decisions/ADR-0003-media-core-profile.md)、[ADR-0010](../../docs/decisions/ADR-0010-wp0-fonts-resources-attachments.md) |
 | 首版字符与版式profile | **阻塞**：库级原文统计完成；71850码点为候选，真实业务静态/动态交集待证；WP0.4/0.9/0.10 | [ADR-0007](../../docs/decisions/ADR-0007-wp0-character-layout-profile.md)，宿主样本+双writer差分 |
 | 性能参考值 | **已固定实验参考**：含资源/单次subset/双writer的cold/hot分项；生产SLO/原生x64/业务延期 | [ADR-0011](../../docs/decisions/ADR-0011-wp0-performance-reference.md)，18固定证据，WP1服务另验 |
 | IR→输出几何误差正式门槛 | **阻塞**：0.05mm仍仅PoC观察线，0.0005mm仅单标量量化界；WP0.5/0.6/0.7 | [ADR-0009](../../docs/decisions/ADR-0009-wp0-ir-precision.md)，设备/区域测量与批准 |

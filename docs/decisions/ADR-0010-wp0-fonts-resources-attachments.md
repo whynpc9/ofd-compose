@@ -6,7 +6,7 @@
 
 ## 字体与资源身份
 
-沿用 [五字体 manifest](../../packages/typography-core/fonts/manifest.json) 的精确文件、SHA-256、上游 commit、大小与 OFL 文本，不把家族名当身份：Noto Sans CJK SC Regular400/Bold700（CFF 主候选）、LXGW WenKai Regular400（TTF 中文备选）、Noto Sans Italic400/BoldItalic700（真实拉丁斜体）。仅静态、单 face，禁止可变/集合/WOFF 和合成粗斜体/系统回退。中文斜体不能偷换成拉丁字体。
+沿用 [五字体 manifest](../../packages/typography-core/fonts/manifest.json) 的精确文件、SHA-256、上游 commit、大小与 OFL 文本，不把家族名当身份：Noto Sans CJK SC Regular400/Bold700（CFF 主候选）、LXGW WenKai Regular400（实测 TTF 楷体候选）、Noto Sans Italic400/BoldItalic700（真实拉丁斜体）。仅静态、单 face，禁止可变/集合/WOFF 和合成粗斜体/系统回退。中文斜体不能偷换成拉丁字体。
 
 下列是**实验资源锁**，不是批准新增字重/字体分发产品：
 
@@ -20,7 +20,9 @@
 
 ResourcePack 只传宿主授权字节与内容摘要，不隐式访问 URL/路径。Worker 用 harfbuzzjs1.6.0 的实际 `harfbuzz-subset.wasm`、retainGids，一次子集供双 writer 原样嵌入；字形 closure/映射仍校验。完整字体用于编辑/新增字符，不能拿嵌入 subset 充当 full font；宿主必须显式授权并匹配原文件摘要。静态字体/资源门禁已实现；硬进程内存/超时需 Job Host。
 
-目前没有目标桌面 CFF 失败证据，故不触发自动改用 TTF，不替用户批准家族切换。完成 issue18 同一样本 CFF/TTF 显示/复制/搜索后，再选定首发文件/字重集合；若出现失败，定位 font/reader/profile，比较修复与 TTF 路线并记录明确选择。新文件/字重需新的资源锁和相应回归。
+[ADR-0001 §F](ADR-0001-technology-baseline.md) 的候选与条件路线不变：Noto Sans SC（Google Fonts 构建的静态 TTF 实例）是 TrueType 轮廓备选，LXGW WenKai 是楷体候选；目标阅读器确认 CFF 失败时转向 TrueType 轮廓路线。现有实测 TTF 字节来自 WenKai，不意味着已经选用它替换指定的 Noto Sans SC 候选；后者精确静态文件/摘要及本平台 reader 验收 **Not verified**。
++
++目前没有目标桌面 CFF 失败证据，故上述条件尚未触发，本票不执行或批准字体切换，也不撤销 ADR-0001 的条件路线。完成 issue18 同一样本 CFF/TTF 显示/复制/搜索后再固定首发文件/字重；若确认失败，按该条件路线提出具体静态 TTF 文件和字重锁，完成新字体度量/布局/双 writer/目标 reader 回归及明确资源选择后才能放行。新文件不能沿用 WenKai 的测试结果。
 
 ## 源附件：单 JSON 为候选，未冻结容器协议
 
