@@ -3083,6 +3083,30 @@
                       {
                         "const": "ean13",
                         "type": "string"
+                      },
+                      {
+                        "const": "code39",
+                        "type": "string"
+                      },
+                      {
+                        "const": "code93",
+                        "type": "string"
+                      },
+                      {
+                        "const": "codabar",
+                        "type": "string"
+                      },
+                      {
+                        "const": "ean8",
+                        "type": "string"
+                      },
+                      {
+                        "const": "upca",
+                        "type": "string"
+                      },
+                      {
+                        "const": "itf",
+                        "type": "string"
                       }
                     ]
                   },
@@ -3130,6 +3154,22 @@
                   },
                   "pure": {
                     "type": "boolean"
+                  },
+                  "normalizationPolicy": {
+                    "anyOf": [
+                      {
+                        "const": "strict-1",
+                        "type": "string"
+                      },
+                      {
+                        "const": "legacy-upca-to-ean13-1",
+                        "type": "string"
+                      },
+                      {
+                        "const": "legacy-itf-pad-left-1",
+                        "type": "string"
+                      }
+                    ]
                   }
                 }
               },

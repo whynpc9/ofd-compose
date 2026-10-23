@@ -35,6 +35,11 @@ jobs:
 
       - run: pnpm build
 
+      - name: Regenerate actual Worker barcode decoder fixtures
+        run: |
+          node packages/render-worker/tests/generate-barcode-fixtures.mjs
+          test -z "$(git status --porcelain -- tests/barcodes/fixtures.json)"
+
       - name: TS tests (node mode)
         # Native-font suites have their own Vitest workers; avoid multiplying them
         # across workspaces on a small runner. Workloads and test deadlines stay unchanged.

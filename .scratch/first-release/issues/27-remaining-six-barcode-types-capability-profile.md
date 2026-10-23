@@ -4,10 +4,14 @@
 
 **Blocked by:** 11 Media Core：图片 + 条码（code128 / ean13）
 
-**Status:** ready-for-agent
+**Status:** ready-for-human
 
-- [ ] 每种码制：正向样本、无效输入（字符集、长度、校验位）、边界尺寸/缩放、静区、pure、居中、列表值与循环场景
-- [ ] 双解码器验收：zxing-wasm 与 ZXing.Net 均解出声明值与码制；解码器对 UPC-A/EAN13 的规范化行为记录，不误判
-- [ ] 规范化政策：`BARCODE_NORMALIZED` 返回 `inputValue / encodedValue / normalizationPolicy`；ITF pure 参数行为显式
-- [ ] capability profile 文件逐码制记录"通过 / 未通过 / Not verified"；未通过类型在能力发现接口中不可用
-- [ ] 二维码/DataMatrix 明确不在范围
+- [x] 每种码制：正向样本、无效输入（字符集、长度、校验位）、边界尺寸/缩放、静区、pure、居中、列表值与循环场景
+- [x] 双解码器验收：zxing-wasm 与 ZXing.Net 均解出声明值与码制；解码器对 UPC-A/EAN13 的规范化行为记录，不误判
+- [x] 规范化政策：`BARCODE_NORMALIZED` 返回 `inputValue / encodedValue / normalizationPolicy`；ITF pure 参数行为显式
+- [x] capability profile 文件逐码制记录"通过 / 未通过 / Not verified"；未通过类型在能力发现接口中不可用
+- [x] 二维码/DataMatrix 明确不在范围
+
+## Comments
+
+2026-10-23: Implemented the experimental bars-only six-type profile; see [admission, actual Worker fixtures, decoder aliases and limitations](../../../tests/barcodes/README.md) and [shared capability source](../../../packages/media-core/src/capabilities.ts). Lists use RepeatBlock; direct array values are diagnosed. ITF pure=false remains explicitly unsupported under ADR-0003. Local .NET decoding used SDK10.0.401, not the unavailable10.0.302 pin; current-head CI/review evidence is tracked in the PR. This does not release v1, implement issue21, authorize merging, or remove WP0 No-Go / unverified human gates.

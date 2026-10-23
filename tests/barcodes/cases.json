@@ -1,0 +1,137 @@
+[
+  {
+    "name": "code39-basic",
+    "symbology": "code39",
+    "inputValue": "CODE39-123",
+    "encodedValue": "CODE39-123",
+    "expectedFormat": "Code39"
+  },
+  {
+    "name": "code39-alphabet",
+    "symbology": "code39",
+    "inputValue": "AZ09 -.$/+%",
+    "encodedValue": "AZ09 -.$/+%",
+    "expectedFormat": "Code39"
+  },
+  {
+    "name": "code93-basic",
+    "symbology": "code93",
+    "inputValue": "CODE93-123",
+    "encodedValue": "CODE93-123",
+    "expectedFormat": "Code93"
+  },
+  {
+    "name": "code93-alphabet",
+    "symbology": "code93",
+    "inputValue": "AZ09 -.$/+%",
+    "encodedValue": "AZ09 -.$/+%",
+    "expectedFormat": "Code93"
+  },
+  {
+    "name": "codabar-basic",
+    "symbology": "codabar",
+    "inputValue": "A123456B",
+    "encodedValue": "A123456B",
+    "expectedFormat": "Codabar"
+  },
+  {
+    "name": "codabar-alphabet",
+    "symbology": "codabar",
+    "inputValue": "C0129-$:/.+D",
+    "encodedValue": "C0129-$:/.+D",
+    "expectedFormat": "Codabar"
+  },
+  {
+    "name": "codabar-short",
+    "symbology": "codabar",
+    "inputValue": "A12A",
+    "encodedValue": "A12A",
+    "expectedFormat": "Codabar"
+  },
+  {
+    "name": "ean8-basic",
+    "symbology": "ean8",
+    "inputValue": "96385074",
+    "encodedValue": "96385074",
+    "expectedFormat": "EAN8"
+  },
+  {
+    "name": "ean8-leading-zero",
+    "symbology": "ean8",
+    "inputValue": "01234565",
+    "encodedValue": "01234565",
+    "expectedFormat": "EAN8"
+  },
+  {
+    "name": "upca-basic",
+    "symbology": "upca",
+    "inputValue": "036000291452",
+    "encodedValue": "036000291452",
+    "expectedFormat": "UPCA"
+  },
+  {
+    "name": "upca-other",
+    "symbology": "upca",
+    "inputValue": "042100005264",
+    "encodedValue": "042100005264",
+    "expectedFormat": "UPCA"
+  },
+  {
+    "name": "itf-basic",
+    "symbology": "itf",
+    "inputValue": "1234567890",
+    "encodedValue": "1234567890",
+    "expectedFormat": "ITF"
+  },
+  {
+    "name": "itf-short",
+    "symbology": "itf",
+    "inputValue": "12",
+    "encodedValue": "12",
+    "expectedFormat": "ITF"
+  },
+  {
+    "name": "upca-legacy",
+    "symbology": "upca",
+    "inputValue": "036000291452",
+    "encodedValue": "0036000291452",
+    "expectedFormat": "EAN13",
+    "normalizationPolicy": "legacy-upca-to-ean13-1"
+  },
+  {
+    "name": "itf-legacy",
+    "symbology": "itf",
+    "inputValue": "123456789",
+    "encodedValue": "0123456789",
+    "expectedFormat": "ITF",
+    "normalizationPolicy": "legacy-itf-pad-left-1"
+  },
+  {
+    "name": "code128-basic",
+    "symbology": "code128",
+    "inputValue": "REGRESSION-128",
+    "encodedValue": "REGRESSION-128",
+    "expectedFormat": "Code128"
+  },
+  {
+    "name": "ean13-basic",
+    "symbology": "ean13",
+    "inputValue": "6901234567892",
+    "encodedValue": "6901234567892",
+    "expectedFormat": "EAN13"
+  },
+  {
+    "name": "code39-short",
+    "symbology": "code39",
+    "inputValue": "A",
+    "encodedValue": "A",
+    "expectedFormat": "Code39"
+  },
+  {
+    "name": "code93-short",
+    "symbology": "code93",
+    "inputValue": "A",
+    "encodedValue": "A",
+    "expectedFormat": "Code93"
+  }
+]

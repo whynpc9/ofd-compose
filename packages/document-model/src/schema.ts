@@ -296,13 +296,30 @@ export const ImageOptionsSchema = Type.Object(
 );
 export const BarcodeOptionsSchema = Type.Object(
   {
-    symbology: Type.Union([Type.Literal("code128"), Type.Literal("ean13")]),
+    symbology: Type.Union([
+      Type.Literal("code128"),
+      Type.Literal("ean13"),
+      Type.Literal("code39"),
+      Type.Literal("code93"),
+      Type.Literal("codabar"),
+      Type.Literal("ean8"),
+      Type.Literal("upca"),
+      Type.Literal("itf"),
+    ]),
     width: MediaLengthSchema,
     height: MediaLengthSchema,
     /** Physical whitespace on each side (mm); omission uses the symbology minimum in modules. */
     quietZone: Type.Optional(MediaLengthSchema),
     /** P0 emits bars only. false requires the future shaped human-readable-label profile. */
     pure: Type.Optional(Type.Boolean()),
+    /** Explicit legacy migration only; omission always uses strict validation. */
+    normalizationPolicy: Type.Optional(
+      Type.Union([
+        Type.Literal("strict-1"),
+        Type.Literal("legacy-upca-to-ean13-1"),
+        Type.Literal("legacy-itf-pad-left-1"),
+      ]),
+    ),
   },
   { additionalProperties: false },
 );

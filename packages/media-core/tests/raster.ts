@@ -1,6 +1,10 @@
 import type { PreparedBarcode } from "../src/index.js";
 /** Independent test-only CPU rasterizer consumes the IR path, never generator data. */
-export function raster(code: PreparedBarcode) {
+export function raster(
+  code: Pick<PreparedBarcode, "width" | "height"> & {
+    path: Pick<PreparedBarcode["path"], "commands">;
+  },
+) {
   const pixelsPerMm = 20,
     margin = 20;
   const width = Math.ceil(code.width * pixelsPerMm),

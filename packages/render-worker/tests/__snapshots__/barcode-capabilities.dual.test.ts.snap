@@ -1,0 +1,17 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`renders centered repeated list values and decodes each codabar 1`] = `"ce253f66edff77ba6d386e9b9fca52cf836c80e1a10c097f93faad2d5fbed54e"`;
+
+exports[`renders centered repeated list values and decodes each code39 1`] = `"edfffa014d975fa4db3ea491bd4db8ef473ae2beb150f1e85b7c6305510fec7f"`;
+
+exports[`renders centered repeated list values and decodes each code93 1`] = `"75020aea2e95638f0e5cec314082a34ae7943d754c5df76e095415e32469cde4"`;
+
+exports[`renders centered repeated list values and decodes each code128 1`] = `"113835926384c2c2afc94b59cfd3a97f8f77f629a5059a12fe26428ffb2511d6"`;
+
+exports[`renders centered repeated list values and decodes each ean8 1`] = `"782f5ffb66afb458289b128f2fc5f2aef31fbd9ade4fb7af5bb2a12c4943586b"`;
+
+exports[`renders centered repeated list values and decodes each ean13 1`] = `"6dd2d344595672df5e108eb25a4bc490000e1797fcc1d02cf16f0ef3a5d8e8e8"`;
+
+exports[`renders centered repeated list values and decodes each itf 1`] = `"bca3281a72d1b4b61b98746640534a1b6487fe706970cdc58b31f8f4b621c497"`;
+
+exports[`renders centered repeated list values and decodes each upca 1`] = `"05d5c01d7ea82f1bd8a7a73e3436bc92aedcb14644da5f26cfed9f93c349beff"`;

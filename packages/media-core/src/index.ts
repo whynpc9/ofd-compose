@@ -23,6 +23,7 @@ import {
 
 export * from "./barcodes.js";
 export { MediaError, mediaLimits } from "./budget.js";
+export * from "./capabilities.js";
 export { imageDimensions, mediaVersion } from "./dimensions.js";
 export type { AuthorizedImage, AuthorizedRoot, ImageResource, PreparedImage } from "./images.js";
 export interface MediaOptions {
@@ -130,8 +131,30 @@ export function prepareMedia(
               source: block,
               images: block.sources.map((s: ImageSource) => resolver.resolve(s, block.options)),
             });
-          } else
-            blocks.push({ source: block, barcode: barcode(block.value, block.options, budget) });
+          } else {
+            const prepared = barcode(block.value, block.options, budget);
+            blocks.push({ source: block, barcode: prepared });
+            if (
+              prepared.inputValue !== prepared.encodedValue ||
+              prepared.declaredSymbology !== prepared.symbology
+            )
+              diagnostics.push({
+                code: "BARCODE_NORMALIZED",
+                severity: "warning",
+                phase: "media",
+                nodeId: block.nodeId,
+                bindingId: block.bindingId,
+                ...(block.dataPath === undefined ? {} : { dataPath: block.dataPath }),
+                message: "Barcode normalized by an explicit legacy policy",
+                details: {
+                  inputValue: prepared.inputValue,
+                  encodedValue: prepared.encodedValue,
+                  normalizationPolicy: prepared.normalizationPolicy,
+                  declaredSymbology: prepared.declaredSymbology,
+                  encodedSymbology: prepared.symbology,
+                },
+              });
+          }
         }
       }
     };
