@@ -92,6 +92,9 @@ it.each(recipes)("renders native media reconstruction %s", async (name, labels) 
           symbology: symbology as BarcodeOptions["symbology"],
           width: 95.25,
           height: 26.458333,
+          ...(symbology === "upca"
+            ? { normalizationPolicy: "legacy-upca-to-ean13-1" as const }
+            : {}),
         },
       });
     }
@@ -102,18 +105,26 @@ it.each(recipes)("renders native media reconstruction %s", async (name, labels) 
     "docx-tests/10-block-image-centered",
     "docx-tests/11-images-in-loop",
     "examples/06-images",
-    "docx-tests/14-barcodes-upca-itf",
   ]);
   if (rejected.has(name)) {
     expect(result.ok).toBe(false);
     expect(result).not.toHaveProperty("ir");
     expect(result.diagnostics[0]?.code).toBe("MODEL_INVALID");
-    expect(result.diagnostics[0]?.message).toContain(
-      name.endsWith("14-barcodes-upca-itf") ? "Expected union" : "CRC mismatch",
-    );
+    expect(result.diagnostics[0]?.message).toContain("CRC mismatch");
     return;
   }
   if (!result.ok) throw new Error(JSON.stringify(result.diagnostics));
+  if (name === "docx-tests/14-barcodes-upca-itf")
+    expect(result.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "BARCODE_NORMALIZED",
+        details: expect.objectContaining({
+          inputValue: "036000291452",
+          encodedValue: "0036000291452",
+          normalizationPolicy: "legacy-upca-to-ean13-1",
+        }),
+      }),
+    );
   const objects = result.ir.pages.flatMap((p) => p.objects);
   expect(
     objects

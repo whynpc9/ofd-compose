@@ -1,0 +1,39 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`decodes actual rectangles: codabar-alphabet 1`] = `"63a03f68d22c00d7dfa2f8c62a6f6d02a33d81188953e65fd0e6749bb090d6f9"`;
+
+exports[`decodes actual rectangles: codabar-basic 1`] = `"41afa6ad9d5418d47a28af23d34c0ee79a0bddf9ddb6341244cad9242559019d"`;
+
+exports[`decodes actual rectangles: codabar-short 1`] = `"6684516aae3d59261aebd67f8ba0bb2825248c9189070b548f21e8611ff99530"`;
+
+exports[`decodes actual rectangles: code39-alphabet 1`] = `"dc512ab29540027fd3f457fc5e5792137edd7052d031887a2800289b67b281ee"`;
+
+exports[`decodes actual rectangles: code39-basic 1`] = `"3285c3869053bd715549ea804e0e079d3ab6ad5e25fd565aadbb0c8217eff4b0"`;
+
+exports[`decodes actual rectangles: code39-short 1`] = `"59e21e802613bdde640b429ba51ff4ab6c744d94f23032b0d16339ef6b88a7b9"`;
+
+exports[`decodes actual rectangles: code93-alphabet 1`] = `"48ecd33795b7ea5687d1444f7f65caeb2d5eff0b6462fad195db3e9b7f01269d"`;
+
+exports[`decodes actual rectangles: code93-basic 1`] = `"8ab041bf45c99296e0d2757f46934e8f245cdfd94120422cf402d7b43ccc8671"`;
+
+exports[`decodes actual rectangles: code93-short 1`] = `"df7c45135a58a6b8be3f76cd62c75784213c954cd24bd78c73b611c5b2e22e03"`;
+
+exports[`decodes actual rectangles: code128-basic 1`] = `"5dcc77b3c8cf3a3806846e2bc8fe40b6068f708450b0c054ee42912025a1a4b5"`;
+
+exports[`decodes actual rectangles: ean8-basic 1`] = `"811003e30ea1a41a519f77657939061b82cc36b258fba6767c404cb5065602e9"`;
+
+exports[`decodes actual rectangles: ean8-leading-zero 1`] = `"47ee0fedf24f2bc485ae6bccc97d97c021b6d46163bf693fd59a8b55162e0f84"`;
+
+exports[`decodes actual rectangles: ean13-basic 1`] = `"3313d5d865a30e979b5a363a10cf901ed2a9f7994eee71f2fb8e4acf987d3408"`;
+
+exports[`decodes actual rectangles: itf-basic 1`] = `"490d1e85a97dde208b25a6dabdff37d115ad6d886f4934d43086ff46676bcf9d"`;
+
+exports[`decodes actual rectangles: itf-legacy 1`] = `"0420239615d10358b629e548a3f0ae7dab050c16e35feca9849be5a69aeb4e4d"`;
+
+exports[`decodes actual rectangles: itf-short 1`] = `"45ae06a97b130d9fb12dcc3a14a996b6fda325a39e661047200624ff6a84cd8e"`;
+
+exports[`decodes actual rectangles: upca-basic 1`] = `"a8bf99bcd8f76a603240895aa29e2321ee55518ed8cd9cebd84b5d1b2678fa79"`;
+
+exports[`decodes actual rectangles: upca-legacy 1`] = `"df83f429bcdb82da67b20bbd4561891bcd5d062575b56538e54cf8690672ce8f"`;
+
+exports[`decodes actual rectangles: upca-other 1`] = `"4d694871226ec0c68d945204dc33fa271c26db9e4d6369771f2f13de8150b806"`;

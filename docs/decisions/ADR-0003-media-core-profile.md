@@ -24,3 +24,7 @@ The implementation's hard input, pixel, command and deterministic work budgets a
 Source verification used the installed locked sources: bwip `dist/bwip-js-gen.d.ts`, `src/exports.js`, `src/bwipjs.js`, `src/drawing-svg.js` (comparison of line semantics only; not called); image-size `dist/types/png.mjs` and `jpg.mjs`; zxing-wasm reader declarations and local WASM loader. Upstream references: [bwip-js v4.11.4](https://github.com/metafloor/bwip-js/tree/v4.11.4), [image-size v2.0.2](https://github.com/image-size/image-size/tree/v2.0.2), [zxing-wasm v3.1.3](https://github.com/Sec-ant/zxing-wasm/tree/v3.1.3).
 
 WP0.10 still needs writer PNG/JPEG compressed-data handling, dual writer output decoding/physical-size checks and target reader evidence. Issue11's core tests do not constitute writer, device, business-template or production acceptance.
+
+## Issue27 implementation addendum (2026-10-23)
+
+The [experimental linear barcode admission](../../tests/barcodes/README.md) extends the shared drawing-context implementation to code39/code93/codabar/ean8/upca/itf with actual Worker IR decoded independently by zxing-wasm and ZXing.Net. Strict validation is the default; legacy UPC-A to EAN13 and odd ITF padding require explicit per-binding normalization policies and diagnostics. The bars-only policy remains unchanged. This adds bounded preparation evidence and does not accept WP0 production writer/font profiles or change the status above.

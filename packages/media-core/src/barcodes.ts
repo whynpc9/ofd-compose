@@ -2,13 +2,18 @@ import type { BarcodeOptions } from "@ofd-compose/document-model";
 import { digestCanonical, type LayoutIR } from "@ofd-compose/layout-ir";
 import bwip from "bwip-js/generic";
 import { fail, MediaBudget, MediaError } from "./budget.js";
+import { barcodeCapabilities, barcodeGeneratorVersion } from "./capabilities.js";
 import { physical } from "./dimensions.js";
 
-export const barcodeGeneratorVersion = "bwip-js@4.11.4/drawing-context@1";
+export { barcodeGeneratorVersion } from "./capabilities.js";
 export type PathObject = Extract<LayoutIR["pages"][number]["objects"][number], { kind: "path" }>;
 export interface PreparedBarcode {
   readonly value: string;
-  readonly symbology: "code128" | "ean13";
+  readonly symbology: BarcodeOptions["symbology"];
+  readonly declaredSymbology: BarcodeOptions["symbology"];
+  readonly inputValue: string;
+  readonly encodedValue: string;
+  readonly normalizationPolicy: NonNullable<BarcodeOptions["normalizationPolicy"]>;
   readonly generatorVersion: typeof barcodeGeneratorVersion;
   readonly width: number;
   readonly height: number;
@@ -26,26 +31,35 @@ export function barcode(
   if (typeof value !== "string") fail("BARCODE_VALUE_INVALID", "Barcode value must be a string");
   if (value.length > budget.limits.barcodeCharacters)
     fail("RESOURCE_LIMIT", "Barcode value exceeds character budget");
-  if (!options || (options.symbology !== "code128" && options.symbology !== "ean13"))
-    fail("UNSUPPORTED_FEATURE", "P0 supports only code128/ean13");
+  if (
+    !options ||
+    !Object.hasOwn(barcodeCapabilities, options.symbology) ||
+    barcodeCapabilities[options.symbology].status !== "passed"
+  )
+    fail("UNSUPPORTED_FEATURE", "Barcode symbology is outside the linear barcode profile");
   if (options.pure !== undefined && options.pure !== true)
     fail(
       "UNSUPPORTED_FEATURE",
-      "P0 pure=true emits bars only; human-readable labels require the shaped-text profile",
+      "pure=true emits bars only; human-readable labels require the shaped-text profile",
     );
-  if (!value.length || (options.symbology === "code128" && !/^[\x20-\x7e]+$/.test(value)))
-    fail(
-      "BARCODE_VALUE_INVALID",
-      "Code128 P0 requires nonempty printable ASCII (no FNC escape interpretation)",
-    );
-  if (options.symbology === "ean13") {
-    if (!/^\d{13}$/.test(value))
-      fail("BARCODE_VALUE_INVALID", "EAN13 requires exactly 13 digits including check digit");
-    let sum = 0;
-    for (let i = 0; i < 12; i++) sum += Number(value[i]) * (i % 2 ? 3 : 1);
-    if ((10 - (sum % 10)) % 10 !== Number(value[12]))
-      fail("BARCODE_VALUE_INVALID", "Invalid EAN13 check digit");
+  const inputValue = value;
+  const normalizationPolicy = options.normalizationPolicy ?? "strict-1";
+  let symbology = options.symbology;
+  if (
+    normalizationPolicy !== "strict-1" &&
+    !(normalizationPolicy === "legacy-upca-to-ean13-1" && symbology === "upca") &&
+    !(normalizationPolicy === "legacy-itf-pad-left-1" && symbology === "itf")
+  )
+    fail("MODEL_INVALID", "Normalization policy does not apply to the declared symbology");
+  if (symbology === "itf" && normalizationPolicy === "legacy-itf-pad-left-1" && value.length % 2)
+    value = `0${value}`;
+  validateValue(value, symbology);
+  if (normalizationPolicy === "legacy-upca-to-ean13-1") {
+    value = `0${value}`;
+    symbology = "ean13";
   }
+  if (value.length > budget.limits.barcodeCharacters)
+    fail("RESOURCE_LIMIT", "Normalized barcode exceeds character budget");
   const width = physical(options.width),
     height = physical(options.height);
   if (width > 1000 || height > 1000 || height < 1)
@@ -93,11 +107,13 @@ export function barcode(
   try {
     bwip.render(
       {
-        bcid: options.symbology,
+        bcid: barcodeCapabilities[symbology].generator,
         text: value,
         scale: 2,
         height: 10,
         includetext: false,
+        // Code93 requires both C/K checks; BWIPP defaults includecheck to false.
+        includecheck: symbology === "code93",
         parse: false,
         parsefnc: false,
         guardwhitespace: false,
@@ -121,7 +137,7 @@ export function barcode(
   }
   // scale=2 fixes one BWIPP module at two drawing units; no upstream width rounding.
   const modules = (right - left) / 2;
-  const quietModules = options.symbology === "ean13" ? 11 : 10;
+  const quietModules = barcodeCapabilities[symbology].quietZoneModules;
   const quietZone = requestedQuiet ?? (width * quietModules) / (modules + 2 * quietModules);
   const moduleWidth = (width - 2 * quietZone) / modules;
   if (moduleWidth < 0.1 || quietZone + 1e-9 < quietModules * moduleWidth)
@@ -146,7 +162,7 @@ export function barcode(
   Object.freeze(commands);
   const geometryDigest = digestCanonical({
     generatorVersion: barcodeGeneratorVersion,
-    symbology: options.symbology,
+    symbology,
     value,
     width,
     height,
@@ -169,7 +185,11 @@ export function barcode(
   Object.freeze(path);
   return Object.freeze({
     value,
-    symbology: options.symbology,
+    inputValue,
+    encodedValue: value,
+    declaredSymbology: options.symbology,
+    normalizationPolicy,
+    symbology,
     generatorVersion: barcodeGeneratorVersion,
     width,
     height,
@@ -178,4 +198,44 @@ export function barcode(
     geometryDigest,
     path,
   });
+}
+
+function validateValue(value: string, symbology: BarcodeOptions["symbology"]): void {
+  if (symbology === "code128") {
+    if (!/^[\x20-\x7e]+$/.test(value))
+      fail(
+        "BARCODE_VALUE_INVALID",
+        "Code128 requires nonempty printable ASCII without FNC interpretation",
+      );
+  } else if (symbology === "code39" || symbology === "code93") {
+    if (!/^[A-Z0-9 .$/+%-]+$/.test(value))
+      fail(
+        "BARCODE_VALUE_INVALID",
+        "Code39/Code93 profile requires basic uppercase characters; no extended encoding or start/stop input",
+      );
+  } else if (symbology === "codabar") {
+    if (!/^[ABCD][0-9$:+./-]{2,}[ABCD]$/.test(value))
+      fail(
+        "BARCODE_VALUE_INVALID",
+        "Codabar requires uppercase A-D start/end and at least two data characters (digits or -$:/.+)",
+      );
+  } else if (symbology === "itf") {
+    if (!/^(?:[0-9]{2})+$/.test(value))
+      fail(
+        "BARCODE_VALUE_INVALID",
+        "ITF requires a nonempty even number of digits; no implicit padding or checksum",
+      );
+  } else {
+    const length = symbology === "ean13" ? 13 : symbology === "ean8" ? 8 : 12;
+    if (value.length !== length || !/^[0-9]+$/.test(value))
+      fail(
+        "BARCODE_VALUE_INVALID",
+        `${symbology} requires exactly ${length} digits including check digit`,
+      );
+    let sum = 0;
+    for (let i = length - 2, weight = 3; i >= 0; i--, weight = 4 - weight)
+      sum += Number(value[i]) * weight;
+    if ((10 - (sum % 10)) % 10 !== Number(value[length - 1]))
+      fail("BARCODE_VALUE_INVALID", `Invalid ${symbology} check digit`);
+  }
 }
